@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -5,7 +6,6 @@ const morgan = require('morgan');
 const session = require('express-session');
 const pgSession = require('connect-pg-simple')(session);
 const { pool } = require('./src/config/db');
-require('dotenv').config();
 
 const app = express();
 
@@ -25,7 +25,10 @@ app.use(session({
   cookie: { secure: false, httpOnly: true, maxAge: 1000 * 60 * 60 * 24 }
 }));
 
-// Health Check Route
+// Auth Routes
+const authRoutes = require('./src/modules/auth/auth.routes');
+app.use('/api/auth', authRoutes);
+// Health Check route
 app.get('/', (req, res) => {
   res.json({ status: 'Care4U API is running' });
 });
