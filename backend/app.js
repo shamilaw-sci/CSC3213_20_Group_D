@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -5,7 +6,9 @@ const morgan = require('morgan');
 const session = require('express-session');
 const pgSession = require('connect-pg-simple')(session);
 const { pool } = require('./src/config/db');
-require('dotenv').config();
+
+// Routes
+const doctorRoutes = require('./src/modules/doctor/doctor.routes');
 
 const app = express();
 
@@ -29,6 +32,9 @@ app.use(session({
 app.get('/', (req, res) => {
   res.json({ status: 'Care4U API is running' });
 });
+
+// Module Routes
+app.use('/api/doctors', doctorRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
