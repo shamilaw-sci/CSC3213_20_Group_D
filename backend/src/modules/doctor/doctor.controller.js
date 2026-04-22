@@ -59,7 +59,40 @@ const getAllDoctorsController = async (req, res) => {
   }
 };
 
+/**
+ * Update a doctor profile by ID.
+ * PUT /api/doctors/:id
+ */
+const updateDoctorController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const data = req.body;
+
+    const updated = await doctorService.updateDoctorProfile(id, data);
+
+    if (!updated) {
+      return res.status(404).json({
+        success: false,
+        message: 'Doctor not found',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Doctor profile updated successfully',
+      data: updated,
+    });
+  } catch (error) {
+    console.error('updateDoctorController error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+    });
+  }
+};
+
 module.exports = {
   getDoctorController,
   getAllDoctorsController,
+  updateDoctorController,
 };

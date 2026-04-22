@@ -26,7 +26,19 @@ const getAllDoctors = async () => {
   return doctors;
 };
 
+/**
+ * Update a doctor's profile.
+ * @param {string} id   - UUID of the doctor
+ * @param {Object} data - Fields to update
+ * @returns {Promise<Object>} Updated doctor object
+ */
+const updateDoctorProfile = async (id, data) => {
+  const updated = await doctorRepository.updateDoctor(id, data);
+  return updated;
+};
+
 module.exports = {
   getDoctorProfile,
   getAllDoctors,
+  updateDoctorProfile,
 };

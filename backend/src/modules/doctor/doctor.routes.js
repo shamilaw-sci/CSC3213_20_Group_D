@@ -10,6 +10,7 @@ const router = express.Router();
 const {
   getDoctorController,
   getAllDoctorsController,
+  updateDoctorController,
 } = require('./doctor.controller');
 
 // GET /api/doctors — get all verified doctors
@@ -17,5 +18,8 @@ router.get('/', getAllDoctorsController);
 
 // GET /api/doctors/:id — get doctor profile by ID
 router.get('/:id', getDoctorController);
+
+// PUT /api/doctors/:id — update doctor profile
+router.put('/:id', updateDoctorController);
 
 module.exports = router;
