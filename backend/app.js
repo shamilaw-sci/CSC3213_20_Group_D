@@ -9,6 +9,7 @@ const { pool } = require('./src/config/db');
 
 // Routes
 const doctorRoutes = require('./src/modules/doctor/doctor.routes');
+const appointmentRoutes = require('./src/modules/appointment/appointment.routes');
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.get('/', (req, res) => {
 
 // Module Routes
 app.use('/api/doctors', doctorRoutes);
+app.use('/api/appointments', appointmentRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
