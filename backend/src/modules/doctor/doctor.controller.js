@@ -146,10 +146,34 @@ const updateDoctorAvailabilityController = async (req, res) => {
   }
 };
 
+/**
+ * Get today's appointment queue.
+ * GET /api/doctors/:id/appointments/today
+ */
+const getTodayAppointmentsController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const appointments = await doctorService.getTodayAppointments(id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Today\'s appointments retrieved successfully',
+      data: appointments,
+    });
+  } catch (error) {
+    console.error('getTodayAppointmentsController error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+    });
+  }
+};
+
 module.exports = {
   getDoctorController,
   getAllDoctorsController,
   updateDoctorController,
   getDoctorAvailabilityController,
   updateDoctorAvailabilityController,
+  getTodayAppointmentsController,
 };

@@ -58,10 +58,21 @@ const updateDoctorAvailability = async (doctorId, slots) => {
   return updated;
 };
 
+/**
+ * Get today's appointment queue for a doctor.
+ * @param {string} doctorId - UUID of the doctor
+ * @returns {Promise<Array>} Array of today's appointments
+ */
+const getTodayAppointments = async (doctorId) => {
+  const appointments = await doctorRepository.getTodayAppointments(doctorId);
+  return appointments;
+};
+
 module.exports = {
   getDoctorProfile,
   getAllDoctors,
   updateDoctorProfile,
   getDoctorAvailability,
   updateDoctorAvailability,
+  getTodayAppointments,
 };

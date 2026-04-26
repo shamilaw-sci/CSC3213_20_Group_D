@@ -116,6 +116,32 @@ const updateDoctorAvailability = async (doctorId, slots) => {
   return getDoctorAvailability(doctorId);
 };
 
+/**
+ * Get today's appointments for a doctor.
+ * @param {string} doctorId - UUID of the doctor
+ * @returns {Promise<Array>} Array of today's appointments with patient info
+ */
+const getTodayAppointments = async (doctorId) => {
+  const result = await pool.query(
+    `SELECT 
+       a.id,
+       a.patient_id,
+       a.scheduled_at,
+       a.status,
+       a.type,
+       a.notes,
+       p.full_name AS patient_name,
+       p.id AS patient_uuid
+     FROM appointments a
+     JOIN patients p ON a.patient_id = p.id
+     WHERE a.doctor_id = $1
+       AND DATE(a.scheduled_at) = CURRENT_DATE
+     ORDER BY a.scheduled_at ASC`,
+    [doctorId]
+  );
+  return result.rows;
+};
+
 module.exports = {
   getDoctorById,
   getDoctorByUserId,
@@ -123,4 +149,5 @@ module.exports = {
   getAllDoctors,
   getDoctorAvailability,
   updateDoctorAvailability,
+  getTodayAppointments,
 };
