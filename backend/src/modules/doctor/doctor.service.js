@@ -37,8 +37,31 @@ const updateDoctorProfile = async (id, data) => {
   return updated;
 };
 
+/**
+ * Get doctor availability schedule.
+ * @param {string} doctorId - UUID of the doctor
+ * @returns {Promise<Array>} Availability slots
+ */
+const getDoctorAvailability = async (doctorId) => {
+  const availability = await doctorRepository.getDoctorAvailability(doctorId);
+  return availability;
+};
+
+/**
+ * Update doctor availability schedule.
+ * @param {string} doctorId - UUID of the doctor
+ * @param {Array}  slots    - Array of availability slot objects
+ * @returns {Promise<Array>} Updated availability slots
+ */
+const updateDoctorAvailability = async (doctorId, slots) => {
+  const updated = await doctorRepository.updateDoctorAvailability(doctorId, slots);
+  return updated;
+};
+
 module.exports = {
   getDoctorProfile,
   getAllDoctors,
   updateDoctorProfile,
+  getDoctorAvailability,
+  updateDoctorAvailability,
 };

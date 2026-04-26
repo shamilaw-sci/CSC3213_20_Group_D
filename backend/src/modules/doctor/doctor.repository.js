@@ -77,9 +77,50 @@ const getAllDoctors = async () => {
   return result.rows;
 };
 
+/**
+ * Get doctor availability schedule.
+ * @param {string} doctorId - UUID of the doctor
+ * @returns {Promise<Array>} Array of availability slots
+ */
+const getDoctorAvailability = async (doctorId) => {
+  const result = await pool.query(
+    `SELECT * FROM doctor_availability
+     WHERE doctor_id = $1
+     ORDER BY day_of_week ASC`,
+    [doctorId]
+  );
+  return result.rows;
+};
+
+/**
+ * Update doctor availability — delete old slots and insert new ones.
+ * @param {string} doctorId - UUID of the doctor
+ * @param {Array}  slots    - Array of availability slot objects
+ * @returns {Promise<Array>} Updated availability slots
+ */
+const updateDoctorAvailability = async (doctorId, slots) => {
+  await pool.query(
+    `DELETE FROM doctor_availability WHERE doctor_id = $1`,
+    [doctorId]
+  );
+
+  for (const slot of slots) {
+    await pool.query(
+      `INSERT INTO doctor_availability 
+       (doctor_id, day_of_week, start_time, end_time, slot_duration_minutes, is_active)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [doctorId, slot.day_of_week, slot.start_time, slot.end_time, slot.slot_duration_minutes, slot.is_active ?? true]
+    );
+  }
+
+  return getDoctorAvailability(doctorId);
+};
+
 module.exports = {
   getDoctorById,
   getDoctorByUserId,
   updateDoctor,
   getAllDoctors,
+  getDoctorAvailability,
+  updateDoctorAvailability,
 };

@@ -91,8 +91,65 @@ const updateDoctorController = async (req, res) => {
   }
 };
 
+/**
+ * Get doctor availability.
+ * GET /api/doctors/:id/availability
+ */
+const getDoctorAvailabilityController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const availability = await doctorService.getDoctorAvailability(id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Doctor availability retrieved successfully',
+      data: availability,
+    });
+  } catch (error) {
+    console.error('getDoctorAvailabilityController error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+    });
+  }
+};
+
+/**
+ * Update doctor availability.
+ * PUT /api/doctors/:id/availability
+ */
+const updateDoctorAvailabilityController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { slots } = req.body;
+
+    if (!slots || !Array.isArray(slots)) {
+      return res.status(400).json({
+        success: false,
+        message: 'slots must be an array',
+      });
+    }
+
+    const updated = await doctorService.updateDoctorAvailability(id, slots);
+
+    res.status(200).json({
+      success: true,
+      message: 'Doctor availability updated successfully',
+      data: updated,
+    });
+  } catch (error) {
+    console.error('updateDoctorAvailabilityController error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+    });
+  }
+};
+
 module.exports = {
   getDoctorController,
   getAllDoctorsController,
   updateDoctorController,
+  getDoctorAvailabilityController,
+  updateDoctorAvailabilityController,
 };

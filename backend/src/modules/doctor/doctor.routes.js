@@ -11,6 +11,8 @@ const {
   getDoctorController,
   getAllDoctorsController,
   updateDoctorController,
+  getDoctorAvailabilityController,
+  updateDoctorAvailabilityController,
 } = require('./doctor.controller');
 
 // GET /api/doctors — get all verified doctors
@@ -21,5 +23,11 @@ router.get('/:id', getDoctorController);
 
 // PUT /api/doctors/:id — update doctor profile
 router.put('/:id', updateDoctorController);
+
+// GET /api/doctors/:id/availability — get doctor availability
+router.get('/:id/availability', getDoctorAvailabilityController);
+
+// PUT /api/doctors/:id/availability — update doctor availability
+router.put('/:id/availability', updateDoctorAvailabilityController);
 
 module.exports = router;
