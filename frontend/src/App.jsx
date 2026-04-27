@@ -4,8 +4,9 @@
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import PatientProfilePage from './pages/patient/PatientProfilePage'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import PatientProfilePage from './pages/patient/PatientProfilePage';
+import MedicalRecordsPage from './pages/patient/MedicalRecordsPage';
 
 function App() {
   return (
@@ -16,11 +17,12 @@ function App() {
 
         {/* Patient routes */}
         <Route path="/patient/profile" element={<PatientProfilePage />} />
+        <Route path="/patient/medical-records" element={<MedicalRecordsPage />} />
 
         {/* Other members will add their routes here */}
       </Routes>
     </BrowserRouter>
-  )
+  );
 }
 
-export default App
+export default App;

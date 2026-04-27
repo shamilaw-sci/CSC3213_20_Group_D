@@ -28,3 +28,13 @@ export const updatePatientProfile = async (patientId, data) => {
   const response = await api.put(`/api/patients/${patientId}`, data);
   return response.data.data;   // unwrap { success, message, data }
 };
+
+/**
+ * Fetches all medical records for a patient.
+ * @param {string} patientId - UUID of the patient
+ * @returns {Promise<Array>} Array of medical record objects
+ */
+export const getMedicalRecords = async (patientId) => {
+  const response = await api.get(`/api/patients/${patientId}/medical-records`);
+  return response.data.data;   // unwrap { success, message, data }
+};
