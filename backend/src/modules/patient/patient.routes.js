@@ -7,7 +7,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { getPatientController } = require('./patient.controller');
+const { getPatientController, updatePatientController } = require('./patient.controller');
 
 // const { isAuthenticated } = require('../../middleware/auth');        // Uncomment when auth is ready
 // const { authorize } = require('../../middleware/rbac');              // Uncomment when auth is ready
@@ -22,6 +22,18 @@ router.get(
   // isAuthenticated,                 // Uncomment when auth is ready
   // authorize('patient', 'doctor'),  // Uncomment when auth is ready
   getPatientController
+);
+
+/**
+ * PUT /api/patients/:id
+ * Updates editable fields on a patient profile.
+ * Auth middleware is commented out until Member 1 finishes auth module.
+ */
+router.put(
+  '/:id',
+  // isAuthenticated,                 // Uncomment when auth is ready
+  // authorize('patient', 'doctor'),  // Uncomment when auth is ready
+  updatePatientController
 );
 
 module.exports = router;

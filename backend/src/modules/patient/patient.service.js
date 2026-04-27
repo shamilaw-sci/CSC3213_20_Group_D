@@ -26,6 +26,44 @@ const getPatientProfile = async (id) => {
   return patient;
 };
 
+/**
+ * Updates editable fields on a patient profile.
+ * @param {string} id   - UUID of the patient record (from patients table)
+ * @param {Object} data - Object containing fields to update
+ * @returns {Promise<Object>} The updated patient record
+ * @throws {Error} If patient is not found
+ */
+const updatePatientProfile = async (id, data) => {
+  // Step 1: Check the patient exists before trying to update
+  const existing = await patientRepository.getPatientById(id);
+  if (!existing) {
+    const error = new Error('Patient not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  // Step 2: Only allow safe, editable fields through — never let
+  // sensitive fields like user_id or qr_code_id be overwritten
+  const allowedFields = {
+    full_name:                      data.full_name,
+    blood_group:                    data.blood_group,
+    emergency_contact_name:         data.emergency_contact_name,
+    emergency_contact_phone:        data.emergency_contact_phone,
+    emergency_contact_relationship: data.emergency_contact_relationship,
+  };
+
+  // Step 3: Strip out any keys where the value is undefined
+  // (fields the caller didn't send) so we don't overwrite with null
+  const filteredData = Object.fromEntries(
+    Object.entries(allowedFields).filter(([_, v]) => v !== undefined)
+  );
+
+  // Step 4: Perform the update
+  const updated = await patientRepository.updatePatient(id, filteredData);
+  return updated;
+};
+
 module.exports = {
   getPatientProfile,
+  updatePatientProfile,
 };
