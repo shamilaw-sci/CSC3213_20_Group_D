@@ -7,7 +7,11 @@
 
 const express = require('express');
 const router = express.Router();
-const { getPatientController, updatePatientController } = require('./patient.controller');
+const {
+  getPatientController,
+  updatePatientController,
+  getMedicalRecordsController,
+} = require('./patient.controller');
 
 // const { isAuthenticated } = require('../../middleware/auth');        // Uncomment when auth is ready
 // const { authorize } = require('../../middleware/rbac');              // Uncomment when auth is ready
@@ -15,7 +19,6 @@ const { getPatientController, updatePatientController } = require('./patient.con
 /**
  * GET /api/patients/:id
  * Returns the profile of a patient by their UUID.
- * Auth middleware is commented out until Member 1 finishes auth module.
  */
 router.get(
   '/:id',
@@ -27,13 +30,23 @@ router.get(
 /**
  * PUT /api/patients/:id
  * Updates editable fields on a patient profile.
- * Auth middleware is commented out until Member 1 finishes auth module.
  */
 router.put(
   '/:id',
   // isAuthenticated,                 // Uncomment when auth is ready
   // authorize('patient', 'doctor'),  // Uncomment when auth is ready
   updatePatientController
+);
+
+/**
+ * GET /api/patients/:id/medical-records
+ * Returns all medical records for a patient, newest first.
+ */
+router.get(
+  '/:id/medical-records',
+  // isAuthenticated,                 // Uncomment when auth is ready
+  // authorize('patient', 'doctor'),  // Uncomment when auth is ready
+  getMedicalRecordsController
 );
 
 module.exports = router;

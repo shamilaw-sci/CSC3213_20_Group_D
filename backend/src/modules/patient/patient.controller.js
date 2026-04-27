@@ -56,7 +56,32 @@ const updatePatientController = async (req, res) => {
   }
 };
 
+/**
+ * Handles GET /api/patients/:id/medical-records
+ * Returns all medical records for a patient, newest first.
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const getMedicalRecordsController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const records = await patientService.getMedicalRecords(id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Medical records retrieved successfully',
+      data: records,
+    });
+  } catch (error) {
+    console.error('getMedicalRecordsController error:', error);
+    const statusCode = error.statusCode || 500;
+    const message = error.statusCode ? error.message : 'Internal server error';
+    res.status(statusCode).json({ success: false, message });
+  }
+};
+
 module.exports = {
   getPatientController,
   updatePatientController,
+  getMedicalRecordsController,
 };

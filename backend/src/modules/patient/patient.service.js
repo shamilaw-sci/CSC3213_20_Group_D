@@ -63,7 +63,28 @@ const updatePatientProfile = async (id, data) => {
   return updated;
 };
 
+/**
+ * Retrieves all medical records for a patient, newest first.
+ * @param {string} patientId - UUID of the patient (from patients table)
+ * @returns {Promise<Array>} Array of medical record objects
+ * @throws {Error} If patient is not found
+ */
+const getMedicalRecords = async (patientId) => {
+  // First confirm the patient actually exists
+  const existing = await patientRepository.getPatientById(patientId);
+  if (!existing) {
+    const error = new Error('Patient not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  // Returns empty array if patient exists but has no records yet — that is fine
+  const records = await patientRepository.getMedicalRecords(patientId);
+  return records;
+};
+
 module.exports = {
   getPatientProfile,
   updatePatientProfile,
+  getMedicalRecords,
 };

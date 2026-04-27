@@ -114,8 +114,38 @@ async function updatePatient(id, data) {
   return result.rows[0] || null;
 }
 
+/**
+ * Fetches all medical records for a patient, ordered newest first.
+ * Joins with the doctors and users tables to include the doctor's name.
+ * @param {string} patientId - UUID of the patient (patients.id)
+ * @returns {Promise<Array>} Array of medical record rows (empty array if none)
+ */
+async function getMedicalRecords(patientId) {
+  const result = await pool.query(
+    `SELECT
+      mr.id,
+      mr.patient_id,
+      mr.doctor_id,
+      mr.appointment_id,
+      mr.record_type,
+      mr.title,
+      mr.description,
+      mr.is_confidential,
+      mr.created_at,
+      d.full_name AS doctor_name,
+      d.specialization AS doctor_specialization
+    FROM medical_records mr
+    LEFT JOIN doctors d ON mr.doctor_id = d.id
+    WHERE mr.patient_id = $1
+    ORDER BY mr.created_at DESC`,
+    [patientId]
+  );
+  return result.rows;
+}
+
 module.exports = {
   getPatientById,
   getPatientByUserId,
   updatePatient,
+  getMedicalRecords,
 };
