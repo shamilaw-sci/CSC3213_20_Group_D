@@ -30,7 +30,11 @@ app.use(session({
   cookie: { secure: false, httpOnly: true, maxAge: 1000 * 60 * 60 * 24 }
 }));
 
-// Health Check Route
+// Auth Routes
+const authRoutes = require('./src/modules/auth/auth.routes');
+app.use('/api/auth', authRoutes);
+
+// Health Check route
 app.get('/', (req, res) => {
   res.json({ status: 'Care4U API is running' });
 });
