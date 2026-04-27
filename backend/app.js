@@ -9,6 +9,9 @@ require('dotenv').config();
 
 const app = express();
 
+// Route Imports
+const patientRoutes = require('./src/modules/patient/patient.routes');
+
 // Security & Middleware
 app.use(helmet());
 app.use(morgan('dev'));
@@ -30,7 +33,8 @@ app.get('/', (req, res) => {
   res.json({ status: 'Care4U API is running' });
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Routes
+app.use('/api/patients', patientRoutes);
+
 
 module.exports = app;
