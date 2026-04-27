@@ -13,6 +13,7 @@ const {
   getMedicalRecordsController,
   getAllergiesController,
   addAllergyController,
+  getPatientPrescriptionsController,
 } = require('./patient.controller');
 
 // const { isAuthenticated } = require('../../middleware/auth');        // Uncomment when auth is ready
@@ -72,6 +73,17 @@ router.post(
   // isAuthenticated,                 // Uncomment when auth is ready
   // authorize('patient', 'doctor'),  // Uncomment when auth is ready
   addAllergyController
+);
+
+/**
+ * GET /api/patients/:id/prescriptions
+ * Returns all prescriptions for a patient with their medicine items.
+ */
+router.get(
+  '/:id/prescriptions',
+  // isAuthenticated,                 // Uncomment when auth is ready
+  // authorize('patient', 'doctor'),  // Uncomment when auth is ready
+  getPatientPrescriptionsController
 );
 
 module.exports = router;

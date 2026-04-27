@@ -179,6 +179,63 @@ async function addAllergy(patientId, allergen, severity, notes) {
   return result.rows[0];
 }
 
+/**
+ * Fetches all prescriptions for a patient with their medicine items,
+ * ordered newest first. Uses JSON_AGG to bundle all items per prescription
+ * into a single array so each prescription appears as one object.
+ * @param {string} patientId - UUID of the patient (patients.id)
+ * @returns {Promise<Array>} Array of prescription objects (empty array if none)
+ */
+async function getPatientPrescriptions(patientId) {
+  const result = await pool.query(
+    `SELECT
+      pr.id,
+      pr.patient_id,
+      pr.doctor_id,
+      pr.appointment_id,
+      pr.qr_code_value,
+      pr.status,
+      pr.expires_at,
+      pr.notes,
+      pr.created_at,
+      pr.updated_at,
+      d.full_name       AS doctor_name,
+      d.specialization  AS doctor_specialization,
+      JSON_AGG(
+        JSON_BUILD_OBJECT(
+          'id',                   pi.id,
+          'medicine_name',        pi.medicine_name,
+          'dosage',               pi.dosage,
+          'frequency',            pi.frequency,
+          'duration_days',        pi.duration_days,
+          'quantity_prescribed',  pi.quantity_prescribed,
+          'quantity_dispensed',   pi.quantity_dispensed,
+          'special_notes',        pi.special_notes
+        ) ORDER BY pi.medicine_name
+      ) AS items
+    FROM prescriptions pr
+    LEFT JOIN doctors d  ON pr.doctor_id = d.id
+    LEFT JOIN prescription_items pi ON pi.prescription_id = pr.id
+    WHERE pr.patient_id = $1
+    GROUP BY
+      pr.id,
+      pr.patient_id,
+      pr.doctor_id,
+      pr.appointment_id,
+      pr.qr_code_value,
+      pr.status,
+      pr.expires_at,
+      pr.notes,
+      pr.created_at,
+      pr.updated_at,
+      d.full_name,
+      d.specialization
+    ORDER BY pr.created_at DESC`,
+    [patientId]
+  );
+  return result.rows;
+}
+
 module.exports = {
   getPatientById,
   getPatientByUserId,
@@ -186,4 +243,5 @@ module.exports = {
   getMedicalRecords,
   getAllergies,
   addAllergy,
+  getPatientPrescriptions,
 };

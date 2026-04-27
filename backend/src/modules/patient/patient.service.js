@@ -105,14 +105,12 @@ const getAllergies = async (patientId) => {
  * @throws {Error} 404 if patient is not found
  */
 const addAllergy = async (patientId, allergen, severity, notes) => {
-  // Step 1: Validate required fields
   if (!allergen || !severity) {
     const error = new Error('allergen and severity are required');
     error.statusCode = 400;
     throw error;
   }
 
-  // Step 2: Validate severity is one of the accepted values
   const validSeverities = ['mild', 'moderate', 'severe'];
   if (!validSeverities.includes(severity.toLowerCase())) {
     const error = new Error('severity must be mild, moderate, or severe');
@@ -120,7 +118,6 @@ const addAllergy = async (patientId, allergen, severity, notes) => {
     throw error;
   }
 
-  // Step 3: Confirm the patient exists
   const existing = await patientRepository.getPatientById(patientId);
   if (!existing) {
     const error = new Error('Patient not found');
@@ -128,7 +125,6 @@ const addAllergy = async (patientId, allergen, severity, notes) => {
     throw error;
   }
 
-  // Step 4: Insert the allergy record
   const allergy = await patientRepository.addAllergy(
     patientId,
     allergen,
@@ -138,10 +134,29 @@ const addAllergy = async (patientId, allergen, severity, notes) => {
   return allergy;
 };
 
+/**
+ * Retrieves all prescriptions for a patient with their medicine items.
+ * @param {string} patientId - UUID of the patient (from patients table)
+ * @returns {Promise<Array>} Array of prescription objects with items array
+ * @throws {Error} 404 if patient is not found
+ */
+const getPatientPrescriptions = async (patientId) => {
+  const existing = await patientRepository.getPatientById(patientId);
+  if (!existing) {
+    const error = new Error('Patient not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const prescriptions = await patientRepository.getPatientPrescriptions(patientId);
+  return prescriptions;
+};
+
 module.exports = {
   getPatientProfile,
   updatePatientProfile,
   getMedicalRecords,
   getAllergies,
   addAllergy,
+  getPatientPrescriptions,
 };

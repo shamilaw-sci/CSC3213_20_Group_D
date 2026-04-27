@@ -121,10 +121,33 @@ const addAllergyController = async (req, res) => {
   }
 };
 
+/**
+ * Handles GET /api/patients/:id/prescriptions
+ * Returns all prescriptions for a patient with their medicine items.
+ */
+const getPatientPrescriptionsController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const prescriptions = await patientService.getPatientPrescriptions(id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Prescriptions retrieved successfully',
+      data: prescriptions,
+    });
+  } catch (error) {
+    console.error('getPatientPrescriptionsController error:', error);
+    const statusCode = error.statusCode || 500;
+    const message = error.statusCode ? error.message : 'Internal server error';
+    res.status(statusCode).json({ success: false, message });
+  }
+};
+
 module.exports = {
   getPatientController,
   updatePatientController,
   getMedicalRecordsController,
   getAllergiesController,
   addAllergyController,
+  getPatientPrescriptionsController,
 };
