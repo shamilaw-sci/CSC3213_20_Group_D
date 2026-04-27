@@ -80,10 +80,6 @@ async function getPatientByUserId(userId) {
  * Only the fields passed in `data` will be updated.
  * @param {string} id - UUID of the patient (patients.id)
  * @param {Object} data - Fields to update
- * @param {string} [data.blood_group]
- * @param {string} [data.emergency_contact_name]
- * @param {string} [data.emergency_contact_phone]
- * @param {string} [data.emergency_contact_relationship]
  * @returns {Promise<Object|null>} Updated patient row or null
  */
 async function updatePatient(id, data) {
@@ -116,7 +112,7 @@ async function updatePatient(id, data) {
 
 /**
  * Fetches all medical records for a patient, ordered newest first.
- * Joins with the doctors and users tables to include the doctor's name.
+ * Joins with the doctors table to include the doctor's name.
  * @param {string} patientId - UUID of the patient (patients.id)
  * @returns {Promise<Array>} Array of medical record rows (empty array if none)
  */
@@ -143,9 +139,51 @@ async function getMedicalRecords(patientId) {
   return result.rows;
 }
 
+/**
+ * Fetches all allergy records for a patient, ordered newest first.
+ * @param {string} patientId - UUID of the patient (patients.id)
+ * @returns {Promise<Array>} Array of allergy rows (empty array if none)
+ */
+async function getAllergies(patientId) {
+  const result = await pool.query(
+    `SELECT
+      id,
+      patient_id,
+      allergen,
+      severity,
+      notes,
+      created_at
+    FROM patient_allergies
+    WHERE patient_id = $1
+    ORDER BY created_at DESC`,
+    [patientId]
+  );
+  return result.rows;
+}
+
+/**
+ * Inserts a new allergy record for a patient.
+ * @param {string} patientId - UUID of the patient (patients.id)
+ * @param {string} allergen  - Name of the allergen (e.g. Penicillin)
+ * @param {string} severity  - Severity level: mild / moderate / severe
+ * @param {string|null} notes - Optional additional notes
+ * @returns {Promise<Object>} The newly created allergy row
+ */
+async function addAllergy(patientId, allergen, severity, notes) {
+  const result = await pool.query(
+    `INSERT INTO patient_allergies (id, patient_id, allergen, severity, notes, created_at)
+    VALUES (gen_random_uuid(), $1, $2, $3, $4, NOW())
+    RETURNING *`,
+    [patientId, allergen, severity, notes || null]
+  );
+  return result.rows[0];
+}
+
 module.exports = {
   getPatientById,
   getPatientByUserId,
   updatePatient,
   getMedicalRecords,
+  getAllergies,
+  addAllergy,
 };

@@ -11,8 +11,6 @@ const patientService = require('./patient.service');
 /**
  * Handles GET /api/patients/:id
  * Returns the full profile of a patient by their UUID.
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
  */
 const getPatientController = async (req, res) => {
   try {
@@ -35,8 +33,6 @@ const getPatientController = async (req, res) => {
 /**
  * Handles PUT /api/patients/:id
  * Updates editable fields on a patient profile.
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
  */
 const updatePatientController = async (req, res) => {
   try {
@@ -59,8 +55,6 @@ const updatePatientController = async (req, res) => {
 /**
  * Handles GET /api/patients/:id/medical-records
  * Returns all medical records for a patient, newest first.
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
  */
 const getMedicalRecordsController = async (req, res) => {
   try {
@@ -80,8 +74,57 @@ const getMedicalRecordsController = async (req, res) => {
   }
 };
 
+/**
+ * Handles GET /api/patients/:id/allergies
+ * Returns all allergy records for a patient.
+ */
+const getAllergiesController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const allergies = await patientService.getAllergies(id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Allergies retrieved successfully',
+      data: allergies,
+    });
+  } catch (error) {
+    console.error('getAllergiesController error:', error);
+    const statusCode = error.statusCode || 500;
+    const message = error.statusCode ? error.message : 'Internal server error';
+    res.status(statusCode).json({ success: false, message });
+  }
+};
+
+/**
+ * Handles POST /api/patients/:id/allergies
+ * Adds a new allergy record for a patient.
+ * Body: { allergen, severity, notes (optional) }
+ */
+const addAllergyController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { allergen, severity, notes } = req.body;
+
+    const allergy = await patientService.addAllergy(id, allergen, severity, notes);
+
+    res.status(201).json({
+      success: true,
+      message: 'Allergy added successfully',
+      data: allergy,
+    });
+  } catch (error) {
+    console.error('addAllergyController error:', error);
+    const statusCode = error.statusCode || 500;
+    const message = error.statusCode ? error.message : 'Internal server error';
+    res.status(statusCode).json({ success: false, message });
+  }
+};
+
 module.exports = {
   getPatientController,
   updatePatientController,
   getMedicalRecordsController,
+  getAllergiesController,
+  addAllergyController,
 };

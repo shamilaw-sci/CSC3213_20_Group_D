@@ -11,6 +11,8 @@ const {
   getPatientController,
   updatePatientController,
   getMedicalRecordsController,
+  getAllergiesController,
+  addAllergyController,
 } = require('./patient.controller');
 
 // const { isAuthenticated } = require('../../middleware/auth');        // Uncomment when auth is ready
@@ -47,6 +49,29 @@ router.get(
   // isAuthenticated,                 // Uncomment when auth is ready
   // authorize('patient', 'doctor'),  // Uncomment when auth is ready
   getMedicalRecordsController
+);
+
+/**
+ * GET /api/patients/:id/allergies
+ * Returns all allergy records for a patient.
+ */
+router.get(
+  '/:id/allergies',
+  // isAuthenticated,                 // Uncomment when auth is ready
+  // authorize('patient', 'doctor'),  // Uncomment when auth is ready
+  getAllergiesController
+);
+
+/**
+ * POST /api/patients/:id/allergies
+ * Adds a new allergy record for a patient.
+ * Body: { allergen, severity, notes (optional) }
+ */
+router.post(
+  '/:id/allergies',
+  // isAuthenticated,                 // Uncomment when auth is ready
+  // authorize('patient', 'doctor'),  // Uncomment when auth is ready
+  addAllergyController
 );
 
 module.exports = router;
