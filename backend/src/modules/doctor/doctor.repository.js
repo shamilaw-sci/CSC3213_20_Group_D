@@ -1,0 +1,153 @@
+/**
+ * @file    doctor.repository.js
+ * @module  Doctor
+ * @desc    Database queries for the Doctor module.
+ *          Handles all direct interactions with the doctors table.
+ * @author  Tharindu (S/21/166)
+ */
+
+const { pool } = require('../../config/db');
+
+/**
+ * Get a doctor by their doctor ID.
+ * @param {string} id - UUID of the doctor
+ * @returns {Promise<Object|null>} Doctor object or null
+ */
+const getDoctorById = async (id) => {
+  const result = await pool.query(
+    `SELECT d.*, u.email, u.phone, u.role
+     FROM doctors d
+     JOIN users u ON d.user_id = u.id
+     WHERE d.id = $1`,
+    [id]
+  );
+  return result.rows[0] || null;
+};
+
+/**
+ * Get a doctor by their user ID.
+ * @param {string} userId - UUID from the users table
+ * @returns {Promise<Object|null>} Doctor object or null
+ */
+const getDoctorByUserId = async (userId) => {
+  const result = await pool.query(
+    `SELECT d.*, u.email, u.phone, u.role
+     FROM doctors d
+     JOIN users u ON d.user_id = u.id
+     WHERE d.user_id = $1`,
+    [userId]
+  );
+  return result.rows[0] || null;
+};
+
+/**
+ * Update a doctor's profile fields.
+ * @param {string} id   - UUID of the doctor
+ * @param {Object} data - Fields to update
+ * @returns {Promise<Object|null>} Updated doctor object or null
+ */
+const updateDoctor = async (id, data) => {
+  const { specialization, qualifications, years_experience, hospital_name } = data;
+  const result = await pool.query(
+    `UPDATE doctors
+     SET specialization   = COALESCE($1, specialization),
+         qualifications   = COALESCE($2, qualifications),
+         years_experience = COALESCE($3, years_experience),
+         hospital_name    = COALESCE($4, hospital_name),
+         updated_at       = NOW()
+     WHERE id = $5
+     RETURNING *`,
+    [specialization, qualifications, years_experience, hospital_name, id]
+  );
+  return result.rows[0] || null;
+};
+
+/**
+ * Get all verified doctors (used by patients when booking appointments).
+ * @returns {Promise<Array>} Array of verified doctor objects
+ */
+const getAllDoctors = async () => {
+  const result = await pool.query(
+    `SELECT d.*, u.email, u.phone
+     FROM doctors d
+     JOIN users u ON d.user_id = u.id
+     WHERE d.is_verified = true
+     ORDER BY d.created_at DESC`
+  );
+  return result.rows;
+};
+
+/**
+ * Get doctor availability schedule.
+ * @param {string} doctorId - UUID of the doctor
+ * @returns {Promise<Array>} Array of availability slots
+ */
+const getDoctorAvailability = async (doctorId) => {
+  const result = await pool.query(
+    `SELECT * FROM doctor_availability
+     WHERE doctor_id = $1
+     ORDER BY day_of_week ASC`,
+    [doctorId]
+  );
+  return result.rows;
+};
+
+/**
+ * Update doctor availability — delete old slots and insert new ones.
+ * @param {string} doctorId - UUID of the doctor
+ * @param {Array}  slots    - Array of availability slot objects
+ * @returns {Promise<Array>} Updated availability slots
+ */
+const updateDoctorAvailability = async (doctorId, slots) => {
+  await pool.query(
+    `DELETE FROM doctor_availability WHERE doctor_id = $1`,
+    [doctorId]
+  );
+
+  for (const slot of slots) {
+    await pool.query(
+      `INSERT INTO doctor_availability 
+       (doctor_id, day_of_week, start_time, end_time, slot_duration_minutes, is_active)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [doctorId, slot.day_of_week, slot.start_time, slot.end_time, slot.slot_duration_minutes, slot.is_active ?? true]
+    );
+  }
+
+  return getDoctorAvailability(doctorId);
+};
+
+/**
+ * Get today's appointments for a doctor.
+ * @param {string} doctorId - UUID of the doctor
+ * @returns {Promise<Array>} Array of today's appointments with patient info
+ */
+const getTodayAppointments = async (doctorId) => {
+  const result = await pool.query(
+    `SELECT 
+       a.id,
+       a.patient_id,
+       a.scheduled_at,
+       a.status,
+       a.type,
+       a.notes,
+       p.full_name AS patient_name,
+       p.id AS patient_uuid
+     FROM appointments a
+     JOIN patients p ON a.patient_id = p.id
+     WHERE a.doctor_id = $1
+       AND DATE(a.scheduled_at) = CURRENT_DATE
+     ORDER BY a.scheduled_at ASC`,
+    [doctorId]
+  );
+  return result.rows;
+};
+
+module.exports = {
+  getDoctorById,
+  getDoctorByUserId,
+  updateDoctor,
+  getAllDoctors,
+  getDoctorAvailability,
+  updateDoctorAvailability,
+  getTodayAppointments,
+};
