@@ -3,25 +3,32 @@
  * @desc    Root application component. Defines all client-side routes.
  * @author  Wasana Karunanayaka (S/21/081)
  */
-
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import PatientProfilePage    from './pages/patient/PatientProfilePage';
-import LoginPage from './pages/auth/LoginPage';
-import MedicalRecordsPage    from './pages/patient/MedicalRecordsPage';
-import PrescriptionsPage     from './pages/patient/PrescriptionsPage';
+import { Toaster } from 'react-hot-toast';
+
+import PatientLayout      from './components/layout/PatientLayout';
+import PatientProfilePage from './pages/patient/PatientProfilePage';
+import MedicalRecordsPage from './pages/patient/MedicalRecordsPage';
+import PrescriptionsPage  from './pages/patient/PrescriptionsPage';
+import LoginPage          from './pages/auth/LoginPage';
 
 function App() {
   return (
     <BrowserRouter>
+      <Toaster position="top-right" />
       <Routes>
-        {/* Default redirect to patient profile for testing */}
+        {/* Default redirect */}
         <Route path="/" element={<Navigate to="/login" replace />} />
+
+        {/* Auth pages — no sidebar */}
         <Route path="/login" element={<LoginPage />} />
 
-        {/* Patient routes */}
-        <Route path="/patient/profile"         element={<PatientProfilePage />} />
-        <Route path="/patient/medical-records" element={<MedicalRecordsPage />} />
-        <Route path="/patient/prescriptions"   element={<PrescriptionsPage />} />
+        {/* Patient pages — all share the sidebar layout */}
+        <Route path="/patient" element={<PatientLayout />}>
+          <Route path="profile"         element={<PatientProfilePage />} />
+          <Route path="medical-records" element={<MedicalRecordsPage />} />
+          <Route path="prescriptions"   element={<PrescriptionsPage />} />
+        </Route>
 
         {/* Other members will add their routes here */}
       </Routes>
