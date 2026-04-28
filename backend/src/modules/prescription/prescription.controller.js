@@ -83,4 +83,42 @@ const getPrescriptionController = async (req, res) => {
   }
 };
 
-module.exports = { createPrescriptionController, getPrescriptionController };
+/**
+ * Handles GET /api/prescriptions/verify/:qrValue
+ * Verifies a prescription by QR code value for pharmacy use.
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const verifyPrescriptionController = async (req, res) => {
+  try {
+    const { qrValue } = req.params;
+
+    const prescription = await prescriptionService.verifyPrescriptionByQR(qrValue);
+
+    if (!prescription) {
+      return res.status(404).json({
+        success: false,
+        message: 'Prescription not found — invalid QR code'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Prescription verified successfully',
+      data: prescription
+    });
+
+  } catch (error) {
+    console.error('verifyPrescriptionController error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
+module.exports = { 
+  createPrescriptionController, 
+  getPrescriptionController,
+  verifyPrescriptionController
+};

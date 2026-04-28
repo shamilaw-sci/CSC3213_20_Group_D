@@ -58,4 +58,15 @@ const getPrescriptionById = async (id) => {
   return prescription;
 };
 
-module.exports = { createPrescription, getPrescriptionById };
+/**
+ * Verifies a prescription by its QR code value.
+ * Called when a pharmacist scans a patient's QR code.
+ * @param {string} qrValue - The QR code string (e.g. "RX-uuid")
+ * @returns {Promise<Object|null>} Prescription object with items, or null if not found
+ */
+const verifyPrescriptionByQR = async (qrValue) => {
+  const prescription = await prescriptionRepository.getPrescriptionByQrCode(qrValue);
+  return prescription;
+};
+
+module.exports = { createPrescription, getPrescriptionById, verifyPrescriptionByQR };
