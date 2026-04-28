@@ -48,4 +48,14 @@ const createPrescription = async (doctorId, patientId, appointmentId, items, not
   };
 };
 
-module.exports = { createPrescription };
+/**
+ * Retrieves a prescription by ID with all its medicine items.
+ * @param {string} id - UUID of the prescription
+ * @returns {Promise<Object|null>} Prescription object with items, or null if not found
+ */
+const getPrescriptionById = async (id) => {
+  const prescription = await prescriptionRepository.getPrescriptionById(id);
+  return prescription;
+};
+
+module.exports = { createPrescription, getPrescriptionById };
