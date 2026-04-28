@@ -132,10 +132,30 @@ const updatePrescriptionStatus = async (id, status) => {
   return result.rows[0];
 };
 
+/**
+ * Updates the quantity dispensed for a prescription item.
+ * @param {string} prescriptionItemId  - UUID of the prescription item
+ * @param {number} quantityDispensed   - Amount being dispensed
+ * @returns {Promise<Object|null>} Updated prescription item row
+ */
+const updateQuantityDispensed = async (prescriptionItemId, quantityDispensed) => {
+  const result = await pool.query(
+    `UPDATE prescription_items
+     SET quantity_dispensed = quantity_dispensed + $1
+     WHERE id = $2
+     RETURNING *`,
+    [quantityDispensed, prescriptionItemId]
+  );
+
+  if (result.rows.length === 0) return null;
+  return result.rows[0];
+};
+
 module.exports = {
   createPrescription,
   createPrescriptionItems,
   getPrescriptionById,
   getPrescriptionByQrCode,
-  updatePrescriptionStatus
+  updatePrescriptionStatus,
+  updateQuantityDispensed
 };
