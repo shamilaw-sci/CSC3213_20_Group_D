@@ -10,3 +10,8 @@ export const getPatientProfile = async (patientId) => {
   const response = await api.get(`/api/patients/${patientId}`);
   return response.data.data;
 };
+
+export const getPatientAllergies = async (patientId) => {
+  const response = await api.get(`/api/patients/${patientId}/allergies`);
+  return response.data.data;
+};

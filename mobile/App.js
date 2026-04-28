@@ -5,8 +5,8 @@
  * @author  Wasana Karunanayaka (S/21/081)
  */
 import React from 'react';
-import PatientProfileScreen from './src/screens/PatientProfileScreen';
+import PatientQRCardScreen from './src/screens/PatientQRCardScreen';
 
 export default function App() {
-  return <PatientProfileScreen />;
+  return <PatientQRCardScreen />;
 }
