@@ -1,121 +1,50 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+/**
+ * @file    App.jsx
+ * @desc    Root application component. Defines all client-side routes.
+ * @author  Wasana Karunanayaka (S/21/081)
+ */
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+<<<<<<< HEAD
+import PatientProfilePage    from './pages/patient/PatientProfilePage';
+import IssuePrescriptionPage from './pages/doctor/IssuePrescriptionPage';
+import LoginPage from './pages/auth/LoginPage';
+import MedicalRecordsPage    from './pages/patient/MedicalRecordsPage';
+import PrescriptionsPage     from './pages/patient/PrescriptionsPage';
+=======
+import { Toaster } from 'react-hot-toast';
+
+import PatientLayout      from './components/layout/PatientLayout';
+import PatientProfilePage from './pages/patient/PatientProfilePage';
+import MedicalRecordsPage from './pages/patient/MedicalRecordsPage';
+import PrescriptionsPage  from './pages/patient/PrescriptionsPage';
+import LoginPage          from './pages/auth/LoginPage';
+>>>>>>> 8c3c3943253bd186d9fffe5fc8c1b58b10e3f82c
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <BrowserRouter>
+      <Toaster position="top-right" />
+      <Routes>
+        {/* Default redirect */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
 
-      <div className="ticks"></div>
+        {/* Auth pages — no sidebar */}
+        <Route path="/login" element={<LoginPage />} />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+        {/* Patient pages — all share the sidebar layout */}
+        <Route path="/patient" element={<PatientLayout />}>
+          <Route path="profile"         element={<PatientProfilePage />} />
+          <Route path="medical-records" element={<MedicalRecordsPage />} />
+          <Route path="prescriptions"   element={<PrescriptionsPage />} />
+        </Route>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+        {/* Doctor routes */}
+        <Route path="/doctor/issue-prescription" element={<IssuePrescriptionPage />} />
+        
+        {/* Other members will add their routes here */}
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;

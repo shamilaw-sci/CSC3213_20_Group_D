@@ -7,9 +7,11 @@ const session = require('express-session');
 const pgSession = require('connect-pg-simple')(session);
 const { pool } = require('./src/config/db');
 
-// Routes
+// Route Imports
+const patientRoutes = require('./src/modules/patient/patient.routes');
 const doctorRoutes = require('./src/modules/doctor/doctor.routes');
 const appointmentRoutes = require('./src/modules/appointment/appointment.routes');
+const prescriptionRoutes = require('./src/modules/prescription/prescription.routes');
 
 const app = express();
 
@@ -29,16 +31,19 @@ app.use(session({
   cookie: { secure: false, httpOnly: true, maxAge: 1000 * 60 * 60 * 24 }
 }));
 
-// Health Check Route
+// Auth Routes
+const authRoutes = require('./src/modules/auth/auth.routes');
+app.use('/api/auth', authRoutes);
+
+// Health Check route
 app.get('/', (req, res) => {
   res.json({ status: 'Care4U API is running' });
 });
 
 // Module Routes
+app.use('/api/patients', patientRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/appointments', appointmentRoutes);
-
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.use('/api/prescriptions', prescriptionRoutes);
 
 module.exports = app;
