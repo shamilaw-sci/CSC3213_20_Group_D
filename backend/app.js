@@ -11,6 +11,7 @@ const { pool } = require('./src/config/db');
 const patientRoutes = require('./src/modules/patient/patient.routes');
 const doctorRoutes = require('./src/modules/doctor/doctor.routes');
 const appointmentRoutes = require('./src/modules/appointment/appointment.routes');
+const prescriptionRoutes = require('./src/modules/prescription/prescription.routes');
 
 const app = express();
 
@@ -43,5 +44,6 @@ app.get('/', (req, res) => {
 app.use('/api/patients', patientRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/appointments', appointmentRoutes);
+app.use('/api/prescriptions', prescriptionRoutes);
 
 module.exports = app;
