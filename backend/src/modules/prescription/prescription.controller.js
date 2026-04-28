@@ -117,8 +117,54 @@ const verifyPrescriptionController = async (req, res) => {
   }
 };
 
+/**
+ * Handles POST /api/prescriptions/:id/dispense
+ * Records medicine dispensing by a pharmacist.
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const dispenseMedicineController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { dispenseItems } = req.body;
+
+    if (!dispenseItems || dispenseItems.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed: dispenseItems array is required'
+      });
+    }
+
+    const updatedPrescription = await prescriptionService.dispenseMedicine(
+      id,
+      dispenseItems
+    );
+
+    if (!updatedPrescription) {
+      return res.status(404).json({
+        success: false,
+        message: 'Prescription not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Medicine dispensed successfully',
+      data: updatedPrescription
+    });
+
+  } catch (error) {
+    console.error('dispenseMedicineController error:', error);
+    res.status(400).json({
+      success: false,
+      message: error.message || 'Internal server error'
+    });
+  }
+};
+
 module.exports = { 
   createPrescriptionController, 
   getPrescriptionController,
-  verifyPrescriptionController
+  verifyPrescriptionController,
+  dispenseMedicineController
 };

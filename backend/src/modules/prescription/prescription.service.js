@@ -97,8 +97,76 @@ const verifyPrescriptionByQR = async (qrValue) => {
   return checkedPrescription;
 };
 
+/**
+ * Dispenses medicines from a prescription.
+ * Updates quantity dispensed and prescription status.
+ * @param {string} prescriptionId - UUID of the prescription
+ * @param {Array}  dispenseItems  - Array of { prescriptionItemId, quantityDispensed }
+ * @returns {Promise<Object>} Updated prescription with new status
+ */
+const dispenseMedicine = async (prescriptionId, dispenseItems) => {
+  // Step 1: Get the current prescription
+  const prescription = await prescriptionRepository.getPrescriptionById(prescriptionId);
+  if (!prescription) return null;
+
+  // Step 2: Check if prescription is expired
+  if (prescription.status === 'expired') {
+    throw new Error('Cannot dispense — prescription is expired');
+  }
+
+  // Step 3: Dispense each item
+  for (const dispenseItem of dispenseItems) {
+    // Find the matching item in the prescription
+    const existingItem = prescription.items.find(
+      item => item.id === dispenseItem.prescriptionItemId
+    );
+
+    if (!existingItem) {
+      throw new Error(`Item ${dispenseItem.prescriptionItemId} not found in prescription`);
+    }
+
+    // Check cannot over-dispense
+    const totalAfterDispense = existingItem.quantity_dispensed + dispenseItem.quantityDispensed;
+    if (totalAfterDispense > existingItem.quantity_prescribed) {
+      throw new Error(`Cannot dispense more than prescribed for ${existingItem.medicine_name}`);
+    }
+
+    // Update quantity dispensed
+    await prescriptionRepository.updateQuantityDispensed(
+      dispenseItem.prescriptionItemId,
+      dispenseItem.quantityDispensed
+    );
+  }
+
+  // Step 4: Get updated prescription
+  const updatedPrescription = await prescriptionRepository.getPrescriptionById(prescriptionId);
+
+  // Step 5: Check if all items are fully dispensed
+  const allDispensed = updatedPrescription.items.every(
+    item => item.quantity_dispensed >= item.quantity_prescribed
+  );
+
+  const someDispensed = updatedPrescription.items.some(
+    item => item.quantity_dispensed > 0
+  );
+
+  // Step 6: Update prescription status
+  let newStatus = prescription.status;
+  if (allDispensed) {
+    newStatus = 'completed';
+  } else if (someDispensed) {
+    newStatus = 'partially_filled';
+  }
+
+  await prescriptionRepository.updatePrescriptionStatus(prescriptionId, newStatus);
+  updatedPrescription.status = newStatus;
+
+  return updatedPrescription;
+};
+
 module.exports = { 
   createPrescription, 
   getPrescriptionById, 
-  verifyPrescriptionByQR 
+  verifyPrescriptionByQR,
+  dispenseMedicine
 };
