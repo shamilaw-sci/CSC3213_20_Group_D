@@ -15,23 +15,24 @@ const {
   updateDoctorAvailabilityController,
   getTodayAppointmentsController,
 } = require('./doctor.controller');
+const { auditMiddleware } = require('../../middleware/auditLog');
 
 // GET /api/doctors — get all verified doctors
 router.get('/', getAllDoctorsController);
 
 // GET /api/doctors/:id — get doctor profile by ID
-router.get('/:id', getDoctorController);
+router.get('/:id', auditMiddleware('VIEW_DOCTOR_PROFILE', 'doctor'), getDoctorController);
 
 // PUT /api/doctors/:id — update doctor profile
-router.put('/:id', updateDoctorController);
+router.put('/:id', auditMiddleware('UPDATE_DOCTOR_PROFILE', 'doctor'), updateDoctorController);
 
 // GET /api/doctors/:id/availability — get doctor availability
 router.get('/:id/availability', getDoctorAvailabilityController);
 
 // PUT /api/doctors/:id/availability — update doctor availability
-router.put('/:id/availability', updateDoctorAvailabilityController);
+router.put('/:id/availability', auditMiddleware('UPDATE_DOCTOR_AVAILABILITY', 'doctor'), updateDoctorAvailabilityController);
 
 // GET /api/doctors/:id/appointments/today — get today's queue
-router.get('/:id/appointments/today', getTodayAppointmentsController);
+router.get('/:id/appointments/today', auditMiddleware('VIEW_APPOINTMENT_QUEUE', 'doctor'), getTodayAppointmentsController);
 
 module.exports = router;
