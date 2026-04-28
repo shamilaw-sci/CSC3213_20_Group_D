@@ -5,8 +5,9 @@
  */
 
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import PatientProfilePage from './pages/patient/PatientProfilePage';
-import MedicalRecordsPage from './pages/patient/MedicalRecordsPage';
+import PatientProfilePage    from './pages/patient/PatientProfilePage';
+import MedicalRecordsPage    from './pages/patient/MedicalRecordsPage';
+import PrescriptionsPage     from './pages/patient/PrescriptionsPage';
 
 function App() {
   return (
@@ -16,8 +17,9 @@ function App() {
         <Route path="/" element={<Navigate to="/patient/profile" replace />} />
 
         {/* Patient routes */}
-        <Route path="/patient/profile" element={<PatientProfilePage />} />
+        <Route path="/patient/profile"         element={<PatientProfilePage />} />
         <Route path="/patient/medical-records" element={<MedicalRecordsPage />} />
+        <Route path="/patient/prescriptions"   element={<PrescriptionsPage />} />
 
         {/* Other members will add their routes here */}
       </Routes>
