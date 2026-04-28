@@ -80,10 +80,6 @@ async function getPatientByUserId(userId) {
  * Only the fields passed in `data` will be updated.
  * @param {string} id - UUID of the patient (patients.id)
  * @param {Object} data - Fields to update
- * @param {string} [data.blood_group]
- * @param {string} [data.emergency_contact_name]
- * @param {string} [data.emergency_contact_phone]
- * @param {string} [data.emergency_contact_relationship]
  * @returns {Promise<Object|null>} Updated patient row or null
  */
 async function updatePatient(id, data) {
@@ -114,8 +110,138 @@ async function updatePatient(id, data) {
   return result.rows[0] || null;
 }
 
+/**
+ * Fetches all medical records for a patient, ordered newest first.
+ * Joins with the doctors table to include the doctor's name.
+ * @param {string} patientId - UUID of the patient (patients.id)
+ * @returns {Promise<Array>} Array of medical record rows (empty array if none)
+ */
+async function getMedicalRecords(patientId) {
+  const result = await pool.query(
+    `SELECT
+      mr.id,
+      mr.patient_id,
+      mr.doctor_id,
+      mr.appointment_id,
+      mr.record_type,
+      mr.title,
+      mr.description,
+      mr.is_confidential,
+      mr.created_at,
+      d.full_name AS doctor_name,
+      d.specialization AS doctor_specialization
+    FROM medical_records mr
+    LEFT JOIN doctors d ON mr.doctor_id = d.id
+    WHERE mr.patient_id = $1
+    ORDER BY mr.created_at DESC`,
+    [patientId]
+  );
+  return result.rows;
+}
+
+/**
+ * Fetches all allergy records for a patient, ordered newest first.
+ * @param {string} patientId - UUID of the patient (patients.id)
+ * @returns {Promise<Array>} Array of allergy rows (empty array if none)
+ */
+async function getAllergies(patientId) {
+  const result = await pool.query(
+    `SELECT
+      id,
+      patient_id,
+      allergen,
+      severity,
+      notes,
+      created_at
+    FROM patient_allergies
+    WHERE patient_id = $1
+    ORDER BY created_at DESC`,
+    [patientId]
+  );
+  return result.rows;
+}
+
+/**
+ * Inserts a new allergy record for a patient.
+ * @param {string} patientId - UUID of the patient (patients.id)
+ * @param {string} allergen  - Name of the allergen (e.g. Penicillin)
+ * @param {string} severity  - Severity level: mild / moderate / severe
+ * @param {string|null} notes - Optional additional notes
+ * @returns {Promise<Object>} The newly created allergy row
+ */
+async function addAllergy(patientId, allergen, severity, notes) {
+  const result = await pool.query(
+    `INSERT INTO patient_allergies (id, patient_id, allergen, severity, notes, created_at)
+    VALUES (gen_random_uuid(), $1, $2, $3, $4, NOW())
+    RETURNING *`,
+    [patientId, allergen, severity, notes || null]
+  );
+  return result.rows[0];
+}
+
+/**
+ * Fetches all prescriptions for a patient with their medicine items,
+ * ordered newest first. Uses JSON_AGG to bundle all items per prescription
+ * into a single array so each prescription appears as one object.
+ * @param {string} patientId - UUID of the patient (patients.id)
+ * @returns {Promise<Array>} Array of prescription objects (empty array if none)
+ */
+async function getPatientPrescriptions(patientId) {
+  const result = await pool.query(
+    `SELECT
+      pr.id,
+      pr.patient_id,
+      pr.doctor_id,
+      pr.appointment_id,
+      pr.qr_code_value,
+      pr.status,
+      pr.expires_at,
+      pr.notes,
+      pr.created_at,
+      pr.updated_at,
+      d.full_name       AS doctor_name,
+      d.specialization  AS doctor_specialization,
+      JSON_AGG(
+        JSON_BUILD_OBJECT(
+          'id',                   pi.id,
+          'medicine_name',        pi.medicine_name,
+          'dosage',               pi.dosage,
+          'frequency',            pi.frequency,
+          'duration_days',        pi.duration_days,
+          'quantity_prescribed',  pi.quantity_prescribed,
+          'quantity_dispensed',   pi.quantity_dispensed,
+          'special_notes',        pi.special_notes
+        ) ORDER BY pi.medicine_name
+      ) AS items
+    FROM prescriptions pr
+    LEFT JOIN doctors d  ON pr.doctor_id = d.id
+    LEFT JOIN prescription_items pi ON pi.prescription_id = pr.id
+    WHERE pr.patient_id = $1
+    GROUP BY
+      pr.id,
+      pr.patient_id,
+      pr.doctor_id,
+      pr.appointment_id,
+      pr.qr_code_value,
+      pr.status,
+      pr.expires_at,
+      pr.notes,
+      pr.created_at,
+      pr.updated_at,
+      d.full_name,
+      d.specialization
+    ORDER BY pr.created_at DESC`,
+    [patientId]
+  );
+  return result.rows;
+}
+
 module.exports = {
   getPatientById,
   getPatientByUserId,
   updatePatient,
+  getMedicalRecords,
+  getAllergies,
+  addAllergy,
+  getPatientPrescriptions,
 };
