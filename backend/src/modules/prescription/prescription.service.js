@@ -10,6 +10,25 @@ const prescriptionRepository = require('./prescription.repository');
 const { generatePrescriptionQR } = require('../../utils/qr');
 
 /**
+ * Checks if a prescription is expired and updates status in DB if so.
+ * @param {Object} prescription - Prescription object from database
+ * @returns {Promise<Object>} Updated prescription with correct status
+ */
+const isPrescriptionExpired = async (prescription) => {
+  if (prescription.status === 'expired') return prescription;
+
+  const now = new Date();
+  const expiresAt = new Date(prescription.expires_at);
+
+  if (expiresAt < now) {
+    await prescriptionRepository.updatePrescriptionStatus(prescription.id, 'expired');
+    prescription.status = 'expired';
+  }
+
+  return prescription;
+};
+
+/**
  * Creates a new digital prescription with QR code and medicine items.
  * @param {string} doctorId       - UUID of the issuing doctor
  * @param {string} patientId      - UUID of the patient
@@ -50,23 +69,36 @@ const createPrescription = async (doctorId, patientId, appointmentId, items, not
 
 /**
  * Retrieves a prescription by ID with all its medicine items.
+ * Also checks and updates expiry status automatically.
  * @param {string} id - UUID of the prescription
  * @returns {Promise<Object|null>} Prescription object with items, or null if not found
  */
 const getPrescriptionById = async (id) => {
   const prescription = await prescriptionRepository.getPrescriptionById(id);
-  return prescription;
+  if (!prescription) return null;
+
+  // Automatically check and update expiry
+  const checkedPrescription = await isPrescriptionExpired(prescription);
+  return checkedPrescription;
 };
 
 /**
  * Verifies a prescription by its QR code value.
- * Called when a pharmacist scans a patient's QR code.
+ * Also checks and updates expiry status automatically.
  * @param {string} qrValue - The QR code string (e.g. "RX-uuid")
  * @returns {Promise<Object|null>} Prescription object with items, or null if not found
  */
 const verifyPrescriptionByQR = async (qrValue) => {
   const prescription = await prescriptionRepository.getPrescriptionByQrCode(qrValue);
-  return prescription;
+  if (!prescription) return null;
+
+  // Automatically check and update expiry
+  const checkedPrescription = await isPrescriptionExpired(prescription);
+  return checkedPrescription;
 };
 
-module.exports = { createPrescription, getPrescriptionById, verifyPrescriptionByQR };
+module.exports = { 
+  createPrescription, 
+  getPrescriptionById, 
+  verifyPrescriptionByQR 
+};
