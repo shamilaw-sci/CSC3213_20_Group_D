@@ -1,20 +1,12 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+/**
+ * @file    App.js
+ * @module  Root
+ * @desc    Root component for Care4U mobile app.
+ * @author  Wasana Karunanayaka (S/21/081)
+ */
+import React from 'react';
+import PatientProfileScreen from './src/screens/PatientProfileScreen';
 
 export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
+  return <PatientProfileScreen />;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
