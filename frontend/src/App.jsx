@@ -6,6 +6,7 @@
 
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import PatientProfilePage    from './pages/patient/PatientProfilePage';
+import LoginPage from './pages/auth/LoginPage';
 import MedicalRecordsPage    from './pages/patient/MedicalRecordsPage';
 import PrescriptionsPage     from './pages/patient/PrescriptionsPage';
 
@@ -14,7 +15,8 @@ function App() {
     <BrowserRouter>
       <Routes>
         {/* Default redirect to patient profile for testing */}
-        <Route path="/" element={<Navigate to="/patient/profile" replace />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/login" element={<LoginPage />} />
 
         {/* Patient routes */}
         <Route path="/patient/profile"         element={<PatientProfilePage />} />
