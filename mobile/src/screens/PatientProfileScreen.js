@@ -29,6 +29,19 @@ const severityColor = (severity) => {
   return '#1F7A1F';
 };
 
+/**
+ * Extracts up to 2 initials from a full name.
+ * "Nimasha Perera" → "NP"
+ * @param {string} name
+ * @returns {string}
+ */
+const getInitials = (name) => {
+  if (!name) return '?';
+  const parts = name.trim().split(' ').filter(Boolean);
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+};
+
 export default function PatientProfileScreen() {
   const [patient,   setPatient]   = useState(null);
   const [allergies, setAllergies] = useState([]);
@@ -72,13 +85,26 @@ export default function PatientProfileScreen() {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
 
-        {/* Header */}
+        {/* ── Header ── */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>My Profile</Text>
-          <Text style={styles.headerSubtitle}>Patient ID: {patient?.qr_code_id}</Text>
+          <View style={styles.headerRow}>
+
+            {/* Initials Avatar — drawn locally, no network request */}
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>
+                {getInitials(patient?.full_name)}
+              </Text>
+            </View>
+
+            <View style={styles.headerText}>
+              <Text style={styles.headerTitle}>{patient?.full_name || 'My Profile'}</Text>
+              <Text style={styles.headerSubtitle}>Patient ID: {patient?.qr_code_id}</Text>
+            </View>
+
+          </View>
         </View>
 
-        {/* Personal Information Card */}
+        {/* ── Personal Information Card ── */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Personal Information</Text>
           <ProfileField label="Full Name"     value={patient?.full_name} />
@@ -88,7 +114,7 @@ export default function PatientProfileScreen() {
           <ProfileField label="NIC"           value={patient?.nic} />
         </View>
 
-        {/* Emergency Contact Card */}
+        {/* ── Emergency Contact Card ── */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Emergency Contact</Text>
           <ProfileField label="Name"         value={patient?.emergency_contact_name} />
@@ -96,7 +122,7 @@ export default function PatientProfileScreen() {
           <ProfileField label="Relationship" value={patient?.emergency_contact_relationship} />
         </View>
 
-        {/* Known Allergies Card */}
+        {/* ── Known Allergies Card ── */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>
             Known Allergies ({allergies.length})
@@ -113,12 +139,10 @@ export default function PatientProfileScreen() {
                     <Text style={styles.allergyNotes}>{allergy.notes}</Text>
                   ) : null}
                 </View>
-                <View
-                  style={[
-                    styles.severityBadge,
-                    { backgroundColor: severityColor(allergy.severity) },
-                  ]}
-                >
+                <View style={[
+                  styles.severityBadge,
+                  { backgroundColor: severityColor(allergy.severity) },
+                ]}>
                   <Text style={styles.severityText}>
                     {allergy.severity
                       ? allergy.severity.charAt(0).toUpperCase() + allergy.severity.slice(1)
@@ -149,10 +173,25 @@ const styles = StyleSheet.create({
   loadingText:    { marginTop: 12, fontSize: 14, color: '#64748B' },
   errorText:      { fontSize: 14, color: '#C00000', textAlign: 'center' },
 
+  // Header
   header:         { backgroundColor: '#1E3A5F', padding: 24, paddingTop: 48 },
-  headerTitle:    { fontSize: 24, fontWeight: 'bold', color: '#FFFFFF' },
+  headerRow:      { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  headerText:     { flex: 1 },
+  headerTitle:    { fontSize: 22, fontWeight: 'bold', color: '#FFFFFF' },
   headerSubtitle: { fontSize: 12, color: '#94A3B8', marginTop: 4 },
 
+  // Avatar — drawn with View + Text, no Image component needed
+  avatar: {
+    width: 60, height: 60, borderRadius: 30,
+    backgroundColor: '#2E75B6',
+    borderWidth: 2, borderColor: 'rgba(255,255,255,0.35)',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  avatarText: {
+    fontSize: 22, fontWeight: 'bold', color: '#FFFFFF', letterSpacing: 1,
+  },
+
+  // Cards
   card:           { backgroundColor: '#FFFFFF', margin: 16, marginBottom: 0,
                     borderRadius: 12, padding: 16,
                     shadowColor: '#000', shadowOpacity: 0.06,
@@ -161,6 +200,7 @@ const styles = StyleSheet.create({
                     marginBottom: 12, paddingBottom: 8,
                     borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
 
+  // Profile fields
   fieldRow:       { flexDirection: 'row', justifyContent: 'space-between',
                     paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F8FAFC' },
   fieldLabel:     { fontSize: 13, color: '#64748B', flex: 1 },
