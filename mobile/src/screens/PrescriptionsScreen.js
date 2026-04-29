@@ -1,10 +1,10 @@
 /**
  * @file    PrescriptionsScreen.js
  * @module  Patient
- * @desc    Displays all prescriptions for a patient.
- *          Each prescription can be tapped to show a full-screen QR code
- *          for the pharmacist to scan.
- * @author  S/21/001
+ * @desc    Displays all prescriptions for a patient with full medicine details.
+ *          Each prescription shows medicine items with dosage, special notes,
+ *          and dispensing quantities. Active prescriptions show a QR code button.
+ * @author  S/21/001 — status fix + medicine details by S/21/081
  */
 
 import React, { useEffect, useState } from 'react';
@@ -35,7 +35,18 @@ const isExpired = (expiresAt) => {
 };
 
 /**
- * Returns a colour based on prescription status.
+ * Resolves the display status — checks expiry first, overrides DB status if expired.
+ * @param {string} status    - DB status value
+ * @param {string} expiresAt - ISO date string
+ * @returns {string} resolved status for display
+ */
+const resolveBadgeStatus = (status, expiresAt) => {
+  if (isExpired(expiresAt)) return 'expired';
+  return status || 'active';
+};
+
+/**
+ * Returns a colour based on resolved prescription status.
  * @param {string} status - active | expired | completed | partially_filled
  * @returns {string} hex colour
  */
@@ -65,7 +76,7 @@ const PrescriptionsScreen = () => {
   const [prescriptions, setPrescriptions] = useState([]);
   const [loading,       setLoading]       = useState(true);
   const [error,         setError]         = useState(null);
-  const [selectedQR,    setSelectedQR]    = useState(null); // QR modal
+  const [selectedQR,    setSelectedQR]    = useState(null);
 
   useEffect(() => {
     const fetchPrescriptions = async () => {
@@ -138,7 +149,7 @@ const PrescriptionsScreen = () => {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>My Prescriptions</Text>
         <Text style={styles.headerSubtitle}>
-          Tap a prescription to show QR code at pharmacy
+          Tap "Show QR Code" to present at the pharmacy
         </Text>
       </View>
 
@@ -153,60 +164,91 @@ const PrescriptionsScreen = () => {
           </View>
         )}
 
-        {prescriptions.map((prescription) => (
-          <View key={prescription.id} style={styles.card}>
+        {prescriptions.map((prescription) => {
+          const badgeStatus = resolveBadgeStatus(prescription.status, prescription.expires_at);
+          const validItems  = (prescription.items || []).filter(i => i && i.medicine_name);
 
-            {/* Card Header */}
-            <View style={styles.cardHeader}>
-              <View style={styles.cardHeaderLeft}>
-                <Text style={styles.cardDate}>
-                  Issued: {formatDate(prescription.created_at)}
-                </Text>
-                <Text style={styles.cardExpiry}>
-                  Expires: {formatDate(prescription.expires_at)}
-                </Text>
+          return (
+            <View key={prescription.id} style={styles.card}>
+
+              {/* ── Card Header — dates + status badge ── */}
+              <View style={styles.cardHeader}>
+                <View style={styles.cardHeaderLeft}>
+                  <Text style={styles.cardDate}>
+                    Issued: {formatDate(prescription.created_at)}
+                  </Text>
+                  <Text style={styles.cardExpiry}>
+                    Expires: {formatDate(prescription.expires_at)}
+                  </Text>
+                </View>
+                <View style={[
+                  styles.statusBadge,
+                  { backgroundColor: statusColor(badgeStatus) },
+                ]}>
+                  <Text style={styles.statusText}>
+                    {badgeStatus.replace('_', ' ')}
+                  </Text>
+                </View>
               </View>
-              <View style={[
-                styles.statusBadge,
-                { backgroundColor: statusColor(prescription.status) }
-              ]}>
-                <Text style={styles.statusText}>
-                  {prescription.status?.replace('_', ' ') || 'active'}
-                </Text>
-              </View>
+
+              {/* ── Doctor's Notes ── */}
+              {prescription.notes && (
+                <View style={styles.notesBox}>
+                  <Text style={styles.notesLabel}>DOCTOR'S NOTES</Text>
+                  <Text style={styles.notesText}>{prescription.notes}</Text>
+                </View>
+              )}
+
+              {/* ── Medicines ── */}
+              {validItems.length > 0 && (
+                <View style={styles.medicinesContainer}>
+                  <Text style={styles.medicinesLabel}>MEDICINES</Text>
+                  {validItems.map((item, idx) => (
+                    <View key={item.id || idx} style={styles.medicineRow}>
+
+                      {/* Medicine name + dosage line */}
+                      <Text style={styles.medicineName}>{item.medicine_name}</Text>
+                      <Text style={styles.medicineDetails}>
+                        {item.dosage} · {item.frequency} · {item.duration_days} days
+                      </Text>
+
+                      {/* Special notes — italic blue, same as web */}
+                      {item.special_notes ? (
+                        <Text style={styles.medicineNotes}>{item.special_notes}</Text>
+                      ) : null}
+
+                      {/* Qty prescribed + dispensed */}
+                      <View style={styles.qtyRow}>
+                        <Text style={styles.qtyLabel}>
+                          Qty prescribed:{' '}
+                          <Text style={styles.qtyValue}>{item.quantity_prescribed}</Text>
+                        </Text>
+                        {item.quantity_dispensed > 0 && (
+                          <Text style={styles.qtyDispensed}>
+                            {item.quantity_dispensed} dispensed
+                          </Text>
+                        )}
+                      </View>
+
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {/* ── QR Button — only for active or partially_filled, not expired ── */}
+              {(badgeStatus === 'active' || badgeStatus === 'partially_filled') &&
+                prescription.qr_code_value && (
+                <TouchableOpacity
+                  style={styles.qrButton}
+                  onPress={() => setSelectedQR(prescription.qr_code_value)}
+                >
+                  <Text style={styles.qrButtonText}>📱 Show QR Code at Pharmacy</Text>
+                </TouchableOpacity>
+              )}
+
             </View>
-
-            {/* Notes */}
-            {prescription.notes && (
-              <Text style={styles.notes}>{prescription.notes}</Text>
-            )}
-
-            {/* Medicine Items */}
-            <View style={styles.medicinesContainer}>
-              {(prescription.items || [])
-                .filter(item => item && item.medicine_name)
-                .map((item, idx) => (
-                  <View key={item.id || idx} style={styles.medicineRow}>
-                    <Text style={styles.medicineName}>{item.medicine_name}</Text>
-                    <Text style={styles.medicineDetails}>
-                      {item.dosage} · {item.frequency} · {item.duration_days} days
-                    </Text>
-                  </View>
-                ))}
-            </View>
-
-            {/* Show QR Button */}
-            {(prescription.status === 'active' || prescription.status === 'partially_filled') && !isExpired(prescription.expires_at) && prescription.qr_code_value && (
-              <TouchableOpacity
-                style={styles.qrButton}
-                onPress={() => setSelectedQR(prescription.qr_code_value)}
-              >
-                <Text style={styles.qrButtonText}>📱 Show QR Code at Pharmacy</Text>
-              </TouchableOpacity>
-            )}
-
-          </View>
-        ))}
+          );
+        })}
       </ScrollView>
     </SafeAreaView>
   );
@@ -286,7 +328,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   cardHeaderLeft: {
     flex: 1,
@@ -314,34 +356,77 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
 
-  // Notes
-  notes: {
-    fontSize: 13,
-    color: '#64748B',
+  // Doctor's notes
+  notesBox: {
     backgroundColor: '#F8FAFC',
     borderRadius: 8,
     padding: 10,
-    marginBottom: 10,
+    marginBottom: 12,
+  },
+  notesLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#64748B',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  notesText: {
+    fontSize: 13,
+    color: '#475569',
+    lineHeight: 18,
   },
 
   // Medicines
   medicinesContainer: {
     marginBottom: 12,
   },
+  medicinesLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#64748B',
+    letterSpacing: 0.5,
+    marginBottom: 8,
+  },
   medicineRow: {
-    paddingVertical: 6,
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
   },
   medicineName: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#1E293B',
+    marginBottom: 2,
   },
   medicineDetails: {
     fontSize: 12,
     color: '#64748B',
+    marginBottom: 4,
+  },
+  medicineNotes: {
+    fontSize: 12,
+    color: '#2E75B6',
+    fontStyle: 'italic',
+    marginBottom: 6,
+  },
+  qtyRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginTop: 2,
+  },
+  qtyLabel: {
+    fontSize: 12,
+    color: '#64748B',
+  },
+  qtyValue: {
+    fontWeight: '600',
+    color: '#1E293B',
+  },
+  qtyDispensed: {
+    fontSize: 12,
+    color: '#1F7A1F',
+    fontWeight: '500',
   },
 
   // QR Button
