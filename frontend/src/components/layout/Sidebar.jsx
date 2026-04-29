@@ -6,6 +6,18 @@
  */
 import { NavLink } from 'react-router-dom';
 
+const handleLogout = async () => {
+  try {
+    await fetch('http://localhost:5000/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include',
+    });
+  } catch {
+    // ignore error
+  }
+  window.location.href = '/login';
+};
+
 const NAV_ITEMS = [
   { to: '/patient/profile',         label: 'My Profile' },
   { to: '/patient/medical-records', label: 'Medical Records' },
@@ -78,14 +90,26 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* ── Footer tag ── */}
+      {/* ── Logout button ── */}
       <div style={{
         padding: '16px 20px',
         borderTop: '1px solid rgba(255,255,255,0.1)',
-        color: '#475569',
-        fontSize: '11px',
       }}>
-        Group D — CSC3213
+        <button
+          onClick={handleLogout}
+          style={{
+            width: '100%',
+            padding: '10px',
+            backgroundColor: 'transparent',
+            border: '1px solid #2E75B6',
+            borderRadius: '8px',
+            color: '#93C5FD',
+            fontSize: '14px',
+            cursor: 'pointer',
+          }}
+        >
+          🔓 Logout
+        </button>
       </div>
 
     </aside>
