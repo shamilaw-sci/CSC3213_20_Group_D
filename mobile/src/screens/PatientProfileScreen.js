@@ -17,6 +17,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import {
   getPatientProfile,
@@ -241,24 +242,35 @@ export default function PatientProfileScreen() {
           keyboardShouldPersistTaps="handled"
         >
 
-          {/* ── Header ── */}
-          <View style={styles.header}>
+        {/* ── Header ── */}
+        <View style={styles.header}>
             <View style={styles.headerRow}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {getInitials(patient?.full_name)}
-                </Text>
-              </View>
-              <View style={styles.headerText}>
+
+                {/* Care4U logo — top left */}
+                <Image
+                source={require('../../assets/logo.png')}
+                style={styles.headerLogo}
+                resizeMode="contain"
+                />
+
+                <View style={styles.headerText}>
                 <Text style={styles.headerTitle}>
-                  {patient?.full_name || 'My Profile'}
+                    {patient?.full_name || 'My Profile'}
                 </Text>
                 <Text style={styles.headerSubtitle}>
-                  Patient ID: {patient?.qr_code_id}
+                    Patient ID: {patient?.qr_code_id}
                 </Text>
-              </View>
+                </View>
+
+                {/* Initials avatar — right side */}
+                <View style={styles.avatar}>
+                <Text style={styles.avatarText}>
+                    {getInitials(patient?.full_name)}
+                </Text>
+                </View>
+
             </View>
-          </View>
+        </View>
 
           {/* ── Success Banner ── */}
           {saveSuccess && (
@@ -464,6 +476,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
   avatarText: { fontSize: 22, fontWeight: 'bold', color: '#FFFFFF', letterSpacing: 1 },
+
+  // ── Header Logo ──
+  headerLogo: {
+  width: 36,
+  height: 36,
+  borderRadius: 8,
+},
 
   // ── Banners ──
   successBanner: {
