@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import Card from '../../components/common/Card';
 import Spinner from '../../components/common/Spinner';
 
-const DOCTOR_ID = '6ca0512b-568a-46df-9988-af31da406794';
+const DOCTOR_ID = 'd04b8bcf-fe8a-4d3b-affc-5ab87e78cfc3';
 const API_URL = 'http://localhost:5000';
 
 const DoctorDashboard = () => {
