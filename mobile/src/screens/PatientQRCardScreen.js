@@ -2,8 +2,9 @@
  * @file    PatientQRCardScreen.js
  * @module  Patient
  * @desc    Displays the patient's QR identity card with name, blood group,
- *          and allergy list. QR code encodes the patient's qr_code_id
+ *          and emergency contact. QR code encodes the patient's qr_code_id
  *          so doctors and pharmacists can scan to identify the patient.
+ *          Allergies have been moved to PatientProfileScreen.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 import React, { useEffect, useState } from 'react';
@@ -16,35 +17,21 @@ import {
   SafeAreaView,
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
-import { getPatientProfile, getPatientAllergies } from '../services/patient.service';
+import { getPatientProfile } from '../services/patient.service';
 
 // TEMPORARY — replace with session user when auth is ready
 const TEST_PATIENT_ID = '006761d1-8279-440e-a786-a492df7abd53';
 
-/**
- * Returns a colour based on allergy severity.
- * @param {string} severity - mild | moderate | severe
- * @returns {string} hex colour
- */
-const severityColor = (severity) => {
-  if (severity === 'severe')   return '#C00000';
-  if (severity === 'moderate') return '#E67E22';
-  return '#1F7A1F';
-};
-
 const PatientQRCardScreen = () => {
-  const [patient,   setPatient]   = useState(null);
-  const [allergies, setAllergies] = useState([]);
-  const [loading,   setLoading]   = useState(true);
-  const [error,     setError]     = useState(null);
+  const [patient, setPatient] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error,   setError]   = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const patientData = await getPatientProfile(TEST_PATIENT_ID);
-        const allergyData = await getPatientAllergies(TEST_PATIENT_ID);
         setPatient(patientData);
-        setAllergies(allergyData);
       } catch (err) {
         setError('Failed to load patient data. Please try again.');
       } finally {
@@ -121,41 +108,6 @@ const PatientQRCardScreen = () => {
             />
           </View>
           <Text style={styles.qrValue}>{patient.qr_code_id}</Text>
-        </View>
-
-        {/* ── Allergies Card ── */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>
-            Known Allergies ({allergies.length})
-          </Text>
-
-          {allergies.length === 0 ? (
-            <Text style={styles.noAllergies}>No allergies recorded</Text>
-          ) : (
-            allergies.map((allergy) => (
-              <View key={allergy.id} style={styles.allergyRow}>
-                <View style={styles.allergyLeft}>
-                  <Text style={styles.allergyName}>{allergy.allergen}</Text>
-                  {allergy.notes ? (
-                    <Text style={styles.allergyNotes}>{allergy.notes}</Text>
-                  ) : null}
-                </View>
-                <View
-                  style={[
-                    styles.severityBadge,
-                    { backgroundColor: severityColor(allergy.severity) },
-                  ]}
-                >
-                  <Text style={styles.severityText}>
-                    {allergy.severity
-                      ? allergy.severity.charAt(0).toUpperCase() +
-                        allergy.severity.slice(1)
-                      : '—'}
-                  </Text>
-                </View>
-              </View>
-            ))
-          )}
         </View>
 
         {/* ── Emergency Contact Card ── */}
@@ -284,45 +236,6 @@ const styles = StyleSheet.create({
     color: '#64748B',
     fontFamily: 'monospace',
     marginTop: 8,
-  },
-
-  // Allergies
-  noAllergies: {
-    fontSize: 13,
-    color: '#64748B',
-    marginTop: 4,
-  },
-  allergyRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-  },
-  allergyLeft: {
-    flex: 1,
-    marginRight: 8,
-  },
-  allergyName: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#1E293B',
-  },
-  allergyNotes: {
-    fontSize: 12,
-    color: '#64748B',
-    marginTop: 2,
-  },
-  severityBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 12,
-  },
-  severityText: {
-    fontSize: 11,
-    color: '#FFFFFF',
-    fontWeight: '600',
   },
 
   // Emergency contact
