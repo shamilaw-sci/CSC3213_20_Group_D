@@ -2,20 +2,22 @@
  * @file    App.js
  * @module  Root
  * @desc    Root component for Care4U mobile app.
- *          Simple bottom tab navigation between patient screens.
+ *          Bottom tab navigation between patient screens.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import LoginScreen from './src/screens/LoginScreen';
+import LoginScreen          from './src/screens/LoginScreen';
 import PatientProfileScreen from './src/screens/PatientProfileScreen';
 import PatientQRCardScreen  from './src/screens/PatientQRCardScreen';
 import PrescriptionsScreen  from './src/screens/PrescriptionsScreen';
+import MedicalRecordsScreen from './src/screens/MedicalRecordsScreen';
 
 const TABS = [
-  { key: 'profile', label: 'My Profile' },
-  { key: 'qrcard',  label: 'QR Card'    },
-  { key: 'prescriptions', label: 'Prescriptions' },
+  { key: 'profile',      label: 'My Profile' },
+  { key: 'records',      label: 'Records'    },
+  { key: 'prescriptions',label: 'Prescriptions' },
+  { key: 'qrcard',       label: 'QR Card'    },
 ];
 
 export default function App() {
@@ -23,7 +25,7 @@ export default function App() {
   const [user, setUser] = useState(null);
 
   if (!user) {
-  return <LoginScreen onLoginSuccess={(userData) => setUser(userData)} />;
+    return <LoginScreen onLoginSuccess={(userData) => setUser(userData)} />;
   }
 
   return (
@@ -31,9 +33,10 @@ export default function App() {
 
       {/* Screen Area */}
       <View style={styles.screen}>
-        {activeTab === 'profile' && <PatientProfileScreen />}
-        {activeTab === 'qrcard'  && <PatientQRCardScreen  />}
-        {activeTab === 'prescriptions' && <PrescriptionsScreen />}
+        {activeTab === 'profile'       && <PatientProfileScreen />}
+        {activeTab === 'records'       && <MedicalRecordsScreen />}
+        {activeTab === 'prescriptions' && <PrescriptionsScreen  />}
+        {activeTab === 'qrcard'        && <PatientQRCardScreen  />}
       </View>
 
       {/* Bottom Tab Bar */}
@@ -76,13 +79,14 @@ const styles = StyleSheet.create({
     borderTopColor:  '#2E75B6',
   },
   tabItem: {
-    flex:           1,
-    alignItems:     'center',
+    flex:       1,
+    alignItems: 'center',
   },
   tabLabel: {
-    fontSize:   13,
+    fontSize:   12,
     color:      '#93C5FD',
     fontWeight: '400',
+    textAlign:  'center',
   },
   tabLabelActive: {
     color:      '#FFFFFF',

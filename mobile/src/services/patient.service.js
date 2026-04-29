@@ -15,3 +15,13 @@ export const getPatientAllergies = async (patientId) => {
   const response = await api.get(`/api/patients/${patientId}/allergies`);
   return response.data.data;
 };
+
+/**
+ * Fetches all medical records for a patient.
+ * @param {string} patientId - UUID of the patient
+ * @returns {Promise<Array>} Array of medical record objects
+ */
+export const getMedicalRecords = async (patientId) => {
+  const response = await api.get(`/api/patients/${patientId}/medical-records`);
+  return response.data.data;
+};
