@@ -143,6 +143,26 @@ const getPatientPrescriptionsController = async (req, res) => {
   }
 };
 
+/**
+ * Handles GET /api/patients/qr/:qrCodeId
+ * Returns a patient's full profile looked up by their QR code ID.
+ */
+const getPatientByQrCodeController = async (req, res) => {
+  try {
+    const { qrCodeId } = req.params;
+    const patient = await patientService.getPatientByQrCode(qrCodeId);
+    res.status(200).json({
+      success: true,
+      message: 'Patient found',
+      data: patient,
+    });
+  } catch (error) {
+    const statusCode = error.statusCode || 500;
+    const message = error.statusCode ? error.message : 'Internal server error';
+    res.status(statusCode).json({ success: false, message });
+  }
+};
+
 module.exports = {
   getPatientController,
   updatePatientController,
@@ -150,4 +170,5 @@ module.exports = {
   getAllergiesController,
   addAllergyController,
   getPatientPrescriptionsController,
+  getPatientByQrCodeController,
 };

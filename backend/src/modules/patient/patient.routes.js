@@ -14,10 +14,24 @@ const {
   getAllergiesController,
   addAllergyController,
   getPatientPrescriptionsController,
+  getPatientByQrCodeController,
 } = require('./patient.controller');
 
 // const { isAuthenticated } = require('../../middleware/auth');        // Uncomment when auth is ready
 // const { authorize } = require('../../middleware/rbac');              // Uncomment when auth is ready
+
+/**
+ * GET /api/patients/qr/:qrCodeId
+ * Returns a patient profile looked up by their QR code ID.
+ * IMPORTANT: This route must stay before /:id — otherwise Express
+ * will treat the word "qr" as a UUID and route to the wrong controller.
+ */
+router.get(
+  '/qr/:qrCodeId',
+  // isAuthenticated,               // Uncomment when auth is ready
+  // authorize('doctor', 'admin'),  // Uncomment when auth is ready
+  getPatientByQrCodeController
+);
 
 /**
  * GET /api/patients/:id

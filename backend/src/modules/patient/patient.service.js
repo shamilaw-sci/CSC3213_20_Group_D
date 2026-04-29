@@ -152,6 +152,22 @@ const getPatientPrescriptions = async (patientId) => {
   return prescriptions;
 };
 
+/**
+ * Retrieves a patient profile using their QR code ID.
+ * Throws 404 if no patient is found with that QR code.
+ * @param {string} qrCodeId - The qr_code_id value (e.g. "QR-TEST-001")
+ * @returns {Promise<Object>} Patient object
+ */
+const getPatientByQrCode = async (qrCodeId) => {
+  const patient = await patientRepository.getPatientByQrCodeId(qrCodeId);
+  if (!patient) {
+    const error = new Error('Patient not found');
+    error.statusCode = 404;
+    throw error;
+  }
+  return patient;
+};
+
 module.exports = {
   getPatientProfile,
   updatePatientProfile,
@@ -159,4 +175,5 @@ module.exports = {
   getAllergies,
   addAllergy,
   getPatientPrescriptions,
+  getPatientByQrCode,        
 };
