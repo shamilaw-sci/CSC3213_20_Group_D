@@ -114,7 +114,7 @@ const PatientQRCardScreen = () => {
           </Text>
           <View style={styles.qrContainer}>
             <QRCode
-              value={patient.qr_code_id}
+              value={`http://localhost:5173/lookup/${patient.qr_code_id}`}
               size={200}
               color="#1E3A5F"
               backgroundColor="#FFFFFF"
