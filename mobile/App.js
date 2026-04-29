@@ -6,7 +6,7 @@
  * @author  Wasana Karunanayaka (S/21/081)
  */
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, StatusBar } from 'react-native';
 import LoginScreen          from './src/screens/LoginScreen';
 import PatientProfileScreen from './src/screens/PatientProfileScreen';
 import PatientQRCardScreen  from './src/screens/PatientQRCardScreen';
@@ -14,25 +14,26 @@ import PrescriptionsScreen  from './src/screens/PrescriptionsScreen';
 import MedicalRecordsScreen from './src/screens/MedicalRecordsScreen';
 
 const TABS = [
-  { key: 'profile',      label: 'My Profile' },
-  { key: 'records',      label: 'Records'    },
-  { key: 'prescriptions',label: 'Prescriptions' },
-  { key: 'qrcard',       label: 'QR Card'    },
+  { key: 'profile',       label: 'My Profile'    },
+  { key: 'records',       label: 'Records'       },
+  { key: 'prescriptions', label: 'Prescriptions' },
+  { key: 'qrcard',        label: 'QR Card'       },
 ];
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('profile');
+  const [user, setUser]           = useState(null);
+
   const handleLogout = async () => {
-  try {
-    await fetch('http://192.168.1.32:5000/api/auth/logout', {
-      method: 'POST',
-    });
-  } catch {
-    // ignore error
-  }
-  setUser(null);
-};
-  const [user, setUser] = useState(null);
+    try {
+      await fetch('http://10.235.201.10:5000/api/auth/logout', {
+        method: 'POST',
+      });
+    } catch {
+      // ignore error
+    }
+    setUser(null);
+  };
 
   if (!user) {
     return <LoginScreen onLoginSuccess={(userData) => setUser(userData)} />;
@@ -40,21 +41,21 @@ export default function App() {
 
   return (
     <View style={styles.root}>
-      
+
       {/* Top bar with logout */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#1E3A5F', paddingTop: 48, paddingBottom: 0, paddingHorizontal: 20 }}>
-        <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '700' }}>Care4U</Text>
+      <View style={styles.topBar}>
+        <Text style={styles.topBarTitle}>Care4U</Text>
         <TouchableOpacity onPress={handleLogout}>
-          <Text style={{ color: '#93C5FD', fontSize: 13, fontWeight: '600' }}>🔓 Logout</Text>
+          <Text style={styles.logoutText}>🔓 Logout</Text>
         </TouchableOpacity>
       </View>
 
       {/* Screen Area */}
       <View style={styles.screen}>
-        {activeTab === 'profile'       && <PatientProfileScreen />}
-        {activeTab === 'records'       && <MedicalRecordsScreen />}
-        {activeTab === 'prescriptions' && <PrescriptionsScreen  />}
-        {activeTab === 'qrcard'        && <PatientQRCardScreen  />}
+        {activeTab === 'profile'        && <PatientProfileScreen />}
+        {activeTab === 'records'        && <MedicalRecordsScreen />}
+        {activeTab === 'prescriptions'  && <PrescriptionsScreen  />}
+        {activeTab === 'qrcard'         && <PatientQRCardScreen  />}
       </View>
 
       {/* Bottom Tab Bar */}
@@ -82,8 +83,27 @@ export default function App() {
 
 const styles = StyleSheet.create({
   root: {
-    flex: 1,
+    flex:            1,
     backgroundColor: '#F8FAFC',
+  },
+  topBar: {
+    flexDirection:     'row',
+    justifyContent:    'space-between',
+    alignItems:        'center',
+    backgroundColor:   '#1E3A5F',
+    paddingTop:        (StatusBar.currentHeight || 24) + 8,
+    paddingBottom:     10,
+    paddingHorizontal: 20,
+  },
+  topBarTitle: {
+    color:      '#FFFFFF',
+    fontSize:   16,
+    fontWeight: '700',
+  },
+  logoutText: {
+    color:      '#93C5FD',
+    fontSize:   13,
+    fontWeight: '600',
   },
   screen: {
     flex: 1,
