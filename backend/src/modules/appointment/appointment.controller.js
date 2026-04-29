@@ -89,7 +89,63 @@ const addConsultationNotesController = async (req, res) => {
   }
 };
 
+/**
+ * Handles POST /api/appointments
+ * Books a new appointment for a patient with a doctor.
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const bookAppointmentController = async (req, res) => {
+  try {
+    const currentUser = req.session?.user || { id: 'test-patient-uuid', role: 'patient' };
+
+    const { doctorId, scheduledAt, type, notes } = req.body;
+
+    if (!doctorId || !scheduledAt || !type) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed: doctorId, scheduledAt and type are required'
+      });
+    }
+
+    // Check for conflicts
+    const conflict = await appointmentRepository.checkAppointmentConflict(
+      doctorId,
+      scheduledAt
+    );
+
+    if (conflict) {
+      return res.status(400).json({
+        success: false,
+        message: 'This time slot is already booked for the selected doctor'
+      });
+    }
+
+    const appointment = await appointmentRepository.bookAppointment(
+      currentUser.id,
+      doctorId,
+      scheduledAt,
+      type,
+      notes
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'Appointment booked successfully',
+      data: appointment
+    });
+
+  } catch (error) {
+    console.error('bookAppointmentController error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
 module.exports = {
   updateAppointmentStatusController,
   addConsultationNotesController,
+  bookAppointmentController
 };

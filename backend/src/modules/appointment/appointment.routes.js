@@ -10,7 +10,11 @@ const router = express.Router();
 const {
   updateAppointmentStatusController,
   addConsultationNotesController,
+  bookAppointmentController
 } = require('./appointment.controller');
+
+// POST /api/appointments — Book a new appointment
+router.post('/', bookAppointmentController);
 
 // PUT /api/appointments/:id/status — update appointment status
 router.put('/:id/status', updateAppointmentStatusController);

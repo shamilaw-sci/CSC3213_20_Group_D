@@ -28,13 +28,11 @@ const TEST_PATIENT_ID = '006761d1-8279-440e-a786-a492df7abd53';
 const formatDate = (dateStr) => {
   if (!dateStr) return '—';
   return new Date(dateStr).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
+    day: 'numeric', month: 'short', year: 'numeric',
   });
 };
 
-// ─── Check if prescription is expired based on expires_at ────────────────────
+// ─── Check if prescription is expired ────────────────────────────────────────
 const isExpired = (expiresAt) => {
   if (!expiresAt) return false;
   return new Date(expiresAt) < new Date();
@@ -47,10 +45,18 @@ const daysRemaining = (expiresAt) => {
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
 };
 
-// ─── Resolve badge status from prescription status + expiry ──────────────────
+// ─── Resolve badge status ─────────────────────────────────────────────────────
 const resolveBadgeStatus = (status, expiresAt) => {
   if (isExpired(expiresAt)) return 'expired';
   return status || 'active';
+};
+
+// ─── Check if QR should be shown (active or partially filled only) ────────────
+const canShowQR = (status, expiresAt) => {
+  if (isExpired(expiresAt)) return false;
+  if (status === 'completed') return false;
+  if (status === 'expired') return false;
+  return true; // active and partially_filled both get QR
 };
 
 // ─── Single Medicine Item Row ─────────────────────────────────────────────────
@@ -72,9 +78,7 @@ const MedicineRow = ({ item }) => (
       <p className="text-xs text-slate-500">Qty prescribed</p>
       <p className="text-sm font-semibold text-slate-700">{item.quantity_prescribed}</p>
       {item.quantity_dispensed > 0 && (
-        <p className="text-xs text-green-600">
-          {item.quantity_dispensed} dispensed
-        </p>
+        <p className="text-xs text-green-600">{item.quantity_dispensed} dispensed</p>
       )}
     </div>
   </div>
@@ -82,15 +86,14 @@ const MedicineRow = ({ item }) => (
 
 // ─── Single Prescription Card ─────────────────────────────────────────────────
 const PrescriptionCard = ({ prescription }) => {
-  const [expanded, setExpanded]   = useState(false);
-  const [showQR,   setShowQR]     = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [showQR,   setShowQR]   = useState(false);
 
   const expired  = isExpired(prescription.expires_at);
   const days     = daysRemaining(prescription.expires_at);
   const badgeSt  = resolveBadgeStatus(prescription.status, prescription.expires_at);
+  const showQRButton = canShowQR(prescription.status, prescription.expires_at);
   const items    = prescription.items || [];
-
-  // Filter out null items (JSON_AGG returns [null] when no items exist)
   const validItems = items.filter(i => i && i.medicine_name);
 
   return (
@@ -106,7 +109,6 @@ const PrescriptionCard = ({ prescription }) => {
             <ClipboardList size={16} className="text-[#1E3A5F]" />
           </div>
           <div>
-            {/* Doctor name */}
             <p className="text-sm font-semibold text-slate-800">
               {prescription.doctor_name
                 ? `Dr. ${prescription.doctor_name}`
@@ -117,8 +119,6 @@ const PrescriptionCard = ({ prescription }) => {
                 </span>
               )}
             </p>
-
-            {/* Dates row */}
             <div className="flex flex-wrap items-center gap-3 mt-1">
               <span className="flex items-center gap-1 text-xs text-slate-500">
                 <Calendar size={11} />
@@ -134,15 +134,11 @@ const PrescriptionCard = ({ prescription }) => {
                 )}
               </span>
             </div>
-
-            {/* Medicine count */}
             <p className="text-xs text-slate-400 mt-1">
               {validItems.length} medicine{validItems.length !== 1 ? 's' : ''}
             </p>
           </div>
         </div>
-
-        {/* Right side: badge + chevron */}
         <div className="flex items-center gap-3 shrink-0">
           <Badge status={badgeSt} />
           {expanded
@@ -184,34 +180,37 @@ const PrescriptionCard = ({ prescription }) => {
             )}
           </div>
 
-          {/* QR Code section */}
-          <div className="px-6 py-4">
-            <button
-              onClick={() => setShowQR(!showQR)}
-              className="flex items-center gap-2 text-xs font-medium text-[#2E75B6] hover:text-[#1E3A5F] transition-colors"
-            >
-              <QrCode size={14} />
-              {showQR ? 'Hide QR Code' : 'Show QR Code for Pharmacy'}
-            </button>
+          {/* QR Code section — only for active and partially filled */}
+          {showQRButton && (
+            <div className="px-6 py-4">
+              <button
+                onClick={() => setShowQR(!showQR)}
+                className="flex items-center gap-2 text-xs font-medium text-[#2E75B6] hover:text-[#1E3A5F] transition-colors"
+              >
+                <QrCode size={14} />
+                {showQR ? 'Hide QR Code' : 'Show QR Code for Pharmacy'}
+              </button>
 
-            {showQR && prescription.qr_code_value && (
-              <div className="mt-4 flex flex-col items-center gap-3 p-4 bg-slate-50 rounded-xl">
-                <QRCodeSVG
-                  value={prescription.qr_code_value}
-                  size={180}
-                  bgColor="#FFFFFF"
-                  fgColor="#1E3A5F"
-                  level="M"
-                />
-                <p className="text-xs font-mono text-slate-500">
-                  {prescription.qr_code_value}
-                </p>
-                <p className="text-xs text-slate-400 text-center">
-                  Show this QR code to the pharmacist for dispensing
-                </p>
-              </div>
-            )}
-          </div>
+              {showQR && prescription.qr_code_value && (
+                <div className="mt-4 flex flex-col items-center gap-3 p-4 bg-slate-50 rounded-xl">
+                  <QRCodeSVG
+                    value={prescription.qr_code_value}
+                    size={180}
+                    bgColor="#FFFFFF"
+                    fgColor="#1E3A5F"
+                    level="M"
+                  />
+                  <p className="text-xs font-mono text-slate-500">
+                    {prescription.qr_code_value}
+                  </p>
+                  <p className="text-xs text-slate-400 text-center">
+                    Show this QR code to the pharmacist for dispensing
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
         </div>
       )}
     </div>
@@ -231,7 +230,6 @@ const PrescriptionsPage = () => {
     queryFn: () => getPatientPrescriptions(TEST_PATIENT_ID),
   });
 
-  // ── Loading state ──────────────────────────────────────────────────────────
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -243,25 +241,19 @@ const PrescriptionsPage = () => {
     );
   }
 
-  // ── Error state ────────────────────────────────────────────────────────────
   if (isError) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
-          <Alert
-            type="error"
-            message={error?.message || 'Failed to load prescriptions.'}
-          />
+          <Alert type="error" message={error?.message || 'Failed to load prescriptions.'} />
         </div>
       </div>
     );
   }
 
-  // ── Separate active from expired ───────────────────────────────────────────
-  const active  = prescriptions.filter(p => !isExpired(p.expires_at) && p.status !== 'completed');
-  const others  = prescriptions.filter(p =>  isExpired(p.expires_at) || p.status === 'completed');
+  const active = prescriptions.filter(p => !isExpired(p.expires_at) && p.status !== 'completed');
+  const others = prescriptions.filter(p =>  isExpired(p.expires_at) || p.status === 'completed');
 
-  // ── Main render ────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-slate-50">
 
@@ -275,7 +267,6 @@ const PrescriptionsPage = () => {
                 Click any prescription to view medicines and QR code
               </p>
             </div>
-            {/* Summary counts */}
             <div className="hidden sm:flex gap-4">
               <div className="text-center bg-white/10 rounded-xl px-4 py-2">
                 <p className="text-xl font-bold">{active.length}</p>
@@ -293,7 +284,6 @@ const PrescriptionsPage = () => {
       {/* ── Page Body ── */}
       <div className="max-w-3xl mx-auto px-6 py-8 space-y-8">
 
-        {/* Empty state */}
         {prescriptions.length === 0 && (
           <Card>
             <div className="text-center py-8">
@@ -305,33 +295,28 @@ const PrescriptionsPage = () => {
           </Card>
         )}
 
-        {/* Active prescriptions */}
         {active.length > 0 && (
           <div>
             <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">
               Active Prescriptions
             </h2>
             <div className="space-y-4">
-              {active.map(p => (
-                <PrescriptionCard key={p.id} prescription={p} />
-              ))}
+              {active.map(p => <PrescriptionCard key={p.id} prescription={p} />)}
             </div>
           </div>
         )}
 
-        {/* Past / expired prescriptions */}
         {others.length > 0 && (
           <div>
             <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">
               Past Prescriptions
             </h2>
             <div className="space-y-4">
-              {others.map(p => (
-                <PrescriptionCard key={p.id} prescription={p} />
-              ))}
+              {others.map(p => <PrescriptionCard key={p.id} prescription={p} />)}
             </div>
           </div>
         )}
+
       </div>
     </div>
   );

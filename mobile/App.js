@@ -7,16 +7,24 @@
  */
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import LoginScreen from './src/screens/LoginScreen';
 import PatientProfileScreen from './src/screens/PatientProfileScreen';
 import PatientQRCardScreen  from './src/screens/PatientQRCardScreen';
+import PrescriptionsScreen  from './src/screens/PrescriptionsScreen';
 
 const TABS = [
   { key: 'profile', label: 'My Profile' },
   { key: 'qrcard',  label: 'QR Card'    },
+  { key: 'prescriptions', label: 'Prescriptions' },
 ];
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('profile');
+  const [user, setUser] = useState(null);
+
+  if (!user) {
+  return <LoginScreen onLoginSuccess={(userData) => setUser(userData)} />;
+  }
 
   return (
     <View style={styles.root}>
@@ -25,6 +33,7 @@ export default function App() {
       <View style={styles.screen}>
         {activeTab === 'profile' && <PatientProfileScreen />}
         {activeTab === 'qrcard'  && <PatientQRCardScreen  />}
+        {activeTab === 'prescriptions' && <PrescriptionsScreen />}
       </View>
 
       {/* Bottom Tab Bar */}

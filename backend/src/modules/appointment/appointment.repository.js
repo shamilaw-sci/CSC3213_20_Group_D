@@ -38,8 +38,47 @@ const createConsultationNote = async (appointmentId, patientId, doctorId, title,
   return result.rows[0];
 };
 
+/**
+ * Books a new appointment for a patient with a doctor.
+ * @param {string} patientId   - UUID of the patient
+ * @param {string} doctorId    - UUID of the doctor
+ * @param {string} scheduledAt - ISO timestamp for the appointment
+ * @param {string} type        - Appointment type (e.g. 'consultation')
+ * @param {string} notes       - Optional notes
+ * @returns {Promise<Object>} The created appointment row
+ */
+const bookAppointment = async (patientId, doctorId, scheduledAt, type, notes) => {
+  const result = await pool.query(
+    `INSERT INTO appointments
+      (patient_id, doctor_id, scheduled_at, status, type, notes)
+     VALUES ($1, $2, $3, 'scheduled', $4, $5)
+     RETURNING *`,
+    [patientId, doctorId, scheduledAt, type, notes || null]
+  );
+  return result.rows[0];
+};
+
+/**
+ * Checks if a doctor already has an appointment at a given time.
+ * @param {string} doctorId    - UUID of the doctor
+ * @param {string} scheduledAt - ISO timestamp to check
+ * @returns {Promise<boolean>} True if conflict exists
+ */
+const checkAppointmentConflict = async (doctorId, scheduledAt) => {
+  const result = await pool.query(
+    `SELECT id FROM appointments
+     WHERE doctor_id = $1
+     AND scheduled_at = $2
+     AND status NOT IN ('cancelled')`,
+    [doctorId, scheduledAt]
+  );
+  return result.rows.length > 0;
+};
+
 module.exports = {
   updateAppointmentStatus,
   getAppointmentById,
   createConsultationNote,
+  bookAppointment,
+  checkAppointmentConflict
 };
