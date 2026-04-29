@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import Spinner from '../../components/common/Spinner';
 import Alert from '../../components/common/Alert';
 
-const DOCTOR_ID = '0b526dd9-7f00-4eab-ab9c-8cc25c1b70af';
+const DOCTOR_ID = '6ca0512b-568a-46df-9988-af31da406794';
 const API_URL = 'http://localhost:5000';
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
@@ -68,7 +68,7 @@ const DoctorProfilePage = () => {
       } else {
         setAlert({ type: 'error', message: 'Failed to update profile.' });
       }
-    } catch (error) {
+    } catch (_error) {
       setAlert({ type: 'error', message: 'Something went wrong.' });
     } finally {
       setSaving(false);
@@ -89,7 +89,7 @@ const DoctorProfilePage = () => {
       } else {
         setAlert({ type: 'error', message: 'Failed to update availability.' });
       }
-    } catch (error) {
+    } catch (_error) {
       setAlert({ type: 'error', message: 'Something went wrong.' });
     } finally {
       setSaving(false);
