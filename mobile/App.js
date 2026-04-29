@@ -9,10 +9,12 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import PatientProfileScreen from './src/screens/PatientProfileScreen';
 import PatientQRCardScreen  from './src/screens/PatientQRCardScreen';
+import PrescriptionsScreen  from './src/screens/PrescriptionsScreen';
 
 const TABS = [
   { key: 'profile', label: 'My Profile' },
   { key: 'qrcard',  label: 'QR Card'    },
+  { key: 'prescriptions', label: 'Prescriptions' },
 ];
 
 export default function App() {
@@ -25,6 +27,7 @@ export default function App() {
       <View style={styles.screen}>
         {activeTab === 'profile' && <PatientProfileScreen />}
         {activeTab === 'qrcard'  && <PatientQRCardScreen  />}
+        {activeTab === 'prescriptions' && <PrescriptionsScreen />}
       </View>
 
       {/* Bottom Tab Bar */}
