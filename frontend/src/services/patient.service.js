@@ -48,3 +48,24 @@ export const getPatientPrescriptions = async (patientId) => {
   const response = await api.get(`/api/patients/${patientId}/prescriptions`);
   return response.data.data;   // unwrap { success, message, data }
 };
+
+/**
+ * Fetches a patient profile by their QR code ID.
+ * Used by the doctor-facing QR lookup page.
+ * @param {string} qrCodeId - The qr_code_id value (e.g. "QR-TEST-001")
+ * @returns {Promise<Object>} The patient data object
+ */
+export const getPatientByQrCode = async (qrCodeId) => {
+  const response = await api.get(`/api/patients/qr/${qrCodeId}`);
+  return response.data.data;   // unwrap { success, message, data }
+};
+
+/**
+ * Fetches all allergy records for a patient.
+ * @param {string} patientId - UUID of the patient
+ * @returns {Promise<Array>} Array of allergy objects
+ */
+export const getAllergies = async (patientId) => {
+  const response = await api.get(`/api/patients/${patientId}/allergies`);
+  return response.data.data;   // unwrap { success, message, data }
+};

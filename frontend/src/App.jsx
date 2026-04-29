@@ -10,6 +10,7 @@ import PatientLayout          from './components/layout/PatientLayout';
 import PatientProfilePage     from './pages/patient/PatientProfilePage';
 import MedicalRecordsPage     from './pages/patient/MedicalRecordsPage';
 import PrescriptionsPage      from './pages/patient/PrescriptionsPage';
+import PatientLookupPage      from './pages/patient/PatientLookupPage';
 import LoginPage              from './pages/auth/LoginPage';
 import RegisterPage           from './pages/auth/RegisterPage';
 import IssuePrescriptionPage  from './pages/doctor/IssuePrescriptionPage';
@@ -29,6 +30,9 @@ function App() {
         <Route path="/login"    element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
+        {/* Patient QR lookup — no sidebar, doctor-facing read-only view */}
+        <Route path="/lookup/:qrCodeId" element={<PatientLookupPage />} />
+
         {/* Patient pages — all share the sidebar layout */}
         <Route path="/patient" element={<PatientLayout />}>
           <Route path="profile"         element={<PatientProfilePage />} />
@@ -37,9 +41,9 @@ function App() {
         </Route>
 
         {/* Doctor routes */}
-        <Route path="/doctor/dashboard"         element={<DoctorDashboard />} />
-        <Route path="/doctor/queue"             element={<AppointmentQueuePage />} />
-        <Route path="/doctor/profile"           element={<DoctorProfilePage />} />
+        <Route path="/doctor/dashboard"          element={<DoctorDashboard />} />
+        <Route path="/doctor/queue"              element={<AppointmentQueuePage />} />
+        <Route path="/doctor/profile"            element={<DoctorProfilePage />} />
         <Route path="/doctor/issue-prescription" element={<IssuePrescriptionPage />} />
 
         {/* Other members will add their routes here */}
