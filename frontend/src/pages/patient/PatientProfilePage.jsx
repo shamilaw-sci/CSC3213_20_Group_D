@@ -4,6 +4,7 @@
  * @desc      Displays and allows editing of the patient's profile.
  *            Fetches from GET /api/patients/:id via React Query.
  *            Submits updates via PUT /api/patients/:id using React Hook Form.
+ *            Also displays known allergies from GET /api/patients/:id/allergies.
  * @author    Wasana Karunanayaka (S/21/081)
  */
 
@@ -11,9 +12,9 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { User, Droplets, Phone, Calendar, Edit2, X, Save } from 'lucide-react';
+import { User, Droplets, Phone, Calendar, Edit2, X, Save, AlertTriangle } from 'lucide-react';
 
-import { getPatientProfile, updatePatientProfile } from '../../services/patient.service';
+import { getPatientProfile, updatePatientProfile, getAllergies } from '../../services/patient.service';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
@@ -37,6 +38,22 @@ const formatDate = (dateStr) => {
 const capitalise = (str) => {
   if (!str) return '—';
   return str.charAt(0).toUpperCase() + str.slice(1);
+};
+
+// ─── Severity badge styles ────────────────────────────────────────────────────
+const SEVERITY_STYLES = {
+  severe:   { bg: 'bg-red-100',    text: 'text-red-700',    label: 'Severe'   },
+  moderate: { bg: 'bg-orange-100', text: 'text-orange-700', label: 'Moderate' },
+  mild:     { bg: 'bg-green-100',  text: 'text-green-700',  label: 'Mild'     },
+};
+
+const SeverityBadge = ({ severity }) => {
+  const style = SEVERITY_STYLES[severity?.toLowerCase()] || SEVERITY_STYLES.mild;
+  return (
+    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${style.bg} ${style.text}`}>
+      {style.label}
+    </span>
+  );
 };
 
 // ─── Profile Field — used in view mode ───────────────────────────────────────
@@ -66,6 +83,13 @@ const PatientProfilePage = () => {
   } = useQuery({
     queryKey: ['patient', TEST_PATIENT_ID],
     queryFn: () => getPatientProfile(TEST_PATIENT_ID),
+  });
+
+  // ── Fetch patient allergies ────────────────────────────────────────────────
+  const { data: allergies = [] } = useQuery({
+    queryKey: ['allergies', TEST_PATIENT_ID],
+    queryFn: () => getAllergies(TEST_PATIENT_ID),
+    enabled: !!patient, // only fetch after profile is loaded
   });
 
   // ── React Hook Form setup ──────────────────────────────────────────────────
@@ -223,6 +247,36 @@ const PatientProfilePage = () => {
                 </div>
               </Card>
             </div>
+
+            {/* ── Known Allergies Card ── */}
+            <Card title="Known Allergies">
+              {allergies.length === 0 ? (
+                <p className="text-sm text-slate-500 text-center py-4">
+                  No allergies recorded.
+                </p>
+              ) : (
+                <div className="divide-y divide-slate-100">
+                  {allergies.map((allergy) => (
+                    <div key={allergy.id} className="py-3 flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-3">
+                        <div className="mt-0.5 p-2 bg-red-50 rounded-lg">
+                          <AlertTriangle size={16} className="text-red-500" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-slate-800">
+                            {allergy.allergen}
+                          </p>
+                          {allergy.notes && (
+                            <p className="text-xs text-slate-500 mt-0.5">{allergy.notes}</p>
+                          )}
+                        </div>
+                      </div>
+                      <SeverityBadge severity={allergy.severity} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
 
             {/* Edit Button */}
             <div className="flex justify-end">
