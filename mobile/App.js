@@ -22,6 +22,16 @@ const TABS = [
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('profile');
+  const handleLogout = async () => {
+  try {
+    await fetch('http://192.168.1.32:5000/api/auth/logout', {
+      method: 'POST',
+    });
+  } catch {
+    // ignore error
+  }
+  setUser(null);
+};
   const [user, setUser] = useState(null);
 
   if (!user) {
@@ -30,6 +40,14 @@ export default function App() {
 
   return (
     <View style={styles.root}>
+      
+      {/* Top bar with logout */}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#1E3A5F', paddingTop: 48, paddingBottom: 0, paddingHorizontal: 20 }}>
+        <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '700' }}>Care4U</Text>
+        <TouchableOpacity onPress={handleLogout}>
+          <Text style={{ color: '#93C5FD', fontSize: 13, fontWeight: '600' }}>🔓 Logout</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Screen Area */}
       <View style={styles.screen}>
