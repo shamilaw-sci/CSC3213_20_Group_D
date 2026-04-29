@@ -25,6 +25,16 @@ import { getPatientPrescriptions } from '../services/prescription.service';
 const TEST_PATIENT_ID = '006761d1-8279-440e-a786-a492df7abd53';
 
 /**
+ * Checks if a prescription is expired based on expires_at date.
+ * @param {string} expiresAt - ISO date string
+ * @returns {boolean} true if expired
+ */
+const isExpired = (expiresAt) => {
+  if (!expiresAt) return false;
+  return new Date(expiresAt) < new Date();
+};
+
+/**
  * Returns a colour based on prescription status.
  * @param {string} status - active | expired | completed | partially_filled
  * @returns {string} hex colour
@@ -186,7 +196,7 @@ const PrescriptionsScreen = () => {
             </View>
 
             {/* Show QR Button */}
-            {prescription.status === 'active' && prescription.qr_code_value && (
+            {(prescription.status === 'active' || prescription.status === 'partially_filled') && !isExpired(prescription.expires_at) && prescription.qr_code_value && (
               <TouchableOpacity
                 style={styles.qrButton}
                 onPress={() => setSelectedQR(prescription.qr_code_value)}
