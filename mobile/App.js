@@ -7,6 +7,7 @@
  */
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import LoginScreen from './src/screens/LoginScreen';
 import PatientProfileScreen from './src/screens/PatientProfileScreen';
 import PatientQRCardScreen  from './src/screens/PatientQRCardScreen';
 import PrescriptionsScreen  from './src/screens/PrescriptionsScreen';
@@ -19,6 +20,11 @@ const TABS = [
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('profile');
+  const [user, setUser] = useState(null);
+
+  if (!user) {
+  return <LoginScreen onLoginSuccess={(userData) => setUser(userData)} />;
+  }
 
   return (
     <View style={styles.root}>
