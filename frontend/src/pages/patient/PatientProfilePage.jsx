@@ -57,6 +57,7 @@ const SeverityBadge = ({ severity }) => {
 };
 
 // ─── Profile Field — used in view mode ───────────────────────────────────────
+// eslint-disable-next-line no-unused-vars
 const ProfileField = ({ icon: Icon, label, value }) => (
   <div className="flex items-start gap-3">
     <div className="mt-0.5 p-2 bg-slate-100 rounded-lg">

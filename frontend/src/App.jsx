@@ -17,6 +17,7 @@ import IssuePrescriptionPage  from './pages/doctor/IssuePrescriptionPage';
 import DoctorDashboard        from './pages/doctor/DoctorDashboard';
 import AppointmentQueuePage   from './pages/doctor/AppointmentQueuePage';
 import DoctorProfilePage      from './pages/doctor/DoctorProfilePage';
+import PharmacyLookupPage from './pages/pharmacy/PharmacyLookupPage';
 
 function App() {
   return (
@@ -45,6 +46,9 @@ function App() {
         <Route path="/doctor/queue"              element={<AppointmentQueuePage />} />
         <Route path="/doctor/profile"            element={<DoctorProfilePage />} />
         <Route path="/doctor/issue-prescription" element={<IssuePrescriptionPage />} />
+
+        {/* Pharmacy routes */}
+        <Route path="/pharmacy/:qrValue" element={<PharmacyLookupPage />} />
 
         {/* Other members will add their routes here */}
       </Routes>
