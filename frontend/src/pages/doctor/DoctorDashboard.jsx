@@ -106,7 +106,7 @@ const DoctorDashboard = () => {
           </p>
         </button>
         <button
-          onClick={() => navigate('/doctor/prescription')}
+          onClick={() => navigate('/doctor/issue-prescription')}
           className="bg-white rounded-lg shadow p-6 text-left hover:shadow-md transition-shadow"
         >
           <p className="text-lg font-semibold text-slate-800">

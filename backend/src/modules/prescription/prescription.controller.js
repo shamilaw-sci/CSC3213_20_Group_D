@@ -15,7 +15,7 @@ const prescriptionService = require('./prescription.service');
  */
 const createPrescriptionController = async (req, res) => {
   try {
-    const currentUser = req.session?.user || { id: 'test-doctor-uuid', role: 'doctor' };
+    const currentUser = { id: 'd04b8bcf-fe8a-4d3b-affc-5ab87e78cfc3', role: 'doctor' };
 
     const { patientId, appointmentId, items, notes } = req.body;
 

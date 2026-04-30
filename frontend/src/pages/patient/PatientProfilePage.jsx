@@ -166,26 +166,37 @@ const PatientProfilePage = () => {
   // ── Main render ────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* ── Page Header ── */}
-      <div className="bg-[#1E3A5F] text-white px-6 py-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center justify-between">
+    {/* ── Page Header ── */}
+    <div className="bg-[#1E3A5F] text-white px-6 py-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex items-center justify-between">
+
+          {/* Avatar + Name + Subtitle */}
+          <div className="flex items-center gap-4">
+            <img
+              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(patient?.full_name || 'Patient')}&background=2E75B6&color=fff&size=80&bold=true&rounded=true`}
+              alt="Patient avatar"
+              className="w-16 h-16 rounded-full border-2 border-white/30"
+            />
             <div>
-              <h1 className="text-2xl font-bold">My Profile</h1>
+              <h1 className="text-2xl font-bold">{patient?.full_name || 'My Profile'}</h1>
               <p className="text-blue-200 text-sm mt-1">
                 View and manage your personal health information
               </p>
             </div>
-            {/* UHI / QR Badge */}
-            <div className="hidden sm:block bg-white/10 rounded-xl px-4 py-2 text-right">
-              <p className="text-xs text-blue-200 uppercase tracking-wide">Patient ID</p>
-              <p className="text-sm font-mono font-semibold">
-                {patient?.qr_code_id || '—'}
-              </p>
-            </div>
           </div>
+
+          {/* UHI / QR Badge */}
+          <div className="hidden sm:block bg-white/10 rounded-xl px-4 py-2 text-right">
+            <p className="text-xs text-blue-200 uppercase tracking-wide">Patient ID</p>
+            <p className="text-sm font-mono font-semibold">
+              {patient?.qr_code_id || '—'}
+            </p>
+          </div>
+
         </div>
       </div>
+    </div>
 
       {/* ── Page Body ── */}
       <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">

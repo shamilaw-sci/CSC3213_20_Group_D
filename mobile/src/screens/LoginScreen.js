@@ -18,7 +18,7 @@ import {
   ScrollView,
 } from 'react-native';
 
-const API_URL = 'http://192.168.1.32:5000';
+const API_URL = 'http://10.235.201.10:5000';
 // const API_URL = 'http://localhost:5000'; // iOS simulator
 
 export default function LoginScreen({ onLoginSuccess }) {
