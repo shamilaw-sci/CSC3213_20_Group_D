@@ -339,11 +339,13 @@ Click **Issue Prescription** — the generated prescription QR code appears on s
 
 Open the Care4U app on your phone via Expo Go.
 
-![](docs/screenshots/23.jpeg)
-
-![](docs/screenshots/24.jpeg)
-
-![](docs/screenshots/25.jpeg)
+<table>
+  <tr>
+    <td><img src="docs/screenshots/23.jpeg"/></td>
+    <td><img src="docs/screenshots/24.jpeg"/></td>
+    <td><img src="docs/screenshots/25.jpeg"/></td>
+  </tr>
+</table>
 
 The app has 4 tabs at the bottom.
 
@@ -356,22 +358,30 @@ The app has 4 tabs at the bottom.
 
 #### My Profile Tab
 
-![](docs/screenshots/26.jpeg)
-
-![](docs/screenshots/27.jpeg)
+<table>
+  <tr>
+    <td><img src="docs/screenshots/26.jpeg"/></td>
+    <td><img src="docs/screenshots/27.jpeg"/></td>
+  </tr>
+</table>
 
 #### Records Tab
 
-![](docs/screenshots/28.jpeg)
-
-![](docs/screenshots/29.jpeg)
+<table>
+  <tr>
+    <td><img src="docs/screenshots/28.jpeg"/></td>
+    <td><img src="docs/screenshots/29.jpeg"/></td>
+  </tr>
+</table>
 
 #### Prescriptions Tab
 
-![](docs/screenshots/30.jpeg)
-
-![](docs/screenshots/31.jpeg)
-
+<table>
+  <tr>
+    <td><img src="docs/screenshots/30.jpeg"/></td>
+    <td><img src="docs/screenshots/31.jpeg"/></td>
+  </tr>
+</table>
 
 #### QR Card Tab
 
