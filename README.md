@@ -339,11 +339,11 @@ Click **Issue Prescription** — the generated prescription QR code appears on s
 
 Open the Care4U app on your phone via Expo Go.
 
-![](docs/screenshots/23.png)
+![](docs/screenshots/23.jpeg)
 
-![](docs/screenshots/24.png)
+![](docs/screenshots/24.jpeg)
 
-![](docs/screenshots/25.png)
+![](docs/screenshots/25.jpeg)
 
 The app has 4 tabs at the bottom.
 
@@ -356,26 +356,26 @@ The app has 4 tabs at the bottom.
 
 #### My Profile Tab
 
-![](docs/screenshots/26.png)
+![](docs/screenshots/26.jpeg)
 
-![](docs/screenshots/27.png)
+![](docs/screenshots/27.jpeg)
 
 #### Records Tab
 
-![](docs/screenshots/28.png)
+![](docs/screenshots/28.jpeg)
 
-![](docs/screenshots/29.png)
+![](docs/screenshots/29.jpeg)
 
 #### Prescriptions Tab
 
-![](docs/screenshots/30.png)
+![](docs/screenshots/30.jpeg)
 
-![](docs/screenshots/31.png)
+![](docs/screenshots/31.jpeg)
 
 
 #### QR Card Tab
 
-![](docs/screenshots/32.png)
+![](docs/screenshots/32.jpeg)
 
 ---
 
