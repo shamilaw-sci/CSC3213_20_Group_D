@@ -2,7 +2,7 @@
  * @file    patient.controller.js
  * @module  Patient
  * @desc    HTTP request handlers for the patient module.
- *          Reads request data, calls the service, and sends responses.
+ * Reads request data, calls the service, and sends responses.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -122,6 +122,27 @@ const addAllergyController = async (req, res) => {
 };
 
 /**
+ * Handles DELETE /api/patients/:id/allergies/:allergyId
+ * Deletes a specific allergy record for a patient.
+ */
+const deleteAllergyController = async (req, res) => {
+  try {
+    const { id, allergyId } = req.params;
+    await patientService.deleteAllergy(id, allergyId);
+
+    res.status(200).json({
+      success: true,
+      message: 'Allergy deleted successfully',
+    });
+  } catch (error) {
+    console.error('deleteAllergyController error:', error);
+    const statusCode = error.statusCode || 500;
+    const message = error.statusCode ? error.message : 'Internal server error';
+    res.status(statusCode).json({ success: false, message });
+  }
+};
+
+/**
  * Handles GET /api/patients/:id/prescriptions
  * Returns all prescriptions for a patient with their medicine items.
  */
@@ -169,6 +190,7 @@ module.exports = {
   getMedicalRecordsController,
   getAllergiesController,
   addAllergyController,
+  deleteAllergyController,
   getPatientPrescriptionsController,
   getPatientByQrCodeController,
 };

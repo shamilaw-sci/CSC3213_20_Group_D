@@ -13,6 +13,7 @@ const {
   getMedicalRecordsController,
   getAllergiesController,
   addAllergyController,
+  deleteAllergyController,
   getPatientPrescriptionsController,
   getPatientByQrCodeController,
 } = require('./patient.controller');
@@ -87,6 +88,17 @@ router.post(
   // isAuthenticated,                 // Uncomment when auth is ready
   // authorize('patient', 'doctor'),  // Uncomment when auth is ready
   addAllergyController
+);
+
+/**
+ * DELETE /api/patients/:id/allergies/:allergyId
+ * Removes an allergy record for a patient.
+ */
+router.delete(
+  '/:id/allergies/:allergyId',
+  // isAuthenticated,                 // Uncomment when auth is ready
+  // authorize('patient', 'doctor'),  // Uncomment when auth is ready
+  deleteAllergyController
 );
 
 /**

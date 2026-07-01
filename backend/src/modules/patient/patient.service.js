@@ -2,7 +2,7 @@
  * @file    patient.service.js
  * @module  Patient
  * @desc    Business logic for patient profile management.
- *          Sits between the controller and the repository.
+ * Sits between the controller and the repository.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -135,6 +135,29 @@ const addAllergy = async (patientId, allergen, severity, notes) => {
 };
 
 /**
+ * Deletes an allergy record belonging to a specific patient.
+ * @param {string} patientId - UUID of the patient
+ * @param {string} allergyId - UUID of the allergy to delete
+ * @returns {Promise<void>}
+ * @throws {Error} 404 if patient or allergy is not found
+ */
+const deleteAllergy = async (patientId, allergyId) => {
+  const existing = await patientRepository.getPatientById(patientId);
+  if (!existing) {
+    const error = new Error('Patient not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const deleted = await patientRepository.deleteAllergy(patientId, allergyId);
+  if (!deleted) {
+    const error = new Error('Allergy not found or does not belong to this patient');
+    error.statusCode = 404;
+    throw error;
+  }
+};
+
+/**
  * Retrieves all prescriptions for a patient with their medicine items.
  * @param {string} patientId - UUID of the patient (from patients table)
  * @returns {Promise<Array>} Array of prescription objects with items array
@@ -174,6 +197,7 @@ module.exports = {
   getMedicalRecords,
   getAllergies,
   addAllergy,
+  deleteAllergy,
   getPatientPrescriptions,
   getPatientByQrCode,        
 };
