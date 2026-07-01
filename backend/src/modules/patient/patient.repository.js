@@ -2,7 +2,7 @@
  * @file patient.repository.js
  * @module Patient
  * @desc Database query functions for the Patient module.
- *       All direct SQL interactions for patient data live here.
+ * All direct SQL interactions for patient data live here.
  * @author Wasana Karunanayaka (S/21/081)
  */
 
@@ -180,6 +180,22 @@ async function addAllergy(patientId, allergen, severity, notes) {
 }
 
 /**
+ * Deletes an allergy record belonging to a specific patient.
+ * @param {string} patientId - UUID of the patient (patients.id)
+ * @param {string} allergyId - UUID of the allergy (patient_allergies.id)
+ * @returns {Promise<boolean>} True if a row was deleted, false otherwise
+ */
+async function deleteAllergy(patientId, allergyId) {
+  const result = await pool.query(
+    `DELETE FROM patient_allergies 
+     WHERE id = $1 AND patient_id = $2
+     RETURNING id`,
+    [allergyId, patientId]
+  );
+  return result.rowCount > 0;
+}
+
+/**
  * Fetches all prescriptions for a patient with their medicine items,
  * ordered newest first. Uses JSON_AGG to bundle all items per prescription
  * into a single array so each prescription appears as one object.
@@ -277,6 +293,7 @@ module.exports = {
   getMedicalRecords,
   getAllergies,
   addAllergy,
+  deleteAllergy,
   getPatientPrescriptions,
   getPatientByQrCodeId,
 };
