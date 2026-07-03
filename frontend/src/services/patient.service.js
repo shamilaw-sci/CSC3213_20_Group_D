@@ -2,7 +2,7 @@
  * @file    patient.service.js
  * @module  Services
  * @desc    Frontend service functions for the Patient module.
- *          Calls the Care4U backend patient API endpoints.
+ * Calls the Care4U backend patient API endpoints.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -68,4 +68,32 @@ export const getPatientByQrCode = async (qrCodeId) => {
 export const getAllergies = async (patientId) => {
   const response = await api.get(`/api/patients/${patientId}/allergies`);
   return response.data.data;   // unwrap { success, message, data }
+};
+
+/**
+ * Adds a new allergy for a patient.
+ * @param {string} patientId - UUID of the patient
+ * @param {string} allergen - Name of the allergen
+ * @param {string} severity - mild, moderate, or severe
+ * @param {string} notes - Optional notes
+ * @returns {Promise<Object>} The created allergy object
+ */
+export const addAllergy = async (patientId, allergen, severity, notes) => {
+  const response = await api.post(`/api/patients/${patientId}/allergies`, {
+    allergen,
+    severity,
+    notes
+  });
+  return response.data.data;
+};
+
+/**
+ * Deletes an allergy record for a patient.
+ * @param {string} patientId - UUID of the patient
+ * @param {string} allergyId - UUID of the allergy
+ * @returns {Promise<Object>} The success response object
+ */
+export const deleteAllergy = async (patientId, allergyId) => {
+  const response = await api.delete(`/api/patients/${patientId}/allergies/${allergyId}`);
+  return response.data; 
 };

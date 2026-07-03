@@ -240,7 +240,7 @@ const PrescriptionsScreen = () => {
                 prescription.qr_code_value && (
                 <TouchableOpacity
                   style={styles.qrButton}
-                  onPress={() => setSelectedQR(prescription.qr_code_value)}
+                onPress={() => setSelectedQR(`http://localhost:5173/pharmacy/${prescription.qr_code_value}`)}
                 >
                   <Text style={styles.qrButtonText}>📱 Show QR Code at Pharmacy</Text>
                 </TouchableOpacity>

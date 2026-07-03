@@ -194,7 +194,7 @@ const PrescriptionCard = ({ prescription }) => {
               {showQR && prescription.qr_code_value && (
                 <div className="mt-4 flex flex-col items-center gap-3 p-4 bg-slate-50 rounded-xl">
                   <QRCodeSVG
-                    value={prescription.qr_code_value}
+                    value={`http://localhost:5173/pharmacy/${prescription.qr_code_value}`}
                     size={180}
                     bgColor="#FFFFFF"
                     fgColor="#1E3A5F"
