@@ -16,6 +16,7 @@ const {
   deleteAllergyController,
   getPatientPrescriptionsController,
   getPatientByQrCodeController,
+  getPatientHistorySummaryController
 } = require('./patient.controller');
 
 // const { isAuthenticated } = require('../../middleware/auth');        // Uncomment when auth is ready
@@ -110,6 +111,17 @@ router.get(
   // isAuthenticated,                 // Uncomment when auth is ready
   // authorize('patient', 'doctor'),  // Uncomment when auth is ready
   getPatientPrescriptionsController
+);
+
+/**
+ * GET /api/patients/:id/summary
+ * Generates an AI summary of the patient's entire medical history.
+ */
+router.get(
+  '/:id/summary',
+  // isAuthenticated,                 // Uncomment when auth is ready
+  // authorize('doctor'),             // Usually only doctors need this feature
+  getPatientHistorySummaryController
 );
 
 module.exports = router;
