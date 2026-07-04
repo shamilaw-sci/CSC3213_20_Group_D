@@ -7,7 +7,7 @@
  */
 
 const patientRepository = require('./patient.repository');
-const { generateAIResponse } = require('../../utils/gemini.util');
+const { generateAIResponse } = require('../../utils/ai.util');
 
 /**
  * Retrieves a patient's full profile by their patient UUID.
@@ -193,37 +193,77 @@ const getPatientByQrCode = async (qrCodeId) => {
 };
 
 /**
- * Uses Google Gemini to generate a clinical summary of a patient's entire medical history.
- * Tailored specifically to skip demographics/allergies (handled by UI) and focus purely on clinical timeline.
+ * Uses AI to generate a highly precise clinical summary of a patient's medical history.
+ * Optimized for extreme brevity, tables, and rapid doctor scannability.
  * @param {string} patientId - UUID of the patient
  * @returns {Promise<Object>} Object containing the generated summary text
  */
 const getPatientHistorySummary = async (patientId) => {
-  // 1. Fetch ONLY the medical records (UI already handles profile and allergies)
   const records = await getMedicalRecords(patientId);
 
-  // 2. Format the records safely
   const formattedRecords = records.length > 0 
-    ? records.map(r => `- [${new Date(r.created_at).toLocaleDateString()}] ${r.record_type}: ${r.title}. Notes: ${r.description || 'None'}`).join('\n') 
-    : 'No past medical records.';
+    ? records.map(r => {
+        const recordDate = new Date(r.created_at).toLocaleDateString('en-GB', {
+          day: 'numeric', month: 'short', year: 'numeric'
+        });
+        return `[DATE: ${recordDate}] | TYPE: ${r.record_type} | TITLE: ${r.title} | DETAILS: ${r.description || 'None'}`;
+      }).join('\n')
+    : 'No past medical records found.';
 
-  // 3. Construct the highly targeted clinical prompt
   const prompt = `
-    You are an expert clinical AI assistant for the Care4U healthcare system. 
-    Your task is to summarize the following patient's past medical records so a doctor can read it in 15 seconds before starting a consultation.
-    
-    STRICT RULES:
-    1. DO NOT diagnose the patient or suggest treatments.
-    2. DO NOT introduce the patient (e.g., "This patient is..."). The UI already shows their name, age, and allergies.
-    3. Focus ONLY on synthesizing the clinical history: chronic conditions, recent interventions, and recurring symptoms.
-    4. Make it highly scannable. Use Markdown bullet points and **bold** key medical terms or diagnoses.
-    5. Keep it under 100 words.
+    You are a clinical UI assistant. Provide a lightning-fast, ultra-concise summary for a doctor who has 30 seconds before a patient walks in.
+
+    ## STRICT UX & ACCURACY RULES:
+    1. DO NOT include a consultation timeline (the UI already shows this).
+    2. DO NOT include allergies (the UI already shows this).
+    3. Use extreme brevity. Fragment sentences are preferred.
+    4. Use ONLY information explicitly present in the records. Do not diagnose.
+    5. NEVER alter or guess dates.
+    6. Records are provided oldest to newest (or mixed order) — read ALL of them
+       before writing any section. Do not summarize record-by-record; cross-reference
+       first, then output.
+    7. If any record contains language like "repeat test", "follow-up in X", "monitor",
+       or "recheck", scan all LATER records to see if that action was completed.
+       If no later record confirms completion, it is OUTSTANDING and must appear
+       in URGENT ALERTS — never silently drop it.
+    8. A medication or instruction only belongs in ACTIVE PLAN if it treats an
+       ongoing/chronic issue, or if nothing in the records suggests the condition
+       it was prescribed for has resolved. Short-course medication tied to a
+       time-limited acute illness (e.g. a several-day infection, a resolved
+       injury) that has already run its course is EXCLUDED, even if no record
+       explicitly says "resolved."
+    9. LATEST LAB RESULTS must be EXHAUSTIVE, not curated: include every distinct
+       test/parameter that appears anywhere across all records (e.g. every
+       individual FBC component, every TFT component, vitals like BMI/BP if
+       recorded as numeric values) — never omit a test just because its result
+       is normal. HOWEVER, if the same test/parameter was measured more than
+       once across different records, include only its most recent value —
+       do not list the same test twice.
+
+    ## REQUIRED OUTPUT FORMAT (Use exactly these 4 headers):
+
+    ### 1. URGENT ALERTS
+    - Bullet points of ONLY abnormal labs, unresolved follow-ups (see Rule 7), or
+      immediate clinical red flags. (If none, output "- None active").
+
+    ### 2. PATIENT SNAPSHOT
+    - 2-3 bullet points: active chronic conditions, major surgical history, and any
+      documented family/social history that materially affects risk (e.g. strong
+      family history of a relevant condition). Omit if not present in records.
+
+    ### 3. LATEST LAB RESULTS
+    - Format STRICTLY as a Markdown table, following Rule 9 (exhaustive tests, latest value only per test).
+    | Test | Result | Status | Date |
+    |---|---|---|---|
+
+    ### 4. ACTIVE PLAN
+    - Bullet points of medications/instructions that are still ongoing per Rule 8.
 
     --- PAST MEDICAL RECORDS ---
     ${formattedRecords}
   `;
 
-  // 4. Call the shared AI utility
+  const { generateAIResponse } = require('../../utils/ai.util');
   const summaryText = await generateAIResponse(prompt);
   
   return { summary: summaryText };

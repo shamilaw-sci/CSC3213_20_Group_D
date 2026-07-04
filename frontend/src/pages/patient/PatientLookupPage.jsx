@@ -47,26 +47,74 @@ const severityColor = (severity) => {
   return '#1F7A1F';
 };
 
-// ─── AI Text Formatter (Parses basic markdown) ──────────────────────────────
+// ─── AI Text Formatter (Hardened for Tables & Superscripts) ────────────────
 const formatAiText = (text) => {
   if (!text) return null;
-  return text.split('\n').filter(line => line.trim()).map((line, index) => {
-    // Check if it's a bullet point
-    const isBullet = /^[*-]\s*/.test(line);
-    // Remove the raw markdown bullet character
-    const cleanLine = line.replace(/^[*-]\s*/, '');
-    // Split by ** for bolding
+
+  // Helper to turn ^9 into proper <sup>9</sup> HTML
+  const renderTextWithSuperscript = (str) => {
+    const parts = str.split(/\^(\d+)/);
+    return parts.map((part, i) => 
+      i % 2 === 1 ? <sup key={i} className="text-[10px] text-indigo-700 font-bold">{part}</sup> : part
+    );
+  };
+
+  let normalizedText = text
+    .replace(/^\s*[*-+]\s+\*/gm, '* ')
+    .replace(/^\s*[*-+]\s+\*\*/gm, '* **');
+
+  const lines = normalizedText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+
+  return lines.map((line, index) => {
+    // 1. Handle Markdown Tables (| Test | Result |)
+    if (line.startsWith('|')) {
+      if (line.includes('---')) return null; // Skip the markdown divider row
+      
+      const cells = line.split('|').filter(c => c.trim());
+      // Detect if this is the header row by checking if the next line is the divider
+      const isHeader = index + 1 < lines.length && lines[index + 1].includes('---');
+
+      return (
+        <div key={index} className={`flex gap-4 py-2 border-b border-indigo-50/50 ${isHeader ? 'bg-indigo-50/80 font-bold text-indigo-900 rounded-t-md px-3 mt-3' : 'px-3 hover:bg-slate-50 transition-colors'}`}>
+          {cells.map((cell, i) => (
+            <div key={i} className={`flex-1 text-sm ${isHeader ? 'uppercase tracking-wider text-xs' : (i === 0 ? 'font-semibold text-slate-700' : 'text-slate-600')}`}>
+              {renderTextWithSuperscript(cell.trim())}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    // 2. Handle Headers (###)
+    if (line.match(/^#+\s/)) {
+      return (
+        <h4 key={index} className="text-xs font-bold text-indigo-900 mt-6 mb-2 uppercase tracking-widest border-b border-indigo-100 pb-1">
+          {line.replace(/^#+\s*/, '').replace(/\*/g, '')}
+        </h4>
+      );
+    }
+
+    // 3. Handle Bullets & Bolding
+    const isBullet = /^[*\-+•]\s*/.test(line);
+    let cleanLine = line.replace(/^[*\-+•]\s*/, '');
+    
+    cleanLine = cleanLine.replace(/(^\*.*?\*\*)|(^\*\*.*?\*)/g, (match) => {
+      return '**' + match.replace(/\*/g, '') + '**';
+    });
+
     const parts = cleanLine.split(/\*\*(.*?)\*\*/g);
     
     return (
-      <div key={index} className={`flex items-start gap-3 ${isBullet ? 'mb-2.5' : 'mb-3 mt-4'}`}>
-        {isBullet && <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-2 shrink-0 shadow-sm" />}
+      <div key={index} className={`flex items-start gap-3 ${isBullet ? 'mb-2' : 'mb-3 mt-3'}`}>
+        {isBullet && <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-2 shrink-0 shadow-sm" />}
         <p className="text-sm text-slate-700 leading-relaxed flex-1">
           {parts.map((part, i) => 
             i % 2 === 1 ? (
-              <strong key={i} className="font-semibold text-indigo-950">{part}</strong>
+              <strong key={i} className="font-semibold text-indigo-950">
+                {renderTextWithSuperscript(part)}
+              </strong>
             ) : (
-              part
+              renderTextWithSuperscript(part.replace(/\*/g, ''))
             )
           )}
         </p>
