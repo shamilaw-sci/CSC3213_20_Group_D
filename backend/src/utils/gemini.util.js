@@ -19,15 +19,15 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 /**
  * Generates text using the Gemini model based on a provided prompt.
- * Uses gemini-1.5-flash for fast, efficient text-based generation.
- * * @param {string} prompt - The instructions and data for the AI to process.
+ * Uses gemini-3.5-flash for fast, efficient text-based generation.
+ * @param {string} prompt - The instructions and data for the AI to process.
  * @returns {Promise<string>} The generated text response from the AI.
  * @throws Will throw an error if the Gemini API request fails.
  */
 const generateAIResponse = async (prompt) => {
   try {
-    // For text-only tasks, gemini-1.5-flash is the recommended, fastest model
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    // For text-only tasks, gemini-3.5-flash is the recommended, fastest model
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' });
     
     const result = await model.generateContent(prompt);
     const response = await result.response;
