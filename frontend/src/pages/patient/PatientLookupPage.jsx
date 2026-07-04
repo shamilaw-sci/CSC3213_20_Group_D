@@ -52,9 +52,9 @@ const formatAiText = (text) => {
   if (!text) return null;
   return text.split('\n').filter(line => line.trim()).map((line, index) => {
     // Check if it's a bullet point
-    const isBullet = /^[\*\-]\s*/.test(line);
+    const isBullet = /^[*-]\s*/.test(line);
     // Remove the raw markdown bullet character
-    const cleanLine = line.replace(/^[\*\-]\s*/, '');
+    const cleanLine = line.replace(/^[*-]\s*/, '');
     // Split by ** for bolding
     const parts = cleanLine.split(/\*\*(.*?)\*\*/g);
     
@@ -267,7 +267,7 @@ const PatientLookupPage = () => {
 
           {/* AI Summary Display Panel */}
           {aiSummary && (
-            <div className="mb-6 p-6 bg-gradient-to-br from-indigo-50 to-white border border-indigo-100 rounded-xl shadow-sm">
+            <div className="mb-6 p-6 bg-linear-to-br from-indigo-50 to-white border border-indigo-100 rounded-xl shadow-sm">
               <div className="flex items-center justify-between mb-4 border-b border-indigo-100 pb-3">
                 <div className="flex items-center gap-2.5 text-indigo-900 font-bold text-base">
                   <Sparkles size={18} className="text-indigo-600" />
