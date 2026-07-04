@@ -184,6 +184,27 @@ const getPatientByQrCodeController = async (req, res) => {
   }
 };
 
+/**
+ * Handles generating an AI summary of the patient's history.
+ */
+const getPatientHistorySummaryController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const data = await patientService.getPatientHistorySummary(id);
+    res.status(200).json({
+      success: true,
+      message: 'AI summary generated successfully',
+      data,
+    });
+  } catch (error) {
+    console.error('getPatientHistorySummaryController Error:', error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Failed to generate AI summary',
+    });
+  }
+};
+
 module.exports = {
   getPatientController,
   updatePatientController,
@@ -193,4 +214,5 @@ module.exports = {
   deleteAllergyController,
   getPatientPrescriptionsController,
   getPatientByQrCodeController,
+  getPatientHistorySummaryController
 };

@@ -7,6 +7,7 @@
  */
 
 const patientRepository = require('./patient.repository');
+const { generateAIResponse } = require('../../utils/gemini.util');
 
 /**
  * Retrieves a patient's full profile by their patient UUID.
@@ -191,6 +192,43 @@ const getPatientByQrCode = async (qrCodeId) => {
   return patient;
 };
 
+/**
+ * Uses Google Gemini to generate a clinical summary of a patient's entire medical history.
+ * Tailored specifically to skip demographics/allergies (handled by UI) and focus purely on clinical timeline.
+ * @param {string} patientId - UUID of the patient
+ * @returns {Promise<Object>} Object containing the generated summary text
+ */
+const getPatientHistorySummary = async (patientId) => {
+  // 1. Fetch ONLY the medical records (UI already handles profile and allergies)
+  const records = await getMedicalRecords(patientId);
+
+  // 2. Format the records safely
+  const formattedRecords = records.length > 0 
+    ? records.map(r => `- [${new Date(r.created_at).toLocaleDateString()}] ${r.record_type}: ${r.title}. Notes: ${r.description || 'None'}`).join('\n') 
+    : 'No past medical records.';
+
+  // 3. Construct the highly targeted clinical prompt
+  const prompt = `
+    You are an expert clinical AI assistant for the Care4U healthcare system. 
+    Your task is to summarize the following patient's past medical records so a doctor can read it in 15 seconds before starting a consultation.
+    
+    STRICT RULES:
+    1. DO NOT diagnose the patient or suggest treatments.
+    2. DO NOT introduce the patient (e.g., "This patient is..."). The UI already shows their name, age, and allergies.
+    3. Focus ONLY on synthesizing the clinical history: chronic conditions, recent interventions, and recurring symptoms.
+    4. Make it highly scannable. Use Markdown bullet points and **bold** key medical terms or diagnoses.
+    5. Keep it under 100 words.
+
+    --- PAST MEDICAL RECORDS ---
+    ${formattedRecords}
+  `;
+
+  // 4. Call the shared AI utility
+  const summaryText = await generateAIResponse(prompt);
+  
+  return { summary: summaryText };
+};
+
 module.exports = {
   getPatientProfile,
   updatePatientProfile,
@@ -199,5 +237,6 @@ module.exports = {
   addAllergy,
   deleteAllergy,
   getPatientPrescriptions,
-  getPatientByQrCode,        
+  getPatientByQrCode,
+  getPatientHistorySummary
 };
