@@ -97,3 +97,13 @@ export const deleteAllergy = async (patientId, allergyId) => {
   const response = await api.delete(`/api/patients/${patientId}/allergies/${allergyId}`);
   return response.data; 
 };
+
+/**
+ * Fetches an AI-generated clinical summary of a patient's medical history.
+ * @param {string} patientId - UUID of the patient
+ * @returns {Promise<Object>} Object containing the { summary } string
+ */
+export const getPatientHistorySummary = async (patientId) => {
+  const response = await api.get(`/api/patients/${patientId}/summary`);
+  return response.data.data;
+};
