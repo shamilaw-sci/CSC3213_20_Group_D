@@ -17,6 +17,7 @@ import {
   getAllergies,
   getPatientHistorySummary
 } from '../../services/patient.service';
+import { formatAge } from '../../utils/dateUtils';
 import Spinner from '../../components/common/Spinner';
 import Alert from '../../components/common/Alert';
 import Card from '../../components/common/Card';
@@ -251,6 +252,7 @@ const PatientLookupPage = () => {
             <ProfileField label="Full Name" value={patient.full_name} />
             <ProfileField label="Blood Group" value={patient.blood_group} valueStyle={{ color: '#C00000', fontWeight: '700' }} />
             <ProfileField label="Date of Birth" value={formatDate(patient.date_of_birth)} />
+            <ProfileField label="Age" value={formatAge(patient.date_of_birth)} />
             <ProfileField label="Gender" value={capitalise(patient.gender)} />
             <ProfileField label="NIC" value={patient.nic} />
             <ProfileField label="QR ID" value={patient.qr_code_id} />
