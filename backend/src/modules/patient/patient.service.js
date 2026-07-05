@@ -199,11 +199,15 @@ const getPatientByQrCode = async (qrCodeId) => {
 /**
  * Uses AI to generate a highly precise clinical summary of a patient's medical history.
  * Optimized for extreme brevity, tables, and rapid doctor scannability.
+ * Cross-references the patient's known chronic conditions (CARE4U-60) as context
+ * for medication classification, without duplicating what the UI's dedicated
+ * Chronic Conditions card already displays.
  * @param {string} patientId - UUID of the patient
  * @returns {Promise<Object>} Object containing the generated summary text
  */
 const getPatientHistorySummary = async (patientId) => {
   const records = await getMedicalRecords(patientId);
+  const conditions = await patientRepository.getConditionsByPatientId(patientId);
 
   const formattedRecords = records.length > 0 
     ? records.map(r => {
@@ -214,12 +218,21 @@ const getPatientHistorySummary = async (patientId) => {
       }).join('\n')
     : 'No past medical records found.';
 
+  const formattedConditions = conditions.length > 0
+    ? conditions.map(c => {
+        const diagnosedDate = c.diagnosed_at
+          ? new Date(c.diagnosed_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+          : 'Unknown date';
+        return `[CONDITION: ${c.condition}] | DIAGNOSED: ${diagnosedDate} | PRIORITY: ${c.is_priority ? 'Yes' : 'No'} | NOTES: ${c.notes || 'None'}`;
+      }).join('\n')
+    : 'No chronic conditions recorded.';
+
   const prompt = `
     You are a clinical UI assistant. Provide a lightning-fast, ultra-concise summary for a doctor who has 30 seconds before a patient walks in.
 
     ## STRICT UX & ACCURACY RULES:
     1. DO NOT include a consultation timeline (the UI already shows this).
-    2. DO NOT include allergies (the UI already shows this).
+    2. DO NOT include allergies or chronic conditions in your output (the UI already shows both of these separately) — but DO use the chronic conditions list below as context for Rule 8.
     3. Use extreme brevity. Fragment sentences are preferred.
     4. Use ONLY information explicitly present in the records. Do not diagnose.
     5. NEVER alter or guess dates.
@@ -232,7 +245,9 @@ const getPatientHistorySummary = async (patientId) => {
        in URGENT ALERTS — never silently drop it.
     8. A medication or instruction only belongs in ACTIVE PLAN if it treats an
        ongoing/chronic issue, or if nothing in the records suggests the condition
-       it was prescribed for has resolved. Short-course medication tied to a
+       it was prescribed for has resolved. Use the KNOWN CHRONIC CONDITIONS list
+       below to help decide chronicity — a medication tied to a listed chronic
+       condition is ongoing by default. Short-course medication tied to a
        time-limited acute illness (e.g. a several-day infection, a resolved
        injury) that has already run its course is EXCLUDED, even if no record
        explicitly says "resolved."
@@ -251,9 +266,12 @@ const getPatientHistorySummary = async (patientId) => {
       immediate clinical red flags. (If none, output "- None active").
 
     ### 2. PATIENT SNAPSHOT
-    - 2-3 bullet points: active chronic conditions, major surgical history, and any
-      documented family/social history that materially affects risk (e.g. strong
-      family history of a relevant condition). Omit if not present in records.
+    - One bullet each, only for categories actually present in the records:
+      major surgical history; family history relevant to risk (e.g. a strong
+      family history of a relevant condition); social history (smoking,
+      alcohol, occupation). Do NOT repeat chronic conditions here (see Rule 2).
+      Do NOT omit a category just to keep the list short — include every
+      category that has documented information, skip only the ones with none.
 
     ### 3. LATEST LAB RESULTS
     - Format STRICTLY as a Markdown table, following Rule 9 (exhaustive tests, latest value only per test).
@@ -262,6 +280,9 @@ const getPatientHistorySummary = async (patientId) => {
 
     ### 4. ACTIVE PLAN
     - Bullet points of medications/instructions that are still ongoing per Rule 8.
+
+    --- KNOWN CHRONIC CONDITIONS ---
+    ${formattedConditions}
 
     --- PAST MEDICAL RECORDS ---
     ${formattedRecords}

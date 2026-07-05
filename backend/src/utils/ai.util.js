@@ -25,6 +25,9 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 /**
  * Generates text using AI based on a provided prompt.
  * Tries Groq first (speed), falls back to Gemini (reliability), then extracts local data.
+ * Uses a low, fixed temperature and seed so identical prompts (e.g. the clinical
+ * summary prompt, which a doctor may regenerate) produce consistent, reproducible
+ * output rather than flip-flopping on judgment calls like "is this follow-up outstanding".
  * @param {string} prompt - The instructions and data for the AI to process.
  * @returns {Promise<string>} The generated text response.
  */
@@ -34,6 +37,8 @@ const generateAIResponse = async (prompt) => {
       const groqResponse = await groq.chat.completions.create({
         messages: [{ role: 'user', content: prompt }],
         model: 'llama-3.3-70b-versatile', // Upgraded to 70B for strict prompt adherence
+        temperature: 0.1, // Low, near-deterministic — avoids inconsistent judgment calls on repeated generations
+        seed: 42,          // Fixed seed for reproducibility across calls with identical input
       });
       
       return groqResponse.choices[0].message.content;
@@ -44,7 +49,10 @@ const generateAIResponse = async (prompt) => {
     
     try {
       // --- SECONDARY SERVICE: Google Gemini (Reliability) ---
-      const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' });
+      const model = genAI.getGenerativeModel({
+        model: 'gemini-3.5-flash',
+        generationConfig: { temperature: 0.1 }, // Match Groq's low temperature for consistency
+      });
       const result = await model.generateContent(prompt);
       
       return result.response.text();
