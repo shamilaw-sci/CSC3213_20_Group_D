@@ -205,6 +205,29 @@ const getPatientHistorySummaryController = async (req, res) => {
   }
 };
 
+/**
+ * Handles POST /api/patients/:id/photo
+ * Uploads a new profile photo for a patient. Expects a multipart/form-data
+ * body with a single file field named "photo" (handled by multer upstream).
+ */
+const uploadPatientPhotoController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updated = await patientService.uploadPatientPhoto(id, req.file);
+
+    res.status(200).json({
+      success: true,
+      message: 'Patient photo uploaded successfully',
+      data: updated,
+    });
+  } catch (error) {
+    console.error('uploadPatientPhotoController error:', error);
+    const statusCode = error.statusCode || 500;
+    const message = error.statusCode ? error.message : 'Internal server error';
+    res.status(statusCode).json({ success: false, message });
+  }
+};
+
 module.exports = {
   getPatientController,
   updatePatientController,
@@ -214,5 +237,6 @@ module.exports = {
   deleteAllergyController,
   getPatientPrescriptionsController,
   getPatientByQrCodeController,
-  getPatientHistorySummaryController
+  getPatientHistorySummaryController,
+  uploadPatientPhotoController
 };

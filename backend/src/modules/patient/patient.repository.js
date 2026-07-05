@@ -28,6 +28,7 @@ async function getPatientById(id) {
       p.emergency_contact_phone,
       p.emergency_contact_relationship,
       p.qr_code_id,
+      p.photo_url,
       p.created_at,
       p.full_name,
       u.email,
@@ -61,6 +62,7 @@ async function getPatientByUserId(userId) {
       p.emergency_contact_phone,
       p.emergency_contact_relationship,
       p.qr_code_id,
+      p.photo_url,
       p.created_at,
       p.full_name,
       u.email,
@@ -106,6 +108,26 @@ async function updatePatient(id, data) {
       emergency_contact_relationship,
       id,
     ]
+  );
+  return result.rows[0] || null;
+}
+
+/**
+ * Updates only the photo_url field on a patient record.
+ * Kept as its own function (rather than folded into updatePatient)
+ * since photo uploads go through a dedicated multipart endpoint,
+ * not the general profile-edit JSON body.
+ * @param {string} patientId - UUID of the patient (patients.id)
+ * @param {string} photoUrl  - Public URL of the uploaded photo in Supabase Storage
+ * @returns {Promise<Object|null>} Updated patient row or null
+ */
+async function updatePatientPhoto(patientId, photoUrl) {
+  const result = await pool.query(
+    `UPDATE patients
+    SET photo_url = $1
+    WHERE id = $2
+    RETURNING *`,
+    [photoUrl, patientId]
   );
   return result.rows[0] || null;
 }
@@ -296,6 +318,7 @@ async function getPatientByQrCodeId(qrCodeId) {
       p.emergency_contact_phone,
       p.emergency_contact_relationship,
       p.qr_code_id,
+      p.photo_url,
       p.created_at,
       p.full_name,
       u.email,
@@ -314,11 +337,12 @@ module.exports = {
   getPatientById,
   getPatientByUserId,
   updatePatient,
+  updatePatientPhoto,
   getMedicalRecords,
   getAllergies,
   addAllergy,
   deleteAllergy,
   getPatientPrescriptions,
   getPatientByQrCodeId,
-  getConditionsByPatientId, 
+  getConditionsByPatientId,
 };

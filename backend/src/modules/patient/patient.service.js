@@ -8,6 +8,9 @@
 
 const patientRepository = require('./patient.repository');
 const { generateAIResponse } = require('../../utils/ai.util');
+const { supabase } = require('../../config/supabase');
+
+const PHOTO_BUCKET = 'patient-photos';
 
 /**
  * Retrieves a patient's full profile by their patient UUID.
@@ -55,6 +58,63 @@ const updatePatientProfile = async (id, data) => {
   );
 
   const updated = await patientRepository.updatePatient(id, filteredData);
+  return updated;
+};
+
+/**
+ * Uploads a new profile photo for a patient to Supabase Storage and
+ * saves the resulting public URL onto the patient's record.
+ * Uses a fixed storage path per patient (no original filename/extension)
+ * with upsert enabled, so re-uploading always overwrites the previous
+ * photo rather than accumulating orphaned files in the bucket.
+ * @param {string} patientId - UUID of the patient (from patients table)
+ * @param {Object} file      - Multer file object ({ buffer, mimetype, size })
+ * @returns {Promise<Object>} The updated patient record (with new photo_url)
+ * @throws {Error} 404 if patient is not found
+ * @throws {Error} 400 if no file was provided
+ * @throws {Error} 500 if the Supabase Storage upload fails
+ */
+const uploadPatientPhoto = async (patientId, file) => {
+  if (!file) {
+    const error = new Error('No photo file was provided');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const existing = await patientRepository.getPatientById(patientId);
+  if (!existing) {
+    const error = new Error('Patient not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  // Fixed path per patient — upsert overwrites any previous photo,
+  // regardless of the original file's extension.
+  const storagePath = `${patientId}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(PHOTO_BUCKET)
+    .upload(storagePath, file.buffer, {
+      contentType: file.mimetype,
+      upsert: true,
+    });
+
+  if (uploadError) {
+    console.error('Supabase Storage upload error:', uploadError);
+    const error = new Error('Failed to upload photo to storage');
+    error.statusCode = 500;
+    throw error;
+  }
+
+  const { data: publicUrlData } = supabase.storage
+    .from(PHOTO_BUCKET)
+    .getPublicUrl(storagePath);
+
+  // Cache-bust so the doctor lookup page and patient's own profile
+  // don't keep showing a stale browser-cached image after re-upload.
+  const photoUrl = `${publicUrlData.publicUrl}?updated=${Date.now()}`;
+
+  const updated = await patientRepository.updatePatientPhoto(patientId, photoUrl);
   return updated;
 };
 
@@ -288,7 +348,6 @@ const getPatientHistorySummary = async (patientId) => {
     ${formattedRecords}
   `;
 
-  const { generateAIResponse } = require('../../utils/ai.util');
   const summaryText = await generateAIResponse(prompt);
   
   return { summary: summaryText };
@@ -297,6 +356,7 @@ const getPatientHistorySummary = async (patientId) => {
 module.exports = {
   getPatientProfile,
   updatePatientProfile,
+  uploadPatientPhoto,
   getMedicalRecords,
   getAllergies,
   addAllergy,
