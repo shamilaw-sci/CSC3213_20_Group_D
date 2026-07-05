@@ -177,10 +177,11 @@ const getPatientPrescriptions = async (patientId) => {
 };
 
 /**
- * Retrieves a patient profile using their QR code ID.
+ * Retrieves a patient profile using their QR code ID, including their
+ * chronic conditions bundled in as a `conditions` array.
  * Throws 404 if no patient is found with that QR code.
  * @param {string} qrCodeId - The qr_code_id value (e.g. "QR-TEST-001")
- * @returns {Promise<Object>} Patient object
+ * @returns {Promise<Object>} Patient object with a `conditions` array attached
  */
 const getPatientByQrCode = async (qrCodeId) => {
   const patient = await patientRepository.getPatientByQrCodeId(qrCodeId);
@@ -189,7 +190,10 @@ const getPatientByQrCode = async (qrCodeId) => {
     error.statusCode = 404;
     throw error;
   }
-  return patient;
+
+  const conditions = await patientRepository.getConditionsByPatientId(patient.id);
+
+  return { ...patient, conditions };
 };
 
 /**

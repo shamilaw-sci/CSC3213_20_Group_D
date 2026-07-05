@@ -146,7 +146,7 @@ const PatientLookupPage = () => {
   const [aiSummary, setAiSummary] = useState(null);
   const [summaryError, setSummaryError] = useState(null);
 
-  // Fetch patient by QR code ID
+  // Fetch patient by QR code ID (includes bundled `conditions` array)
   const {
     data: patient,
     isLoading: patientLoading,
@@ -170,6 +170,9 @@ const PatientLookupPage = () => {
     queryFn: () => getMedicalRecords(patient.id),
     enabled: !!patient?.id,
   });
+
+  // Chronic conditions come bundled on the patient object itself (CARE4U-60)
+  const conditions = patient?.conditions || [];
 
   // ── AI Summary Handler ──
   const handleGenerateSummary = async () => {
@@ -265,7 +268,47 @@ const PatientLookupPage = () => {
           </Card>
         </div>
 
-        {/* ── Row 2: Known Allergies ── */}
+        {/* ── Row 2: Chronic Conditions (CARE4U-60) ── */}
+        <Card title={`Chronic Conditions (${conditions.length})`}>
+          {conditions.length === 0 ? (
+            <p className="text-sm text-slate-500 py-2">No chronic conditions recorded.</p>
+          ) : (
+            <div className="flex flex-col gap-3 pt-1">
+              {conditions.map((condition) => (
+                <div
+                  key={condition.id}
+                  className={`flex items-start justify-between py-2.5 px-3 rounded-md border-b border-slate-100 last:border-0 ${
+                    condition.is_priority ? 'bg-red-50 border border-red-200' : ''
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center gap-2">
+                      {condition.is_priority && (
+                        <AlertTriangle size={14} className="text-red-600 shrink-0" strokeWidth={2.5} />
+                      )}
+                      <p className={`text-sm font-semibold ${condition.is_priority ? 'text-red-900' : 'text-slate-800'}`}>
+                        {condition.condition}
+                      </p>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Diagnosed: {formatDate(condition.diagnosed_at)}
+                    </p>
+                    {condition.notes && (
+                      <p className="text-xs text-slate-500 mt-0.5">{condition.notes}</p>
+                    )}
+                  </div>
+                  {condition.is_priority && (
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full text-white ml-4 shrink-0 bg-red-600">
+                      Priority
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+
+        {/* ── Row 3: Known Allergies ── */}
         <Card title={`Known Allergies (${allergies.length})`}>
           {allergies.length === 0 ? (
             <p className="text-sm text-slate-500 py-2">No allergies recorded.</p>
@@ -289,7 +332,7 @@ const PatientLookupPage = () => {
           )}
         </Card>
 
-        {/* ── Row 3: Medical Records with AI Integration ── */}
+        {/* ── Row 4: Medical Records with AI Integration ── */}
         <Card title={`Medical Records (${records.length})`}>
           
           {/* AI Action Button */}

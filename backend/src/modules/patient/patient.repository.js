@@ -162,6 +162,30 @@ async function getAllergies(patientId) {
 }
 
 /**
+ * Fetches all chronic condition records for a patient, ordered so
+ * priority-flagged conditions surface first, then newest first.
+ * @param {string} patientId - UUID of the patient (patients.id)
+ * @returns {Promise<Array>} Array of condition rows (empty array if none)
+ */
+async function getConditionsByPatientId(patientId) {
+  const result = await pool.query(
+    `SELECT
+      id,
+      patient_id,
+      condition,
+      diagnosed_at,
+      notes,
+      is_priority,
+      created_at
+    FROM patient_conditions
+    WHERE patient_id = $1
+    ORDER BY is_priority DESC, created_at DESC`,
+    [patientId]
+  );
+  return result.rows;
+}
+
+/**
  * Inserts a new allergy record for a patient.
  * @param {string} patientId - UUID of the patient (patients.id)
  * @param {string} allergen  - Name of the allergen (e.g. Penicillin)
@@ -296,4 +320,5 @@ module.exports = {
   deleteAllergy,
   getPatientPrescriptions,
   getPatientByQrCodeId,
+  getConditionsByPatientId, 
 };
