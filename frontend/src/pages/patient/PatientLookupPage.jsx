@@ -4,6 +4,10 @@
  * Fetches and displays full patient details using a QR code ID.
  * URL pattern: /lookup/:qrCodeId
  * Reachable after a doctor scans a patient QR code via qr-scanner.app.
+ * Header banner redesigned for at-a-glance clinical identity (CARE4U-59/66/69):
+ * photo, name, age/gender, blood group, and priority condition surface
+ * immediately, with an ECG-trace signature animation on load. Avatar sized
+ * up to 96px for reliable visual identification.
  * @author    Wasana Karunanayaka (S/21/081)
  */
 
@@ -50,14 +54,13 @@ const severityColor = (severity) => {
 
 /**
  * Builds the avatar image source: the patient's uploaded photo if present,
- * otherwise a generated placeholder based on their name. Mirrors the same
- * fallback pattern used on the patient's own profile page (CARE4U-65).
+ * otherwise a generated placeholder based on their name (CARE4U-65).
  * @param {Object} patient - The patient data object
  * @returns {string} Image URL to render
  */
 const getAvatarSrc = (patient) => {
   if (patient?.photo_url) return patient.photo_url;
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(patient?.full_name || 'Patient')}&background=93C5FD&color=1E3A5F&size=80&bold=true&rounded=true`;
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(patient?.full_name || 'Patient')}&background=93C5FD&color=1E3A5F&size=120&bold=true&rounded=true`;
 };
 
 // ─── AI Text Formatter (Hardened for Tables & Superscripts) ────────────────
@@ -147,6 +150,46 @@ const ProfileField = ({ label, value, valueStyle }) => (
   </div>
 );
 
+// ─── Banner Load Animations (scoped to this page) ─────────────────────────────
+// Kept as an inline <style> block rather than a separate CSS file since these
+// keyframes are used nowhere else in the app yet. All animations are one-shot
+// (no looping) and fully disabled under prefers-reduced-motion.
+const BannerAnimationStyles = () => (
+  <style>{`
+    @keyframes cuAvatarPop {
+      from { opacity: 0; transform: scale(0.6); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    @keyframes cuFadeSlideUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes cuEcgDraw {
+      from { stroke-dashoffset: 1600; }
+      to   { stroke-dashoffset: 0; }
+    }
+    .cu-avatar-pop {
+      animation: cuAvatarPop 450ms ease-out both;
+    }
+    .cu-fade-slide-up {
+      animation: cuFadeSlideUp 450ms ease-out both;
+    }
+    .cu-ecg-draw {
+      stroke-dasharray: 1600;
+      stroke-dashoffset: 1600;
+      animation: cuEcgDraw 900ms ease-out 100ms both;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .cu-avatar-pop, .cu-fade-slide-up, .cu-ecg-draw {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+        stroke-dashoffset: 0 !important;
+      }
+    }
+  `}</style>
+);
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const PatientLookupPage = () => {
@@ -185,6 +228,9 @@ const PatientLookupPage = () => {
 
   // Chronic conditions come bundled on the patient object itself (CARE4U-60)
   const conditions = patient?.conditions || [];
+
+  // The single highest-priority condition, if any, surfaces in the banner (CARE4U-59)
+  const priorityCondition = conditions.find((c) => c.is_priority);
 
   // ── AI Summary Handler ──
   const handleGenerateSummary = async () => {
@@ -245,22 +291,72 @@ const PatientLookupPage = () => {
   return (
     <div className="min-h-screen bg-slate-50">
 
-      {/* ── Header Banner ── */}
-      <div className="px-8 py-6" style={{ backgroundColor: '#1E3A5F' }}>
-        <div className="max-w-5xl mx-auto flex items-center gap-4">
-          <img
-            src={getAvatarSrc(patient)}
-            alt="Patient"
-            className="w-16 h-16 rounded-full border-2 border-white/30 shadow-md object-cover shrink-0"
+      <BannerAnimationStyles />
+
+      {/* ── Header Banner (CARE4U-59 / 66 / 69) ── */}
+      <div className="relative overflow-hidden px-8 py-7 bg-linear-to-br from-[#0F2942] to-[#1E3A5F]">
+
+        {/* Signature ECG trace — draws once on load, purely decorative */}
+        <svg
+          className="absolute inset-0 w-full h-full opacity-25 pointer-events-none"
+          viewBox="0 0 1200 60"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <path
+            className="cu-ecg-draw"
+            d="M0,30 L140,30 L160,8 L180,52 L200,4 L220,56 L240,30 L420,30 L440,18 L460,42 L480,30 L1200,30"
+            fill="none"
+            stroke="#38BDF8"
+            strokeWidth="2"
           />
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: '#93C5FD' }}>
-              Doctor View — Read Only
-            </p>
-            <h1 className="text-2xl font-bold text-white">{patient?.full_name || 'Patient Lookup'}</h1>
-            <p className="text-sm mt-1" style={{ color: '#CBD5E1' }}>
-              Scanned via QR code — <span className="font-mono font-semibold text-white">{qrCodeId}</span>
-            </p>
+        </svg>
+
+        <div className="max-w-5xl mx-auto flex items-center justify-between gap-6 relative z-10">
+          <div className="flex items-center gap-5">
+            <img
+              src={getAvatarSrc(patient)}
+              alt="Patient"
+              className="cu-avatar-pop w-24 h-24 rounded-full border-4 border-white/30 shadow-md object-cover shrink-0"
+            />
+            <div>
+              <p className="cu-fade-slide-up text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: '#93C5FD' }}>
+                Doctor View — Read Only
+              </p>
+              <h1 className="cu-fade-slide-up text-2xl font-bold text-white" style={{ animationDelay: '80ms' }}>
+                {patient?.full_name || 'Patient Lookup'}
+              </h1>
+              <div
+                className="cu-fade-slide-up flex flex-wrap items-center gap-2 mt-2"
+                style={{ animationDelay: '150ms' }}
+              >
+                <span className="text-sm" style={{ color: '#CBD5E1' }}>
+                  {formatAge(patient.date_of_birth)} · {capitalise(patient.gender)}
+                </span>
+                {patient.blood_group && (
+                  <span
+                    className="text-xs font-bold px-2 py-0.5 rounded-full text-white"
+                    style={{ backgroundColor: '#C00000' }}
+                  >
+                    {patient.blood_group}
+                  </span>
+                )}
+                {priorityCondition && (
+                  <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full text-white bg-amber-600">
+                    <AlertTriangle size={11} strokeWidth={2.5} />
+                    {priorityCondition.condition}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div
+            className="cu-fade-slide-up hidden sm:block bg-white/10 rounded-xl px-4 py-2 text-right backdrop-blur-sm"
+            style={{ animationDelay: '250ms' }}
+          >
+            <p className="text-xs text-blue-200 uppercase tracking-wide">Patient ID</p>
+            <p className="text-sm font-mono font-semibold text-white">{qrCodeId}</p>
           </div>
         </div>
       </div>
@@ -275,7 +371,6 @@ const PatientLookupPage = () => {
             <ProfileField label="Blood Group" value={patient.blood_group} valueStyle={{ color: '#C00000', fontWeight: '700' }} />
             <ProfileField label="Date of Birth" value={formatDate(patient.date_of_birth)} />
             <ProfileField label="Age" value={formatAge(patient.date_of_birth)} />
-            <ProfileField label="Gender" value={capitalise(patient.gender)} />
             <ProfileField label="NIC" value={patient.nic} />
             <ProfileField label="QR ID" value={patient.qr_code_id} />
           </Card>

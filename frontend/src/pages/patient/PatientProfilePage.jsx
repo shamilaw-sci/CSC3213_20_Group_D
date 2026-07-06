@@ -3,7 +3,9 @@
  * @component PatientProfilePage
  * @desc    Displays and allows editing of the patient's profile.
  * Includes smart autocomplete for adding allergies, secure deletion,
- * and profile photo upload (CARE4U-65).
+ * profile photo upload (CARE4U-65), and a warm, personal header banner
+ * redesign sharing visual DNA with the doctor lookup banner (CARE4U-59/69).
+ * Avatar sized up to 96px for reliable visual identification.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -56,7 +58,18 @@ const capitalise = (str) => {
  */
 const getAvatarSrc = (patient) => {
   if (patient?.photo_url) return patient.photo_url;
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(patient?.full_name || 'Patient')}&background=2E75B6&color=fff&size=80&bold=true&rounded=true`;
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(patient?.full_name || 'Patient')}&background=2E75B6&color=fff&size=120&bold=true&rounded=true`;
+};
+
+/**
+ * Extracts just the first name for the warm banner greeting.
+ * Falls back to the full value if no space is found (e.g. mononyms).
+ * @param {string} fullName - The patient's full name
+ * @returns {string} First name only
+ */
+const getFirstName = (fullName) => {
+  if (!fullName) return 'there';
+  return fullName.trim().split(' ')[0];
 };
 
 // ─── Severity Badge ───────────────────────────────────────────────────────────
@@ -87,6 +100,47 @@ const ProfileField = ({ icon: Icon, label, value }) => (
       <p className="text-sm font-medium text-slate-800 mt-0.5">{value || '—'}</p>
     </div>
   </div>
+);
+
+// ─── Banner Load Animations (scoped to this page) ─────────────────────────────
+// Same choreography language as the doctor lookup banner (CARE4U-69), but the
+// photo gets a soft breathing glow ring instead of an ECG trace — a calmer,
+// more personal signature for the patient's own space rather than a clinical one.
+// All animations are one-shot and disabled under prefers-reduced-motion.
+const BannerAnimationStyles = () => (
+  <style>{`
+    @keyframes cuAvatarPop {
+      from { opacity: 0; transform: scale(0.6); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    @keyframes cuFadeSlideUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes cuGlowPulse {
+      0%   { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.55); }
+      70%  { box-shadow: 0 0 0 18px rgba(56, 189, 248, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+    }
+    .cu-avatar-pop {
+      animation: cuAvatarPop 450ms ease-out both;
+    }
+    .cu-fade-slide-up {
+      animation: cuFadeSlideUp 450ms ease-out both;
+    }
+    .cu-glow-ring {
+      animation: cuGlowPulse 1400ms ease-out 350ms 1;
+      border-radius: 9999px;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .cu-avatar-pop, .cu-fade-slide-up, .cu-glow-ring {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+        box-shadow: none !important;
+      }
+    }
+  `}</style>
 );
 
 // ─── Main Page Component ──────────────────────────────────────────────────────
@@ -275,16 +329,20 @@ const PatientProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-12">
-      {/* ── Page Header ── */}
-      <div className="bg-[#1E3A5F] text-white px-6 py-8 shadow-sm">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            {/* ── Avatar with upload trigger (CARE4U-65) ── */}
-            <div className="relative w-16 h-16 shrink-0">
+
+      <BannerAnimationStyles />
+
+      {/* ── Page Header (CARE4U-59 / 69) ── */}
+      <div className="relative overflow-hidden text-white px-6 py-8 shadow-sm bg-linear-to-br from-[#0F2942] to-[#1E3A5F]">
+        <div className="max-w-4xl mx-auto flex items-center justify-between relative z-10">
+          <div className="flex items-center gap-5">
+            {/* ── Avatar with upload trigger + glow-ring signature (CARE4U-65 / 69) ── */}
+            <div className="relative w-24 h-24 shrink-0">
+              <div className="cu-glow-ring absolute inset-0" />
               <img
                 src={getAvatarSrc(patient)}
                 alt="Profile"
-                className="w-16 h-16 rounded-full border-2 border-white/30 shadow-md object-cover"
+                className="cu-avatar-pop w-24 h-24 rounded-full border-4 border-white/30 shadow-md object-cover"
               />
               {uploadPhotoMutation.isPending && (
                 <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center">
@@ -296,9 +354,9 @@ const PatientProfilePage = () => {
                 onClick={handlePhotoButtonClick}
                 disabled={uploadPhotoMutation.isPending}
                 title="Change profile photo"
-                className="absolute -bottom-1 -right-1 p-1.5 bg-white rounded-full shadow-md border border-slate-200 hover:bg-slate-50 transition-colors disabled:opacity-50"
+                className="absolute -bottom-0.5 -right-0.5 p-2 bg-white rounded-full shadow-md border border-slate-200 hover:bg-slate-50 transition-colors disabled:opacity-50"
               >
-                <Camera size={12} className="text-[#1E3A5F]" />
+                <Camera size={14} className="text-[#1E3A5F]" />
               </button>
               <input
                 ref={photoInputRef}
@@ -309,11 +367,21 @@ const PatientProfilePage = () => {
               />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">{patient?.full_name || 'My Profile'}</h1>
-              <p className="text-blue-200 text-sm mt-1">Manage your personal health information</p>
+              <p className="cu-fade-slide-up text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: '#93C5FD' }}>
+                My Profile
+              </p>
+              <h1 className="cu-fade-slide-up text-2xl font-bold" style={{ animationDelay: '80ms' }}>
+                Welcome back, {getFirstName(patient?.full_name)}
+              </h1>
+              <p className="cu-fade-slide-up text-sm mt-1" style={{ color: '#CBD5E1', animationDelay: '150ms' }}>
+                Manage your personal health information
+              </p>
             </div>
           </div>
-          <div className="hidden sm:block bg-white/10 rounded-xl px-4 py-2 text-right backdrop-blur-sm">
+          <div
+            className="cu-fade-slide-up hidden sm:block bg-white/10 rounded-xl px-4 py-2 text-right backdrop-blur-sm"
+            style={{ animationDelay: '250ms' }}
+          >
             <p className="text-xs text-blue-200 uppercase tracking-wide">Patient ID</p>
             <p className="text-sm font-mono font-semibold">{patient?.qr_code_id || '—'}</p>
           </div>
