@@ -30,6 +30,24 @@ export const updatePatientProfile = async (patientId, data) => {
 };
 
 /**
+ * Uploads a new profile photo for a patient.
+ * Sends the file as multipart/form-data under field name "photo",
+ * overriding the default JSON Content-Type set on the shared `api` instance.
+ * @param {string} patientId - UUID of the patient
+ * @param {File}   file      - The image file selected by the user (from an <input type="file">)
+ * @returns {Promise<Object>} The updated patient data object (includes new photo_url)
+ */
+export const uploadPatientPhoto = async (patientId, file) => {
+  const formData = new FormData();
+  formData.append('photo', file);
+
+  const response = await api.post(`/api/patients/${patientId}/photo`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data.data;   // unwrap { success, message, data }
+};
+
+/**
  * Fetches all medical records for a patient.
  * @param {string} patientId - UUID of the patient
  * @returns {Promise<Array>} Array of medical record objects
