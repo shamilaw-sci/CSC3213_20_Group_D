@@ -48,6 +48,18 @@ const severityColor = (severity) => {
   return '#1F7A1F';
 };
 
+/**
+ * Builds the avatar image source: the patient's uploaded photo if present,
+ * otherwise a generated placeholder based on their name. Mirrors the same
+ * fallback pattern used on the patient's own profile page (CARE4U-65).
+ * @param {Object} patient - The patient data object
+ * @returns {string} Image URL to render
+ */
+const getAvatarSrc = (patient) => {
+  if (patient?.photo_url) return patient.photo_url;
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(patient?.full_name || 'Patient')}&background=93C5FD&color=1E3A5F&size=80&bold=true&rounded=true`;
+};
+
 // ─── AI Text Formatter (Hardened for Tables & Superscripts) ────────────────
 const formatAiText = (text) => {
   if (!text) return null;
@@ -235,14 +247,21 @@ const PatientLookupPage = () => {
 
       {/* ── Header Banner ── */}
       <div className="px-8 py-6" style={{ backgroundColor: '#1E3A5F' }}>
-        <div className="max-w-5xl mx-auto">
-          <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: '#93C5FD' }}>
-            Doctor View — Read Only
-          </p>
-          <h1 className="text-2xl font-bold text-white">Patient Lookup</h1>
-          <p className="text-sm mt-1" style={{ color: '#CBD5E1' }}>
-            Scanned via QR code — <span className="font-mono font-semibold text-white">{qrCodeId}</span>
-          </p>
+        <div className="max-w-5xl mx-auto flex items-center gap-4">
+          <img
+            src={getAvatarSrc(patient)}
+            alt="Patient"
+            className="w-16 h-16 rounded-full border-2 border-white/30 shadow-md object-cover shrink-0"
+          />
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: '#93C5FD' }}>
+              Doctor View — Read Only
+            </p>
+            <h1 className="text-2xl font-bold text-white">{patient?.full_name || 'Patient Lookup'}</h1>
+            <p className="text-sm mt-1" style={{ color: '#CBD5E1' }}>
+              Scanned via QR code — <span className="font-mono font-semibold text-white">{qrCodeId}</span>
+            </p>
+          </div>
         </div>
       </div>
 
