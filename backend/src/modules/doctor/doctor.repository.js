@@ -103,6 +103,46 @@ const getTodayAppointments = async (doctorId) => {
   return result.rows;
 };
 
+const getDoctorDashboardStats = async (doctorId) => {
+  const result = await pool.query(
+    `SELECT 
+       a.id,
+       a.patient_id,
+       a.scheduled_at,
+       a.status,
+       a.type,
+       p.full_name AS patient_name
+     FROM appointments a
+     JOIN patients p ON a.patient_id = p.id
+     WHERE a.doctor_id = $1
+       AND DATE(a.scheduled_at) = CURRENT_DATE
+     ORDER BY a.scheduled_at ASC`,
+    [doctorId]
+  );
+
+  const appointments = result.rows;
+  const total = appointments.length;
+  const completed = appointments.filter(a => a.status === 'completed').length;
+  const inProgress = appointments.filter(a => a.status === 'in_progress').length;
+  const pending = appointments.filter(a => a.status === 'scheduled').length;
+  const nextPatient = appointments.find(a => a.status === 'scheduled') || null;
+
+  return {
+    total,
+    completed,
+    inProgress,
+    pending,
+    nextPatient: nextPatient
+      ? {
+          id: nextPatient.id,
+          patient_name: nextPatient.patient_name,
+          scheduled_at: nextPatient.scheduled_at,
+          type: nextPatient.type,
+        }
+      : null,
+  };
+};
+
 module.exports = {
   getDoctorById,
   getDoctorByUserId,
@@ -111,4 +151,5 @@ module.exports = {
   getDoctorAvailability,
   updateDoctorAvailability,
   getTodayAppointments,
+  getDoctorDashboardStats,
 };
