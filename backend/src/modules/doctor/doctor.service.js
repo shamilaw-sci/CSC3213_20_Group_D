@@ -37,6 +37,11 @@ const getTodayAppointments = async (doctorId) => {
   return appointments;
 };
 
+const getDoctorDashboardStats = async (doctorId) => {
+  const stats = await doctorRepository.getDoctorDashboardStats(doctorId);
+  return stats;
+};
+
 module.exports = {
   getDoctorProfile,
   getAllDoctors,
@@ -44,4 +49,5 @@ module.exports = {
   getDoctorAvailability,
   updateDoctorAvailability,
   getTodayAppointments,
+  getDoctorDashboardStats,
 };

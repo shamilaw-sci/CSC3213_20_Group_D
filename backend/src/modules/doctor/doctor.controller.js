@@ -116,6 +116,21 @@ const getTodayAppointmentsController = async (req, res) => {
   }
 };
 
+const getDoctorDashboardStatsController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const stats = await doctorService.getDoctorDashboardStats(id);
+    res.status(200).json({
+      success: true,
+      message: 'Dashboard stats retrieved successfully',
+      data: stats,
+    });
+  } catch (error) {
+    console.error('getDoctorDashboardStatsController error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
 module.exports = {
   getDoctorController,
   getAllDoctorsController,
@@ -123,4 +138,5 @@ module.exports = {
   getDoctorAvailabilityController,
   updateDoctorAvailabilityController,
   getTodayAppointmentsController,
+  getDoctorDashboardStatsController,
 };
