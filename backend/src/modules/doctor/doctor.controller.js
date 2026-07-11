@@ -131,6 +131,22 @@ const getDoctorDashboardStatsController = async (req, res) => {
   }
 };
 
+const getDoctorAiInsightsController = async (req, res) => {
+  try {
+    res.status(200).json({
+      success: true,
+      message: 'AI insights retrieved successfully',
+      data: {
+        insights: [],
+        note: 'No AI-generated insights available yet',
+      },
+    });
+  } catch (error) {
+    console.error('getDoctorAiInsightsController error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
 module.exports = {
   getDoctorController,
   getAllDoctorsController,
@@ -139,4 +155,5 @@ module.exports = {
   updateDoctorAvailabilityController,
   getTodayAppointmentsController,
   getDoctorDashboardStatsController,
+  getDoctorAiInsightsController,
 };

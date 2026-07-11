@@ -15,6 +15,7 @@ const {
   updateDoctorAvailabilityController,
   getTodayAppointmentsController,
   getDoctorDashboardStatsController,
+  getDoctorAiInsightsController,
 } = require('./doctor.controller');
 const { auditMiddleware } = require('../../middleware/auditLog');
 
@@ -38,5 +39,8 @@ router.get('/:id/appointments/today', auditMiddleware('VIEW_APPOINTMENT_QUEUE', 
 
 // GET /api/doctors/:id/dashboard-stats — get dashboard summary stats
 router.get('/:id/dashboard-stats', auditMiddleware('VIEW_DASHBOARD_STATS', 'doctor'), getDoctorDashboardStatsController);
+
+// GET /api/doctors/:id/ai-insights — get AI insights (placeholder until Epic 9.5)
+router.get('/:id/ai-insights', auditMiddleware('VIEW_AI_INSIGHTS', 'doctor'), getDoctorAiInsightsController);
 
 module.exports = router;
