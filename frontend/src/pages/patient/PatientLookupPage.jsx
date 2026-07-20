@@ -24,6 +24,7 @@
  * own Prescriptions page (CARE4U-67).
  * Most Recent Visit Summary added below the banner to give instant context 
  * on the patient's last interaction without scrolling (CARE4U-68).
+ * Thorough loading states and responsive scaling applied for mobile viewing (CARE4U-63/64).
  * @author    Wasana Karunanayaka (S/21/081)
  */
 
@@ -69,9 +70,6 @@ const severityColor = (severity) => {
   return '#1F7A1F';
 };
 
-// A prescription counts as "active" for this doctor-facing card if it's not
-// expired and hasn't been fully completed/dispensed — mirrors the same
-// logic used on the patient's own Prescriptions page.
 const isExpired = (expiresAt) => {
   if (!expiresAt) return false;
   return new Date(expiresAt) < new Date();
@@ -83,22 +81,15 @@ const daysRemaining = (expiresAt) => {
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
 };
 
-/**
- * Builds the avatar image source: the patient's uploaded photo if present,
- * otherwise a generated placeholder based on their name (CARE4U-65).
- * @param {Object} patient - The patient data object
- * @returns {string} Image URL to render
- */
 const getAvatarSrc = (patient) => {
   if (patient?.photo_url) return patient.photo_url;
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(patient?.full_name || 'Patient')}&background=93C5FD&color=1E3A5F&size=120&bold=true&rounded=true`;
 };
 
-// ─── AI Text Formatter (Hardened for Tables & Superscripts) ────────────────
+// ─── AI Text Formatter ──────────────────────────────────────────────────────
 const formatAiText = (text) => {
   if (!text) return null;
 
-  // Helper to turn ^9 into proper <sup>9</sup> HTML
   const renderTextWithSuperscript = (str) => {
     const parts = str.split(/\^(\d+)/);
     return parts.map((part, i) => 
@@ -113,12 +104,10 @@ const formatAiText = (text) => {
   const lines = normalizedText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
 
   return lines.map((line, index) => {
-    // 1. Handle Markdown Tables (| Test | Result |)
     if (line.startsWith('|')) {
-      if (line.includes('---')) return null; // Skip the markdown divider row
+      if (line.includes('---')) return null;
       
       const cells = line.split('|').filter(c => c.trim());
-      // Detect if this is the header row by checking if the next line is the divider
       const isHeader = index + 1 < lines.length && lines[index + 1].includes('---');
 
       return (
@@ -132,7 +121,6 @@ const formatAiText = (text) => {
       );
     }
 
-    // 2. Handle Headers (###)
     if (line.match(/^#+\s/)) {
       return (
         <h4 key={index} className="text-xs font-bold text-indigo-900 mt-6 mb-2 uppercase tracking-widest border-b border-indigo-100 pb-1">
@@ -141,7 +129,6 @@ const formatAiText = (text) => {
       );
     }
 
-    // 3. Handle Bullets & Bolding
     const isBullet = /^[*\-+•]\s*/.test(line);
     let cleanLine = line.replace(/^[*\-+•]\s*/, '');
     
@@ -171,7 +158,6 @@ const formatAiText = (text) => {
 };
 
 // ─── Sub-component: ProfileField ─────────────────────────────────────────────
-
 const ProfileField = ({ label, value, valueStyle }) => (
   <div className="flex flex-col gap-1 py-2 border-b border-slate-100 last:border-0">
     <span className="text-xs text-slate-500 uppercase tracking-wide">{label}</span>
@@ -181,7 +167,7 @@ const ProfileField = ({ label, value, valueStyle }) => (
   </div>
 );
 
-// ─── Sub-component: Active Prescription Row (CARE4U-67) ───────────────────
+// ─── Sub-component: Active Prescription Row ───────────────────────────────────
 const ActivePrescriptionRow = ({ prescription }) => {
   const days = daysRemaining(prescription.expires_at);
   const items = (prescription.items || []).filter((i) => i && i.medicine_name);
@@ -218,7 +204,7 @@ const ActivePrescriptionRow = ({ prescription }) => {
   );
 };
 
-// ─── Banner Load Animations ─────────────────────────────
+// ─── Banner Load Animations ───────────────────────────────────────────────────
 const BannerAnimationStyles = () => (
   <style>{`
     @keyframes cuAvatarPop {
@@ -233,12 +219,8 @@ const BannerAnimationStyles = () => (
       from { stroke-dashoffset: 1600; }
       to   { stroke-dashoffset: 0; }
     }
-    .cu-avatar-pop {
-      animation: cuAvatarPop 450ms ease-out both;
-    }
-    .cu-fade-slide-up {
-      animation: cuFadeSlideUp 450ms ease-out both;
-    }
+    .cu-avatar-pop { animation: cuAvatarPop 450ms ease-out both; }
+    .cu-fade-slide-up { animation: cuFadeSlideUp 450ms ease-out both; }
     .cu-ecg-draw {
       stroke-dasharray: 1600;
       stroke-dashoffset: 1600;
@@ -256,7 +238,6 @@ const BannerAnimationStyles = () => (
 );
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-
 const PatientLookupPage = () => {
   const { qrCodeId } = useParams();
   const [selectedRecord, setSelectedRecord] = useState(null);
@@ -273,19 +254,19 @@ const PatientLookupPage = () => {
     retry: false,
   });
 
-  const { data: allergies = [] } = useQuery({
+  const { data: allergies = [], isLoading: allergiesLoading } = useQuery({
     queryKey: ['allergies', patient?.id],
     queryFn: () => getAllergies(patient.id),
     enabled: !!patient?.id,
   });
 
-  const { data: records = [] } = useQuery({
+  const { data: records = [], isLoading: recordsLoading } = useQuery({
     queryKey: ['medical-records', patient?.id],
     queryFn: () => getMedicalRecords(patient.id),
     enabled: !!patient?.id,
   });
 
-  const { data: prescriptions = [] } = useQuery({
+  const { data: prescriptions = [], isLoading: prescriptionsLoading } = useQuery({
     queryKey: ['prescriptions', patient?.id],
     queryFn: () => getPatientPrescriptions(patient.id),
     enabled: !!patient?.id,
@@ -300,7 +281,6 @@ const PatientLookupPage = () => {
     (p) => !isExpired(p.expires_at) && p.status !== 'completed'
   );
 
-  // Grab the single most recent record for the top summary strip (CARE4U-68)
   const mostRecentVisit = records.length > 0 ? records[0] : null;
 
   const handleGenerateSummary = async () => {
@@ -331,7 +311,7 @@ const PatientLookupPage = () => {
 
   if (patientError) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <Alert
             type="error"
@@ -356,11 +336,10 @@ const PatientLookupPage = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
-
       <BannerAnimationStyles />
 
-      {/* ── Header Banner ── */}
-      <div className="relative overflow-hidden px-8 py-7 bg-linear-to-br from-[#0F2942] to-[#1E3A5F]">
+      {/* ── Header Banner (Responsive) ── */}
+      <div className="relative overflow-hidden px-4 py-6 sm:px-8 sm:py-7 bg-linear-to-br from-[#0F2942] to-[#1E3A5F]">
         <svg
           className="absolute inset-0 w-full h-full opacity-25 pointer-events-none"
           viewBox="0 0 1200 60"
@@ -376,37 +355,37 @@ const PatientLookupPage = () => {
           />
         </svg>
 
-        <div className="max-w-5xl mx-auto flex items-center justify-between gap-6 relative z-10">
-          <div className="flex items-center gap-5">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6 relative z-10">
+          <div className="flex items-center gap-4 sm:gap-5">
             <img
               src={getAvatarSrc(patient)}
               alt="Patient"
-              className="cu-avatar-pop w-24 h-24 rounded-full border-4 border-white/30 shadow-md object-cover shrink-0"
+              className="cu-avatar-pop w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-white/30 shadow-md object-cover shrink-0"
             />
             <div>
-              <p className="cu-fade-slide-up text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: '#93C5FD' }}>
+              <p className="cu-fade-slide-up text-[10px] sm:text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: '#93C5FD' }}>
                 Doctor View — Read Only
               </p>
-              <h1 className="cu-fade-slide-up text-2xl font-bold text-white" style={{ animationDelay: '80ms' }}>
+              <h1 className="cu-fade-slide-up text-xl sm:text-2xl font-bold text-white leading-tight" style={{ animationDelay: '80ms' }}>
                 {patient?.full_name || 'Patient Lookup'}
               </h1>
               <div
                 className="cu-fade-slide-up flex flex-wrap items-center gap-2 mt-2"
                 style={{ animationDelay: '150ms' }}
               >
-                <span className="text-sm" style={{ color: '#CBD5E1' }}>
+                <span className="text-xs sm:text-sm" style={{ color: '#CBD5E1' }}>
                   {formatAge(patient.date_of_birth)} · {capitalise(patient.gender)}
                 </span>
                 {patient.blood_group && (
                   <span
-                    className="text-xs font-bold px-2 py-0.5 rounded-full text-white"
+                    className="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full text-white"
                     style={{ backgroundColor: '#C00000' }}
                   >
                     {patient.blood_group}
                   </span>
                 )}
                 {priorityCondition && (
-                  <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full text-white bg-amber-600">
+                  <span className="flex items-center gap-1 text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full text-white bg-amber-600">
                     <AlertTriangle size={11} strokeWidth={2.5} />
                     {priorityCondition.condition}
                   </span>
@@ -425,12 +404,12 @@ const PatientLookupPage = () => {
         </div>
       </div>
 
-      {/* ── Page Body ── */}
-      <div className="max-w-5xl mx-auto px-6 py-8 flex flex-col gap-6">
+      {/* ── Page Body (Responsive) ── */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 flex flex-col gap-5 sm:gap-6">
 
-        {/* ── Most Recent Visit Strip (CARE4U-68) ── */}
-        {mostRecentVisit && (
-          <div className="bg-indigo-50/50 border border-indigo-100 rounded-lg px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-2 mb-2">
+        {/* ── Most Recent Visit Strip ── */}
+        {!recordsLoading && mostRecentVisit && (
+          <div className="bg-indigo-50/50 border border-indigo-100 rounded-lg px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-2 mb-1 sm:mb-2">
             <div className="flex items-center gap-2 text-indigo-900 font-semibold text-sm">
               <Clock size={16} className="text-indigo-600" />
               Most Recent Visit
@@ -450,7 +429,6 @@ const PatientLookupPage = () => {
           </div>
         )}
 
-        {/* ── Row 1: Patient Info ── */}
         <Card title="Patient Information">
           <ProfileField label="Full Name" value={patient.full_name} />
           <ProfileField label="Blood Group" value={patient.blood_group} valueStyle={{ color: '#C00000', fontWeight: '700' }} />
@@ -460,7 +438,6 @@ const PatientLookupPage = () => {
           <ProfileField label="QR ID" value={patient.qr_code_id} />
         </Card>
 
-        {/* ── Row 2: Chronic Conditions ── */}
         <Card title={`Chronic Conditions (${conditions.length})`}>
           {conditions.length === 0 ? (
             <p className="text-sm text-slate-500 py-2">No chronic conditions recorded.</p>
@@ -469,7 +446,7 @@ const PatientLookupPage = () => {
               {conditions.map((condition) => (
                 <div
                   key={condition.id}
-                  className={`flex items-start justify-between py-2.5 px-3 rounded-md border-b border-slate-100 last:border-0 ${
+                  className={`flex flex-col sm:flex-row sm:items-start sm:justify-between py-2.5 px-3 rounded-md border-b border-slate-100 last:border-0 gap-2 ${
                     condition.is_priority ? 'bg-red-50 border border-red-200' : ''
                   }`}
                 >
@@ -490,7 +467,7 @@ const PatientLookupPage = () => {
                     )}
                   </div>
                   {condition.is_priority && (
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full text-white ml-4 shrink-0 bg-red-600">
+                    <span className="self-start sm:self-auto text-xs font-semibold px-2 py-0.5 rounded-full text-white bg-red-600">
                       Priority
                     </span>
                   )}
@@ -500,13 +477,12 @@ const PatientLookupPage = () => {
           )}
         </Card>
 
-        {/* ── Row 3: Known Allergies ── */}
         <Card
           title={
             <span className="flex items-center gap-2">
               {`Known Allergies (${allergies.length})`}
-              {severeAllergies.length > 0 && (
-                <span className="flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full text-white bg-red-700">
+              {!allergiesLoading && severeAllergies.length > 0 && (
+                <span className="flex items-center gap-1 text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full text-white bg-red-700">
                   <AlertTriangle size={11} strokeWidth={2.5} />
                   {severeAllergies.length} Severe
                 </span>
@@ -514,7 +490,9 @@ const PatientLookupPage = () => {
             </span>
           }
         >
-          {allergies.length === 0 ? (
+          {allergiesLoading ? (
+             <div className="py-4 flex justify-center"><Spinner size="sm" /></div>
+          ) : allergies.length === 0 ? (
             <p className="text-sm text-slate-500 py-2">No allergies recorded.</p>
           ) : (
             <div className="flex flex-col gap-3 pt-1">
@@ -523,7 +501,7 @@ const PatientLookupPage = () => {
                   {severeAllergies.map((allergy) => (
                     <div
                       key={allergy.id}
-                      className="flex items-start justify-between gap-4 py-3 px-4 rounded-md bg-red-700"
+                      className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4 py-3 px-4 rounded-md bg-red-700"
                     >
                       <div className="flex items-start gap-2.5">
                         <AlertTriangle size={18} className="text-white shrink-0 mt-0.5" strokeWidth={2.5} />
@@ -534,7 +512,7 @@ const PatientLookupPage = () => {
                           )}
                         </div>
                       </div>
-                      <span className="text-xs font-bold px-2 py-0.5 rounded-full text-red-700 bg-white shrink-0">
+                      <span className="self-start sm:self-auto text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full text-red-700 bg-white shrink-0">
                         Severe
                       </span>
                     </div>
@@ -543,13 +521,13 @@ const PatientLookupPage = () => {
               )}
 
               {otherAllergies.map((allergy) => (
-                <div key={allergy.id} className="flex items-start justify-between py-2 border-b border-slate-100 last:border-0">
+                <div key={allergy.id} className="flex flex-wrap sm:flex-nowrap items-start justify-between gap-2 py-2 border-b border-slate-100 last:border-0">
                   <div>
                     <p className="text-sm font-semibold text-slate-800">{allergy.allergen}</p>
                     {allergy.notes && <p className="text-xs text-slate-500 mt-0.5">{allergy.notes}</p>}
                   </div>
                   <span
-                    className="text-xs font-semibold px-2 py-0.5 rounded-full text-white ml-4 shrink-0"
+                    className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full text-white shrink-0"
                     style={{ backgroundColor: severityColor(allergy.severity) }}
                   >
                     {capitalise(allergy.severity)}
@@ -560,9 +538,10 @@ const PatientLookupPage = () => {
           )}
         </Card>
 
-        {/* ── Row 3.5: Active Prescriptions ── */}
         <Card title={`Active Prescriptions (${activePrescriptions.length})`}>
-          {activePrescriptions.length === 0 ? (
+          {prescriptionsLoading ? (
+            <div className="py-4 flex justify-center"><Spinner size="sm" /></div>
+          ) : activePrescriptions.length === 0 ? (
             <p className="text-sm text-slate-500 py-2">No active prescriptions.</p>
           ) : (
             <div className="flex flex-col">
@@ -573,60 +552,67 @@ const PatientLookupPage = () => {
           )}
         </Card>
 
-        {/* ── Row 4: Medical Records ── */}
         <Card title={`Medical Records (${records.length})`}>
-          {records.length > 0 && !aiSummary && (
-            <div className="flex justify-end mb-4">
-              <button
-                onClick={handleGenerateSummary}
-                disabled={isGeneratingSummary}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-sm"
-              >
-                {isGeneratingSummary ? (
-                  <>
-                    <Spinner size="sm" color="text-white" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles size={16} />
-                    Generate AI Summary
-                  </>
-                )}
-              </button>
-            </div>
-          )}
-
-          {aiSummary && (
-            <div className="mb-6 p-6 bg-linear-to-br from-indigo-50 to-white border border-indigo-100 rounded-xl shadow-sm">
-              <div className="flex items-center justify-between mb-4 border-b border-indigo-100 pb-3">
-                <div className="flex items-center gap-2.5 text-indigo-900 font-bold text-base">
-                  <Sparkles size={18} className="text-indigo-600" />
-                  AI Clinical Timeline
+          {recordsLoading ? (
+             <div className="py-8 flex justify-center"><Spinner size="md" /></div>
+          ) : (
+            <>
+              {records.length > 0 && !aiSummary && (
+                <div className="flex justify-end mb-4">
+                  <button
+                    onClick={handleGenerateSummary}
+                    disabled={isGeneratingSummary}
+                    className="w-full sm:w-auto flex justify-center items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-sm"
+                  >
+                    {isGeneratingSummary ? (
+                      <>
+                        <Spinner size="sm" color="text-white" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles size={16} />
+                        Generate AI Summary
+                      </>
+                    )}
+                  </button>
                 </div>
-                <div className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-amber-700 bg-amber-100/80 rounded-full border border-amber-200">
-                  <AlertTriangle size={12} strokeWidth={2.5} />
-                  AI-Generated • Verify Manually
+              )}
+
+              {aiSummary && (
+                <div className="mb-6 p-4 sm:p-6 bg-linear-to-br from-indigo-50 to-white border border-indigo-100 rounded-xl shadow-sm overflow-x-auto">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 border-b border-indigo-100 pb-3">
+                    <div className="flex items-center gap-2.5 text-indigo-900 font-bold text-sm sm:text-base">
+                      <Sparkles size={18} className="text-indigo-600" />
+                      AI Clinical Timeline
+                    </div>
+                    <div className="self-start sm:self-auto flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-amber-700 bg-amber-100/80 rounded-full border border-amber-200">
+                      <AlertTriangle size={12} strokeWidth={2.5} />
+                      Verify Manually
+                    </div>
+                  </div>
+                  <div className="mt-2">
+                    {formatAiText(aiSummary)}
+                  </div>
                 </div>
-              </div>
-              <div className="mt-2">
-                {formatAiText(aiSummary)}
-              </div>
-            </div>
-          )}
+              )}
 
-          {summaryError && (
-            <div className="mb-6">
-               <Alert type="error" message={summaryError} />
-            </div>
-          )}
+              {summaryError && (
+                <div className="mb-6">
+                  <Alert type="error" message={summaryError} />
+                </div>
+              )}
 
-          <DataTable
-            columns={recordColumns}
-            data={records}
-            onRowClick={(record) => setSelectedRecord(record)}
-            emptyMessage="No medical records found for this patient."
-          />
+              <div className="overflow-x-auto">
+                <DataTable
+                  columns={recordColumns}
+                  data={records}
+                  onRowClick={(record) => setSelectedRecord(record)}
+                  emptyMessage="No medical records found for this patient."
+                />
+              </div>
+            </>
+          )}
         </Card>
 
         {/* ── Row 5: Emergency Contact ── */}
@@ -657,7 +643,6 @@ const PatientLookupPage = () => {
 
       </div>
 
-      {/* ── Medical Record Detail Modal ── */}
       <Modal
         isOpen={!!selectedRecord}
         onClose={() => setSelectedRecord(null)}
@@ -665,7 +650,7 @@ const PatientLookupPage = () => {
       >
         {selectedRecord && (
           <div className="flex flex-col gap-4">
-            <div className="flex flex-wrap gap-4 text-sm text-slate-600">
+            <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-600">
               <span><span className="font-semibold">Type: </span>{capitalise(selectedRecord.record_type)}</span>
               <span><span className="font-semibold">Date: </span>{formatDate(selectedRecord.created_at)}</span>
               {selectedRecord.doctor_name && (
@@ -681,7 +666,7 @@ const PatientLookupPage = () => {
               <Alert type="warning" message="This record is marked confidential." />
             )}
 
-            <div className="bg-slate-50 rounded-lg p-4">
+            <div className="bg-slate-50 rounded-lg p-3 sm:p-4">
               <p className="text-sm text-slate-700 whitespace-pre-wrap">
                 {selectedRecord.description || 'No description provided.'}
               </p>
