@@ -77,4 +77,57 @@ const findUserByEmail = async (email) => {
     return result.rows[0] || null;
 };
 
-module.exports = {createUser, createPatient, createDoctor, findUserByEmail};
+/**
+ * Saves a new password reset token to the database.
+ * @param {string} token - The secure hex token
+ * @param {string} userId - UUID of the user
+ * @param {Date} expiresAt - Expiration timestamp
+ * @returns {Promise<Object>} The inserted row
+ */
+const savePasswordResetToken = async (token, userId, expiresAt) => {
+    const query = `
+        INSERT INTO password_reset_tokens (token, user_id, expires_at)
+        VALUES ($1, $2, $3)
+        RETURNING *;
+    `;
+    const result = await pool.query(query, [token, userId, expiresAt]);
+    return result.rows[0];
+};
+
+/**
+ * Retrieves a valid, unused, unexpired password reset token.
+ * @param {string} token 
+ * @returns {Promise<object|null>} 
+ */
+const getValidPasswordResetToken = async (token) => {
+    const result = await pool.query(
+        `SELECT * FROM password_reset_tokens WHERE token = $1 AND used = false AND expires_at > CURRENT_TIMESTAMP`,
+        [token]
+    );
+    return result.rows[0] || null;
+};
+
+/**
+ * Marks a password reset token as used.
+ * @param {string} token 
+ */
+const markTokenAsUsed = async (token) => {
+    await pool.query(
+        `UPDATE password_reset_tokens SET used = true WHERE token = $1`,
+        [token]
+    );
+};
+
+/**
+ * Updates a user's password.
+ * @param {string} userId 
+ * @param {string} newPasswordHash 
+ */
+const updateUserPassword = async (userId, newPasswordHash) => {
+    await pool.query(
+        `UPDATE users SET password_hash = $2 WHERE id = $1`,
+        [userId, newPasswordHash]
+    );
+};
+
+module.exports = {createUser, createPatient, createDoctor, findUserByEmail, savePasswordResetToken, getValidPasswordResetToken, markTokenAsUsed, updateUserPassword};

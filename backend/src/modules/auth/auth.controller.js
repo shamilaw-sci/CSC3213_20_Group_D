@@ -5,7 +5,7 @@
  * @author I.M.L.S. Idirisinghe (S/21/389)
  */
 
-const {register, login} = require('./auth.service');
+const {register, login, forgotPassword, resetPassword} = require('./auth.service');
 
 /**
  * Handles POST/ api/ auth/ register
@@ -180,4 +180,83 @@ const getMeController = (req, res) => {
   });
 };
 
-module.exports = { registerController, loginController, logoutController, getMeController };
+/**
+ * Handles POST /api/auth/forgot-password
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ */
+const forgotPasswordController = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email is required'
+            });
+        }
+
+        const result = await forgotPassword(email);
+
+        return res.status(200).json({
+            success: true,
+            message: result.message
+        });
+
+    } catch (error) {
+        console.error('forgotPasswordController error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+/**
+ * Handles POST /api/auth/reset-password
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ */
+const resetPasswordController = async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+
+        if (!token || !newPassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'Token and new password are required'
+            });
+        }
+
+        if (newPassword.length < 8) {
+            return res.status(400).json({
+                success: false,
+                message: 'Password must be at least 8 characters'
+            });
+        }
+
+        await resetPassword(token, newPassword);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Password has been reset successfully'
+        });
+
+    } catch (error) {
+        console.error('resetPasswordController error:', error);
+
+        if (error.message === 'Invalid or expired password reset token') {
+            return res.status(400).json({
+                success: false,
+                message: error.message
+            });
+        }
+
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+module.exports = { registerController, loginController, logoutController, getMeController, forgotPasswordController, resetPasswordController };

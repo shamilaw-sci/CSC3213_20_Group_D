@@ -11,7 +11,9 @@ const {
     registerController,
     loginController,
     logoutController,
-    getMeController
+    getMeController,
+    forgotPasswordController,
+    resetPasswordController
 } = require('./auth.controller');
 
 // POST /api/auth/register
@@ -25,5 +27,11 @@ router.post('/logout', logoutController);
 
 // GET /api/auth/me
 router.get('/me', getMeController);
+
+// POST /api/auth/forgot-password
+router.post('/forgot-password', forgotPasswordController);
+
+// POST /api/auth/reset-password
+router.post('/reset-password', resetPasswordController);
 
 module.exports = router;
