@@ -11,13 +11,18 @@
  * Known Allergies card splits severe allergies into a static red alert
  * strip above the regular list, so a severe allergy can't be scanned past
  * (CARE4U-61).
+ * Emergency Contact demoted from a top-level Row 1 card into a closed-by-
+ * default collapsible section near the bottom of the page — it's rarely
+ * needed mid-lookup and previously competed for visual weight with
+ * safety-critical info (CARE4U-62). Patient Information now takes the
+ * full Row 1 width on its own.
  * @author    Wasana Karunanayaka (S/21/081)
  */
 
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Sparkles, AlertTriangle } from 'lucide-react';
+import { Sparkles, AlertTriangle, ChevronDown, Phone } from 'lucide-react';
 import {
   getPatientByQrCode,
   getMedicalRecords,
@@ -198,7 +203,12 @@ const BannerAnimationStyles = () => (
 const PatientLookupPage = () => {
   const { qrCodeId } = useParams();
   const [selectedRecord, setSelectedRecord] = useState(null);
-  
+
+  // Emergency Contact — collapsed by default, closed until a doctor
+  // deliberately opens it (CARE4U-62). Not needed in the moment of a
+  // routine lookup, so it no longer takes top-level card weight.
+  const [showEmergencyContact, setShowEmergencyContact] = useState(false);
+
   // AI Summary States
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [aiSummary, setAiSummary] = useState(null);
@@ -372,23 +382,16 @@ const PatientLookupPage = () => {
       {/* ── Page Body ── */}
       <div className="max-w-5xl mx-auto px-6 py-8 flex flex-col gap-6">
 
-        {/* ── Row 1: Patient Info + Emergency Contact ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card title="Patient Information">
-            <ProfileField label="Full Name" value={patient.full_name} />
-            <ProfileField label="Blood Group" value={patient.blood_group} valueStyle={{ color: '#C00000', fontWeight: '700' }} />
-            <ProfileField label="Date of Birth" value={formatDate(patient.date_of_birth)} />
-            <ProfileField label="Age" value={formatAge(patient.date_of_birth)} />
-            <ProfileField label="NIC" value={patient.nic} />
-            <ProfileField label="QR ID" value={patient.qr_code_id} />
-          </Card>
-
-          <Card title="Emergency Contact">
-            <ProfileField label="Contact Name" value={patient.emergency_contact_name} />
-            <ProfileField label="Contact Phone" value={patient.emergency_contact_phone} />
-            <ProfileField label="Relationship" value={capitalise(patient.emergency_contact_relationship)} />
-          </Card>
-        </div>
+        {/* ── Row 1: Patient Info (CARE4U-62 — now full width, Emergency
+             Contact demoted out of this row entirely) ── */}
+        <Card title="Patient Information">
+          <ProfileField label="Full Name" value={patient.full_name} />
+          <ProfileField label="Blood Group" value={patient.blood_group} valueStyle={{ color: '#C00000', fontWeight: '700' }} />
+          <ProfileField label="Date of Birth" value={formatDate(patient.date_of_birth)} />
+          <ProfileField label="Age" value={formatAge(patient.date_of_birth)} />
+          <ProfileField label="NIC" value={patient.nic} />
+          <ProfileField label="QR ID" value={patient.qr_code_id} />
+        </Card>
 
         {/* ── Row 2: Chronic Conditions (CARE4U-60) ── */}
         <Card title={`Chronic Conditions (${conditions.length})`}>
@@ -555,6 +558,32 @@ const PatientLookupPage = () => {
             emptyMessage="No medical records found for this patient."
           />
         </Card>
+
+        {/* ── Row 5: Emergency Contact — demoted, closed by default (CARE4U-62) ── */}
+        <div className="border border-slate-200 rounded-lg bg-white">
+          <button
+            onClick={() => setShowEmergencyContact((prev) => !prev)}
+            className="w-full flex items-center justify-between px-4 py-3 text-left"
+            aria-expanded={showEmergencyContact}
+          >
+            <span className="flex items-center gap-2 text-sm font-medium text-slate-600">
+              <Phone size={14} className="text-slate-400" />
+              Emergency Contact
+            </span>
+            <ChevronDown
+              size={16}
+              className={`text-slate-400 transition-transform ${showEmergencyContact ? 'rotate-180' : ''}`}
+            />
+          </button>
+
+          {showEmergencyContact && (
+            <div className="px-4 pb-4 pt-1 border-t border-slate-100">
+              <ProfileField label="Contact Name" value={patient.emergency_contact_name} />
+              <ProfileField label="Contact Phone" value={patient.emergency_contact_phone} />
+              <ProfileField label="Relationship" value={capitalise(patient.emergency_contact_relationship)} />
+            </div>
+          )}
+        </div>
 
       </div>
 
