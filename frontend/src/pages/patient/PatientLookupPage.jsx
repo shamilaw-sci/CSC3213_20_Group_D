@@ -22,13 +22,15 @@
  * a patient is already on before prescribing something new. Reuses the
  * existing getPatientPrescriptions endpoint/data shape from the patient's
  * own Prescriptions page (CARE4U-67).
+ * Most Recent Visit Summary added below the banner to give instant context 
+ * on the patient's last interaction without scrolling (CARE4U-68).
  * @author    Wasana Karunanayaka (S/21/081)
  */
 
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Sparkles, AlertTriangle, ChevronDown, Phone, Pill, Calendar } from 'lucide-react';
+import { Sparkles, AlertTriangle, ChevronDown, Phone, Pill, Calendar, Clock } from 'lucide-react';
 import {
   getPatientByQrCode,
   getMedicalRecords,
@@ -180,9 +182,6 @@ const ProfileField = ({ label, value, valueStyle }) => (
 );
 
 // ─── Sub-component: Active Prescription Row (CARE4U-67) ───────────────────
-// Flat, read-only row — deliberately no expand/collapse or QR display here;
-// this card exists purely so a doctor can see current meds at a glance
-// before prescribing something new.
 const ActivePrescriptionRow = ({ prescription }) => {
   const days = daysRemaining(prescription.expires_at);
   const items = (prescription.items || []).filter((i) => i && i.medicine_name);
@@ -219,10 +218,7 @@ const ActivePrescriptionRow = ({ prescription }) => {
   );
 };
 
-// ─── Banner Load Animations (scoped to this page) ─────────────────────────────
-// Kept as an inline <style> block rather than a separate CSS file since these
-// keyframes are used nowhere else in the app yet. All animations are one-shot
-// (no looping) and fully disabled under prefers-reduced-motion.
+// ─── Banner Load Animations ─────────────────────────────
 const BannerAnimationStyles = () => (
   <style>{`
     @keyframes cuAvatarPop {
@@ -264,10 +260,6 @@ const BannerAnimationStyles = () => (
 const PatientLookupPage = () => {
   const { qrCodeId } = useParams();
   const [selectedRecord, setSelectedRecord] = useState(null);
-
-  // Emergency Contact — collapsed by default, closed until a doctor
-  // deliberately opens it (CARE4U-62). Not needed in the moment of a
-  // routine lookup, so it no longer takes top-level card weight.
   const [showEmergencyContact, setShowEmergencyContact] = useState(false);
 
   // AI Summary States
@@ -275,56 +267,42 @@ const PatientLookupPage = () => {
   const [aiSummary, setAiSummary] = useState(null);
   const [summaryError, setSummaryError] = useState(null);
 
-  // Fetch patient by QR code ID (includes bundled `conditions` array)
-  const {
-    data: patient,
-    isLoading: patientLoading,
-    error: patientError,
-  } = useQuery({
+  const { data: patient, isLoading: patientLoading, error: patientError } = useQuery({
     queryKey: ['patient-qr', qrCodeId],
     queryFn: () => getPatientByQrCode(qrCodeId),
     retry: false,
   });
 
-  // Fetch allergies
   const { data: allergies = [] } = useQuery({
     queryKey: ['allergies', patient?.id],
     queryFn: () => getAllergies(patient.id),
     enabled: !!patient?.id,
   });
 
-  // Fetch medical records
   const { data: records = [] } = useQuery({
     queryKey: ['medical-records', patient?.id],
     queryFn: () => getMedicalRecords(patient.id),
     enabled: !!patient?.id,
   });
 
-  // Fetch prescriptions (CARE4U-67) — reuses the same endpoint/service
-  // function as the patient's own Prescriptions page.
   const { data: prescriptions = [] } = useQuery({
     queryKey: ['prescriptions', patient?.id],
     queryFn: () => getPatientPrescriptions(patient.id),
     enabled: !!patient?.id,
   });
 
-  // Chronic conditions come bundled on the patient object itself (CARE4U-60)
   const conditions = patient?.conditions || [];
-
-  // The single highest-priority condition, if any, surfaces in the banner (CARE4U-59)
   const priorityCondition = conditions.find((c) => c.is_priority);
-
-  // Severe allergies are split out so they can't be scanned past in the flat
-  // list — they render in their own static alert strip (CARE4U-61).
   const severeAllergies = allergies.filter((a) => a.severity?.toLowerCase() === 'severe');
   const otherAllergies = allergies.filter((a) => a.severity?.toLowerCase() !== 'severe');
 
-  // Active = not expired and not completed (CARE4U-67)
   const activePrescriptions = prescriptions.filter(
     (p) => !isExpired(p.expires_at) && p.status !== 'completed'
   );
 
-  // ── AI Summary Handler ──
+  // Grab the single most recent record for the top summary strip (CARE4U-68)
+  const mostRecentVisit = records.length > 0 ? records[0] : null;
+
   const handleGenerateSummary = async () => {
     if (!patient?.id) return;
     setIsGeneratingSummary(true);
@@ -340,7 +318,6 @@ const PatientLookupPage = () => {
     }
   };
 
-  // ── Loading state ──
   if (patientLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -352,7 +329,6 @@ const PatientLookupPage = () => {
     );
   }
 
-  // ── Error state ──
   if (patientError) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
@@ -370,7 +346,6 @@ const PatientLookupPage = () => {
     );
   }
 
-  // ── Medical records table columns ──
   const recordColumns = [
     { key: 'created_at', label: 'Date', render: (value) => formatDate(value) },
     { key: 'record_type', label: 'Type', render: (value) => capitalise(value) },
@@ -379,16 +354,13 @@ const PatientLookupPage = () => {
     { key: 'is_confidential', label: 'Status', render: (value) => <Badge status={value ? 'confidential' : 'normal'} /> },
   ];
 
-  // ── Success state ──
   return (
     <div className="min-h-screen bg-slate-50">
 
       <BannerAnimationStyles />
 
-      {/* ── Header Banner (CARE4U-59 / 66 / 69) ── */}
+      {/* ── Header Banner ── */}
       <div className="relative overflow-hidden px-8 py-7 bg-linear-to-br from-[#0F2942] to-[#1E3A5F]">
-
-        {/* Signature ECG trace — draws once on load, purely decorative */}
         <svg
           className="absolute inset-0 w-full h-full opacity-25 pointer-events-none"
           viewBox="0 0 1200 60"
@@ -456,8 +428,29 @@ const PatientLookupPage = () => {
       {/* ── Page Body ── */}
       <div className="max-w-5xl mx-auto px-6 py-8 flex flex-col gap-6">
 
-        {/* ── Row 1: Patient Info (CARE4U-62 — now full width, Emergency
-             Contact demoted out of this row entirely) ── */}
+        {/* ── Most Recent Visit Strip (CARE4U-68) ── */}
+        {mostRecentVisit && (
+          <div className="bg-indigo-50/50 border border-indigo-100 rounded-lg px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-2 mb-2">
+            <div className="flex items-center gap-2 text-indigo-900 font-semibold text-sm">
+              <Clock size={16} className="text-indigo-600" />
+              Most Recent Visit
+            </div>
+            <div className="hidden sm:block w-px h-4 bg-indigo-200"></div>
+            <div className="text-sm text-slate-700 flex flex-wrap items-center gap-3">
+              <span className="font-medium text-slate-900">{formatDate(mostRecentVisit.created_at)}</span>
+              <span className="text-slate-400">•</span>
+              <span>{mostRecentVisit.title || capitalise(mostRecentVisit.record_type)}</span>
+              {mostRecentVisit.doctor_name && (
+                <>
+                  <span className="text-slate-400">•</span>
+                  <span>Dr. {mostRecentVisit.doctor_name}</span>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── Row 1: Patient Info ── */}
         <Card title="Patient Information">
           <ProfileField label="Full Name" value={patient.full_name} />
           <ProfileField label="Blood Group" value={patient.blood_group} valueStyle={{ color: '#C00000', fontWeight: '700' }} />
@@ -467,7 +460,7 @@ const PatientLookupPage = () => {
           <ProfileField label="QR ID" value={patient.qr_code_id} />
         </Card>
 
-        {/* ── Row 2: Chronic Conditions (CARE4U-60) ── */}
+        {/* ── Row 2: Chronic Conditions ── */}
         <Card title={`Chronic Conditions (${conditions.length})`}>
           {conditions.length === 0 ? (
             <p className="text-sm text-slate-500 py-2">No chronic conditions recorded.</p>
@@ -507,7 +500,7 @@ const PatientLookupPage = () => {
           )}
         </Card>
 
-        {/* ── Row 3: Known Allergies (CARE4U-61 — severe visual escalation) ── */}
+        {/* ── Row 3: Known Allergies ── */}
         <Card
           title={
             <span className="flex items-center gap-2">
@@ -525,9 +518,6 @@ const PatientLookupPage = () => {
             <p className="text-sm text-slate-500 py-2">No allergies recorded.</p>
           ) : (
             <div className="flex flex-col gap-3 pt-1">
-
-              {/* Severe allergy alert strip — deliberately static, no animation,
-                  so it never competes with motion for a doctor's attention. */}
               {severeAllergies.length > 0 && (
                 <div className="flex flex-col gap-2 mb-1">
                   {severeAllergies.map((allergy) => (
@@ -552,7 +542,6 @@ const PatientLookupPage = () => {
                 </div>
               )}
 
-              {/* Non-severe allergies — unchanged existing styling */}
               {otherAllergies.map((allergy) => (
                 <div key={allergy.id} className="flex items-start justify-between py-2 border-b border-slate-100 last:border-0">
                   <div>
@@ -571,7 +560,7 @@ const PatientLookupPage = () => {
           )}
         </Card>
 
-        {/* ── Row 3.5: Active Prescriptions (CARE4U-67) ── */}
+        {/* ── Row 3.5: Active Prescriptions ── */}
         <Card title={`Active Prescriptions (${activePrescriptions.length})`}>
           {activePrescriptions.length === 0 ? (
             <p className="text-sm text-slate-500 py-2">No active prescriptions.</p>
@@ -584,10 +573,8 @@ const PatientLookupPage = () => {
           )}
         </Card>
 
-        {/* ── Row 4: Medical Records with AI Integration ── */}
+        {/* ── Row 4: Medical Records ── */}
         <Card title={`Medical Records (${records.length})`}>
-          
-          {/* AI Action Button */}
           {records.length > 0 && !aiSummary && (
             <div className="flex justify-end mb-4">
               <button
@@ -610,7 +597,6 @@ const PatientLookupPage = () => {
             </div>
           )}
 
-          {/* AI Summary Display Panel */}
           {aiSummary && (
             <div className="mb-6 p-6 bg-linear-to-br from-indigo-50 to-white border border-indigo-100 rounded-xl shadow-sm">
               <div className="flex items-center justify-between mb-4 border-b border-indigo-100 pb-3">
@@ -623,21 +609,18 @@ const PatientLookupPage = () => {
                   AI-Generated • Verify Manually
                 </div>
               </div>
-              
               <div className="mt-2">
                 {formatAiText(aiSummary)}
               </div>
             </div>
           )}
 
-          {/* Error Message for AI */}
           {summaryError && (
             <div className="mb-6">
                <Alert type="error" message={summaryError} />
             </div>
           )}
 
-          {/* Standard Data Table */}
           <DataTable
             columns={recordColumns}
             data={records}
@@ -646,7 +629,7 @@ const PatientLookupPage = () => {
           />
         </Card>
 
-        {/* ── Row 5: Emergency Contact — demoted, closed by default (CARE4U-62) ── */}
+        {/* ── Row 5: Emergency Contact ── */}
         <div className="border border-slate-200 rounded-lg bg-white">
           <button
             onClick={() => setShowEmergencyContact((prev) => !prev)}
