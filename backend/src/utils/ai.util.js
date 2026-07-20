@@ -24,7 +24,11 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 /**
  * Generates text using AI based on a provided prompt.
- * Tries Groq first (speed), falls back to Gemini (reliability), then extracts local data.
+ * Tries Groq first (speed), falls back to Gemini (reliability), then returns a
+ * plain "please check manually" notice if both cloud services are unavailable.
+ * Uses a low, fixed temperature and seed so identical prompts (e.g. the clinical
+ * summary prompt, which a doctor may regenerate) produce consistent, reproducible
+ * output rather than flip-flopping on judgment calls like "is this follow-up outstanding".
  * @param {string} prompt - The instructions and data for the AI to process.
  * @returns {Promise<string>} The generated text response.
  */
@@ -34,6 +38,8 @@ const generateAIResponse = async (prompt) => {
       const groqResponse = await groq.chat.completions.create({
         messages: [{ role: 'user', content: prompt }],
         model: 'llama-3.3-70b-versatile', // Upgraded to 70B for strict prompt adherence
+        temperature: 0.1, // Low, near-deterministic — avoids inconsistent judgment calls on repeated generations
+        seed: 42,          // Fixed seed for reproducibility across calls with identical input
       });
       
       return groqResponse.choices[0].message.content;
@@ -44,38 +50,24 @@ const generateAIResponse = async (prompt) => {
     
     try {
       // --- SECONDARY SERVICE: Google Gemini (Reliability) ---
-      const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' });
+      const model = genAI.getGenerativeModel({
+        model: 'gemini-3.5-flash',
+        generationConfig: { temperature: 0.1 }, // Match Groq's low temperature for consistency
+      });
       const result = await model.generateContent(prompt);
       
       return result.response.text();
 
     } catch (geminiError) {
       console.error('Gemini AI Fallback Error:', geminiError.message);
-      
-      // --- FINAL SAFETY NET: Local Data Extraction ---
-      console.warn('Both Groq and Gemini are offline. Engaging local data extraction fallback.');
-      
-      // Attempt to extract the raw medical records from the prompt itself
-      const recordsMatch = prompt.match(/--- PAST MEDICAL RECORDS ---\n([\s\S]*)/);
-      
-      if (recordsMatch && recordsMatch[1]) {
-        const rawRecords = recordsMatch[1].trim().split('\n');
-        
-        if (rawRecords.length === 1 && rawRecords[0].includes('No past medical records')) {
-           return "### ⚠️ Local Fallback (APIs Offline)\n\n* No past medical records found for this patient.";
-        }
 
-        // Format the raw data cleanly
-        const formatted = rawRecords.map(record => {
-          // Converts "- [Date] Type: Title" to "* **Date:** Type: Title"
-          return record.replace('- [', '* **').replace('] ', ':** ');
-        }).join('\n\n');
+      // --- FINAL SAFETY NET: Manual Review Notice ---
+      // Both AI services are unavailable. Rather than re-parsing and re-displaying
+      // records/conditions the doctor can already see in their own dedicated
+      // UI sections on this page, just point them there directly.
+      console.warn('Both Groq and Gemini are offline. Returning manual-review notice.');
 
-        return `### ⚠️ Local Fallback Timeline (APIs Offline)\n\n${formatted}\n\n*(Note: This is an un-summarized list extracted locally because all AI cloud services are currently unavailable.)*`;
-      }
-
-      // If extraction fails entirely
-      return `### ⚠️ Local Fallback (APIs Offline)\n\n* Unable to generate summary. Please review the detailed table below manually.`;
+      return `### ⚠️ AI Summary Unavailable\n\nBoth AI services are currently offline and a summary could not be generated. Please refer to the **Chronic Conditions**, **Known Allergies**, and **Medical Records** sections above for this patient's full history.`;
     }
   }
 };

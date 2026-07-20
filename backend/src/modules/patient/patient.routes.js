@@ -10,6 +10,7 @@ const router = express.Router();
 const {
   getPatientController,
   updatePatientController,
+  uploadPatientPhotoController,
   getMedicalRecordsController,
   getAllergiesController,
   addAllergyController,
@@ -18,6 +19,8 @@ const {
   getPatientByQrCodeController,
   getPatientHistorySummaryController
 } = require('./patient.controller');
+
+const { upload } = require('../../middleware/upload');
 
 // const { isAuthenticated } = require('../../middleware/auth');        // Uncomment when auth is ready
 // const { authorize } = require('../../middleware/rbac');              // Uncomment when auth is ready
@@ -55,6 +58,18 @@ router.put(
   // isAuthenticated,                 // Uncomment when auth is ready
   // authorize('patient', 'doctor'),  // Uncomment when auth is ready
   updatePatientController
+);
+
+/**
+ * POST /api/patients/:id/photo
+ * Uploads/replaces a patient's profile photo. Multipart form field: "photo".
+ */
+router.post(
+  '/:id/photo',
+  upload.single('photo'),
+  // isAuthenticated,                 // Uncomment when auth is ready
+  // authorize('patient', 'doctor'),  // Uncomment when auth is ready
+  uploadPatientPhotoController
 );
 
 /**

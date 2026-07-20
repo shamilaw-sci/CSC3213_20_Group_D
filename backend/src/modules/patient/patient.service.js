@@ -8,6 +8,9 @@
 
 const patientRepository = require('./patient.repository');
 const { generateAIResponse } = require('../../utils/ai.util');
+const { supabase } = require('../../config/supabase');
+
+const PHOTO_BUCKET = 'patient-photos';
 
 /**
  * Retrieves a patient's full profile by their patient UUID.
@@ -55,6 +58,63 @@ const updatePatientProfile = async (id, data) => {
   );
 
   const updated = await patientRepository.updatePatient(id, filteredData);
+  return updated;
+};
+
+/**
+ * Uploads a new profile photo for a patient to Supabase Storage and
+ * saves the resulting public URL onto the patient's record.
+ * Uses a fixed storage path per patient (no original filename/extension)
+ * with upsert enabled, so re-uploading always overwrites the previous
+ * photo rather than accumulating orphaned files in the bucket.
+ * @param {string} patientId - UUID of the patient (from patients table)
+ * @param {Object} file      - Multer file object ({ buffer, mimetype, size })
+ * @returns {Promise<Object>} The updated patient record (with new photo_url)
+ * @throws {Error} 404 if patient is not found
+ * @throws {Error} 400 if no file was provided
+ * @throws {Error} 500 if the Supabase Storage upload fails
+ */
+const uploadPatientPhoto = async (patientId, file) => {
+  if (!file) {
+    const error = new Error('No photo file was provided');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const existing = await patientRepository.getPatientById(patientId);
+  if (!existing) {
+    const error = new Error('Patient not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  // Fixed path per patient — upsert overwrites any previous photo,
+  // regardless of the original file's extension.
+  const storagePath = `${patientId}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(PHOTO_BUCKET)
+    .upload(storagePath, file.buffer, {
+      contentType: file.mimetype,
+      upsert: true,
+    });
+
+  if (uploadError) {
+    console.error('Supabase Storage upload error:', uploadError);
+    const error = new Error('Failed to upload photo to storage');
+    error.statusCode = 500;
+    throw error;
+  }
+
+  const { data: publicUrlData } = supabase.storage
+    .from(PHOTO_BUCKET)
+    .getPublicUrl(storagePath);
+
+  // Cache-bust so the doctor lookup page and patient's own profile
+  // don't keep showing a stale browser-cached image after re-upload.
+  const photoUrl = `${publicUrlData.publicUrl}?updated=${Date.now()}`;
+
+  const updated = await patientRepository.updatePatientPhoto(patientId, photoUrl);
   return updated;
 };
 
@@ -177,10 +237,11 @@ const getPatientPrescriptions = async (patientId) => {
 };
 
 /**
- * Retrieves a patient profile using their QR code ID.
+ * Retrieves a patient profile using their QR code ID, including their
+ * chronic conditions bundled in as a `conditions` array.
  * Throws 404 if no patient is found with that QR code.
  * @param {string} qrCodeId - The qr_code_id value (e.g. "QR-TEST-001")
- * @returns {Promise<Object>} Patient object
+ * @returns {Promise<Object>} Patient object with a `conditions` array attached
  */
 const getPatientByQrCode = async (qrCodeId) => {
   const patient = await patientRepository.getPatientByQrCodeId(qrCodeId);
@@ -189,17 +250,24 @@ const getPatientByQrCode = async (qrCodeId) => {
     error.statusCode = 404;
     throw error;
   }
-  return patient;
+
+  const conditions = await patientRepository.getConditionsByPatientId(patient.id);
+
+  return { ...patient, conditions };
 };
 
 /**
  * Uses AI to generate a highly precise clinical summary of a patient's medical history.
  * Optimized for extreme brevity, tables, and rapid doctor scannability.
+ * Cross-references the patient's known chronic conditions (CARE4U-60) as context
+ * for medication classification, without duplicating what the UI's dedicated
+ * Chronic Conditions card already displays.
  * @param {string} patientId - UUID of the patient
  * @returns {Promise<Object>} Object containing the generated summary text
  */
 const getPatientHistorySummary = async (patientId) => {
   const records = await getMedicalRecords(patientId);
+  const conditions = await patientRepository.getConditionsByPatientId(patientId);
 
   const formattedRecords = records.length > 0 
     ? records.map(r => {
@@ -210,12 +278,21 @@ const getPatientHistorySummary = async (patientId) => {
       }).join('\n')
     : 'No past medical records found.';
 
+  const formattedConditions = conditions.length > 0
+    ? conditions.map(c => {
+        const diagnosedDate = c.diagnosed_at
+          ? new Date(c.diagnosed_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+          : 'Unknown date';
+        return `[CONDITION: ${c.condition}] | DIAGNOSED: ${diagnosedDate} | PRIORITY: ${c.is_priority ? 'Yes' : 'No'} | NOTES: ${c.notes || 'None'}`;
+      }).join('\n')
+    : 'No chronic conditions recorded.';
+
   const prompt = `
     You are a clinical UI assistant. Provide a lightning-fast, ultra-concise summary for a doctor who has 30 seconds before a patient walks in.
 
     ## STRICT UX & ACCURACY RULES:
     1. DO NOT include a consultation timeline (the UI already shows this).
-    2. DO NOT include allergies (the UI already shows this).
+    2. DO NOT include allergies or chronic conditions in your output (the UI already shows both of these separately) — but DO use the chronic conditions list below as context for Rule 8.
     3. Use extreme brevity. Fragment sentences are preferred.
     4. Use ONLY information explicitly present in the records. Do not diagnose.
     5. NEVER alter or guess dates.
@@ -228,7 +305,9 @@ const getPatientHistorySummary = async (patientId) => {
        in URGENT ALERTS — never silently drop it.
     8. A medication or instruction only belongs in ACTIVE PLAN if it treats an
        ongoing/chronic issue, or if nothing in the records suggests the condition
-       it was prescribed for has resolved. Short-course medication tied to a
+       it was prescribed for has resolved. Use the KNOWN CHRONIC CONDITIONS list
+       below to help decide chronicity — a medication tied to a listed chronic
+       condition is ongoing by default. Short-course medication tied to a
        time-limited acute illness (e.g. a several-day infection, a resolved
        injury) that has already run its course is EXCLUDED, even if no record
        explicitly says "resolved."
@@ -247,9 +326,12 @@ const getPatientHistorySummary = async (patientId) => {
       immediate clinical red flags. (If none, output "- None active").
 
     ### 2. PATIENT SNAPSHOT
-    - 2-3 bullet points: active chronic conditions, major surgical history, and any
-      documented family/social history that materially affects risk (e.g. strong
-      family history of a relevant condition). Omit if not present in records.
+    - One bullet each, only for categories actually present in the records:
+      major surgical history; family history relevant to risk (e.g. a strong
+      family history of a relevant condition); social history (smoking,
+      alcohol, occupation). Do NOT repeat chronic conditions here (see Rule 2).
+      Do NOT omit a category just to keep the list short — include every
+      category that has documented information, skip only the ones with none.
 
     ### 3. LATEST LAB RESULTS
     - Format STRICTLY as a Markdown table, following Rule 9 (exhaustive tests, latest value only per test).
@@ -259,11 +341,13 @@ const getPatientHistorySummary = async (patientId) => {
     ### 4. ACTIVE PLAN
     - Bullet points of medications/instructions that are still ongoing per Rule 8.
 
+    --- KNOWN CHRONIC CONDITIONS ---
+    ${formattedConditions}
+
     --- PAST MEDICAL RECORDS ---
     ${formattedRecords}
   `;
 
-  const { generateAIResponse } = require('../../utils/ai.util');
   const summaryText = await generateAIResponse(prompt);
   
   return { summary: summaryText };
@@ -272,6 +356,7 @@ const getPatientHistorySummary = async (patientId) => {
 module.exports = {
   getPatientProfile,
   updatePatientProfile,
+  uploadPatientPhoto,
   getMedicalRecords,
   getAllergies,
   addAllergy,

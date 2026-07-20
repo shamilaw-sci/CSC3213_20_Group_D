@@ -2,7 +2,10 @@
  * @file    PatientProfilePage.jsx
  * @component PatientProfilePage
  * @desc    Displays and allows editing of the patient's profile.
- * Includes smart autocomplete for adding allergies and secure deletion.
+ * Includes smart autocomplete for adding allergies, secure deletion,
+ * profile photo upload (CARE4U-65), and a warm, personal header banner
+ * redesign sharing visual DNA with the doctor lookup banner (CARE4U-59/69).
+ * Avatar sized up to 96px for reliable visual identification.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -10,11 +13,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { User, Droplets, Phone, Calendar, Edit2, X, Save, AlertTriangle, Trash2, Plus } from 'lucide-react';
+import { User, Droplets, Phone, Calendar, Edit2, X, Save, AlertTriangle, Trash2, Plus, Camera } from 'lucide-react';
 
 import { 
   getPatientProfile, 
   updatePatientProfile, 
+  uploadPatientPhoto,
   getAllergies, 
   addAllergy, 
   deleteAllergy 
@@ -31,6 +35,10 @@ import Modal from '../../components/common/Modal'; // Assuming this was created 
 // ─── TEMPORARY: hardcoded test patient UUID until auth is integrated ──────────
 const TEST_PATIENT_ID = '006761d1-8279-440e-a786-a492df7abd53';
 
+// ─── Photo upload constraints (mirrors backend middleware/upload.js) ──────────
+const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_PHOTO_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const formatDate = (dateStr) => {
   if (!dateStr) return '—';
@@ -40,6 +48,28 @@ const formatDate = (dateStr) => {
 const capitalise = (str) => {
   if (!str) return '—';
   return str.charAt(0).toUpperCase() + str.slice(1);
+};
+
+/**
+ * Builds the avatar image source: the patient's uploaded photo if present,
+ * otherwise a generated placeholder based on their name.
+ * @param {Object} patient - The patient data object
+ * @returns {string} Image URL to render
+ */
+const getAvatarSrc = (patient) => {
+  if (patient?.photo_url) return patient.photo_url;
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(patient?.full_name || 'Patient')}&background=2E75B6&color=fff&size=120&bold=true&rounded=true`;
+};
+
+/**
+ * Extracts just the first name for the warm banner greeting.
+ * Falls back to the full value if no space is found (e.g. mononyms).
+ * @param {string} fullName - The patient's full name
+ * @returns {string} First name only
+ */
+const getFirstName = (fullName) => {
+  if (!fullName) return 'there';
+  return fullName.trim().split(' ')[0];
 };
 
 // ─── Severity Badge ───────────────────────────────────────────────────────────
@@ -72,10 +102,54 @@ const ProfileField = ({ icon: Icon, label, value }) => (
   </div>
 );
 
+// ─── Banner Load Animations (scoped to this page) ─────────────────────────────
+// Same choreography language as the doctor lookup banner (CARE4U-69), but the
+// photo gets a soft breathing glow ring instead of an ECG trace — a calmer,
+// more personal signature for the patient's own space rather than a clinical one.
+// All animations are one-shot and disabled under prefers-reduced-motion.
+const BannerAnimationStyles = () => (
+  <style>{`
+    @keyframes cuAvatarPop {
+      from { opacity: 0; transform: scale(0.6); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    @keyframes cuFadeSlideUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes cuGlowPulse {
+      0%   { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.55); }
+      70%  { box-shadow: 0 0 0 18px rgba(56, 189, 248, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+    }
+    .cu-avatar-pop {
+      animation: cuAvatarPop 450ms ease-out both;
+    }
+    .cu-fade-slide-up {
+      animation: cuFadeSlideUp 450ms ease-out both;
+    }
+    .cu-glow-ring {
+      animation: cuGlowPulse 1400ms ease-out 350ms 1;
+      border-radius: 9999px;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .cu-avatar-pop, .cu-fade-slide-up, .cu-glow-ring {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+        box-shadow: none !important;
+      }
+    }
+  `}</style>
+);
+
 // ─── Main Page Component ──────────────────────────────────────────────────────
 const PatientProfilePage = () => {
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
+
+  // ── Photo Upload State ──
+  const photoInputRef = useRef(null);
 
   // ── Allergy UI State ──
   const [isAddAllergyModalOpen, setIsAddAllergyModalOpen] = useState(false);
@@ -140,6 +214,18 @@ const PatientProfilePage = () => {
     onError: () => toast.error('Failed to update profile.'),
   });
 
+  const uploadPhotoMutation = useMutation({
+    mutationFn: (file) => uploadPatientPhoto(TEST_PATIENT_ID, file),
+    onSuccess: (updatedPatient) => {
+      queryClient.setQueryData(['patient', TEST_PATIENT_ID], updatedPatient);
+      toast.success('Profile photo updated');
+    },
+    onError: (err) => {
+      const message = err?.response?.data?.message || 'Failed to upload photo.';
+      toast.error(message);
+    },
+  });
+
   const addAllergyMutation = useMutation({
     mutationFn: (data) => addAllergy(TEST_PATIENT_ID, data.allergen, data.severity, data.notes),
     onSuccess: () => {
@@ -175,6 +261,29 @@ const PatientProfilePage = () => {
       emergency_contact_relationship: patient?.emergency_contact_relationship || '',
     });
     setIsEditing(true);
+  };
+
+  const handlePhotoButtonClick = () => {
+    photoInputRef.current?.click();
+  };
+
+  const handlePhotoFileChange = (e) => {
+    const file = e.target.files?.[0];
+    // Reset the input value immediately so selecting the same file twice
+    // in a row still fires onChange (browsers otherwise suppress it).
+    e.target.value = '';
+    if (!file) return;
+
+    if (!ALLOWED_PHOTO_TYPES.includes(file.type)) {
+      toast.error('Please select a JPEG, PNG, or WEBP image.');
+      return;
+    }
+    if (file.size > MAX_PHOTO_SIZE_BYTES) {
+      toast.error('Image must be 2MB or smaller.');
+      return;
+    }
+
+    uploadPhotoMutation.mutate(file);
   };
 
   const submitAddAllergy = (e) => {
@@ -220,21 +329,59 @@ const PatientProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-12">
-      {/* ── Page Header ── */}
-      <div className="bg-[#1E3A5F] text-white px-6 py-8 shadow-sm">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <img
-              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(patient?.full_name || 'Patient')}&background=2E75B6&color=fff&size=80&bold=true&rounded=true`}
-              alt="Avatar"
-              className="w-16 h-16 rounded-full border-2 border-white/30 shadow-md"
-            />
+
+      <BannerAnimationStyles />
+
+      {/* ── Page Header (CARE4U-59 / 69) ── */}
+      <div className="relative overflow-hidden text-white px-6 py-8 shadow-sm bg-linear-to-br from-[#0F2942] to-[#1E3A5F]">
+        <div className="max-w-4xl mx-auto flex items-center justify-between relative z-10">
+          <div className="flex items-center gap-5">
+            {/* ── Avatar with upload trigger + glow-ring signature (CARE4U-65 / 69) ── */}
+            <div className="relative w-24 h-24 shrink-0">
+              <div className="cu-glow-ring absolute inset-0" />
+              <img
+                src={getAvatarSrc(patient)}
+                alt="Profile"
+                className="cu-avatar-pop w-24 h-24 rounded-full border-4 border-white/30 shadow-md object-cover"
+              />
+              {uploadPhotoMutation.isPending && (
+                <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center">
+                  <Spinner size="sm" color="text-white" />
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={handlePhotoButtonClick}
+                disabled={uploadPhotoMutation.isPending}
+                title="Change profile photo"
+                className="absolute -bottom-0.5 -right-0.5 p-2 bg-white rounded-full shadow-md border border-slate-200 hover:bg-slate-50 transition-colors disabled:opacity-50"
+              >
+                <Camera size={14} className="text-[#1E3A5F]" />
+              </button>
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={handlePhotoFileChange}
+              />
+            </div>
             <div>
-              <h1 className="text-2xl font-bold">{patient?.full_name || 'My Profile'}</h1>
-              <p className="text-blue-200 text-sm mt-1">Manage your personal health information</p>
+              <p className="cu-fade-slide-up text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: '#93C5FD' }}>
+                My Profile
+              </p>
+              <h1 className="cu-fade-slide-up text-2xl font-bold" style={{ animationDelay: '80ms' }}>
+                Welcome back, {getFirstName(patient?.full_name)}
+              </h1>
+              <p className="cu-fade-slide-up text-sm mt-1" style={{ color: '#CBD5E1', animationDelay: '150ms' }}>
+                Manage your personal health information
+              </p>
             </div>
           </div>
-          <div className="hidden sm:block bg-white/10 rounded-xl px-4 py-2 text-right backdrop-blur-sm">
+          <div
+            className="cu-fade-slide-up hidden sm:block bg-white/10 rounded-xl px-4 py-2 text-right backdrop-blur-sm"
+            style={{ animationDelay: '250ms' }}
+          >
             <p className="text-xs text-blue-200 uppercase tracking-wide">Patient ID</p>
             <p className="text-sm font-mono font-semibold">{patient?.qr_code_id || '—'}</p>
           </div>

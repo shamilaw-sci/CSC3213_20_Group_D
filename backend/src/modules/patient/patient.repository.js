@@ -28,6 +28,7 @@ async function getPatientById(id) {
       p.emergency_contact_phone,
       p.emergency_contact_relationship,
       p.qr_code_id,
+      p.photo_url,
       p.created_at,
       p.full_name,
       u.email,
@@ -61,6 +62,7 @@ async function getPatientByUserId(userId) {
       p.emergency_contact_phone,
       p.emergency_contact_relationship,
       p.qr_code_id,
+      p.photo_url,
       p.created_at,
       p.full_name,
       u.email,
@@ -111,6 +113,26 @@ async function updatePatient(id, data) {
 }
 
 /**
+ * Updates only the photo_url field on a patient record.
+ * Kept as its own function (rather than folded into updatePatient)
+ * since photo uploads go through a dedicated multipart endpoint,
+ * not the general profile-edit JSON body.
+ * @param {string} patientId - UUID of the patient (patients.id)
+ * @param {string} photoUrl  - Public URL of the uploaded photo in Supabase Storage
+ * @returns {Promise<Object|null>} Updated patient row or null
+ */
+async function updatePatientPhoto(patientId, photoUrl) {
+  const result = await pool.query(
+    `UPDATE patients
+    SET photo_url = $1
+    WHERE id = $2
+    RETURNING *`,
+    [photoUrl, patientId]
+  );
+  return result.rows[0] || null;
+}
+
+/**
  * Fetches all medical records for a patient, ordered newest first.
  * Joins with the doctors table to include the doctor's name.
  * @param {string} patientId - UUID of the patient (patients.id)
@@ -156,6 +178,30 @@ async function getAllergies(patientId) {
     FROM patient_allergies
     WHERE patient_id = $1
     ORDER BY created_at DESC`,
+    [patientId]
+  );
+  return result.rows;
+}
+
+/**
+ * Fetches all chronic condition records for a patient, ordered so
+ * priority-flagged conditions surface first, then newest first.
+ * @param {string} patientId - UUID of the patient (patients.id)
+ * @returns {Promise<Array>} Array of condition rows (empty array if none)
+ */
+async function getConditionsByPatientId(patientId) {
+  const result = await pool.query(
+    `SELECT
+      id,
+      patient_id,
+      condition,
+      diagnosed_at,
+      notes,
+      is_priority,
+      created_at
+    FROM patient_conditions
+    WHERE patient_id = $1
+    ORDER BY is_priority DESC, created_at DESC`,
     [patientId]
   );
   return result.rows;
@@ -272,6 +318,7 @@ async function getPatientByQrCodeId(qrCodeId) {
       p.emergency_contact_phone,
       p.emergency_contact_relationship,
       p.qr_code_id,
+      p.photo_url,
       p.created_at,
       p.full_name,
       u.email,
@@ -290,10 +337,12 @@ module.exports = {
   getPatientById,
   getPatientByUserId,
   updatePatient,
+  updatePatientPhoto,
   getMedicalRecords,
   getAllergies,
   addAllergy,
   deleteAllergy,
   getPatientPrescriptions,
   getPatientByQrCodeId,
+  getConditionsByPatientId,
 };
