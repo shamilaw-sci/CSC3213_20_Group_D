@@ -135,6 +135,9 @@ const LoginPage = () => {
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
+            <a href="/forgot-password" className="text-sm text-[#1E3A5F] font-medium hover:underline text-center">
+            Forgot your password?
+            </a>
           </div>
 
           {/* Register Link */}
