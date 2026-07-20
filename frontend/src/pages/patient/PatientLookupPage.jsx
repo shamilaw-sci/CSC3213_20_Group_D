@@ -16,18 +16,25 @@
  * needed mid-lookup and previously competed for visual weight with
  * safety-critical info (CARE4U-62). Patient Information now takes the
  * full Row 1 width on its own.
+ * Active Prescriptions section added between Known Allergies and Medical
+ * Records — flat, non-expandable list of currently active prescriptions
+ * (medicine, dosage, prescribing doctor, expiry) so a doctor can see what
+ * a patient is already on before prescribing something new. Reuses the
+ * existing getPatientPrescriptions endpoint/data shape from the patient's
+ * own Prescriptions page (CARE4U-67).
  * @author    Wasana Karunanayaka (S/21/081)
  */
 
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Sparkles, AlertTriangle, ChevronDown, Phone } from 'lucide-react';
+import { Sparkles, AlertTriangle, ChevronDown, Phone, Pill, Calendar } from 'lucide-react';
 import {
   getPatientByQrCode,
   getMedicalRecords,
   getAllergies,
-  getPatientHistorySummary
+  getPatientHistorySummary,
+  getPatientPrescriptions
 } from '../../services/patient.service';
 import { formatAge } from '../../utils/dateUtils';
 import Spinner from '../../components/common/Spinner';
@@ -58,6 +65,20 @@ const severityColor = (severity) => {
   if (severity === 'severe')   return '#C00000';
   if (severity === 'moderate') return '#E67E22';
   return '#1F7A1F';
+};
+
+// A prescription counts as "active" for this doctor-facing card if it's not
+// expired and hasn't been fully completed/dispensed — mirrors the same
+// logic used on the patient's own Prescriptions page.
+const isExpired = (expiresAt) => {
+  if (!expiresAt) return false;
+  return new Date(expiresAt) < new Date();
+};
+
+const daysRemaining = (expiresAt) => {
+  if (!expiresAt) return null;
+  const diff = new Date(expiresAt) - new Date();
+  return Math.ceil(diff / (1000 * 60 * 60 * 24));
 };
 
 /**
@@ -158,6 +179,46 @@ const ProfileField = ({ label, value, valueStyle }) => (
   </div>
 );
 
+// ─── Sub-component: Active Prescription Row (CARE4U-67) ───────────────────
+// Flat, read-only row — deliberately no expand/collapse or QR display here;
+// this card exists purely so a doctor can see current meds at a glance
+// before prescribing something new.
+const ActivePrescriptionRow = ({ prescription }) => {
+  const days = daysRemaining(prescription.expires_at);
+  const items = (prescription.items || []).filter((i) => i && i.medicine_name);
+
+  return (
+    <div className="py-3 border-b border-slate-100 last:border-0">
+      <div className="flex items-center justify-between gap-3 mb-2">
+        <span className="text-xs font-medium text-slate-600">
+          {prescription.doctor_name ? `Dr. ${prescription.doctor_name}` : 'Prescribing doctor unknown'}
+        </span>
+        <span className={`flex items-center gap-1 text-xs ${days !== null && days <= 7 ? 'text-orange-500 font-medium' : 'text-slate-400'}`}>
+          <Calendar size={11} />
+          Expires {formatDate(prescription.expires_at)}
+          {days !== null && days <= 7 && ` (${days}d left)`}
+        </span>
+      </div>
+
+      {items.length === 0 ? (
+        <p className="text-xs text-slate-400">No medicines listed.</p>
+      ) : (
+        <div className="flex flex-col gap-1.5">
+          {items.map((item, idx) => (
+            <div key={item.id || idx} className="flex items-center gap-2">
+              <Pill size={12} className="text-[#2E75B6] shrink-0" />
+              <span className="text-sm text-slate-800 font-medium">{item.medicine_name}</span>
+              <span className="text-xs text-slate-500">
+                {item.dosage}{item.frequency ? ` · ${item.frequency}` : ''}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ─── Banner Load Animations (scoped to this page) ─────────────────────────────
 // Kept as an inline <style> block rather than a separate CSS file since these
 // keyframes are used nowhere else in the app yet. All animations are one-shot
@@ -239,6 +300,14 @@ const PatientLookupPage = () => {
     enabled: !!patient?.id,
   });
 
+  // Fetch prescriptions (CARE4U-67) — reuses the same endpoint/service
+  // function as the patient's own Prescriptions page.
+  const { data: prescriptions = [] } = useQuery({
+    queryKey: ['prescriptions', patient?.id],
+    queryFn: () => getPatientPrescriptions(patient.id),
+    enabled: !!patient?.id,
+  });
+
   // Chronic conditions come bundled on the patient object itself (CARE4U-60)
   const conditions = patient?.conditions || [];
 
@@ -249,6 +318,11 @@ const PatientLookupPage = () => {
   // list — they render in their own static alert strip (CARE4U-61).
   const severeAllergies = allergies.filter((a) => a.severity?.toLowerCase() === 'severe');
   const otherAllergies = allergies.filter((a) => a.severity?.toLowerCase() !== 'severe');
+
+  // Active = not expired and not completed (CARE4U-67)
+  const activePrescriptions = prescriptions.filter(
+    (p) => !isExpired(p.expires_at) && p.status !== 'completed'
+  );
 
   // ── AI Summary Handler ──
   const handleGenerateSummary = async () => {
@@ -492,6 +566,19 @@ const PatientLookupPage = () => {
                     {capitalise(allergy.severity)}
                   </span>
                 </div>
+              ))}
+            </div>
+          )}
+        </Card>
+
+        {/* ── Row 3.5: Active Prescriptions (CARE4U-67) ── */}
+        <Card title={`Active Prescriptions (${activePrescriptions.length})`}>
+          {activePrescriptions.length === 0 ? (
+            <p className="text-sm text-slate-500 py-2">No active prescriptions.</p>
+          ) : (
+            <div className="flex flex-col">
+              {activePrescriptions.map((prescription) => (
+                <ActivePrescriptionRow key={prescription.id} prescription={prescription} />
               ))}
             </div>
           )}
