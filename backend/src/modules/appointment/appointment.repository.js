@@ -27,13 +27,36 @@ const getAppointmentById = async (id) => {
   return result.rows[0] || null;
 };
 
-const createConsultationNote = async (appointmentId, patientId, doctorId, title, description, isConfidential) => {
+const createConsultationNote = async (
+  appointmentId,
+  patientId,
+  doctorId,
+  title,
+  description,
+  isConfidential,
+  chiefComplaint,
+  diagnosis,
+  treatmentPlan,
+  followUpNeeded
+) => {
   const result = await pool.query(
     `INSERT INTO medical_records 
-     (patient_id, doctor_id, appointment_id, record_type, title, description, is_confidential)
-     VALUES ($1, $2, $3, 'consultation', $4, $5, $6)
+     (patient_id, doctor_id, appointment_id, record_type, title, description, is_confidential,
+      chief_complaint, diagnosis, treatment_plan, follow_up_needed)
+     VALUES ($1, $2, $3, 'consultation', $4, $5, $6, $7, $8, $9, $10)
      RETURNING *`,
-    [patientId, doctorId, appointmentId, title, description, isConfidential ?? false]
+    [
+      patientId,
+      doctorId,
+      appointmentId,
+      title,
+      description,
+      isConfidential ?? false,
+      chiefComplaint,
+      diagnosis,
+      treatmentPlan,
+      followUpNeeded ?? false,
+    ]
   );
   return result.rows[0];
 };
