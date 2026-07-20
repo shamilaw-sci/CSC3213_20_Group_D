@@ -8,6 +8,9 @@
  * photo, name, age/gender, blood group, and priority condition surface
  * immediately, with an ECG-trace signature animation on load. Avatar sized
  * up to 96px for reliable visual identification.
+ * Known Allergies card splits severe allergies into a static red alert
+ * strip above the regular list, so a severe allergy can't be scanned past
+ * (CARE4U-61).
  * @author    Wasana Karunanayaka (S/21/081)
  */
 
@@ -232,6 +235,11 @@ const PatientLookupPage = () => {
   // The single highest-priority condition, if any, surfaces in the banner (CARE4U-59)
   const priorityCondition = conditions.find((c) => c.is_priority);
 
+  // Severe allergies are split out so they can't be scanned past in the flat
+  // list — they render in their own static alert strip (CARE4U-61).
+  const severeAllergies = allergies.filter((a) => a.severity?.toLowerCase() === 'severe');
+  const otherAllergies = allergies.filter((a) => a.severity?.toLowerCase() !== 'severe');
+
   // ── AI Summary Handler ──
   const handleGenerateSummary = async () => {
     if (!patient?.id) return;
@@ -422,13 +430,53 @@ const PatientLookupPage = () => {
           )}
         </Card>
 
-        {/* ── Row 3: Known Allergies ── */}
-        <Card title={`Known Allergies (${allergies.length})`}>
+        {/* ── Row 3: Known Allergies (CARE4U-61 — severe visual escalation) ── */}
+        <Card
+          title={
+            <span className="flex items-center gap-2">
+              {`Known Allergies (${allergies.length})`}
+              {severeAllergies.length > 0 && (
+                <span className="flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full text-white bg-red-700">
+                  <AlertTriangle size={11} strokeWidth={2.5} />
+                  {severeAllergies.length} Severe
+                </span>
+              )}
+            </span>
+          }
+        >
           {allergies.length === 0 ? (
             <p className="text-sm text-slate-500 py-2">No allergies recorded.</p>
           ) : (
             <div className="flex flex-col gap-3 pt-1">
-              {allergies.map((allergy) => (
+
+              {/* Severe allergy alert strip — deliberately static, no animation,
+                  so it never competes with motion for a doctor's attention. */}
+              {severeAllergies.length > 0 && (
+                <div className="flex flex-col gap-2 mb-1">
+                  {severeAllergies.map((allergy) => (
+                    <div
+                      key={allergy.id}
+                      className="flex items-start justify-between gap-4 py-3 px-4 rounded-md bg-red-700"
+                    >
+                      <div className="flex items-start gap-2.5">
+                        <AlertTriangle size={18} className="text-white shrink-0 mt-0.5" strokeWidth={2.5} />
+                        <div>
+                          <p className="text-sm font-bold text-white">{allergy.allergen}</p>
+                          {allergy.notes && (
+                            <p className="text-xs text-red-100 mt-0.5">{allergy.notes}</p>
+                          )}
+                        </div>
+                      </div>
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full text-red-700 bg-white shrink-0">
+                        Severe
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Non-severe allergies — unchanged existing styling */}
+              {otherAllergies.map((allergy) => (
                 <div key={allergy.id} className="flex items-start justify-between py-2 border-b border-slate-100 last:border-0">
                   <div>
                     <p className="text-sm font-semibold text-slate-800">{allergy.allergen}</p>
