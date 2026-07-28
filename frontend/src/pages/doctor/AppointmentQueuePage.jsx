@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Badge from '../../components/common/Badge';
 import Spinner from '../../components/common/Spinner';
+import ConsultationNotesModal from '../../components/doctor/ConsultationNotesModal';
 
 const DOCTOR_ID = 'd04b8bcf-fe8a-4d3b-affc-5ab87e78cfc3';
 const API_URL = 'http://localhost:5000';
@@ -18,6 +19,7 @@ const AppointmentQueuePage = () => {
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [notesModalAppointmentId, setNotesModalAppointmentId] = useState(null);
 
   const fetchAppointments = async () => {
     try {
@@ -112,10 +114,10 @@ const AppointmentQueuePage = () => {
                 )}
                 {appt.status === 'in_progress' && (
                   <button
-                    onClick={() => updateStatus(appt.id, 'completed')}
+                    onClick={() => setNotesModalAppointmentId(appt.id)}
                     className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700"
                   >
-                    Complete
+                    Add Notes & Complete
                   </button>
                 )}
                 {(appt.status === 'scheduled' || appt.status === 'in_progress') && (
@@ -131,6 +133,13 @@ const AppointmentQueuePage = () => {
           ))}
         </div>
       )}
+
+      <ConsultationNotesModal
+        isOpen={!!notesModalAppointmentId}
+        onClose={() => setNotesModalAppointmentId(null)}
+        appointmentId={notesModalAppointmentId}
+        onSaved={() => updateStatus(notesModalAppointmentId, 'completed')}
+      />
     </div>
   );
 };
