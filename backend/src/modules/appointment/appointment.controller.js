@@ -52,12 +52,27 @@ const updateAppointmentStatusController = async (req, res) => {
 const addConsultationNotesController = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, is_confidential } = req.body;
+    const {
+      title,
+      description,
+      is_confidential,
+      chief_complaint,
+      diagnosis,
+      treatment_plan,
+      follow_up_needed,
+    } = req.body;
 
     if (!title || !description) {
       return res.status(400).json({
         success: false,
         message: 'title and description are required',
+      });
+    }
+
+    if (!chief_complaint || !diagnosis) {
+      return res.status(400).json({
+        success: false,
+        message: 'chief_complaint and diagnosis are required',
       });
     }
 
@@ -75,7 +90,11 @@ const addConsultationNotesController = async (req, res) => {
       appointment.doctor_id,
       title,
       description,
-      is_confidential
+      is_confidential,
+      chief_complaint,
+      diagnosis,
+      treatment_plan,
+      follow_up_needed
     );
 
     res.status(201).json({
