@@ -13,6 +13,8 @@ import PrescriptionsPage      from './pages/patient/PrescriptionsPage';
 import PatientLookupPage      from './pages/patient/PatientLookupPage';
 import LoginPage              from './pages/auth/LoginPage';
 import RegisterPage           from './pages/auth/RegisterPage';
+import ForgotPasswordPage     from './pages/auth/ForgotPasswordPage';
+import ResetPasswordPage      from './pages/auth/ResetPasswordPage';
 import IssuePrescriptionPage  from './pages/doctor/IssuePrescriptionPage';
 import DoctorDashboard        from './pages/doctor/DoctorDashboard';
 import AppointmentQueuePage   from './pages/doctor/AppointmentQueuePage';
@@ -30,6 +32,8 @@ function App() {
         {/* Auth pages — no sidebar */}
         <Route path="/login"    element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password"  element={<ResetPasswordPage />} />
 
         {/* Patient QR lookup — no sidebar, doctor-facing read-only view */}
         <Route path="/lookup/:qrCodeId" element={<PatientLookupPage />} />
