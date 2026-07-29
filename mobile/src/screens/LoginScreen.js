@@ -6,6 +6,7 @@
  */
 
 import React, { useState } from 'react';
+import api from '../services/api';
 import {
   View,
   Text,
@@ -18,10 +19,7 @@ import {
   ScrollView,
 } from 'react-native';
 
-const API_URL = 'http://10.235.201.10:5000';
-// const API_URL = 'http://localhost:5000'; // iOS simulator
-
-export default function LoginScreen({ onLoginSuccess }) {
+export default function LoginScreen({ onLoginSuccess, onForgotPassword }) {
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading]   = useState(false);
@@ -46,22 +44,24 @@ export default function LoginScreen({ onLoginSuccess }) {
     setError('');
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+      const response = await api.post('/api/auth/login', {
+        email,
+        password,
       });
 
-      const data = await response.json();
+      const data = response.data;
 
       if (data.success) {
-        onLoginSuccess(data.data);
+         onLoginSuccess(data.data);
       } else {
         setError(data.message || 'Login failed. Please try again.');
       }
 
-    } catch {
-      setError('Cannot connect to server. Please check your connection.');
+    } catch (error) {
+      setError(
+        error.response?.data?.message ||
+        'Cannot connect to server. Please check your connection.'
+     );
     } finally {
       setLoading(false);
     }
@@ -128,6 +128,10 @@ export default function LoginScreen({ onLoginSuccess }) {
               ? <ActivityIndicator color="#FFFFFF" />
               : <Text style={styles.buttonText}>Sign In</Text>
             }
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={onForgotPassword}>
+            <Text style={styles.forgotText}>Forgot your password?</Text>
           </TouchableOpacity>
 
           {/* Register link */}
@@ -233,6 +237,15 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
   },
+
+  forgotText: {
+  textAlign: 'center',
+  fontSize: 13,
+  color: '#1E3A5F',
+  fontWeight: '600',
+  marginTop: 14,
+  },
+
   registerText: {
     textAlign: 'center',
     fontSize: 13,
