@@ -25,13 +25,14 @@
  * Most Recent Visit Summary added below the banner to give instant context 
  * on the patient's last interaction without scrolling (CARE4U-68).
  * Thorough loading states and responsive scaling applied for mobile viewing (CARE4U-63/64).
+ * Actions panel added and strictly gated behind doctor authentication (CARE4U-71).
  * @author    Wasana Karunanayaka (S/21/081)
  */
 
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
-import { Sparkles, AlertTriangle, ChevronDown, Phone, Pill, Calendar, Clock } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Sparkles, AlertTriangle, ChevronDown, Phone, Pill, Calendar, Clock, Lock } from 'lucide-react';
 import {
   getPatientByQrCode,
   getMedicalRecords,
@@ -39,6 +40,7 @@ import {
   getPatientHistorySummary,
   getPatientPrescriptions
 } from '../../services/patient.service';
+import useAuthStore from '../../store/authStore';
 import { formatAge } from '../../utils/dateUtils';
 import Spinner from '../../components/common/Spinner';
 import Alert from '../../components/common/Alert';
@@ -46,6 +48,7 @@ import Card from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
 import Modal from '../../components/common/Modal';
 import DataTable from '../../components/common/DataTable';
+
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -240,8 +243,34 @@ const BannerAnimationStyles = () => (
 // ─── Main Component ───────────────────────────────────────────────────────────
 const PatientLookupPage = () => {
   const { qrCodeId } = useParams();
+  const { user, setUser } = useAuthStore(); // Added setUser here
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [showEmergencyContact, setShowEmergencyContact] = useState(false);
+
+  // CARE4U-71: Session Recovery for public route
+  useEffect(() => {
+    const recoverSession = async () => {
+      if (!user) {
+        try {
+          // Check backend for active session cookie
+          const response = await fetch('http://localhost:5000/api/auth/me', {
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          const result = await response.json();
+          if (result.success && result.data) {
+            setUser(result.data);
+          }
+        } catch (error) {
+          console.log("No active doctor session found.");
+        }
+      }
+    };
+    recoverSession();
+  }, [user, setUser]);
+
+  // Gating flag for Doctor Actions (CARE4U-71)
+  const isDoctor = user?.role?.toLowerCase() === 'doctor';
 
   // AI Summary States
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
@@ -253,6 +282,7 @@ const PatientLookupPage = () => {
     queryFn: () => getPatientByQrCode(qrCodeId),
     retry: false,
   });
+
 
   const { data: allergies = [], isLoading: allergiesLoading } = useQuery({
     queryKey: ['allergies', patient?.id],
@@ -403,6 +433,22 @@ const PatientLookupPage = () => {
           </div>
         </div>
       </div>
+
+      {/* ── Gated Doctor Actions Panel (CARE4U-71) ── */}
+      {isDoctor && (
+        <div className="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-40">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-2 text-indigo-700 font-semibold text-sm uppercase tracking-wider">
+              <Lock size={16} />
+              <span>Verified Doctor Access</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Ready for CARE4U-72, 73, 74 integration */}
+              <span className="text-xs text-slate-400 font-medium italic">Action buttons initializing...</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Page Body (Responsive) ── */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 flex flex-col gap-5 sm:gap-6">
