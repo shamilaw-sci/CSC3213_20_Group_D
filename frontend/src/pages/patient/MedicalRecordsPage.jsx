@@ -205,6 +205,33 @@ const MedicalRecordsPage = () => {
               />
             )}
 
+            {/* Structured Consultation Notes */}
+            {selectedRecord.record_type === 'consultation' && (
+              <>
+                {selectedRecord.chief_complaint && (
+                  <div>
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Chief Complaint</p>
+                    <p className="text-sm text-slate-700 leading-relaxed bg-slate-50 rounded-lg p-4">{selectedRecord.chief_complaint}</p>
+                  </div>
+                )}
+                {selectedRecord.diagnosis && (
+                  <div>
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Diagnosis</p>
+                    <p className="text-sm text-slate-700 leading-relaxed bg-slate-50 rounded-lg p-4">{selectedRecord.diagnosis}</p>
+                  </div>
+                )}
+                {selectedRecord.treatment_plan && (
+                  <div>
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Treatment Plan</p>
+                    <p className="text-sm text-slate-700 leading-relaxed bg-slate-50 rounded-lg p-4">{selectedRecord.treatment_plan}</p>
+                  </div>
+                )}
+                {selectedRecord.follow_up_needed && (
+                  <Alert type="info" message="Follow-up recommended by doctor." />
+                )}
+              </>
+            )}
+
             {/* Description */}
             <div>
               <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">
