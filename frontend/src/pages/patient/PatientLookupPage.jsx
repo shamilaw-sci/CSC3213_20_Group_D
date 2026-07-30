@@ -26,13 +26,16 @@
  * on the patient's last interaction without scrolling (CARE4U-68).
  * Thorough loading states and responsive scaling applied for mobile viewing (CARE4U-63/64).
  * Actions panel added and strictly gated behind doctor authentication (CARE4U-71).
+ * "Start Visit" action button creates a walk-in consultation (CARE4U-72).
  * @author    Wasana Karunanayaka (S/21/081)
  */
 
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
-import { Sparkles, AlertTriangle, ChevronDown, Phone, Pill, Calendar, Clock, Lock } from 'lucide-react';
+import { Sparkles, AlertTriangle, ChevronDown, Phone, Pill, Calendar, Clock, Lock, Stethoscope } from 'lucide-react';
+import toast from 'react-hot-toast';
+
 import {
   getPatientByQrCode,
   getMedicalRecords,
@@ -40,6 +43,7 @@ import {
   getPatientHistorySummary,
   getPatientPrescriptions
 } from '../../services/patient.service';
+import { bookAppointment } from '../../services/appointment.service';
 import useAuthStore from '../../store/authStore';
 import { formatAge } from '../../utils/dateUtils';
 import Spinner from '../../components/common/Spinner';
@@ -48,7 +52,6 @@ import Card from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
 import Modal from '../../components/common/Modal';
 import DataTable from '../../components/common/DataTable';
-
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -243,7 +246,8 @@ const BannerAnimationStyles = () => (
 // ─── Main Component ───────────────────────────────────────────────────────────
 const PatientLookupPage = () => {
   const { qrCodeId } = useParams();
-  const { user, setUser } = useAuthStore(); // Added setUser here
+  const navigate = useNavigate();
+  const { user, setUser } = useAuthStore();
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [showEmergencyContact, setShowEmergencyContact] = useState(false);
 
@@ -252,7 +256,6 @@ const PatientLookupPage = () => {
     const recoverSession = async () => {
       if (!user) {
         try {
-          // Check backend for active session cookie
           const response = await fetch('http://localhost:5000/api/auth/me', {
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' }
@@ -262,7 +265,7 @@ const PatientLookupPage = () => {
             setUser(result.data);
           }
         } catch (error) {
-          console.log("No active doctor session found.");
+          console.log("No active doctor session found.", error.message);
         }
       }
     };
@@ -277,12 +280,14 @@ const PatientLookupPage = () => {
   const [aiSummary, setAiSummary] = useState(null);
   const [summaryError, setSummaryError] = useState(null);
 
+  // Start Visit State (CARE4U-72)
+  const [isStartingVisit, setIsStartingVisit] = useState(false);
+
   const { data: patient, isLoading: patientLoading, error: patientError } = useQuery({
     queryKey: ['patient-qr', qrCodeId],
     queryFn: () => getPatientByQrCode(qrCodeId),
     retry: false,
   });
-
 
   const { data: allergies = [], isLoading: allergiesLoading } = useQuery({
     queryKey: ['allergies', patient?.id],
@@ -325,6 +330,26 @@ const PatientLookupPage = () => {
       setSummaryError('Failed to generate summary. The AI service might be temporarily unavailable.');
     } finally {
       setIsGeneratingSummary(false);
+    }
+  };
+
+  // CARE4U-72: Start Visit Handler
+  const handleStartVisit = async () => {
+    if (!patient?.id || !user?.id) return;
+    setIsStartingVisit(true);
+    try {
+      await bookAppointment({
+        patientId: patient.id,
+        doctorId: user.id,
+        scheduledAt: new Date().toISOString(),
+        type: 'opd' // Fix: Updated to match DB check constraint!
+      });
+      toast.success("Visit started! Added to your queue.");
+      navigate('/doctor/dashboard'); // Route doctor back to their hub
+    } catch (err) {
+      toast.error(err.message || "Failed to start visit");
+    } finally {
+      setIsStartingVisit(false);
     }
   };
 
@@ -434,7 +459,7 @@ const PatientLookupPage = () => {
         </div>
       </div>
 
-      {/* ── Gated Doctor Actions Panel (CARE4U-71) ── */}
+      {/* ── Gated Doctor Actions Panel (CARE4U-71 & CARE4U-72) ── */}
       {isDoctor && (
         <div className="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-40">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -443,8 +468,15 @@ const PatientLookupPage = () => {
               <span>Verified Doctor Access</span>
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              {/* Ready for CARE4U-72, 73, 74 integration */}
-              <span className="text-xs text-slate-400 font-medium italic">Action buttons initializing...</span>
+              <button
+                onClick={handleStartVisit}
+                disabled={isStartingVisit}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors disabled:opacity-50"
+              >
+                {isStartingVisit ? <Spinner size="sm" color="text-white" /> : <Stethoscope size={16} />}
+                Start Visit
+              </button>
+              {/* Ready for CARE4U-73, 74 integration */}
             </div>
           </div>
         </div>

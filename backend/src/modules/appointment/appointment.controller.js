@@ -110,15 +110,25 @@ const addConsultationNotesController = async (req, res) => {
 
 /**
  * Handles POST /api/appointments
- * Books a new appointment for a patient with a doctor.
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
+ * Books a new appointment (supports both Patient self-booking and Doctor walk-in).
  */
 const bookAppointmentController = async (req, res) => {
   try {
     const currentUser = req.session?.user || { id: 'test-patient-uuid', role: 'patient' };
+    let { patientId, doctorId, scheduledAt, type, notes } = req.body;
 
-    const { doctorId, scheduledAt, type, notes } = req.body;
+    // Route logic based on role, explicitly prioritizing the session's profile_id
+    if (currentUser.role?.toLowerCase() === 'doctor') {
+      if (!patientId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Validation failed: patientId is required when a doctor initiates a visit',
+        });
+      }
+      doctorId = currentUser.profile_id || doctorId || currentUser.id;
+    } else {
+      patientId = currentUser.profile_id || currentUser.id;
+    }
 
     if (!doctorId || !scheduledAt || !type) {
       return res.status(400).json({
@@ -141,7 +151,7 @@ const bookAppointmentController = async (req, res) => {
     }
 
     const appointment = await appointmentRepository.bookAppointment(
-      currentUser.id,
+      patientId,
       doctorId,
       scheduledAt,
       type,

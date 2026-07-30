@@ -5,14 +5,17 @@
  * @author I.M.L.S. Idirisinghe (S/21/389)
  */
 
-const {register, login, forgotPassword, resetPassword} = require('./auth.service');
+const { register, login, forgotPassword, resetPassword } = require('./auth.service');
+
+// Import repositories to fetch profile IDs
+const patientRepository = require('../patient/patient.repository');
+const doctorRepository = require('../doctor/doctor.repository');
 
 /**
  * Handles POST/ api/ auth/ register
  * @param {object} req - Express request
  * @param {object} res - Express response 
  */
-
 const registerController = async (req, res) => {
     try {
         const {email, phone, password, role, profileData} = req.body;
@@ -37,7 +40,7 @@ const registerController = async (req, res) => {
         if (password.length<8) {
             return res.status(400).json({
                 success: false,
-                message:'Password must be at leaset 8 characters'
+                message:'Password must be at least 8 characters'
             });
         }
 
@@ -48,7 +51,7 @@ const registerController = async (req, res) => {
             message: 'Registration successful',
             data: {
                 user: result.user,
-                profile:result.profile
+                profile: result.profile
             }
         });
 
@@ -56,18 +59,18 @@ const registerController = async (req, res) => {
       console.error('registerController error: ',error);
 
       if(error.message === 'Email already registered') {
-    return res.status(400).json({
-        success: false,
-        message: error.message
-    });
-}
+        return res.status(400).json({
+            success: false,
+            message: error.message
+        });
+      }
 
-if(error.code === '23505') {
-    return res.status(400).json({
-        success: false,
-        message: 'Email or phone number already registered'
-    });
-}
+      if(error.code === '23505') {
+        return res.status(400).json({
+            success: false,
+            message: 'Email or phone number already registered'
+        });
+      }
 
       return res.status(500).json({
         success:false,
@@ -95,11 +98,24 @@ const loginController = async (req, res) => {
 
     const user = await login(email, password);
 
-    // Save user to session
+    // Fetch the specific profile ID based on role
+    let profileId = null;
+    const userRole = user.role?.toLowerCase();
+    
+    if (userRole === 'patient') {
+      const patientProfile = await patientRepository.getPatientByUserId(user.id);
+      if (patientProfile) profileId = patientProfile.id;
+    } else if (userRole === 'doctor') {
+      const doctorProfile = await doctorRepository.getDoctorByUserId(user.id);
+      if (doctorProfile) profileId = doctorProfile.id;
+    }
+
+    // Save user to session, now including the profile_id
     req.session.user = {
       id: user.id,
       email: user.email,
-      role: user.role
+      role: user.role,
+      profile_id: profileId
     };
 
     return res.status(200).json({
@@ -108,7 +124,8 @@ const loginController = async (req, res) => {
       data: {
         id: user.id,
         email: user.email,
-        role: user.role
+        role: user.role,
+        profile_id: profileId
       }
     });
 
@@ -141,7 +158,6 @@ const loginController = async (req, res) => {
  * @param {Object} req - Express request
  * @param {Object} res - Express response
  */
-
 const logoutController = (req,res) => {
     req.session.destroy((err) => {
         if(err){
@@ -161,10 +177,9 @@ const logoutController = (req,res) => {
 /**
  * Handles GET api/auth/me
  * Returns the currently logged in user from session
- * @param {object} res - Express request
+ * @param {object} req - Express request
  * @param {object} res - Express response
  */
-
 const getMeController = (req, res) => {
   if (!req.session || !req.session.user) {
     return res.status(401).json({

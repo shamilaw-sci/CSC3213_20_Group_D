@@ -66,7 +66,7 @@ const createConsultationNote = async (
  * @param {string} patientId   - UUID of the patient
  * @param {string} doctorId    - UUID of the doctor
  * @param {string} scheduledAt - ISO timestamp for the appointment
- * @param {string} type        - Appointment type (e.g. 'consultation')
+ * @param {string} type        - Appointment type (e.g. 'opd')
  * @param {string} notes       - Optional notes
  * @returns {Promise<Object>} The created appointment row
  */
