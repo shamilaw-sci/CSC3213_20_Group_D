@@ -6,8 +6,11 @@
  * @author  Wasana Karunanayaka (S/21/081)
  */
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, StatusBar } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, StatusBar, Platform } from 'react-native';
+import api from './src/services/api';
 import LoginScreen          from './src/screens/LoginScreen';
+import ForgotPasswordScreen  from './src/screens/ForgotPasswordScreen';
+import ResetPasswordScreen   from './src/screens/ResetPasswordScreen';
 import PatientProfileScreen from './src/screens/PatientProfileScreen';
 import PatientQRCardScreen  from './src/screens/PatientQRCardScreen';
 import PrescriptionsScreen  from './src/screens/PrescriptionsScreen';
@@ -23,21 +26,35 @@ const TABS = [
 export default function App() {
   const [activeTab, setActiveTab] = useState('profile');
   const [user, setUser]           = useState(null);
+  const [authScreen, setAuthScreen] = useState('login'); // 'login' | 'forgot-password' | 'reset-password'
 
   const handleLogout = async () => {
-    try {
-      await fetch('http://10.235.201.10:5000/api/auth/logout', {
-        method: 'POST',
-      });
-    } catch {
-      // ignore error
-    }
-    setUser(null);
-  };
+  setUser(null);
+  setAuthScreen('login');
+
+  try {
+    await api.post('/api/auth/logout');
+  } catch (error) {
+    console.error('Logout error:', error);
+  }
+};
 
   if (!user) {
-    return <LoginScreen onLoginSuccess={(userData) => setUser(userData)} />;
+  if (authScreen === 'forgot-password') {
+    return <ForgotPasswordScreen onBackToLogin={() => setAuthScreen('login')}
+    onResetPassword={() => setAuthScreen('reset-password')} />;
   }
+  if (authScreen === 'reset-password') {
+    return <ResetPasswordScreen onBackToLogin={() => setAuthScreen('login')} />;
+  }
+  return (
+    <LoginScreen
+      onLoginSuccess={(userData) => setUser(userData)}
+      onForgotPassword={() => setAuthScreen('forgot-password')
+      }
+    />
+  );
+}
 
   return (
     <View style={styles.root}>
@@ -91,8 +108,10 @@ const styles = StyleSheet.create({
     justifyContent:    'space-between',
     alignItems:        'center',
     backgroundColor:   '#1E3A5F',
-    paddingTop:        (StatusBar.currentHeight || 24) + 8,
-    paddingBottom:     10,
+    paddingTop: Platform.OS === 'ios'
+  ? 70
+  : (StatusBar.currentHeight || 24) + 8,
+    paddingBottom:     0,
     paddingHorizontal: 20,
   },
   topBarTitle: {
