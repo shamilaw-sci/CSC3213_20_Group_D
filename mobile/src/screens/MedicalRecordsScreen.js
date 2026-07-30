@@ -132,12 +132,41 @@ const MedicalRecordsScreen = () => {
                 )}
               </View>
 
-              {/* Description */}
+              {/* Description / Structured Notes */}
               <View style={styles.modalBody}>
-                <Text style={styles.modalDescLabel}>DETAILS</Text>
-                <Text style={styles.modalDesc}>
-                  {selectedRecord.description || 'No additional details recorded.'}
-                </Text>
+                {selectedRecord.record_type === 'consultation' && selectedRecord.chief_complaint ? (
+                  <>
+                    <Text style={styles.modalDescLabel}>CHIEF COMPLAINT</Text>
+                    <Text style={styles.modalDesc}>{selectedRecord.chief_complaint}</Text>
+
+                    <Text style={[styles.modalDescLabel, { marginTop: 16 }]}>DIAGNOSIS</Text>
+                    <Text style={styles.modalDesc}>{selectedRecord.diagnosis}</Text>
+
+                    <Text style={[styles.modalDescLabel, { marginTop: 16 }]}>TREATMENT PLAN</Text>
+                    <Text style={styles.modalDesc}>{selectedRecord.treatment_plan}</Text>
+                    
+                    {/* Fallback to standard description if doctor also added free text */}
+                    {selectedRecord.description && (
+                       <>
+                         <Text style={[styles.modalDescLabel, { marginTop: 16 }]}>ADDITIONAL NOTES</Text>
+                         <Text style={styles.modalDesc}>{selectedRecord.description}</Text>
+                       </>
+                    )}
+
+                    {selectedRecord.follow_up_needed && (
+                      <View style={styles.followUpBanner}>
+                        <Text style={styles.followUpText}>📅 Follow-up Required</Text>
+                      </View>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <Text style={styles.modalDescLabel}>DETAILS</Text>
+                    <Text style={styles.modalDesc}>
+                      {selectedRecord.description || 'No additional details recorded.'}
+                    </Text>
+                  </>
+                )}
               </View>
 
             </ScrollView>
@@ -386,6 +415,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 10,
     padding: 14,
+  },
+  followUpBanner: {
+    marginTop: 16,
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    borderRadius: 10,
+    padding: 14,
+    alignItems: 'center',
+  },
+  followUpText: {
+    color: '#1E3A5F',
+    fontWeight: '600',
+    fontSize: 14,
   },
   closeButton: {
     margin: 16,
