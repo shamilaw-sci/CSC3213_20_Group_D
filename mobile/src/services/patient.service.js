@@ -35,3 +35,23 @@ export const deleteAllergy = async (patientId, allergyId) => {
   const response = await api.delete(`/api/patients/${patientId}/allergies/${allergyId}`);
   return response.data;
 };
+
+export const getConditions = async (patientId) => {
+  const response = await api.get(`/api/patients/${patientId}/conditions`);
+  return response.data.data;
+};
+
+export const addCondition = async (patientId, condition, diagnosedAt, notes, isPriority) => {
+  const response = await api.post(`/api/patients/${patientId}/conditions`, {
+    condition,
+    diagnosedAt,
+    notes,
+    isPriority
+  });
+  return response.data.data;
+};
+
+export const deleteCondition = async (patientId, conditionId) => {
+  const response = await api.delete(`/api/patients/${patientId}/conditions/${conditionId}`);
+  return response.data;
+};

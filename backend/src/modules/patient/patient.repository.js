@@ -212,6 +212,41 @@ async function getConditionsByPatientId(patientId) {
 }
 
 /**
+ * Inserts a new chronic condition record for a patient.
+ * @param {string} patientId - UUID of the patient (patients.id)
+ * @param {string} condition - Name of the condition
+ * @param {string} diagnosedAt - Date string for when it was diagnosed
+ * @param {string|null} notes - Optional additional notes
+ * @param {boolean} isPriority - Whether this is a priority/severe condition
+ * @returns {Promise<Object>} The newly created condition row
+ */
+async function addCondition(patientId, condition, diagnosedAt, notes, isPriority) {
+  const result = await pool.query(
+    `INSERT INTO patient_conditions (id, patient_id, condition, diagnosed_at, notes, is_priority, created_at)
+     VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, NOW())
+     RETURNING *`,
+    [patientId, condition, diagnosedAt || null, notes || null, Boolean(isPriority)]
+  );
+  return result.rows[0];
+}
+
+/**
+ * Deletes a chronic condition record belonging to a specific patient.
+ * @param {string} patientId - UUID of the patient (patients.id)
+ * @param {string} conditionId - UUID of the condition (patient_conditions.id)
+ * @returns {Promise<boolean>} True if a row was deleted, false otherwise
+ */
+async function deleteCondition(patientId, conditionId) {
+  const result = await pool.query(
+    `DELETE FROM patient_conditions 
+     WHERE id = $1 AND patient_id = $2
+     RETURNING id`,
+    [conditionId, patientId]
+  );
+  return result.rowCount > 0;
+}
+
+/**
  * Inserts a new allergy record for a patient.
  * @param {string} patientId - UUID of the patient (patients.id)
  * @param {string} allergen  - Name of the allergen (e.g. Penicillin)
@@ -269,14 +304,14 @@ async function getPatientPrescriptions(patientId) {
       d.specialization  AS doctor_specialization,
       JSON_AGG(
         JSON_BUILD_OBJECT(
-          'id',                   pi.id,
-          'medicine_name',        pi.medicine_name,
-          'dosage',               pi.dosage,
-          'frequency',            pi.frequency,
-          'duration_days',        pi.duration_days,
-          'quantity_prescribed',  pi.quantity_prescribed,
-          'quantity_dispensed',   pi.quantity_dispensed,
-          'special_notes',        pi.special_notes
+          'id',                  pi.id,
+          'medicine_name',       pi.medicine_name,
+          'dosage',              pi.dosage,
+          'frequency',           pi.frequency,
+          'duration_days',       pi.duration_days,
+          'quantity_prescribed', pi.quantity_prescribed,
+          'quantity_dispensed',  pi.quantity_dispensed,
+          'special_notes',       pi.special_notes
         ) ORDER BY pi.medicine_name
       ) AS items
     FROM prescriptions pr
@@ -344,9 +379,11 @@ module.exports = {
   updatePatientPhoto,
   getMedicalRecords,
   getAllergies,
+  getConditionsByPatientId,
+  addCondition,
+  deleteCondition,
   addAllergy,
   deleteAllergy,
   getPatientPrescriptions,
   getPatientByQrCodeId,
-  getConditionsByPatientId,
 };

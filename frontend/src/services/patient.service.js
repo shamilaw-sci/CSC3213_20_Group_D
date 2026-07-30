@@ -117,6 +117,46 @@ export const deleteAllergy = async (patientId, allergyId) => {
 };
 
 /**
+ * Fetches all chronic condition records for a patient.
+ * @param {string} patientId - UUID of the patient
+ * @returns {Promise<Array>} Array of condition objects
+ */
+export const getConditions = async (patientId) => {
+  const response = await api.get(`/api/patients/${patientId}/conditions`);
+  return response.data.data;
+};
+
+/**
+ * Adds a new chronic condition for a patient.
+ * @param {string} patientId - UUID of the patient
+ * @param {string} condition - Name of the condition
+ * @param {string} diagnosedAt - Date diagnosed (ISO string)
+ * @param {string} notes - Optional notes
+ * @param {boolean} isPriority - Whether this is a priority condition
+ * @returns {Promise<Object>} The created condition object
+ */
+export const addCondition = async (patientId, condition, diagnosedAt, notes, isPriority) => {
+  const response = await api.post(`/api/patients/${patientId}/conditions`, {
+    condition,
+    diagnosedAt,
+    notes,
+    isPriority
+  });
+  return response.data.data;
+};
+
+/**
+ * Deletes a chronic condition record for a patient.
+ * @param {string} patientId - UUID of the patient
+ * @param {string} conditionId - UUID of the condition
+ * @returns {Promise<Object>} The success response object
+ */
+export const deleteCondition = async (patientId, conditionId) => {
+  const response = await api.delete(`/api/patients/${patientId}/conditions/${conditionId}`);
+  return response.data;
+};
+
+/**
  * Fetches an AI-generated clinical summary of a patient's medical history.
  * @param {string} patientId - UUID of the patient
  * @returns {Promise<Object>} Object containing the { summary } string

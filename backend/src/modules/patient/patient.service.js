@@ -219,6 +219,82 @@ const deleteAllergy = async (patientId, allergyId) => {
 };
 
 /**
+ * Retrieves all chronic conditions for a patient.
+ * @param {string} patientId - UUID of the patient
+ * @returns {Promise<Array>} Array of condition objects
+ * @throws {Error} 404 if patient is not found
+ */
+const getConditions = async (patientId) => {
+  const existing = await patientRepository.getPatientById(patientId);
+  if (!existing) {
+    const error = new Error('Patient not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const conditions = await patientRepository.getConditionsByPatientId(patientId);
+  return conditions;
+};
+
+/**
+ * Adds a new chronic condition record for a patient.
+ * @param {string} patientId - UUID of the patient
+ * @param {string} condition - Name of the condition
+ * @param {string} diagnosedAt - Date diagnosed
+ * @param {string} notes - Optional notes
+ * @param {boolean} isPriority - Priority flag
+ * @returns {Promise<Object>} The newly created condition record
+ * @throws {Error} 400 if condition name is missing
+ * @throws {Error} 404 if patient is not found
+ */
+const addCondition = async (patientId, condition, diagnosedAt, notes, isPriority) => {
+  if (!condition) {
+    const error = new Error('condition name is required');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const existing = await patientRepository.getPatientById(patientId);
+  if (!existing) {
+    const error = new Error('Patient not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const newCondition = await patientRepository.addCondition(
+    patientId,
+    condition,
+    diagnosedAt,
+    notes,
+    isPriority
+  );
+  return newCondition;
+};
+
+/**
+ * Deletes a chronic condition record belonging to a specific patient.
+ * @param {string} patientId - UUID of the patient
+ * @param {string} conditionId - UUID of the condition to delete
+ * @returns {Promise<void>}
+ * @throws {Error} 404 if patient or condition is not found
+ */
+const deleteCondition = async (patientId, conditionId) => {
+  const existing = await patientRepository.getPatientById(patientId);
+  if (!existing) {
+    const error = new Error('Patient not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const deleted = await patientRepository.deleteCondition(patientId, conditionId);
+  if (!deleted) {
+    const error = new Error('Condition not found or does not belong to this patient');
+    error.statusCode = 404;
+    throw error;
+  }
+};
+
+/**
  * Retrieves all prescriptions for a patient with their medicine items.
  * @param {string} patientId - UUID of the patient (from patients table)
  * @returns {Promise<Array>} Array of prescription objects with items array
@@ -361,6 +437,9 @@ module.exports = {
   getAllergies,
   addAllergy,
   deleteAllergy,
+  getConditions,
+  addCondition,
+  deleteCondition,
   getPatientPrescriptions,
   getPatientByQrCode,
   getPatientHistorySummary

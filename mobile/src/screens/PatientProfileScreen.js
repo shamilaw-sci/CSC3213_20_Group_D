@@ -2,7 +2,7 @@
  * @file    PatientProfileScreen.js
  * @module  Patient
  * @desc    Mobile screen showing patient profile information, known allergies,
- * and an inline edit form for updatable fields. Includes smart allergy management.
+ * chronic conditions, and an inline edit form for updatable fields.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 import React, { useEffect, useState } from 'react';
@@ -19,14 +19,18 @@ import {
   Platform,
   Image,
   Alert,
-  Modal
+  Modal,
+  Switch
 } from 'react-native';
 import {
   getPatientProfile,
   getPatientAllergies,
   updatePatientProfile,
   addAllergy,
-  deleteAllergy
+  deleteAllergy,
+  getConditions,
+  addCondition,
+  deleteCondition
 } from '../services/patient.service';
 import { searchAllergens } from '../utils/allergenSearch';
 
@@ -46,6 +50,21 @@ const getInitials = (name) => {
   const parts = name.trim().split(' ').filter(Boolean);
   if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
   return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+};
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return '—';
+  return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
+const formatAge = (dob) => {
+  if (!dob) return '—';
+  const birthDate = new Date(dob);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+  return `${age} yrs`;
 };
 
 const OptionSelector = ({ label, value, options, onSelect }) => {
@@ -92,6 +111,7 @@ const ProfileField = ({ label, value }) => (
 export default function PatientProfileScreen() {
   const [patient, setPatient] = useState(null);
   const [allergies, setAllergies] = useState([]);
+  const [conditions, setConditions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -110,6 +130,14 @@ export default function PatientProfileScreen() {
   const [allergyNotes, setAllergyNotes] = useState('');
   const [addingAllergy, setAddingAllergy] = useState(false);
 
+  // Add Condition State
+  const [isAddConditionModalOpen, setIsAddConditionModalOpen] = useState(false);
+  const [conditionInput, setConditionInput] = useState('');
+  const [diagnosedAtInput, setDiagnosedAtInput] = useState('');
+  const [conditionNotes, setConditionNotes] = useState('');
+  const [isPriorityInput, setIsPriorityInput] = useState(false);
+  const [addingCondition, setAddingCondition] = useState(false);
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -118,8 +146,10 @@ export default function PatientProfileScreen() {
     try {
       const profileData = await getPatientProfile(TEST_PATIENT_ID);
       const allergyData = await getPatientAllergies(TEST_PATIENT_ID);
+      const conditionData = await getConditions(TEST_PATIENT_ID);
       setPatient(profileData);
       setAllergies(allergyData);
+      setConditions(conditionData);
     } catch (err) {
       setError('Failed to load profile. Please try again.');
     } finally {
@@ -209,6 +239,52 @@ export default function PatientProfileScreen() {
     );
   };
 
+  // --- Condition Logic ---
+  const handleAddCondition = async () => {
+    if (!conditionInput.trim()) {
+      Alert.alert('Validation Error', 'Please enter a condition name.');
+      return;
+    }
+    setAddingCondition(true);
+    try {
+      await addCondition(TEST_PATIENT_ID, conditionInput.trim(), diagnosedAtInput.trim(), conditionNotes.trim(), isPriorityInput);
+      const updatedConditions = await getConditions(TEST_PATIENT_ID);
+      setConditions(updatedConditions);
+      setIsAddConditionModalOpen(false);
+      setConditionInput('');
+      setDiagnosedAtInput('');
+      setConditionNotes('');
+      setIsPriorityInput(false);
+    } catch (err) {
+      Alert.alert('Error', 'Failed to add condition.');
+    } finally {
+      setAddingCondition(false);
+    }
+  };
+
+  const promptDeleteCondition = (condition) => {
+    Alert.alert(
+      "Remove Condition",
+      `Are you sure you want to remove ${condition.condition}?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Remove", 
+          style: "destructive", 
+          onPress: async () => {
+            try {
+              await deleteCondition(TEST_PATIENT_ID, condition.id);
+              const updatedConditions = await getConditions(TEST_PATIENT_ID);
+              setConditions(updatedConditions);
+            } catch (err) {
+              Alert.alert('Error', 'Failed to remove condition.');
+            }
+          } 
+        }
+      ]
+    );
+  };
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -227,16 +303,41 @@ export default function PatientProfileScreen() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
           
+          {/* NEW UPDATED HEADER DESIGN */}
           <View style={styles.header}>
             <View style={styles.headerRow}>
-              <Image source={require('../../assets/logo.png')} style={styles.headerLogo} resizeMode="contain" />
+              <View style={styles.avatarContainer}>
+                <Image
+                  source={{ uri: patient?.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(patient?.full_name || 'Patient')}&background=2E75B6&color=fff&size=120&bold=true&rounded=true` }}
+                  style={styles.profilePhoto}
+                />
+              </View>
               <View style={styles.headerText}>
-                <Text style={styles.headerTitle}>{patient?.full_name || 'My Profile'}</Text>
-                <Text style={styles.headerSubtitle}>Patient ID: {patient?.qr_code_id}</Text>
+                <Text style={styles.headerEyebrow}>MY PROFILE</Text>
+                <Text style={styles.headerTitle} numberOfLines={1}>{patient?.full_name || 'Patient'}</Text>
+                
+                {/* Clinical Badges Row */}
+                <View style={styles.badgesRow}>
+                  <Text style={styles.demographicsText}>
+                    {formatAge(patient?.date_of_birth)} · {patient?.gender ? patient.gender.charAt(0).toUpperCase() + patient.gender.slice(1) : '—'}
+                  </Text>
+                  {patient?.blood_group ? (
+                    <View style={styles.bloodGroupBadge}>
+                      <Text style={styles.bloodGroupText}>{patient.blood_group}</Text>
+                    </View>
+                  ) : null}
+                  {conditions.some(c => c.is_priority) && (
+                    <View style={styles.priorityConditionBadge}>
+                      <Text style={styles.priorityConditionText}>⚠ Priority</Text>
+                    </View>
+                  )}
+                </View>
               </View>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{getInitials(patient?.full_name)}</Text>
-              </View>
+            </View>
+            
+            <View style={styles.qrCodeContainer}>
+              <Text style={styles.qrCodeLabel}>PATIENT ID</Text>
+              <Text style={styles.qrCodeValue}>{patient?.qr_code_id || '—'}</Text>
             </View>
           </View>
 
@@ -253,8 +354,8 @@ export default function PatientProfileScreen() {
                 <Text style={styles.cardTitle}>Personal Information</Text>
                 <ProfileField label="Full Name" value={patient?.full_name} />
                 <ProfileField label="Blood Group" value={patient?.blood_group} />
-                <ProfileField label="Date of Birth" value={patient?.date_of_birth?.slice(0, 10)} />
-                <ProfileField label="Gender" value={patient?.gender} />
+                <ProfileField label="Date of Birth" value={formatDate(patient?.date_of_birth)} />
+                <ProfileField label="Gender" value={patient?.gender ? patient.gender.charAt(0).toUpperCase() + patient.gender.slice(1) : '—'} />
                 <ProfileField label="NIC" value={patient?.nic} />
               </View>
 
@@ -262,7 +363,45 @@ export default function PatientProfileScreen() {
                 <Text style={styles.cardTitle}>Emergency Contact</Text>
                 <ProfileField label="Name" value={patient?.emergency_contact_name} />
                 <ProfileField label="Phone" value={patient?.emergency_contact_phone} />
-                <ProfileField label="Relationship" value={patient?.emergency_contact_relationship} />
+                <ProfileField label="Relationship" value={patient?.emergency_contact_relationship ? patient.emergency_contact_relationship.charAt(0).toUpperCase() + patient.emergency_contact_relationship.slice(1) : '—'} />
+              </View>
+
+              {/* Chronic Conditions Section */}
+              <View style={styles.card}>
+                <View style={styles.cardHeaderRow}>
+                  <Text style={styles.cardTitleHalf}>Chronic Conditions</Text>
+                  <TouchableOpacity onPress={() => setIsAddConditionModalOpen(true)} style={styles.addMiniButton}>
+                    <Text style={styles.addMiniButtonText}>+ Add</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {conditions.length === 0 ? (
+                  <Text style={styles.noAllergies}>No conditions recorded</Text>
+                ) : (
+                  conditions.map((condition) => (
+                    <View key={condition.id} style={[styles.allergyRow, condition.is_priority && styles.priorityRow]}>
+                      <View style={styles.allergyLeft}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                          <Text style={[styles.allergyName, condition.is_priority && styles.priorityText]}>
+                            {condition.condition}
+                          </Text>
+                        </View>
+                        {condition.diagnosed_at && <Text style={styles.allergyNotes}>Diagnosed: {formatDate(condition.diagnosed_at)}</Text>}
+                        {condition.notes ? <Text style={styles.allergyNotes}>{condition.notes}</Text> : null}
+                      </View>
+                      <View style={styles.allergyRight}>
+                        {condition.is_priority && (
+                          <View style={styles.priorityBadge}>
+                            <Text style={styles.priorityBadgeText}>PRIORITY</Text>
+                          </View>
+                        )}
+                        <TouchableOpacity onPress={() => promptDeleteCondition(condition)} style={styles.deleteIconBtn}>
+                          <Text style={styles.deleteIconText}>✕</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  ))
+                )}
               </View>
 
               {/* Known Allergies Section */}
@@ -353,7 +492,7 @@ export default function PatientProfileScreen() {
               )}
 
               <View style={styles.buttonRow}>
-                <TouchableOpacity style={styles.cancelButton} onPress={handleCancel} disabled={saving}>
+                <TouchableOpacity style={styles.cancelButton} onPress={() => setIsEditing(false)} disabled={saving}>
                   <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.saveButton, saving && styles.saveButtonDisabled]} onPress={handleSave} disabled={saving}>
@@ -423,6 +562,74 @@ export default function PatientProfileScreen() {
         </View>
       </Modal>
 
+      {/* Add Condition Modal */}
+      <Modal visible={isAddConditionModalOpen} animationType="slide" transparent={true}>
+        <View style={styles.modalOverlay}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalContent}>
+            
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Add Chronic Condition</Text>
+              <TouchableOpacity onPress={() => setIsAddConditionModalOpen(false)}><Text style={styles.modalCloseText}>✕</Text></TouchableOpacity>
+            </View>
+
+            <ScrollView keyboardShouldPersistTaps="handled">
+              <View style={styles.editFieldWrapper}>
+                <Text style={styles.editLabel}>Condition Name *</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={conditionInput}
+                  onChangeText={setConditionInput}
+                  placeholder="E.g. Type 2 Diabetes"
+                  placeholderTextColor="#94A3B8"
+                  autoCapitalize="words"
+                />
+              </View>
+
+              <View style={styles.editFieldWrapper}>
+                <Text style={styles.editLabel}>Diagnosed Date (Optional)</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={diagnosedAtInput}
+                  onChangeText={setDiagnosedAtInput}
+                  placeholder="YYYY-MM-DD"
+                  placeholderTextColor="#94A3B8"
+                />
+              </View>
+
+              <View style={styles.editFieldWrapper}>
+                <Text style={styles.editLabel}>Notes (Optional)</Text>
+                <TextInput
+                  style={[styles.textInput, { height: 60, textAlignVertical: 'top' }]}
+                  value={conditionNotes}
+                  onChangeText={setConditionNotes}
+                  placeholder="E.g. Managed with Metformin"
+                  placeholderTextColor="#94A3B8"
+                  multiline
+                />
+              </View>
+
+              <View style={styles.switchContainer}>
+                <View style={styles.switchRow}>
+                  <Text style={styles.switchLabel}>Mark as Priority/Severe</Text>
+                  <Switch
+                    value={isPriorityInput}
+                    onValueChange={setIsPriorityInput}
+                    trackColor={{ false: '#E2E8F0', true: '#FCA5A5' }}
+                    thumbColor={isPriorityInput ? '#C00000' : '#F8FAFC'}
+                  />
+                </View>
+                <Text style={styles.switchHelpText}>Alerts doctors immediately when they scan your profile.</Text>
+              </View>
+
+              <TouchableOpacity style={styles.modalSaveButton} onPress={handleAddCondition} disabled={addingCondition}>
+                {addingCondition ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={styles.saveButtonText}>Save Condition</Text>}
+              </TouchableOpacity>
+            </ScrollView>
+            
+          </KeyboardAvoidingView>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 }
@@ -437,14 +644,22 @@ const styles = StyleSheet.create({
   loadingText: { marginTop: 12, fontSize: 14, color: '#64748B' },
   errorText:   { fontSize: 14, color: '#C00000', textAlign: 'center' },
 
-  header:         { backgroundColor: '#1E3A5F', padding: 24, paddingTop: 48 },
-  headerRow:      { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  headerText:     { flex: 1 },
-  headerTitle:    { fontSize: 22, fontWeight: 'bold', color: '#FFFFFF' },
-  headerSubtitle: { fontSize: 12, color: '#94A3B8', marginTop: 4 },
-  avatar: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#2E75B6', borderWidth: 2, borderColor: 'rgba(255,255,255,0.35)', justifyContent: 'center', alignItems: 'center' },
-  avatarText: { fontSize: 22, fontWeight: 'bold', color: '#FFFFFF', letterSpacing: 1 },
-  headerLogo: { width: 36, height: 36, borderRadius: 8 },
+  header: { backgroundColor: '#1E3A5F', padding: 20, paddingTop: 60, borderBottomLeftRadius: 24, borderBottomRightRadius: 24, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 4, zIndex: 10 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  avatarContainer: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 5, elevation: 5 },
+  profilePhoto: { width: 76, height: 76, borderRadius: 38, borderWidth: 3, borderColor: 'rgba(255,255,255,0.25)' },
+  headerText: { flex: 1, justifyContent: 'center' },
+  headerEyebrow: { fontSize: 10, fontWeight: 'bold', color: '#93C5FD', letterSpacing: 1, marginBottom: 4 },
+  headerTitle: { fontSize: 22, fontWeight: 'bold', color: '#FFFFFF', marginBottom: 8 },
+  badgesRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
+  demographicsText: { fontSize: 13, color: '#CBD5E1', fontWeight: '500' },
+  bloodGroupBadge: { backgroundColor: '#C00000', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12 },
+  bloodGroupText: { fontSize: 11, color: '#FFFFFF', fontWeight: 'bold' },
+  priorityConditionBadge: { backgroundColor: '#D97706', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12, flexDirection: 'row', alignItems: 'center' },
+  priorityConditionText: { fontSize: 11, color: '#FFFFFF', fontWeight: 'bold' },
+  qrCodeContainer: { marginTop: 24, backgroundColor: 'rgba(255,255,255,0.1)', alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
+  qrCodeLabel: { fontSize: 10, color: '#93C5FD', fontWeight: 'bold', letterSpacing: 0.5 },
+  qrCodeValue: { fontSize: 14, color: '#FFFFFF', fontWeight: '600', fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', marginTop: 2 },
 
   successBanner: { backgroundColor: '#DCFCE7', marginHorizontal: 16, marginTop: 12, borderRadius: 8, padding: 12, borderLeftWidth: 4, borderLeftColor: '#1F7A1F' },
   successText: { fontSize: 13, color: '#1F7A1F', fontWeight: '500' },
@@ -473,6 +688,11 @@ const styles = StyleSheet.create({
   deleteIconBtn: { padding: 6, backgroundColor: '#FEE2E2', borderRadius: 20 },
   deleteIconText: { color: '#C00000', fontSize: 12, fontWeight: 'bold' },
 
+  priorityRow: { backgroundColor: '#FEF2F2', paddingHorizontal: 8, borderRadius: 8, marginHorizontal: -8 },
+  priorityText: { color: '#7F1D1D' },
+  priorityBadge: { backgroundColor: '#DC2626', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
+  priorityBadgeText: { fontSize: 10, color: '#FFFFFF', fontWeight: '700', letterSpacing: 0.5 },
+
   editButton: { backgroundColor: '#1E3A5F', marginHorizontal: 16, marginTop: 16, borderRadius: 10, paddingVertical: 14, alignItems: 'center' },
   editButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '600' },
 
@@ -490,6 +710,11 @@ const styles = StyleSheet.create({
   optionItemSelected: { backgroundColor: '#EFF6FF' },
   optionText:         { fontSize: 14, color: '#1E293B' },
   optionTextSelected: { color: '#1E3A5F', fontWeight: '600' },
+
+  switchContainer: { backgroundColor: '#FEF2F2', padding: 12, borderRadius: 8, marginBottom: 16, borderWidth: 1, borderColor: '#FEE2E2' },
+  switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  switchLabel: { fontSize: 14, fontWeight: '600', color: '#7F1D1D' },
+  switchHelpText: { fontSize: 11, color: '#B91C1C' },
 
   buttonRow: { flexDirection: 'row', gap: 12, marginHorizontal: 16, marginTop: 16 },
   cancelButton: { flex: 1, borderWidth: 1.5, borderColor: '#CBD5E1', borderRadius: 10, paddingVertical: 13, alignItems: 'center', backgroundColor: '#FFFFFF' },

@@ -15,6 +15,9 @@ const {
   getAllergiesController,
   addAllergyController,
   deleteAllergyController,
+  getConditionsController,
+  addConditionController,
+  deleteConditionController,
   getPatientPrescriptionsController,
   getPatientByQrCodeController,
   getPatientHistorySummaryController
@@ -115,6 +118,40 @@ router.delete(
   // isAuthenticated,                 // Uncomment when auth is ready
   // authorize('patient', 'doctor'),  // Uncomment when auth is ready
   deleteAllergyController
+);
+
+/**
+ * GET /api/patients/:id/conditions
+ * Returns all chronic condition records for a patient.
+ */
+router.get(
+  '/:id/conditions',
+  // isAuthenticated,                 // Uncomment when auth is ready
+  // authorize('patient', 'doctor'),  // Uncomment when auth is ready
+  getConditionsController
+);
+
+/**
+ * POST /api/patients/:id/conditions
+ * Adds a new chronic condition record for a patient.
+ * Body: { condition, diagnosedAt, notes, isPriority }
+ */
+router.post(
+  '/:id/conditions',
+  // isAuthenticated,                 // Uncomment when auth is ready
+  // authorize('patient', 'doctor'),  // Uncomment when auth is ready
+  addConditionController
+);
+
+/**
+ * DELETE /api/patients/:id/conditions/:conditionId
+ * Removes a chronic condition record for a patient.
+ */
+router.delete(
+  '/:id/conditions/:conditionId',
+  // isAuthenticated,                 // Uncomment when auth is ready
+  // authorize('patient', 'doctor'),  // Uncomment when auth is ready
+  deleteConditionController
 );
 
 /**

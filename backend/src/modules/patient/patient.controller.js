@@ -143,6 +143,80 @@ const deleteAllergyController = async (req, res) => {
 };
 
 /**
+ * Handles GET /api/patients/:id/conditions
+ * Returns all chronic conditions for a patient.
+ */
+const getConditionsController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const conditions = await patientService.getConditions(id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Conditions retrieved successfully',
+      data: conditions,
+    });
+  } catch (error) {
+    console.error('getConditionsController error:', error);
+    const statusCode = error.statusCode || 500;
+    const message = error.statusCode ? error.message : 'Internal server error';
+    res.status(statusCode).json({ success: false, message });
+  }
+};
+
+/**
+ * Handles POST /api/patients/:id/conditions
+ * Adds a new chronic condition record for a patient.
+ * Body: { condition, diagnosedAt, notes, isPriority }
+ */
+const addConditionController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { condition, diagnosedAt, notes, isPriority } = req.body;
+
+    const newCondition = await patientService.addCondition(
+      id,
+      condition,
+      diagnosedAt,
+      notes,
+      isPriority
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'Condition added successfully',
+      data: newCondition,
+    });
+  } catch (error) {
+    console.error('addConditionController error:', error);
+    const statusCode = error.statusCode || 500;
+    const message = error.statusCode ? error.message : 'Internal server error';
+    res.status(statusCode).json({ success: false, message });
+  }
+};
+
+/**
+ * Handles DELETE /api/patients/:id/conditions/:conditionId
+ * Deletes a specific chronic condition record for a patient.
+ */
+const deleteConditionController = async (req, res) => {
+  try {
+    const { id, conditionId } = req.params;
+    await patientService.deleteCondition(id, conditionId);
+
+    res.status(200).json({
+      success: true,
+      message: 'Condition deleted successfully',
+    });
+  } catch (error) {
+    console.error('deleteConditionController error:', error);
+    const statusCode = error.statusCode || 500;
+    const message = error.statusCode ? error.message : 'Internal server error';
+    res.status(statusCode).json({ success: false, message });
+  }
+};
+
+/**
  * Handles GET /api/patients/:id/prescriptions
  * Returns all prescriptions for a patient with their medicine items.
  */
@@ -235,6 +309,9 @@ module.exports = {
   getAllergiesController,
   addAllergyController,
   deleteAllergyController,
+  getConditionsController,
+  addConditionController,
+  deleteConditionController,
   getPatientPrescriptionsController,
   getPatientByQrCodeController,
   getPatientHistorySummaryController,
