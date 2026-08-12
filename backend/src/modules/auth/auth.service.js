@@ -7,20 +7,24 @@
 
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const { generateOtp, getOtpExpiry } = require('../../utils/otp');
 const {
-    createUser, createPatient, createDoctor, findUserByEmail,
+    findUserByEmail,
     savePasswordResetToken, getValidPasswordResetToken,
-    markTokenAsUsed, updateUserPassword
+    markTokenAsUsed, updateUserPassword,
+    upsertOtpVerification
 } = require('./auth.repository');
 
 /**
- * Registers a new patient or doctor.
+ * Starts registration for a new patient or doctor. Does NOT create the
+ * users row yet - stores a pending record with a 6-digit OTP instead.
+ * The users row is only created once the OTP is verified.
  * @param {string} email - User email
  * @param {string} phone - User phone number
  * @param {string} password - Plain text password
  * @param {string} role - 'patient' or 'doctor'
  * @param {Object} profileData - Extra data depending on role
- * @returns {Promise<Object>} Created user and profile
+ * @returns {Promise<Object>} Email and OTP expiry timestamp
  */
 const register = async (email, phone, password, role, profileData) => {
     const existingUser = await findUserByEmail(email);
@@ -29,16 +33,16 @@ const register = async (email, phone, password, role, profileData) => {
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
-    const user = await createUser(email, phone, passwordHash, role);
+    const otpCode = generateOtp();
+    const otpExpiresAt = getOtpExpiry(10);
 
-    let profile = null;
-    if (role === 'patient') {
-        profile = await createPatient(user.id, profileData.fullName, profileData.nic);
-    } else if (role === 'doctor') {
-        profile = await createDoctor(user.id, profileData.fullName, profileData.slmcRegNumber, profileData.specialization);
-    }
+    await upsertOtpVerification(email, phone, passwordHash, role, otpCode, otpExpiresAt, profileData);
 
-    return { user, profile };
+    // TODO(sms): Integrate real SMS/email OTP delivery here. Academic
+    // project - OTP is logged to console instead of being sent for real.
+    console.log(`\n=== OTP CODE FOR ${email} ===\n${otpCode}\n(Expires at ${otpExpiresAt.toISOString()})\n=========================================\n`);
+
+    return { email, otpExpiresAt };
 };
 
 /**
