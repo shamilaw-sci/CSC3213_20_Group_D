@@ -9,6 +9,7 @@ const express = require('express');
 const router = express.Router();
 const {
     registerController,
+    verifyOtpController,
     loginController,
     logoutController,
     getMeController,
@@ -18,6 +19,9 @@ const {
 
 // POST /api/auth/register
 router.post('/register', registerController);
+
+// POST /api/auth/verify-otp
+router.post('/verify-otp', verifyOtpController);
 
 // POST /api/auth/login
 router.post('/login', loginController);
