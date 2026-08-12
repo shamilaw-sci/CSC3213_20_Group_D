@@ -16,9 +16,16 @@ CREATE TABLE otp_verifications (
     role            VARCHAR NOT NULL,
     otp_code        VARCHAR(6) NOT NULL,
     otp_expires_at  TIMESTAMP WITH TIME ZONE NOT NULL,
+    profile_data    JSONB NOT NULL DEFAULT '{}'::jsonb,
     created_at      TIMESTAMP WITH TIME ZONE DEFAULT now(),
     updated_at      TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
+
+-- profile_data holds role-specific fields not present on the users
+-- table itself (e.g. patients: full_name, nic | doctors: full_name,
+-- slmc_reg_number, specialization). Stored as JSONB since the shape
+-- differs by role. Consumed by verify-otp to create the linked
+-- patients/doctors row once the users row is created.
 
 CREATE INDEX idx_otp_verifications_email ON otp_verifications(email);
 
