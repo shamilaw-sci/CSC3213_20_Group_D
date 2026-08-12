@@ -8,7 +8,9 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, StatusBar, Platform } from 'react-native';
 import api from './src/services/api';
-import LoginScreen          from './src/screens/LoginScreen';
+import LoginScreen           from './src/screens/LoginScreen';
+import RegisterScreen        from './src/screens/RegisterScreen';
+import OtpVerificationScreen from './src/screens/OtpVerificationScreen';
 import ForgotPasswordScreen  from './src/screens/ForgotPasswordScreen';
 import ResetPasswordScreen   from './src/screens/ResetPasswordScreen';
 import PatientProfileScreen from './src/screens/PatientProfileScreen';
@@ -24,7 +26,8 @@ const TABS = [
 ];
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('profile');
+  const [authScreen, setAuthScreen] = useState('login'); // 'login' | 'register' | 'verify-otp' | 'forgot-password' | 'reset-password'
+  const [pendingEmail, setPendingEmail] = useState('');  // email awaiting OTP verification
   const [user, setUser]           = useState(null);
   const [authScreen, setAuthScreen] = useState('login'); // 'login' | 'forgot-password' | 'reset-password'
 
@@ -40,6 +43,26 @@ export default function App() {
 };
 
   if (!user) {
+  if (authScreen === 'register') {
+    return (
+      <RegisterScreen
+        onRegisterSuccess={({ email }) => {
+          setPendingEmail(email);
+          setAuthScreen('verify-otp');
+        }}
+        onBackToLogin={() => setAuthScreen('login')}
+      />
+    );
+  }
+  if (authScreen === 'verify-otp') {
+    return (
+      <OtpVerificationScreen
+        email={pendingEmail}
+        onVerifySuccess={({ user }) => setUser(user)}
+        onBackToRegister={() => setAuthScreen('register')}
+      />
+    );
+  }
   if (authScreen === 'forgot-password') {
     return <ForgotPasswordScreen onBackToLogin={() => setAuthScreen('login')}
     onResetPassword={() => setAuthScreen('reset-password')} />;
@@ -50,8 +73,8 @@ export default function App() {
   return (
     <LoginScreen
       onLoginSuccess={(userData) => setUser(userData)}
-      onForgotPassword={() => setAuthScreen('forgot-password')
-      }
+      onForgotPassword={() => setAuthScreen('forgot-password')}
+      onRegister={() => setAuthScreen('register')}
     />
   );
 }
