@@ -37,6 +37,19 @@ export const register = async (email, phone, password, role, profileData) => {
 };
 
 /**
+ * Verifies the OTP for a pending registration. On success, the backend
+ * creates the user account and starts the session (cookie is set
+ * automatically by the api client's session handling).
+ * @param {string} email   - Email being verified
+ * @param {string} otpCode - 6-digit OTP entered by the user
+ * @returns {Promise<Object>} The response data ({ success, message, data: { user, profile } })
+ */
+export const verifyOtp = async (email, otpCode) => {
+  const response = await api.post('/api/auth/verify-otp', { email, otpCode });
+  return response.data;
+};
+
+/**
  * Resets a user's password using a valid reset token.
  * @param {string} token       - The password reset token
  * @param {string} newPassword - The new plain text password
