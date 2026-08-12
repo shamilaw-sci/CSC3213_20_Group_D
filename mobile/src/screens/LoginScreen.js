@@ -19,7 +19,7 @@ import {
   ScrollView,
 } from 'react-native';
 
-export default function LoginScreen({ onLoginSuccess, onForgotPassword }) {
+export default function LoginScreen({ onLoginSuccess, onForgotPassword, onRegister }) {
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading]   = useState(false);
@@ -137,7 +137,7 @@ export default function LoginScreen({ onLoginSuccess, onForgotPassword }) {
           {/* Register link */}
           <Text style={styles.registerText}>
             Don't have an account?{' '}
-            <Text style={styles.registerLink}>Register here</Text>
+            <Text style={styles.registerLink} onPress={onRegister}>Register here</Text>
           </Text>
 
         </View>
