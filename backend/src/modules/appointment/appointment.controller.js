@@ -7,7 +7,12 @@
 
 const appointmentRepository = require('./appointment.repository');
 
+const { generateAIResponse } = require('../../utils/ai.util');
+const { logAudit } = require('../../middleware/auditLog');
+
 const VALID_STATUSES = ['scheduled', 'confirmed', 'in_progress', 'completed', 'cancelled'];
+const summarizeSessionCounts = new Map();
+const MAX_SUMMARIZE_CALLS_PER_SESSION = 15;
 
 const updateAppointmentStatusController = async (req, res) => {
   try {
@@ -108,6 +113,87 @@ const addConsultationNotesController = async (req, res) => {
   }
 };
 
+const summarizeNotesController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { observations } = req.body;
+
+    if (!observations || observations.trim().length < 10) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please type at least a short note before summarizing.',
+      });
+    }
+
+    const appointment = await appointmentRepository.getAppointmentById(id);
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Appointment not found',
+      });
+    }
+
+    const sessionKey = req.session?.user?.id || req.ip;
+    const callCount = summarizeSessionCounts.get(sessionKey) || 0;
+    if (callCount >= MAX_SUMMARIZE_CALLS_PER_SESSION) {
+      return res.status(429).json({
+        success: false,
+        message: 'AI summary limit reached for this session. Please fill the fields manually.',
+      });
+    }
+
+    const prompt = `You are helping a doctor structure their consultation notes. Based on the following free-text observations, return ONLY a valid JSON object (no markdown, no explanation) with exactly these keys: "chief_complaint" (string), "diagnosis" (string), "treatment_plan" (string), "follow_up_needed" (boolean).
+
+Observations:
+"""${observations}"""
+
+Respond with JSON only.`;
+
+    const aiText = await generateAIResponse(prompt);
+
+    let parsed;
+    try {
+      const cleaned = aiText.replace(/```json|```/g, '').trim();
+      parsed = JSON.parse(cleaned);
+    } catch (parseError) {
+      console.error('summarizeNotesController parse error:', parseError.message);
+      return res.status(200).json({
+        success: false,
+        message: "Couldn't generate a summary right now. Please fill the fields manually.",
+        data: null,
+      });
+    }
+
+    summarizeSessionCounts.set(sessionKey, callCount + 1);
+
+    await logAudit(
+      req.session?.user?.id || null,
+      'AI_SUMMARIZE_NOTES',
+      'appointment',
+      id,
+      { observationsLength: observations.length },
+      req.ip
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'AI summary generated. Please review before saving.',
+      data: {
+        chief_complaint: parsed.chief_complaint || '',
+        diagnosis: parsed.diagnosis || '',
+        treatment_plan: parsed.treatment_plan || '',
+        follow_up_needed: !!parsed.follow_up_needed,
+      },
+    });
+  } catch (error) {
+    console.error('summarizeNotesController error:', error);
+    res.status(500).json({
+      success: false,
+      message: "Couldn't generate a summary right now. Please fill the fields manually.",
+    });
+  }
+};
+
 /**
  * Handles POST /api/appointments
  * Books a new appointment (supports both Patient self-booking and Doctor walk-in).
@@ -176,5 +262,6 @@ const bookAppointmentController = async (req, res) => {
 module.exports = {
   updateAppointmentStatusController,
   addConsultationNotesController,
-  bookAppointmentController
+  bookAppointmentController,
+  summarizeNotesController
 };
