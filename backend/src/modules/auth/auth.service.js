@@ -8,6 +8,7 @@
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const { generateOtp, getOtpExpiry } = require('../../utils/otp');
+const { generatePatientQR } = require('../../utils/qr');
 const {
     createUser, createPatient, createDoctor, findUserByEmail,
     savePasswordResetToken, getValidPasswordResetToken,
@@ -72,7 +73,8 @@ const verifyOtp = async (email, otpCode) => {
 
     let profile = null;
     if (pending.role === 'patient') {
-        profile = await createPatient(user.id, pending.profile_data.fullName, pending.profile_data.nic);
+        const qrCodeId = generatePatientQR();
+        profile = await createPatient(user.id, pending.profile_data.fullName, pending.profile_data.nic, pending.profile_data.dateOfBirth, qrCodeId);
     } else if (pending.role === 'doctor') {
         profile = await createDoctor(user.id, pending.profile_data.fullName, pending.profile_data.slmcRegNumber, pending.profile_data.specialization);
     }
