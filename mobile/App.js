@@ -79,6 +79,29 @@ export default function App() {
   );
 }
 
+  // Doctor mobile screens don't exist yet - show a placeholder instead
+  // of letting the patient-only screens 404 on a doctor's profile_id.
+  if (user.role === 'doctor') {
+    return (
+      <View style={styles.root}>
+        <View style={styles.topBar}>
+          <Text style={styles.topBarTitle}>Care4U</Text>
+          <TouchableOpacity onPress={handleLogout}>
+            <Text style={styles.logoutText}>🔓 Logout</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={[styles.screen, { alignItems: 'center', justifyContent: 'center', padding: 24 }]}>
+          <Text style={{ fontSize: 16, fontWeight: '600', color: '#1E293B', marginBottom: 8 }}>
+            Doctor dashboard coming soon
+          </Text>
+          <Text style={{ fontSize: 13, color: '#64748B', textAlign: 'center' }}>
+            Your account was created successfully. The doctor mobile experience is still in development.
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.root}>
 
