@@ -26,10 +26,10 @@ const TABS = [
 ];
 
 export default function App() {
+  const [activeTab, setActiveTab] = useState('profile');
+  const [user, setUser]           = useState(null);
   const [authScreen, setAuthScreen] = useState('login'); // 'login' | 'register' | 'verify-otp' | 'forgot-password' | 'reset-password'
   const [pendingEmail, setPendingEmail] = useState('');  // email awaiting OTP verification
-  const [user, setUser]           = useState(null);
-  const [authScreen, setAuthScreen] = useState('login'); // 'login' | 'forgot-password' | 'reset-password'
 
   const handleLogout = async () => {
   setUser(null);
