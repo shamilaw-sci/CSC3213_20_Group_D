@@ -46,12 +46,12 @@ const registerController = async (req, res) => {
 
         const result = await register(email, phone, password, role, profileData || {});
 
-        return res.status(201).json({
+        return res.status(200).json({
             success: true,
-            message: 'Registration successful',
+            message: 'OTP sent to your registered contact. Please verify to complete registration.',
             data: {
-                user: result.user,
-                profile: result.profile
+                email: result.email,
+                otpExpiresAt: result.otpExpiresAt
             }
         });
 
