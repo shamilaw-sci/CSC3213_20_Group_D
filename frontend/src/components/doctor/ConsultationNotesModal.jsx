@@ -151,6 +151,11 @@ const [aiFilled, setAiFilled] = useState(false);
     )}
   </div>
   {summarizeError && <p className="text-xs text-red-600">{summarizeError}</p>}
+  {aiFilled && !summarizeError && (
+    <p className="text-xs text-slate-500 italic">
+      ⚠️ AI-generated draft — not a medical diagnosis. Please review and edit before saving.
+    </p>
+  )}
 </div>
 
         <div className="flex flex-col gap-1">
