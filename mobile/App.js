@@ -13,6 +13,7 @@ import RegisterScreen        from './src/screens/RegisterScreen';
 import OtpVerificationScreen from './src/screens/OtpVerificationScreen';
 import ForgotPasswordScreen  from './src/screens/ForgotPasswordScreen';
 import ResetPasswordScreen   from './src/screens/ResetPasswordScreen';
+import DoctorProfileScreen   from './src/screens/DoctorProfileScreen';
 import PatientProfileScreen from './src/screens/PatientProfileScreen';
 import PatientQRCardScreen  from './src/screens/PatientQRCardScreen';
 import PrescriptionsScreen  from './src/screens/PrescriptionsScreen';
@@ -79,8 +80,9 @@ export default function App() {
   );
 }
 
-  // Doctor mobile screens don't exist yet - show a placeholder instead
-  // of letting the patient-only screens 404 on a doctor's profile_id.
+  // Full doctor dashboard is separate, larger work outside this scope -
+  // this shows a minimal own-profile view instead of 404ing on the
+  // patient-only screens.
   if (user.role === 'doctor') {
     return (
       <View style={styles.root}>
@@ -90,13 +92,8 @@ export default function App() {
             <Text style={styles.logoutText}>🔓 Logout</Text>
           </TouchableOpacity>
         </View>
-        <View style={[styles.screen, { alignItems: 'center', justifyContent: 'center', padding: 24 }]}>
-          <Text style={{ fontSize: 16, fontWeight: '600', color: '#1E293B', marginBottom: 8 }}>
-            Doctor dashboard coming soon
-          </Text>
-          <Text style={{ fontSize: 13, color: '#64748B', textAlign: 'center' }}>
-            Your account was created successfully. The doctor mobile experience is still in development.
-          </Text>
+        <View style={styles.screen}>
+          <DoctorProfileScreen doctorId={user.profile_id} />
         </View>
       </View>
     );
