@@ -8,7 +8,9 @@
 const { pool } = require('../../config/db');
 
 /**
- * Creates a new user in the users table.
+ * Creates a new user in the users table with is_verified = true.
+ * Only called from verifyOtp, after OTP verification has already
+ * succeeded - so the account is verified by definition at creation.
  * @param {string} email - User email
  * @param {string} phone - User phone number
  * @param {string} passwordHash - Bcrypt hashed password
@@ -18,8 +20,8 @@ const { pool } = require('../../config/db');
 
 const createUser = async (email, phone, passwordHash, role) =>{
     const result = await pool.query (
-        `INSERT INTO users (email, phone, password_hash, role)
-         VALUES ($1, $2, $3, $4)
+        `INSERT INTO users (email, phone, password_hash, role, is_verified)
+         VALUES ($1, $2, $3, $4, true)
          RETURNING id, email, phone, role, is_verified, is_active, created_at`,
         [email, phone, passwordHash, role]
     );
