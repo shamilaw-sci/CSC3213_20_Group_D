@@ -92,7 +92,7 @@ export default function App() {
 
       {/* Screen Area */}
       <View style={styles.screen}>
-        {activeTab === 'profile'        && <PatientProfileScreen />}
+        {activeTab === 'profile'        && <PatientProfileScreen patientId={user.profile_id} />}
         {activeTab === 'records'        && <MedicalRecordsScreen />}
         {activeTab === 'prescriptions'  && <PrescriptionsScreen  />}
         {activeTab === 'qrcard'         && <PatientQRCardScreen  />}

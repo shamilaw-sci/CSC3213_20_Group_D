@@ -34,6 +34,7 @@ import {
 } from '../services/patient.service';
 import { searchAllergens } from '../utils/allergenSearch';
 
+// Fallback used only if no patientId prop is passed (e.g. during standalone testing)
 const TEST_PATIENT_ID = '006761d1-8279-440e-a786-a492df7abd53';
 const BLOOD_GROUP_OPTIONS   = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
 const RELATIONSHIP_OPTIONS  = ['spouse', 'parent', 'sibling', 'child', 'friend', 'other'];
@@ -108,7 +109,8 @@ const ProfileField = ({ label, value }) => (
   </View>
 );
 
-export default function PatientProfileScreen() {
+export default function PatientProfileScreen({ patientId }) {
+  const activePatientId = patientId || TEST_PATIENT_ID;
   const [patient, setPatient] = useState(null);
   const [allergies, setAllergies] = useState([]);
   const [conditions, setConditions] = useState([]);
@@ -144,9 +146,9 @@ export default function PatientProfileScreen() {
 
   const fetchData = async () => {
     try {
-      const profileData = await getPatientProfile(TEST_PATIENT_ID);
-      const allergyData = await getPatientAllergies(TEST_PATIENT_ID);
-      const conditionData = await getConditions(TEST_PATIENT_ID);
+      const profileData = await getPatientProfile(activePatientId);
+      const allergyData = await getPatientAllergies(activePatientId);
+      const conditionData = await getConditions(activePatientId);
       setPatient(profileData);
       setAllergies(allergyData);
       setConditions(conditionData);
@@ -175,7 +177,7 @@ export default function PatientProfileScreen() {
     setSaving(true);
     setSaveError(null);
     try {
-      const updated = await updatePatientProfile(TEST_PATIENT_ID, formData);
+      const updated = await updatePatientProfile(activePatientId, formData);
       setPatient(updated);
       setIsEditing(false);
       setSaveSuccess(true);
@@ -202,8 +204,8 @@ export default function PatientProfileScreen() {
     }
     setAddingAllergy(true);
     try {
-      await addAllergy(TEST_PATIENT_ID, allergenInput.trim(), selectedSeverity, allergyNotes.trim());
-      const updatedAllergies = await getPatientAllergies(TEST_PATIENT_ID);
+      await addAllergy(activePatientId, allergenInput.trim(), selectedSeverity, allergyNotes.trim());
+      const updatedAllergies = await getPatientAllergies(activePatientId);
       setAllergies(updatedAllergies);
       setIsAddModalOpen(false);
       setAllergenInput('');
@@ -227,8 +229,8 @@ export default function PatientProfileScreen() {
           style: "destructive", 
           onPress: async () => {
             try {
-              await deleteAllergy(TEST_PATIENT_ID, allergy.id);
-              const updatedAllergies = await getPatientAllergies(TEST_PATIENT_ID);
+              await deleteAllergy(activePatientId, allergy.id);
+              const updatedAllergies = await getPatientAllergies(activePatientId);
               setAllergies(updatedAllergies);
             } catch (err) {
               Alert.alert('Error', 'Failed to remove allergy.');
@@ -247,8 +249,8 @@ export default function PatientProfileScreen() {
     }
     setAddingCondition(true);
     try {
-      await addCondition(TEST_PATIENT_ID, conditionInput.trim(), diagnosedAtInput.trim(), conditionNotes.trim(), isPriorityInput);
-      const updatedConditions = await getConditions(TEST_PATIENT_ID);
+      await addCondition(activePatientId, conditionInput.trim(), diagnosedAtInput.trim(), conditionNotes.trim(), isPriorityInput);
+      const updatedConditions = await getConditions(activePatientId);
       setConditions(updatedConditions);
       setIsAddConditionModalOpen(false);
       setConditionInput('');
@@ -273,8 +275,8 @@ export default function PatientProfileScreen() {
           style: "destructive", 
           onPress: async () => {
             try {
-              await deleteCondition(TEST_PATIENT_ID, condition.id);
-              const updatedConditions = await getConditions(TEST_PATIENT_ID);
+              await deleteCondition(activePatientId, condition.id);
+              const updatedConditions = await getConditions(activePatientId);
               setConditions(updatedConditions);
             } catch (err) {
               Alert.alert('Error', 'Failed to remove condition.');
