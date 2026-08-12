@@ -1,7 +1,7 @@
 /**
  * @file auth.repository.js
  * @module auth
- * @desc Database queries for authentication - register and login.
+ * @desc Database queries for authentication - register, login, and OTP verification.
  * @author I.M.L.S Idirisinghe (S/21/389)
  */
 
@@ -130,4 +130,74 @@ const updateUserPassword = async (userId, newPasswordHash) => {
     );
 };
 
-module.exports = {createUser, createPatient, createDoctor, findUserByEmail, savePasswordResetToken, getValidPasswordResetToken, markTokenAsUsed, updateUserPassword};
+/**
+ * Creates or overwrites a pending OTP verification record for an email.
+ * Used on both initial registration and OTP resend - if a pending record
+ * already exists for this email, it is replaced with a fresh OTP/expiry
+ * and the latest submitted registration data.
+ * @param {string} email - Email being registered
+ * @param {string} phone - Phone number
+ * @param {string} passwordHash - Bcrypt hashed password
+ * @param {string} role - 'patient' or 'doctor'
+ * @param {string} otpCode - 6-digit OTP code
+ * @param {Date} otpExpiresAt - OTP expiry timestamp
+ * @param {object} profileData - Role-specific profile fields (fullName, nic, etc.)
+ * @returns {Promise<object>} The upserted otp_verifications row
+ */
+const upsertOtpVerification = async (email, phone, passwordHash, role, otpCode, otpExpiresAt, profileData) => {
+    const result = await pool.query(
+        `INSERT INTO otp_verifications (email, phone, password_hash, role, otp_code, otp_expires_at, profile_data)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         ON CONFLICT (email)
+         DO UPDATE SET
+            phone = EXCLUDED.phone,
+            password_hash = EXCLUDED.password_hash,
+            role = EXCLUDED.role,
+            otp_code = EXCLUDED.otp_code,
+            otp_expires_at = EXCLUDED.otp_expires_at,
+            profile_data = EXCLUDED.profile_data,
+            updated_at = now()
+         RETURNING id, email, phone, role, otp_expires_at, profile_data, created_at, updated_at`,
+        [email, phone, passwordHash, role, otpCode, otpExpiresAt, profileData]
+    );
+    return result.rows[0];
+};
+
+/**
+ * Finds a pending OTP verification record by email.
+ * @param {string} email - Email to search for
+ * @returns {Promise<object|null>} otp_verifications row or null
+ */
+const findOtpByEmail = async (email) => {
+    const result = await pool.query(
+        `SELECT * FROM otp_verifications WHERE email = $1`,
+        [email]
+    );
+    return result.rows[0] || null;
+};
+
+/**
+ * Deletes a pending OTP verification record by email.
+ * Called after successful verification to clean up the pending row.
+ * @param {string} email - Email to delete the pending record for
+ */
+const deleteOtpByEmail = async (email) => {
+    await pool.query(
+        `DELETE FROM otp_verifications WHERE email = $1`,
+        [email]
+    );
+};
+
+module.exports = {
+    createUser,
+    createPatient,
+    createDoctor,
+    findUserByEmail,
+    savePasswordResetToken,
+    getValidPasswordResetToken,
+    markTokenAsUsed,
+    updateUserPassword,
+    upsertOtpVerification,
+    findOtpByEmail,
+    deleteOtpByEmail
+};
