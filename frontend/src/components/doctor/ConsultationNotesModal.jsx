@@ -26,6 +26,10 @@ const ConsultationNotesModal = ({ isOpen, onClose, appointmentId, onSaved }) => 
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [observations, setObservations] = useState('');
+const [summarizing, setSummarizing] = useState(false);
+const [summarizeError, setSummarizeError] = useState('');
+const [aiFilled, setAiFilled] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -34,6 +38,44 @@ const ConsultationNotesModal = ({ isOpen, onClose, appointmentId, onSaved }) => 
       [name]: type === 'checkbox' ? checked : value,
     }));
   };
+
+  const handleSummarize = async () => {
+  setSummarizeError('');
+
+  if (!observations || observations.trim().length < 10) {
+    setSummarizeError('Please type a few observations first.');
+    return;
+  }
+
+  setSummarizing(true);
+  try {
+    const res = await fetch(`${API_URL}/api/appointments/${appointmentId}/summarize-notes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ observations }),
+    });
+    const data = await res.json();
+
+    if (!data.success) {
+      setSummarizeError(data.message || "Couldn't generate a summary. Please fill the fields manually.");
+      return;
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      chief_complaint: data.data.chief_complaint,
+      diagnosis: data.data.diagnosis,
+      treatment_plan: data.data.treatment_plan,
+      follow_up_needed: data.data.follow_up_needed,
+    }));
+    setAiFilled(true);
+  } catch (err) {
+    console.error('handleSummarize error:', err);
+    setSummarizeError("Couldn't generate a summary. Please fill the fields manually.");
+  } finally {
+    setSummarizing(false);
+  }
+};
 
   const handleSubmit = async () => {
     setError('');
@@ -58,6 +100,8 @@ const ConsultationNotesModal = ({ isOpen, onClose, appointmentId, onSaved }) => 
       }
 
       setForm(initialForm);
+      setObservations('');
+      setAiFilled(false);
       onSaved?.(data.data);
       onClose();
     } catch (err) {
@@ -79,6 +123,35 @@ const ConsultationNotesModal = ({ isOpen, onClose, appointmentId, onSaved }) => 
           placeholder="e.g. Follow-up consultation"
           required
         />
+        <div className="flex flex-col gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+  <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+    Observations (optional — for AI summary)
+  </label>
+  <textarea
+    value={observations}
+    onChange={(e) => setObservations(e.target.value)}
+    rows={3}
+    placeholder="Type your raw observations here, then let AI draft the fields below"
+    className="w-full px-3 py-2 text-sm text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] focus:border-transparent"
+  />
+  <div className="flex items-center justify-between">
+    <Button
+      type="button"
+      variant="secondary"
+      onClick={handleSummarize}
+      loading={summarizing}
+      disabled={summarizing}
+    >
+      {summarizing ? 'Analyzing...' : '✨ Summarize with AI'}
+    </Button>
+    {aiFilled && (
+      <span className="text-xs text-green-700 bg-green-100 px-2 py-1 rounded-full">
+        AI-filled — please review
+      </span>
+    )}
+  </div>
+  {summarizeError && <p className="text-xs text-red-600">{summarizeError}</p>}
+</div>
 
         <div className="flex flex-col gap-1">
           <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">
