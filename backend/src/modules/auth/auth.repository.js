@@ -30,18 +30,20 @@ const createUser = async (email, phone, passwordHash, role) =>{
 
 /**
  * Creates a new patient profile linked to a user.
- * @param {string} userID - UUID of the user
- * @param {string} fullName - National Identity Card number
+ * @param {string} userId - UUID of the user
+ * @param {string} fullName - Patient full name
  * @param {string} nic - National Identity Card number
- * @returns {Promise<object>} Created patiend row
+ * @param {string} dateOfBirth - Date of birth (YYYY-MM-DD)
+ * @param {string} qrCodeId - Unique QR code identifier
+ * @returns {Promise<object>} Created patient row
  */
 
-const createPatient = async (userId, fullName, nic) => {
+const createPatient = async (userId, fullName, nic, dateOfBirth, qrCodeId) => {
   const result = await pool.query(
-    `INSERT INTO patients (user_id, full_name, nic)
-     VALUES ($1, $2, $3)
-     RETURNING id, user_id, full_name, nic, created_at`,
-    [userId, fullName, nic]
+    `INSERT INTO patients (user_id, full_name, nic, date_of_birth, qr_code_id)
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING id, user_id, full_name, nic, date_of_birth, qr_code_id, created_at`,
+    [userId, fullName, nic, dateOfBirth, qrCodeId]
   );
   return result.rows[0];
 };
