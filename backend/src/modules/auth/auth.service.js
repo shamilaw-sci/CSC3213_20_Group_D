@@ -9,10 +9,10 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const { generateOtp, getOtpExpiry } = require('../../utils/otp');
 const {
-    findUserByEmail,
+    createUser, createPatient, createDoctor, findUserByEmail,
     savePasswordResetToken, getValidPasswordResetToken,
     markTokenAsUsed, updateUserPassword,
-    upsertOtpVerification
+    upsertOtpVerification, findOtpByEmail, deleteOtpByEmail
 } = require('./auth.repository');
 
 /**
@@ -43,6 +43,43 @@ const register = async (email, phone, password, role, profileData) => {
     console.log(`\n=== OTP CODE FOR ${email} ===\n${otpCode}\n(Expires at ${otpExpiresAt.toISOString()})\n=========================================\n`);
 
     return { email, otpExpiresAt };
+};
+
+/**
+ * Verifies a pending registration's OTP and, if valid, creates the real
+ * users row (and linked patient/doctor profile) from the pending data
+ * stored in otp_verifications. The pending record is deleted afterward.
+ * @param {string} email - Email being verified
+ * @param {string} otpCode - 6-digit OTP submitted by the user
+ * @returns {Promise<Object>} Created user and profile
+ */
+const verifyOtp = async (email, otpCode) => {
+    const pending = await findOtpByEmail(email);
+
+    if (!pending) {
+        throw new Error('No pending registration found for this email');
+    }
+
+    if (pending.otp_code !== otpCode) {
+        throw new Error('Invalid OTP');
+    }
+
+    if (new Date(pending.otp_expires_at) < new Date()) {
+        throw new Error('OTP has expired');
+    }
+
+    const user = await createUser(pending.email, pending.phone, pending.password_hash, pending.role);
+
+    let profile = null;
+    if (pending.role === 'patient') {
+        profile = await createPatient(user.id, pending.profile_data.fullName, pending.profile_data.nic);
+    } else if (pending.role === 'doctor') {
+        profile = await createDoctor(user.id, pending.profile_data.fullName, pending.profile_data.slmcRegNumber, pending.profile_data.specialization);
+    }
+
+    await deleteOtpByEmail(email);
+
+    return { user, profile };
 };
 
 /**
@@ -113,4 +150,4 @@ const resetPassword = async (token, newPassword) => {
     await markTokenAsUsed(token);
 };
 
-module.exports = { register, login, forgotPassword, resetPassword };
+module.exports = { register, verifyOtp, login, forgotPassword, resetPassword };
