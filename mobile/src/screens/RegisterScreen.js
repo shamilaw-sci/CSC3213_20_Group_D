@@ -29,6 +29,7 @@ export default function RegisterScreen({ onRegisterSuccess, onBackToLogin }) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName]         = useState('');
   const [nic, setNic]                   = useState('');
+  const [dateOfBirth, setDateOfBirth]   = useState('');
   const [slmcRegNumber, setSlmcRegNumber] = useState('');
   const [specialization, setSpecialization] = useState('');
   const [loading, setLoading]           = useState(false);
@@ -52,6 +53,9 @@ export default function RegisterScreen({ onRegisterSuccess, onBackToLogin }) {
     if (role === 'patient' && !nic) {
       setError('NIC is required'); return false;
     }
+    if (role === 'patient' && !dateOfBirth) {
+      setError('Date of birth is required'); return false;
+    }
     if (role === 'doctor' && (!slmcRegNumber || !specialization)) {
       setError('SLMC registration number and specialization are required');
       return false;
@@ -67,8 +71,8 @@ export default function RegisterScreen({ onRegisterSuccess, onBackToLogin }) {
     setLoading(true);
     setError('');
 
-    const profileData = role === 'patient'
-      ? { fullName, nic }
+const profileData = role === 'patient'
+      ? { fullName, nic, dateOfBirth }
       : { fullName, slmcRegNumber, specialization };
 
     try {
@@ -178,17 +182,29 @@ export default function RegisterScreen({ onRegisterSuccess, onBackToLogin }) {
 
           {/* Role-specific fields */}
           {role === 'patient' && (
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>NIC NUMBER</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="200012345678"
-                placeholderTextColor="#94A3B8"
-                autoCapitalize="none"
-                value={nic}
-                onChangeText={(text) => { setNic(text); setError(''); }}
-              />
-            </View>
+            <>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>NIC NUMBER</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="200012345678"
+                  placeholderTextColor="#94A3B8"
+                  autoCapitalize="none"
+                  value={nic}
+                  onChangeText={(text) => { setNic(text); setError(''); }}
+                />
+              </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>DATE OF BIRTH</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="YYYY-MM-DD"
+                  placeholderTextColor="#94A3B8"
+                  value={dateOfBirth}
+                  onChangeText={(text) => { setDateOfBirth(text); setError(''); }}
+                />
+              </View>
+            </>
           )}
 
           {role === 'doctor' && (
