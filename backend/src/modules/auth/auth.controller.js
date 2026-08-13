@@ -5,7 +5,7 @@
  * @author I.M.L.S. Idirisinghe (S/21/389)
  */
 
-const { register, login, forgotPassword, resetPassword } = require('./auth.service');
+const { register, verifyOtp, login, forgotPassword, resetPassword } = require('./auth.service');
 
 // Import repositories to fetch profile IDs
 const patientRepository = require('../patient/patient.repository');
@@ -46,12 +46,12 @@ const registerController = async (req, res) => {
 
         const result = await register(email, phone, password, role, profileData || {});
 
-        return res.status(201).json({
+        return res.status(200).json({
             success: true,
-            message: 'Registration successful',
+            message: 'OTP sent to your registered contact. Please verify to complete registration.',
             data: {
-                user: result.user,
-                profile: result.profile
+                email: result.email,
+                otpExpiresAt: result.otpExpiresAt
             }
         });
 
@@ -78,6 +78,83 @@ const registerController = async (req, res) => {
       });
     }
 };
+
+/**
+ * Handles POST /api/auth/verify-otp
+ * Verifies the OTP, creates the user account, and starts the session -
+ * same session-setting logic as loginController.
+ * @param {object} req - Express request
+ * @param {object} res - Express response
+ */
+const verifyOtpController = async (req, res) => {
+    try {
+        const { email, otpCode } = req.body;
+
+        if (!email || !otpCode) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email and OTP code are required'
+            });
+        }
+
+        const result = await verifyOtp(email, otpCode);
+        const user = result.user;
+
+        // Save user to session, same shape as loginController
+        req.session.user = {
+            id: user.id,
+            email: user.email,
+            role: user.role,
+            profile_id: result.profile ? result.profile.id : null
+        };
+
+        return res.status(201).json({
+            success: true,
+            message: 'Account verified and created successfully',
+            data: {
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    role: user.role,
+                    profile_id: result.profile ? result.profile.id : null
+                },
+                profile: result.profile
+            }
+        });
+
+    } catch (error) {
+        console.error('verifyOtpController error:', error);
+
+        if (error.message === 'No pending registration found for this email') {
+            return res.status(404).json({
+                success: false,
+                message: error.message
+            });
+        }
+
+        if (error.message === 'Invalid OTP' || error.message === 'OTP has expired') {
+            return res.status(400).json({
+                success: false,
+                message: error.message
+            });
+        }
+
+        if (error.code === '23505') {
+            return res.status(400).json({
+                success: false,
+                message: 'Email or phone number already registered'
+            });
+        }
+
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+/**
+ * Handles POST /api/auth/login
 
 /**
  * Handles POST /api/auth/login
@@ -274,4 +351,4 @@ const resetPasswordController = async (req, res) => {
     }
 };
 
-module.exports = { registerController, loginController, logoutController, getMeController, forgotPasswordController, resetPasswordController };
+module.exports = { registerController, verifyOtpController, loginController, logoutController, getMeController, forgotPasswordController, resetPasswordController };

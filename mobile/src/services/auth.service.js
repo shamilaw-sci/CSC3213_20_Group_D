@@ -21,6 +21,35 @@ export const forgotPassword = async (email) => {
 };
 
 /**
+ * Registers a new patient or doctor. Does NOT log the user in - backend
+ * generates an OTP and stores it pending verification. Navigate to
+ * OtpVerificationScreen after this succeeds.
+ * @param {string} email       - User email
+ * @param {string} phone       - User phone number
+ * @param {string} password    - Plain text password
+ * @param {string} role        - 'patient' or 'doctor'
+ * @param {Object} profileData - Role-specific fields (fullName, nic, slmcRegNumber, specialization)
+ * @returns {Promise<Object>} The response data ({ success, message, data: { email, otpExpiresAt } })
+ */
+export const register = async (email, phone, password, role, profileData) => {
+  const response = await api.post('/api/auth/register', { email, phone, password, role, profileData });
+  return response.data;
+};
+
+/**
+ * Verifies the OTP for a pending registration. On success, the backend
+ * creates the user account and starts the session (cookie is set
+ * automatically by the api client's session handling).
+ * @param {string} email   - Email being verified
+ * @param {string} otpCode - 6-digit OTP entered by the user
+ * @returns {Promise<Object>} The response data ({ success, message, data: { user, profile } })
+ */
+export const verifyOtp = async (email, otpCode) => {
+  const response = await api.post('/api/auth/verify-otp', { email, otpCode });
+  return response.data;
+};
+
+/**
  * Resets a user's password using a valid reset token.
  * @param {string} token       - The password reset token
  * @param {string} newPassword - The new plain text password

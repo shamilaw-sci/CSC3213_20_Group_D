@@ -20,4 +20,15 @@ const generatePrescriptionQR = () => {
   return `RX-${uniqueId}`;
 };
 
-module.exports = { generatePrescriptionQR };
+/**
+ * Generates a unique QR code value for a patient.
+ * Format: "QR-<uuid>" — same pattern as generatePrescriptionQR,
+ * stored in patients.qr_code_id and used for pharmacy/doctor lookup.
+ * @returns {string} A unique QR code string e.g. "QR-550e8400-e29b-41d4-a716-446655440000"
+ */
+const generatePatientQR = () => {
+  const uniqueId = uuidv4();
+  return `QR-${uniqueId}`;
+};
+
+module.exports = { generatePrescriptionQR, generatePatientQR };

@@ -7,20 +7,25 @@
 
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const { generateOtp, getOtpExpiry } = require('../../utils/otp');
+const { generatePatientQR } = require('../../utils/qr');
 const {
     createUser, createPatient, createDoctor, findUserByEmail,
     savePasswordResetToken, getValidPasswordResetToken,
-    markTokenAsUsed, updateUserPassword
+    markTokenAsUsed, updateUserPassword,
+    upsertOtpVerification, findOtpByEmail, deleteOtpByEmail
 } = require('./auth.repository');
 
 /**
- * Registers a new patient or doctor.
+ * Starts registration for a new patient or doctor. Does NOT create the
+ * users row yet - stores a pending record with a 6-digit OTP instead.
+ * The users row is only created once the OTP is verified.
  * @param {string} email - User email
  * @param {string} phone - User phone number
  * @param {string} password - Plain text password
  * @param {string} role - 'patient' or 'doctor'
  * @param {Object} profileData - Extra data depending on role
- * @returns {Promise<Object>} Created user and profile
+ * @returns {Promise<Object>} Email and OTP expiry timestamp
  */
 const register = async (email, phone, password, role, profileData) => {
     const existingUser = await findUserByEmail(email);
@@ -29,14 +34,52 @@ const register = async (email, phone, password, role, profileData) => {
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
-    const user = await createUser(email, phone, passwordHash, role);
+    const otpCode = generateOtp();
+    const otpExpiresAt = getOtpExpiry(10);
+
+    await upsertOtpVerification(email, phone, passwordHash, role, otpCode, otpExpiresAt, profileData);
+
+    // TODO(sms): Integrate real SMS/email OTP delivery here. Academic
+    // project - OTP is logged to console instead of being sent for real.
+    console.log(`\n=== OTP CODE FOR ${email} ===\n${otpCode}\n(Expires at ${otpExpiresAt.toISOString()})\n=========================================\n`);
+
+    return { email, otpExpiresAt };
+};
+
+/**
+ * Verifies a pending registration's OTP and, if valid, creates the real
+ * users row (and linked patient/doctor profile) from the pending data
+ * stored in otp_verifications. The pending record is deleted afterward.
+ * @param {string} email - Email being verified
+ * @param {string} otpCode - 6-digit OTP submitted by the user
+ * @returns {Promise<Object>} Created user and profile
+ */
+const verifyOtp = async (email, otpCode) => {
+    const pending = await findOtpByEmail(email);
+
+    if (!pending) {
+        throw new Error('No pending registration found for this email');
+    }
+
+    if (pending.otp_code !== otpCode) {
+        throw new Error('Invalid OTP');
+    }
+
+    if (new Date(pending.otp_expires_at) < new Date()) {
+        throw new Error('OTP has expired');
+    }
+
+    const user = await createUser(pending.email, pending.phone, pending.password_hash, pending.role);
 
     let profile = null;
-    if (role === 'patient') {
-        profile = await createPatient(user.id, profileData.fullName, profileData.nic);
-    } else if (role === 'doctor') {
-        profile = await createDoctor(user.id, profileData.fullName, profileData.slmcRegNumber, profileData.specialization);
+    if (pending.role === 'patient') {
+        const qrCodeId = generatePatientQR();
+        profile = await createPatient(user.id, pending.profile_data.fullName, pending.profile_data.nic, pending.profile_data.dateOfBirth, qrCodeId);
+    } else if (pending.role === 'doctor') {
+        profile = await createDoctor(user.id, pending.profile_data.fullName, pending.profile_data.slmcRegNumber, pending.profile_data.specialization);
     }
+
+    await deleteOtpByEmail(email);
 
     return { user, profile };
 };
@@ -109,4 +152,4 @@ const resetPassword = async (token, newPassword) => {
     await markTokenAsUsed(token);
 };
 
-module.exports = { register, login, forgotPassword, resetPassword };
+module.exports = { register, verifyOtp, login, forgotPassword, resetPassword };
