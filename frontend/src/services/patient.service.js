@@ -157,6 +157,46 @@ export const deleteCondition = async (patientId, conditionId) => {
 };
 
 /**
+ * Fetches all vaccination records for a patient.
+ * @param {string} patientId - UUID of the patient
+ * @returns {Promise<Array>} Array of vaccination objects
+ */
+export const getVaccinations = async (patientId) => {
+  const response = await api.get(`/api/patients/${patientId}/vaccinations`);
+  return response.data.data;
+};
+
+/**
+ * Adds a new vaccination record for a patient.
+ * @param {string} patientId - UUID of the patient
+ * @param {string} vaccineName - Name of the vaccine
+ * @param {string} dateAdministered - Date administered (ISO string)
+ * @param {string} doseNumber - Optional dose number
+ * @param {string} notes - Optional notes
+ * @returns {Promise<Object>} The created vaccination object
+ */
+export const addVaccination = async (patientId, vaccineName, dateAdministered, doseNumber, notes) => {
+  const response = await api.post(`/api/patients/${patientId}/vaccinations`, {
+    vaccineName,
+    dateAdministered,
+    doseNumber,
+    notes
+  });
+  return response.data.data;
+};
+
+/**
+ * Deletes a vaccination record for a patient.
+ * @param {string} patientId - UUID of the patient
+ * @param {string} vaccinationId - UUID of the vaccination
+ * @returns {Promise<Object>} The success response object
+ */
+export const deleteVaccination = async (patientId, vaccinationId) => {
+  const response = await api.delete(`/api/patients/${patientId}/vaccinations/${vaccinationId}`);
+  return response.data;
+};
+
+/**
  * Fetches an AI-generated clinical summary of a patient's medical history.
  * @param {string} patientId - UUID of the patient
  * @returns {Promise<Object>} Object containing the { summary } string
