@@ -30,9 +30,13 @@ import {
   deleteAllergy,
   getConditions,
   addCondition,
-  deleteCondition
+  deleteCondition,
+  getVaccinations,
+  addVaccination,
+  deleteVaccination
 } from '../services/patient.service';
 import { searchAllergens } from '../utils/allergenSearch';
+import { searchVaccines } from '../utils/vaccineSearch';
 
 // Fallback used only if no patientId prop is passed (e.g. during standalone testing)
 const TEST_PATIENT_ID = '006761d1-8279-440e-a786-a492df7abd53';
@@ -114,6 +118,7 @@ export default function PatientProfileScreen({ patientId }) {
   const [patient, setPatient] = useState(null);
   const [allergies, setAllergies] = useState([]);
   const [conditions, setConditions] = useState([]);
+  const [vaccinations, setVaccinations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -140,6 +145,15 @@ export default function PatientProfileScreen({ patientId }) {
   const [isPriorityInput, setIsPriorityInput] = useState(false);
   const [addingCondition, setAddingCondition] = useState(false);
 
+  // Add Vaccination State
+  const [isAddVaccinationModalOpen, setIsAddVaccinationModalOpen] = useState(false);
+  const [vaccineInput, setVaccineInput] = useState('');
+  const [vaccineSuggestions, setVaccineSuggestions] = useState([]);
+  const [vaccineDateInput, setVaccineDateInput] = useState('');
+  const [vaccineDoseInput, setVaccineDoseInput] = useState('');
+  const [vaccineNotes, setVaccineNotes] = useState('');
+  const [addingVaccination, setAddingVaccination] = useState(false);
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -149,9 +163,11 @@ export default function PatientProfileScreen({ patientId }) {
       const profileData = await getPatientProfile(activePatientId);
       const allergyData = await getPatientAllergies(activePatientId);
       const conditionData = await getConditions(activePatientId);
+      const vaccinationData = await getVaccinations(activePatientId);
       setPatient(profileData);
       setAllergies(allergyData);
       setConditions(conditionData);
+      setVaccinations(vaccinationData);
     } catch (err) {
       setError('Failed to load profile. Please try again.');
     } finally {
@@ -287,6 +303,57 @@ export default function PatientProfileScreen({ patientId }) {
     );
   };
 
+  // --- Vaccination Logic ---
+  const handleSearchVaccines = (text) => {
+    setVaccineInput(text);
+    setVaccineSuggestions(searchVaccines(text));
+  };
+
+  const handleAddVaccination = async () => {
+    if (!vaccineInput.trim() || !vaccineDateInput.trim()) {
+      Alert.alert('Validation Error', 'Please enter the vaccine name and date.');
+      return;
+    }
+    setAddingVaccination(true);
+    try {
+      await addVaccination(activePatientId, vaccineInput.trim(), vaccineDateInput.trim(), vaccineDoseInput.trim(), vaccineNotes.trim());
+      const updatedVaccinations = await getVaccinations(activePatientId);
+      setVaccinations(updatedVaccinations);
+      setIsAddVaccinationModalOpen(false);
+      setVaccineInput('');
+      setVaccineDateInput('');
+      setVaccineDoseInput('');
+      setVaccineNotes('');
+    } catch (err) {
+      Alert.alert('Error', 'Failed to add vaccination.');
+    } finally {
+      setAddingVaccination(false);
+    }
+  };
+
+  const promptDeleteVaccination = (vaccination) => {
+    Alert.alert(
+      "Remove Record",
+      `Are you sure you want to remove ${vaccination.vaccine_name}?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Remove", 
+          style: "destructive", 
+          onPress: async () => {
+            try {
+              await deleteVaccination(activePatientId, vaccination.id);
+              const updatedVaccinations = await getVaccinations(activePatientId);
+              setVaccinations(updatedVaccinations);
+            } catch (err) {
+              Alert.alert('Error', 'Failed to remove record.');
+            }
+          } 
+        }
+      ]
+    );
+  };
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -305,7 +372,6 @@ export default function PatientProfileScreen({ patientId }) {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
           
-          {/* NEW UPDATED HEADER DESIGN */}
           <View style={styles.header}>
             <View style={styles.headerRow}>
               <View style={styles.avatarContainer}>
@@ -429,6 +495,36 @@ export default function PatientProfileScreen({ patientId }) {
                           <Text style={styles.severityText}>{allergy.severity.charAt(0).toUpperCase() + allergy.severity.slice(1)}</Text>
                         </View>
                         <TouchableOpacity onPress={() => promptDeleteAllergy(allergy)} style={styles.deleteIconBtn}>
+                          <Text style={styles.deleteIconText}>✕</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  ))
+                )}
+              </View>
+
+              {/* Vaccination Records Section */}
+              <View style={styles.card}>
+                <View style={styles.cardHeaderRow}>
+                  <Text style={styles.cardTitleHalf}>Vaccination Records</Text>
+                  <TouchableOpacity onPress={() => { handleSearchVaccines(''); setIsAddVaccinationModalOpen(true); }} style={styles.addMiniButton}>
+                    <Text style={styles.addMiniButtonText}>+ Add</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {vaccinations.length === 0 ? (
+                  <Text style={styles.noAllergies}>No vaccination records found</Text>
+                ) : (
+                  vaccinations.map((vaccine) => (
+                    <View key={vaccine.id} style={styles.allergyRow}>
+                      <View style={styles.allergyLeft}>
+                        <Text style={styles.allergyName}>{vaccine.vaccine_name}</Text>
+                        <Text style={styles.allergyNotes}>Given: {formatDate(vaccine.date_administered)}</Text>
+                        {vaccine.dose_number ? <Text style={styles.allergyNotes}>Dose: {vaccine.dose_number}</Text> : null}
+                        {vaccine.notes ? <Text style={[styles.allergyNotes, { fontStyle: 'italic' }]}>"{vaccine.notes}"</Text> : null}
+                      </View>
+                      <View style={styles.allergyRight}>
+                        <TouchableOpacity onPress={() => promptDeleteVaccination(vaccine)} style={styles.deleteIconBtn}>
                           <Text style={styles.deleteIconText}>✕</Text>
                         </TouchableOpacity>
                       </View>
@@ -625,6 +721,83 @@ export default function PatientProfileScreen({ patientId }) {
 
               <TouchableOpacity style={styles.modalSaveButton} onPress={handleAddCondition} disabled={addingCondition}>
                 {addingCondition ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={styles.saveButtonText}>Save Condition</Text>}
+              </TouchableOpacity>
+            </ScrollView>
+            
+          </KeyboardAvoidingView>
+        </View>
+      </Modal>
+
+      {/* Add Vaccination Modal */}
+      <Modal visible={isAddVaccinationModalOpen} animationType="slide" transparent={true}>
+        <View style={styles.modalOverlay}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalContent}>
+            
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Add Vaccination Record</Text>
+              <TouchableOpacity onPress={() => setIsAddVaccinationModalOpen(false)}><Text style={styles.modalCloseText}>✕</Text></TouchableOpacity>
+            </View>
+
+            <ScrollView keyboardShouldPersistTaps="handled">
+              <View style={styles.editFieldWrapper}>
+                <Text style={styles.editLabel}>Vaccine Name *</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={vaccineInput}
+                  onChangeText={handleSearchVaccines}
+                  placeholder="Start typing to search..."
+                  placeholderTextColor="#94A3B8"
+                  autoCapitalize="words"
+                />
+                
+                {vaccineSuggestions.length > 0 && vaccineInput.length > 0 && (
+                  <View style={styles.suggestionsContainer}>
+                    {vaccineSuggestions.map((sugg, i) => (
+                      <TouchableOpacity key={i} style={styles.suggestionItem} onPress={() => { setVaccineInput(sugg.name); setVaccineSuggestions([]); }}>
+                        <Text style={styles.suggestionName}>{sugg.name}</Text>
+                        <Text style={styles.suggestionCat}>{sugg.category}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.editFieldWrapper}>
+                <Text style={styles.editLabel}>Date Administered *</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={vaccineDateInput}
+                  onChangeText={setVaccineDateInput}
+                  placeholder="YYYY-MM-DD"
+                  placeholderTextColor="#94A3B8"
+                />
+              </View>
+
+              <View style={styles.editFieldWrapper}>
+                <Text style={styles.editLabel}>Dose Number (Optional)</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={vaccineDoseInput}
+                  onChangeText={setVaccineDoseInput}
+                  placeholder="E.g. Dose 1, Booster"
+                  placeholderTextColor="#94A3B8"
+                />
+              </View>
+
+              <View style={styles.editFieldWrapper}>
+                <Text style={styles.editLabel}>Notes (Optional)</Text>
+                <TextInput
+                  style={[styles.textInput, { height: 60, textAlignVertical: 'top' }]}
+                  value={vaccineNotes}
+                  onChangeText={setVaccineNotes}
+                  placeholder="E.g. Given at General Hospital"
+                  placeholderTextColor="#94A3B8"
+                  multiline
+                />
+              </View>
+
+              <TouchableOpacity style={styles.modalSaveButton} onPress={handleAddVaccination} disabled={addingVaccination}>
+                {addingVaccination ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={styles.saveButtonText}>Save Record</Text>}
               </TouchableOpacity>
             </ScrollView>
             

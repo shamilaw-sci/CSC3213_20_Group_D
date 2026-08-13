@@ -55,3 +55,24 @@ export const deleteCondition = async (patientId, conditionId) => {
   const response = await api.delete(`/api/patients/${patientId}/conditions/${conditionId}`);
   return response.data;
 };
+
+// --- Vaccination Endpoints Added for C4U-152 ---
+export const getVaccinations = async (patientId) => {
+  const response = await api.get(`/api/patients/${patientId}/vaccinations`);
+  return response.data.data;
+};
+
+export const addVaccination = async (patientId, vaccineName, dateAdministered, doseNumber, notes) => {
+  const response = await api.post(`/api/patients/${patientId}/vaccinations`, {
+    vaccineName,
+    dateAdministered,
+    doseNumber,
+    notes
+  });
+  return response.data.data;
+};
+
+export const deleteVaccination = async (patientId, vaccinationId) => {
+  const response = await api.delete(`/api/patients/${patientId}/vaccinations/${vaccinationId}`);
+  return response.data;
+};
