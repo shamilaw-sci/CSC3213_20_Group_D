@@ -7,7 +7,7 @@
  */
 
 const patientRepository = require('./patient.repository');
-const { generateAIResponse } = require('../../utils/ai.util');
+const { generateAIResponse, generateAIVisionResponse } = require('../../utils/ai.util');
 const { supabase } = require('../../config/supabase');
 
 const PHOTO_BUCKET = 'patient-photos';
@@ -505,6 +505,56 @@ const getPatientHistorySummary = async (patientId) => {
   return { summary: summaryText };
 };
 
+/**
+ * Extracts vaccination details from an uploaded image of a vaccination card using AI Vision.
+ * Instructs the AI to return strictly formatted JSON so the frontend can pre-fill the form.
+ * @param {Object} file - Multer file object ({ buffer, mimetype, size })
+ * @returns {Promise<Object>} Extracted data as JSON: { vaccineName, dateAdministered, doseNumber }
+ * @throws {Error} 400 if no file provided
+ * @throws {Error} 500 if AI extraction fails or returns invalid JSON
+ */
+const extractVaccinationDataFromImage = async (file) => {
+  if (!file) {
+    const error = new Error('No image file was provided for scanning');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const prompt = `
+    You are a highly accurate medical data extraction assistant.
+    Analyze this image of a vaccination card or medical record.
+    Extract the latest or most prominent vaccination entry.
+    
+    ## STRICT RULES:
+    1. "vaccineName" should be the standard medical name (e.g., "BCG", "MMR", "OPV").
+    2. "dateAdministered" MUST be formatted exactly as YYYY-MM-DD. If the date is unclear, return an empty string "".
+    3. "doseNumber" should be exactly as written (e.g., "Dose 1", "Booster"), or an empty string "" if not found.
+    4. Return ONLY a valid JSON object. Do not include markdown formatting like \`\`\`json or any conversational text.
+    
+    ## EXPECTED JSON FORMAT:
+    {
+      "vaccineName": "string",
+      "dateAdministered": "YYYY-MM-DD",
+      "doseNumber": "string"
+    }
+  `;
+
+  try {
+    const aiResponseText = await generateAIVisionResponse(prompt, file.buffer, file.mimetype);
+    
+    // Clean the response just in case Gemini stubbornly adds markdown fences despite our instructions
+    const cleanedText = aiResponseText.replace(/```json/gi, '').replace(/```/g, '').trim();
+    
+    const extractedData = JSON.parse(cleanedText);
+    return extractedData;
+  } catch (err) {
+    console.error('AI Extraction parsing error:', err);
+    const error = new Error('Failed to extract recognizable data from the image. Please enter manually.');
+    error.statusCode = 500;
+    throw error;
+  }
+};
+
 module.exports = {
   getPatientProfile,
   updatePatientProfile,
@@ -521,5 +571,6 @@ module.exports = {
   deleteVaccination,
   getPatientPrescriptions,
   getPatientByQrCode,
-  getPatientHistorySummary
+  getPatientHistorySummary,
+  extractVaccinationDataFromImage // Exporting the new AI extraction function
 };

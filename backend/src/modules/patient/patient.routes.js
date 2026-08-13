@@ -23,7 +23,8 @@ const {
   deleteVaccinationController,
   getPatientPrescriptionsController,
   getPatientByQrCodeController,
-  getPatientHistorySummaryController
+  getPatientHistorySummaryController,
+  extractVaccinationDataController
 } = require('./patient.controller');
 
 const { upload } = require('../../middleware/upload');
@@ -155,6 +156,20 @@ router.delete(
   // isAuthenticated,                 // Uncomment when auth is ready
   // authorize('patient', 'doctor'),  // Uncomment when auth is ready
   deleteConditionController
+);
+
+/**
+ * POST /api/patients/:id/vaccinations/scan
+ * Scans an uploaded vaccination card image and returns extracted JSON data.
+ * Multipart form field: "image"
+ * NOTE: Must be defined BEFORE the generic /:vaccinationId delete route.
+ */
+router.post(
+  '/:id/vaccinations/scan',
+  upload.single('image'),
+  // isAuthenticated,                 // Uncomment when auth is ready
+  // authorize('patient', 'doctor', 'hospital'),  // Uncomment when auth is ready
+  extractVaccinationDataController
 );
 
 /**

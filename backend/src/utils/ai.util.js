@@ -2,8 +2,8 @@
  * @file    ai.util.js
  * @module  Shared Utilities
  * @desc    Centralized AI API client for the Care4U system.
- * Uses Groq (Llama 3.1) for blazing-fast primary generation, with a Graceful Degradation
- * fallback to Google Gemini, and a final local data-extraction fallback if all APIs are offline.
+ * Uses Groq (Llama 3.1) for blazing-fast primary text generation, with a Graceful Degradation
+ * fallback to Google Gemini. Includes a dedicated Vision function using Gemini for image processing.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -72,6 +72,37 @@ const generateAIResponse = async (prompt) => {
   }
 };
 
+/**
+ * Analyzes an image using AI Vision.
+ * Exclusively uses Gemini, as it natively handles base64 image inputs highly efficiently.
+ * @param {string} prompt - Instructions for data extraction.
+ * @param {Buffer} imageBuffer - The raw image file buffer.
+ * @param {string} mimeType - The mime type of the image (e.g., 'image/jpeg').
+ * @returns {Promise<string>} The generated text (JSON) response.
+ */
+const generateAIVisionResponse = async (prompt, imageBuffer, mimeType) => {
+  try {
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-3.5-flash', 
+      generationConfig: { temperature: 0.1 }, // Low temperature for factual extraction, no creative guessing
+    });
+
+    const imagePart = {
+      inlineData: {
+        data: imageBuffer.toString('base64'),
+        mimeType: mimeType
+      }
+    };
+
+    const result = await model.generateContent([prompt, imagePart]);
+    return result.response.text();
+  } catch (error) {
+    console.error('AI Vision Generation Error:', error.message);
+    throw new Error('Failed to extract data from image. Please enter details manually.');
+  }
+};
+
 module.exports = {
   generateAIResponse,
+  generateAIVisionResponse, // Exporting the new Vision function
 };

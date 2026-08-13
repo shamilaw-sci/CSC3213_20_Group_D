@@ -376,6 +376,29 @@ const uploadPatientPhotoController = async (req, res) => {
   }
 };
 
+/**
+ * Handles POST /api/patients/:id/vaccinations/scan
+ * Uploads an image of a vaccination card and extracts data using AI.
+ * Does NOT save to the database — only returns the parsed JSON.
+ */
+const extractVaccinationDataController = async (req, res) => {
+  try {
+    // req.file is populated by the multer upload middleware
+    const extractedData = await patientService.extractVaccinationDataFromImage(req.file);
+
+    res.status(200).json({
+      success: true,
+      message: 'Vaccination data extracted successfully',
+      data: extractedData,
+    });
+  } catch (error) {
+    console.error('extractVaccinationDataController error:', error);
+    const statusCode = error.statusCode || 500;
+    const message = error.statusCode ? error.message : 'Internal server error';
+    res.status(statusCode).json({ success: false, message });
+  }
+};
+
 module.exports = {
   getPatientController,
   updatePatientController,
@@ -392,5 +415,6 @@ module.exports = {
   getPatientPrescriptionsController,
   getPatientByQrCodeController,
   getPatientHistorySummaryController,
-  uploadPatientPhotoController
+  uploadPatientPhotoController,
+  extractVaccinationDataController // Exporting the new AI extraction controller
 };
