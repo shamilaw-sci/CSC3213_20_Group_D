@@ -295,6 +295,82 @@ const deleteCondition = async (patientId, conditionId) => {
 };
 
 /**
+ * Retrieves all vaccination records for a patient.
+ * @param {string} patientId - UUID of the patient
+ * @returns {Promise<Array>} Array of vaccination objects
+ * @throws {Error} 404 if patient is not found
+ */
+const getVaccinations = async (patientId) => {
+  const existing = await patientRepository.getPatientById(patientId);
+  if (!existing) {
+    const error = new Error('Patient not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const vaccinations = await patientRepository.getVaccinationsByPatientId(patientId);
+  return vaccinations;
+};
+
+/**
+ * Adds a new vaccination record for a patient.
+ * @param {string} patientId - UUID of the patient
+ * @param {string} vaccineName - Name of the vaccine
+ * @param {string} dateAdministered - Date it was given
+ * @param {string} doseNumber - Dose number/identifier
+ * @param {string} notes - Optional notes
+ * @returns {Promise<Object>} The newly created vaccination record
+ * @throws {Error} 400 if required fields are missing
+ * @throws {Error} 404 if patient is not found
+ */
+const addVaccination = async (patientId, vaccineName, dateAdministered, doseNumber, notes) => {
+  if (!vaccineName || !dateAdministered) {
+    const error = new Error('vaccineName and dateAdministered are required');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const existing = await patientRepository.getPatientById(patientId);
+  if (!existing) {
+    const error = new Error('Patient not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const newVaccination = await patientRepository.addVaccination(
+    patientId,
+    vaccineName,
+    dateAdministered,
+    doseNumber,
+    notes
+  );
+  return newVaccination;
+};
+
+/**
+ * Deletes a vaccination record belonging to a specific patient.
+ * @param {string} patientId - UUID of the patient
+ * @param {string} vaccinationId - UUID of the vaccination to delete
+ * @returns {Promise<void>}
+ * @throws {Error} 404 if patient or vaccination is not found
+ */
+const deleteVaccination = async (patientId, vaccinationId) => {
+  const existing = await patientRepository.getPatientById(patientId);
+  if (!existing) {
+    const error = new Error('Patient not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const deleted = await patientRepository.deleteVaccination(patientId, vaccinationId);
+  if (!deleted) {
+    const error = new Error('Vaccination not found or does not belong to this patient');
+    error.statusCode = 404;
+    throw error;
+  }
+};
+
+/**
  * Retrieves all prescriptions for a patient with their medicine items.
  * @param {string} patientId - UUID of the patient (from patients table)
  * @returns {Promise<Array>} Array of prescription objects with items array
@@ -440,6 +516,9 @@ module.exports = {
   getConditions,
   addCondition,
   deleteCondition,
+  getVaccinations,
+  addVaccination,
+  deleteVaccination,
   getPatientPrescriptions,
   getPatientByQrCode,
   getPatientHistorySummary

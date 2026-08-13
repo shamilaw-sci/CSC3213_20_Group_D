@@ -18,6 +18,9 @@ const {
   getConditionsController,
   addConditionController,
   deleteConditionController,
+  getVaccinationsController,
+  addVaccinationController,
+  deleteVaccinationController,
   getPatientPrescriptionsController,
   getPatientByQrCodeController,
   getPatientHistorySummaryController
@@ -152,6 +155,40 @@ router.delete(
   // isAuthenticated,                 // Uncomment when auth is ready
   // authorize('patient', 'doctor'),  // Uncomment when auth is ready
   deleteConditionController
+);
+
+/**
+ * GET /api/patients/:id/vaccinations
+ * Returns all vaccination records for a patient.
+ */
+router.get(
+  '/:id/vaccinations',
+  // isAuthenticated,                 // Uncomment when auth is ready
+  // authorize('patient', 'doctor'),  // Uncomment when auth is ready
+  getVaccinationsController
+);
+
+/**
+ * POST /api/patients/:id/vaccinations
+ * Adds a new vaccination record for a patient.
+ * Body: { vaccineName, dateAdministered, doseNumber, notes }
+ */
+router.post(
+  '/:id/vaccinations',
+  // isAuthenticated,                 // Uncomment when auth is ready
+  // authorize('patient', 'doctor'),  // Uncomment when auth is ready
+  addVaccinationController
+);
+
+/**
+ * DELETE /api/patients/:id/vaccinations/:vaccinationId
+ * Removes a vaccination record for a patient.
+ */
+router.delete(
+  '/:id/vaccinations/:vaccinationId',
+  // isAuthenticated,                 // Uncomment when auth is ready
+  // authorize('patient', 'doctor'),  // Uncomment when auth is ready
+  deleteVaccinationController
 );
 
 /**
