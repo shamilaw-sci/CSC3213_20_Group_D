@@ -1,9 +1,9 @@
 /**
- * @file patient.repository.js
- * @module Patient
- * @desc Database query functions for the Patient module.
- * All direct SQL interactions for patient data live here.
- * @author Wasana Karunanayaka (S/21/081)
+ * @file    patient.repository.js
+ * @module  Patient
+ * @desc    Database query functions for the Patient module.
+ *          All direct SQL interactions for patient data live here.
+ * @author  Wasana Karunanayaka (S/21/081)
  */
 
 const { pool } = require('../../config/db');
@@ -281,6 +281,64 @@ async function deleteAllergy(patientId, allergyId) {
 }
 
 /**
+ * Fetches all vaccination records for a patient, ordered by date administered newest first.
+ * @param {string} patientId - UUID of the patient (patients.id)
+ * @returns {Promise<Array>} Array of vaccination rows (empty array if none)
+ */
+async function getVaccinationsByPatientId(patientId) {
+  const result = await pool.query(
+    `SELECT
+      id,
+      patient_id,
+      vaccine_name,
+      date_administered,
+      dose_number,
+      notes,
+      created_at
+    FROM vaccinations
+    WHERE patient_id = $1
+    ORDER BY date_administered DESC, created_at DESC`,
+    [patientId]
+  );
+  return result.rows;
+}
+
+/**
+ * Inserts a new vaccination record for a patient.
+ * @param {string} patientId - UUID of the patient (patients.id)
+ * @param {string} vaccineName - Name of the vaccine (e.g. "BCG", "MMR")
+ * @param {string} dateAdministered - Date string (YYYY-MM-DD)
+ * @param {string|null} doseNumber - Dose identifier/number (e.g. "Dose 1", "Booster")
+ * @param {string|null} notes - Optional additional notes
+ * @returns {Promise<Object>} The newly created vaccination row
+ */
+async function addVaccination(patientId, vaccineName, dateAdministered, doseNumber, notes) {
+  const result = await pool.query(
+    `INSERT INTO vaccinations (id, patient_id, vaccine_name, date_administered, dose_number, notes, created_at)
+     VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, NOW())
+     RETURNING *`,
+    [patientId, vaccineName, dateAdministered, doseNumber || null, notes || null]
+  );
+  return result.rows[0];
+}
+
+/**
+ * Deletes a vaccination record belonging to a specific patient.
+ * @param {string} patientId - UUID of the patient (patients.id)
+ * @param {string} vaccinationId - UUID of the vaccination (vaccinations.id)
+ * @returns {Promise<boolean>} True if a row was deleted, false otherwise
+ */
+async function deleteVaccination(patientId, vaccinationId) {
+  const result = await pool.query(
+    `DELETE FROM vaccinations 
+     WHERE id = $1 AND patient_id = $2
+     RETURNING id`,
+    [vaccinationId, patientId]
+  );
+  return result.rowCount > 0;
+}
+
+/**
  * Fetches all prescriptions for a patient with their medicine items,
  * ordered newest first. Uses JSON_AGG to bundle all items per prescription
  * into a single array so each prescription appears as one object.
@@ -384,6 +442,9 @@ module.exports = {
   deleteCondition,
   addAllergy,
   deleteAllergy,
+  getVaccinationsByPatientId,
+  addVaccination,
+  deleteVaccination,
   getPatientPrescriptions,
   getPatientByQrCodeId,
 };
