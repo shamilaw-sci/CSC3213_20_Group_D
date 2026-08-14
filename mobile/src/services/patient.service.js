@@ -56,7 +56,6 @@ export const deleteCondition = async (patientId, conditionId) => {
   return response.data;
 };
 
-// --- Vaccination Endpoints Added for C4U-152 ---
 export const getVaccinations = async (patientId) => {
   const response = await api.get(`/api/patients/${patientId}/vaccinations`);
   return response.data.data;
@@ -72,7 +71,31 @@ export const addVaccination = async (patientId, vaccineName, dateAdministered, d
   return response.data.data;
 };
 
+export const addBulkVaccinations = async (patientId, vaccinations) => {
+  const response = await api.post(`/api/patients/${patientId}/vaccinations/bulk`, { vaccinations });
+  return response.data.data;
+};
+
 export const deleteVaccination = async (patientId, vaccinationId) => {
   const response = await api.delete(`/api/patients/${patientId}/vaccinations/${vaccinationId}`);
   return response.data;
+};
+
+/**
+ * Uploads an image of a vaccination card and returns AI-extracted details.
+ * Specifically formatted for React Native's implementation of FormData.
+ */
+export const scanVaccinationCard = async (patientId, imageUri, mimeType) => {
+  const formData = new FormData();
+  
+  formData.append('image', {
+    uri: imageUri,
+    type: mimeType || 'image/jpeg',
+    name: 'scan.jpg' // A generic name is required for RN to parse it as a file
+  });
+
+  const response = await api.post(`/api/patients/${patientId}/vaccinations/scan`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data.data; 
 };

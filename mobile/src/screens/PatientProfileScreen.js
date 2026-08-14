@@ -3,6 +3,7 @@
  * @module  Patient
  * @desc    Mobile screen showing patient profile information, known allergies,
  * chronic conditions, and an inline edit form for updatable fields.
+ * Now includes AI Camera Scanning for bulk vaccination records.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 import React, { useEffect, useState } from 'react';
@@ -22,6 +23,8 @@ import {
   Modal,
   Switch
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+
 import {
   getPatientProfile,
   getPatientAllergies,
@@ -32,8 +35,9 @@ import {
   addCondition,
   deleteCondition,
   getVaccinations,
-  addVaccination,
-  deleteVaccination
+  addBulkVaccinations,
+  deleteVaccination,
+  scanVaccinationCard
 } from '../services/patient.service';
 import { searchAllergens } from '../utils/allergenSearch';
 import { searchVaccines } from '../utils/vaccineSearch';
@@ -145,14 +149,13 @@ export default function PatientProfileScreen({ patientId }) {
   const [isPriorityInput, setIsPriorityInput] = useState(false);
   const [addingCondition, setAddingCondition] = useState(false);
 
-  // Add Vaccination State
+  // Dynamic Bulk Vaccination State
   const [isAddVaccinationModalOpen, setIsAddVaccinationModalOpen] = useState(false);
-  const [vaccineInput, setVaccineInput] = useState('');
+  const [bulkVaccines, setBulkVaccines] = useState([{ id: 'initial-row', vaccineName: '', dateAdministered: '', doseNumber: '', notes: '' }]);
+  const [activeVaccineRowId, setActiveVaccineRowId] = useState(null);
   const [vaccineSuggestions, setVaccineSuggestions] = useState([]);
-  const [vaccineDateInput, setVaccineDateInput] = useState('');
-  const [vaccineDoseInput, setVaccineDoseInput] = useState('');
-  const [vaccineNotes, setVaccineNotes] = useState('');
   const [addingVaccination, setAddingVaccination] = useState(false);
+  const [scanningCard, setScanningCard] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -303,29 +306,46 @@ export default function PatientProfileScreen({ patientId }) {
     );
   };
 
-  // --- Vaccination Logic ---
-  const handleSearchVaccines = (text) => {
-    setVaccineInput(text);
-    setVaccineSuggestions(searchVaccines(text));
+  // --- Bulk Vaccination Logic ---
+  const addVaccineRow = () => {
+    setBulkVaccines([...bulkVaccines, { id: Date.now().toString(), vaccineName: '', dateAdministered: '', doseNumber: '', notes: '' }]);
   };
 
-  const handleAddVaccination = async () => {
-    if (!vaccineInput.trim() || !vaccineDateInput.trim()) {
-      Alert.alert('Validation Error', 'Please enter the vaccine name and date.');
-      return;
+  const removeVaccineRow = (id) => {
+    setBulkVaccines(bulkVaccines.filter(v => v.id !== id));
+  };
+
+  const updateVaccineRow = (id, field, value) => {
+    setBulkVaccines(bulkVaccines.map(v => v.id === id ? { ...v, [field]: value } : v));
+    if (field === 'vaccineName') {
+      setVaccineSuggestions(searchVaccines(value));
+      setActiveVaccineRowId(id);
     }
+  };
+
+  const submitBulkVaccination = async () => {
+    const validVaccines = bulkVaccines.filter(v => v.vaccineName.trim() !== '' || v.dateAdministered.trim() !== '');
+    
+    if (validVaccines.length === 0) {
+      return Alert.alert('Validation Error', 'Please complete at least one vaccination record.');
+    }
+
+    const hasMissingFields = validVaccines.some(v => v.vaccineName.trim() === '' || v.dateAdministered.trim() === '');
+    
+    if (hasMissingFields) {
+      return Alert.alert('Validation Error', 'Please ensure both Vaccine Name and Date are filled for all active rows.');
+    }
+
     setAddingVaccination(true);
     try {
-      await addVaccination(activePatientId, vaccineInput.trim(), vaccineDateInput.trim(), vaccineDoseInput.trim(), vaccineNotes.trim());
+      await addBulkVaccinations(activePatientId, validVaccines);
       const updatedVaccinations = await getVaccinations(activePatientId);
       setVaccinations(updatedVaccinations);
       setIsAddVaccinationModalOpen(false);
-      setVaccineInput('');
-      setVaccineDateInput('');
-      setVaccineDoseInput('');
-      setVaccineNotes('');
+      setBulkVaccines([{ id: 'initial-row', vaccineName: '', dateAdministered: '', doseNumber: '', notes: '' }]);
+      Alert.alert('Success', 'Vaccinations saved successfully.');
     } catch (err) {
-      Alert.alert('Error', 'Failed to add vaccination.');
+      Alert.alert('Error', 'Failed to add vaccinations.');
     } finally {
       setAddingVaccination(false);
     }
@@ -354,6 +374,56 @@ export default function PatientProfileScreen({ patientId }) {
     );
   };
 
+  // --- AI Camera Scanner ---
+  const handleTakeVaccinePhoto = async () => {
+    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+    if (permissionResult.granted === false) {
+      return Alert.alert("Permission Required", "You need to allow camera access to scan a card.");
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+    });
+    if (!result.canceled) processVaccineImage(result.assets[0].uri, result.assets[0].mimeType);
+  };
+
+  const handleChooseVaccinePhoto = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permissionResult.granted === false) {
+      return Alert.alert("Permission Required", "You need to allow gallery access to upload a card.");
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+    });
+    if (!result.canceled) processVaccineImage(result.assets[0].uri, result.assets[0].mimeType);
+  };
+
+  const processVaccineImage = async (uri, mimeType) => {
+    setScanningCard(true);
+    try {
+      const data = await scanVaccinationCard(activePatientId, uri, mimeType);
+      
+      const extractedArray = Array.isArray(data) ? data : [data];
+      const newBulkRows = extractedArray.map((item, index) => ({
+        id: Date.now().toString() + index,
+        vaccineName: item.vaccineName || '',
+        dateAdministered: item.dateAdministered || '',
+        doseNumber: item.doseNumber || '',
+        notes: ''
+      }));
+
+      if (newBulkRows.length > 0) {
+        setBulkVaccines(newBulkRows);
+        Alert.alert('Success', 'Card scanned! Please review the extracted data below before saving.');
+      }
+    } catch (err) {
+      Alert.alert('Scan Failed', 'Failed to extract data from the image. Please try again or enter manually.');
+    } finally {
+      setScanningCard(false);
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -371,7 +441,7 @@ export default function PatientProfileScreen({ patientId }) {
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
-          
+
           <View style={styles.header}>
             <View style={styles.headerRow}>
               <View style={styles.avatarContainer}>
@@ -383,7 +453,7 @@ export default function PatientProfileScreen({ patientId }) {
               <View style={styles.headerText}>
                 <Text style={styles.headerEyebrow}>MY PROFILE</Text>
                 <Text style={styles.headerTitle} numberOfLines={1}>{patient?.full_name || 'Patient'}</Text>
-                
+
                 {/* Clinical Badges Row */}
                 <View style={styles.badgesRow}>
                   <Text style={styles.demographicsText}>
@@ -402,7 +472,7 @@ export default function PatientProfileScreen({ patientId }) {
                 </View>
               </View>
             </View>
-            
+
             <View style={styles.qrCodeContainer}>
               <Text style={styles.qrCodeLabel}>PATIENT ID</Text>
               <Text style={styles.qrCodeValue}>{patient?.qr_code_id || '—'}</Text>
@@ -507,7 +577,7 @@ export default function PatientProfileScreen({ patientId }) {
               <View style={styles.card}>
                 <View style={styles.cardHeaderRow}>
                   <Text style={styles.cardTitleHalf}>Vaccination Records</Text>
-                  <TouchableOpacity onPress={() => { handleSearchVaccines(''); setIsAddVaccinationModalOpen(true); }} style={styles.addMiniButton}>
+                  <TouchableOpacity onPress={() => { setBulkVaccines([{ id: 'initial-row', vaccineName: '', dateAdministered: '', doseNumber: '', notes: '' }]); setIsAddVaccinationModalOpen(true); }} style={styles.addMiniButton}>
                     <Text style={styles.addMiniButtonText}>+ Add</Text>
                   </TouchableOpacity>
                 </View>
@@ -607,7 +677,7 @@ export default function PatientProfileScreen({ patientId }) {
       <Modal visible={isAddModalOpen} animationType="slide" transparent={true}>
         <View style={styles.modalOverlay}>
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalContent}>
-            
+
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Add New Allergy</Text>
               <TouchableOpacity onPress={() => setIsAddModalOpen(false)}><Text style={styles.modalCloseText}>✕</Text></TouchableOpacity>
@@ -624,7 +694,7 @@ export default function PatientProfileScreen({ patientId }) {
                   placeholderTextColor="#94A3B8"
                   autoCapitalize="words"
                 />
-                
+
                 {suggestions.length > 0 && allergenInput.length > 0 && (
                   <View style={styles.suggestionsContainer}>
                     {suggestions.map((sugg, i) => (
@@ -655,7 +725,7 @@ export default function PatientProfileScreen({ patientId }) {
                 {addingAllergy ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={styles.saveButtonText}>Save Allergy</Text>}
               </TouchableOpacity>
             </ScrollView>
-            
+
           </KeyboardAvoidingView>
         </View>
       </Modal>
@@ -664,7 +734,7 @@ export default function PatientProfileScreen({ patientId }) {
       <Modal visible={isAddConditionModalOpen} animationType="slide" transparent={true}>
         <View style={styles.modalOverlay}>
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalContent}>
-            
+
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Add Chronic Condition</Text>
               <TouchableOpacity onPress={() => setIsAddConditionModalOpen(false)}><Text style={styles.modalCloseText}>✕</Text></TouchableOpacity>
@@ -723,84 +793,114 @@ export default function PatientProfileScreen({ patientId }) {
                 {addingCondition ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={styles.saveButtonText}>Save Condition</Text>}
               </TouchableOpacity>
             </ScrollView>
-            
+
           </KeyboardAvoidingView>
         </View>
       </Modal>
 
-      {/* Add Vaccination Modal */}
+      {/* Dynamic Bulk Add Vaccination Modal */}
       <Modal visible={isAddVaccinationModalOpen} animationType="slide" transparent={true}>
         <View style={styles.modalOverlay}>
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalContent}>
-            
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={[styles.modalContent, { maxHeight: '90%' }]}>
+
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add Vaccination Record</Text>
+              <Text style={styles.modalTitle}>Add Vaccination(s)</Text>
               <TouchableOpacity onPress={() => setIsAddVaccinationModalOpen(false)}><Text style={styles.modalCloseText}>✕</Text></TouchableOpacity>
             </View>
 
-            <ScrollView keyboardShouldPersistTaps="handled">
-              <View style={styles.editFieldWrapper}>
-                <Text style={styles.editLabel}>Vaccine Name *</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={vaccineInput}
-                  onChangeText={handleSearchVaccines}
-                  placeholder="Start typing to search..."
-                  placeholderTextColor="#94A3B8"
-                  autoCapitalize="words"
-                />
-                
-                {vaccineSuggestions.length > 0 && vaccineInput.length > 0 && (
-                  <View style={styles.suggestionsContainer}>
-                    {vaccineSuggestions.map((sugg, i) => (
-                      <TouchableOpacity key={i} style={styles.suggestionItem} onPress={() => { setVaccineInput(sugg.name); setVaccineSuggestions([]); }}>
-                        <Text style={styles.suggestionName}>{sugg.name}</Text>
-                        <Text style={styles.suggestionCat}>{sugg.category}</Text>
-                      </TouchableOpacity>
-                    ))}
+            {/* Smart AI Scan Banner inside Mobile */}
+            <View style={styles.aiBanner}>
+              <Text style={styles.aiBannerTitle}>📸 Smart AI Scan</Text>
+              <Text style={styles.aiBannerText}>Save time! Snap a photo of your vaccination card to automatically extract multiple entries at once.</Text>
+              <View style={styles.aiBannerButtons}>
+                <TouchableOpacity style={styles.aiButton} onPress={handleTakeVaccinePhoto} disabled={scanningCard}>
+                  {scanningCard ? <ActivityIndicator size="small" color="#1E3A5F" /> : <Text style={styles.aiButtonText}>Take Photo</Text>}
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.aiButton} onPress={handleChooseVaccinePhoto} disabled={scanningCard}>
+                  {scanningCard ? <ActivityIndicator size="small" color="#1E3A5F" /> : <Text style={styles.aiButtonText}>Gallery</Text>}
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <ScrollView style={{ marginTop: 10 }} keyboardShouldPersistTaps="handled">
+              
+              {bulkVaccines.map((row, index) => (
+                <View key={row.id} style={styles.bulkRowContainer}>
+                  
+                  {bulkVaccines.length > 1 && (
+                    <TouchableOpacity style={styles.removeRowBtn} onPress={() => removeVaccineRow(row.id)}>
+                      <Text style={styles.removeRowBtnText}>✕ Remove Row</Text>
+                    </TouchableOpacity>
+                  )}
+
+                  <View style={styles.editFieldWrapper}>
+                    <Text style={styles.editLabel}>Vaccine Name *</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      value={row.vaccineName}
+                      onChangeText={(val) => updateVaccineRow(row.id, 'vaccineName', val)}
+                      onFocus={() => { setVaccineSuggestions(searchVaccines(row.vaccineName)); setActiveVaccineRowId(row.id); }}
+                      placeholder="E.g. BCG"
+                      placeholderTextColor="#94A3B8"
+                    />
+
+                    {activeVaccineRowId === row.id && vaccineSuggestions.length > 0 && row.vaccineName.length > 0 && (
+                      <View style={styles.suggestionsContainer}>
+                        {vaccineSuggestions.map((sugg, i) => (
+                          <TouchableOpacity key={i} style={styles.suggestionItem} onPress={() => { updateVaccineRow(row.id, 'vaccineName', sugg.name); setActiveVaccineRowId(null); }}>
+                            <Text style={styles.suggestionName}>{sugg.name}</Text>
+                            <Text style={styles.suggestionCat}>{sugg.category}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    )}
                   </View>
-                )}
-              </View>
 
-              <View style={styles.editFieldWrapper}>
-                <Text style={styles.editLabel}>Date Administered *</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={vaccineDateInput}
-                  onChangeText={setVaccineDateInput}
-                  placeholder="YYYY-MM-DD"
-                  placeholderTextColor="#94A3B8"
-                />
-              </View>
+                  <View style={styles.editFieldWrapper}>
+                    <Text style={styles.editLabel}>Date Administered *</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      value={row.dateAdministered}
+                      onChangeText={(val) => updateVaccineRow(row.id, 'dateAdministered', val)}
+                      placeholder="YYYY-MM-DD"
+                      placeholderTextColor="#94A3B8"
+                    />
+                  </View>
 
-              <View style={styles.editFieldWrapper}>
-                <Text style={styles.editLabel}>Dose Number (Optional)</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={vaccineDoseInput}
-                  onChangeText={setVaccineDoseInput}
-                  placeholder="E.g. Dose 1, Booster"
-                  placeholderTextColor="#94A3B8"
-                />
-              </View>
+                  <View style={{ flexDirection: 'row', gap: 10 }}>
+                    <View style={[styles.editFieldWrapper, { flex: 1 }]}>
+                      <Text style={styles.editLabel}>Dose (Optional)</Text>
+                      <TextInput
+                        style={styles.textInput}
+                        value={row.doseNumber}
+                        onChangeText={(val) => updateVaccineRow(row.id, 'doseNumber', val)}
+                        placeholder="E.g. Booster"
+                        placeholderTextColor="#94A3B8"
+                      />
+                    </View>
+                    <View style={[styles.editFieldWrapper, { flex: 1 }]}>
+                      <Text style={styles.editLabel}>Notes (Optional)</Text>
+                      <TextInput
+                        style={styles.textInput}
+                        value={row.notes}
+                        onChangeText={(val) => updateVaccineRow(row.id, 'notes', val)}
+                        placeholder="E.g. Given at GH"
+                        placeholderTextColor="#94A3B8"
+                      />
+                    </View>
+                  </View>
+                </View>
+              ))}
 
-              <View style={styles.editFieldWrapper}>
-                <Text style={styles.editLabel}>Notes (Optional)</Text>
-                <TextInput
-                  style={[styles.textInput, { height: 60, textAlignVertical: 'top' }]}
-                  value={vaccineNotes}
-                  onChangeText={setVaccineNotes}
-                  placeholder="E.g. Given at General Hospital"
-                  placeholderTextColor="#94A3B8"
-                  multiline
-                />
-              </View>
+              <TouchableOpacity style={styles.addRowButton} onPress={addVaccineRow}>
+                <Text style={styles.addRowButtonText}>+ Add Another Row</Text>
+              </TouchableOpacity>
 
-              <TouchableOpacity style={styles.modalSaveButton} onPress={handleAddVaccination} disabled={addingVaccination}>
-                {addingVaccination ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={styles.saveButtonText}>Save Record</Text>}
+              <TouchableOpacity style={styles.modalSaveButton} onPress={submitBulkVaccination} disabled={addingVaccination}>
+                {addingVaccination ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={styles.saveButtonText}>Save All Records</Text>}
               </TouchableOpacity>
             </ScrollView>
-            
+
           </KeyboardAvoidingView>
         </View>
       </Modal>
@@ -904,9 +1004,23 @@ const styles = StyleSheet.create({
   modalTitle: { fontSize: 18, fontWeight: '700', color: '#1E293B' },
   modalCloseText: { fontSize: 20, color: '#64748B', padding: 4 },
   modalSaveButton: { backgroundColor: '#1E3A5F', borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginTop: 10 },
-  
-  suggestionsContainer: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0', borderTopWidth: 0, borderBottomLeftRadius: 8, borderBottomRightRadius: 8, maxHeight: 150 },
+
+  suggestionsContainer: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0', borderTopWidth: 0, borderBottomLeftRadius: 8, borderBottomRightRadius: 8, maxHeight: 150, zIndex: 50 },
   suggestionItem: { flexDirection: 'row', justifyContent: 'space-between', padding: 12, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
   suggestionName: { fontSize: 14, color: '#1E293B', fontWeight: '500' },
-  suggestionCat: { fontSize: 11, color: '#94A3B8', textTransform: 'uppercase' }
+  suggestionCat: { fontSize: 11, color: '#94A3B8', textTransform: 'uppercase' },
+
+  // Bulk UI & AI Banner Styles
+  aiBanner: { backgroundColor: '#EFF6FF', borderRadius: 12, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: '#DBEAFE' },
+  aiBannerTitle: { fontSize: 15, fontWeight: 'bold', color: '#1E3A5F', marginBottom: 4 },
+  aiBannerText: { fontSize: 12, color: '#475569', marginBottom: 12, lineHeight: 18 },
+  aiBannerButtons: { flexDirection: 'row', gap: 10 },
+  aiButton: { flex: 1, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#BFDBFE', paddingVertical: 10, borderRadius: 8, alignItems: 'center' },
+  aiButtonText: { color: '#1E3A5F', fontSize: 13, fontWeight: '600' },
+
+  bulkRowContainer: { backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, marginBottom: 16 },
+  removeRowBtn: { position: 'absolute', top: -10, right: -10, backgroundColor: '#FEE2E2', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, borderWidth: 1, borderColor: '#FECACA' },
+  removeRowBtnText: { fontSize: 10, color: '#C00000', fontWeight: 'bold' },
+  addRowButton: { backgroundColor: '#F1F5F9', borderWidth: 1, borderColor: '#CBD5E1', borderStyle: 'dashed', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginBottom: 16 },
+  addRowButtonText: { color: '#475569', fontSize: 14, fontWeight: '600' }
 });
