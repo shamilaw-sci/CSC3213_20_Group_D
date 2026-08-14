@@ -8,6 +8,7 @@
  * Avatar sized up to 96px for reliable visual identification.
  * Chronic conditions management added in CARE4U-79.
  * Vaccination Records added in CARE4U-148.
+ * AI Vaccination Bulk Card Scanning added in CARE4U-154.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -15,7 +16,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { User, Droplets, Phone, Calendar, Edit2, X, Save, AlertTriangle, Trash2, Plus, Camera, Syringe } from 'lucide-react';
+import { User, Droplets, Phone, Calendar, Edit2, X, Save, AlertTriangle, Trash2, Plus, Camera, Syringe, ScanLine, Info } from 'lucide-react';
 
 import { 
   getPatientProfile, 
@@ -28,8 +29,9 @@ import {
   addCondition,
   deleteCondition,
   getVaccinations,
-  addVaccination,
-  deleteVaccination
+  addBulkVaccinations,
+  deleteVaccination,
+  scanVaccinationCard
 } from '../../services/patient.service';
 import { searchAllergens } from '../../utils/allergenSearch';
 import { searchVaccines } from '../../utils/vaccineSearch';
@@ -151,6 +153,7 @@ const PatientProfilePage = () => {
   const [isAddVaccinationModalOpen, setIsAddVaccinationModalOpen] = useState(false);
   const [isDeleteVaccinationModalOpen, setIsDeleteVaccinationModalOpen] = useState(false);
   const [vaccinationToDelete, setVaccinationToDelete] = useState(null);
+  const scanVaccineInputRef = useRef(null);
 
   // ── Autocomplete State (Allergies) ──
   const [allergenInput, setAllergenInput] = useState('');
@@ -160,14 +163,12 @@ const PatientProfilePage = () => {
   const [allergyNotes, setAllergyNotes] = useState('');
   const allergyDropdownRef = useRef(null);
 
-  // ── Autocomplete State (Vaccinations) ──
-  const [vaccineInput, setVaccineInput] = useState('');
+  // ── Dynamic Bulk Autocomplete State (Vaccinations) ──
+  const [bulkVaccines, setBulkVaccines] = useState([
+    { id: 'initial-row', vaccineName: '', dateAdministered: '', doseNumber: '', notes: '' }
+  ]);
+  const [activeVaccineRowId, setActiveVaccineRowId] = useState(null);
   const [vaccineSuggestions, setVaccineSuggestions] = useState([]);
-  const [showVaccineSuggestions, setShowVaccineSuggestions] = useState(false);
-  const [vaccineDateInput, setVaccineDateInput] = useState('');
-  const [vaccineDoseInput, setVaccineDoseInput] = useState('');
-  const [vaccineNotes, setVaccineNotes] = useState('');
-  const vaccineDropdownRef = useRef(null);
 
   // ── Add Condition Form State ──
   const [conditionInput, setConditionInput] = useState('');
@@ -181,8 +182,9 @@ const PatientProfilePage = () => {
       if (allergyDropdownRef.current && !allergyDropdownRef.current.contains(event.target)) {
         setShowAllergySuggestions(false);
       }
-      if (vaccineDropdownRef.current && !vaccineDropdownRef.current.contains(event.target)) {
-        setShowVaccineSuggestions(false);
+      // Since bulk rows are dynamic, we just clear the active row if clicking anywhere outside
+      if (!event.target.closest('.vaccine-autocomplete-container')) {
+        setActiveVaccineRowId(null);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -201,16 +203,21 @@ const PatientProfilePage = () => {
     setShowAllergySuggestions(false);
   };
 
-  const handleVaccineInputChange = (e) => {
-    const value = e.target.value;
-    setVaccineInput(value);
-    setVaccineSuggestions(searchVaccines(value));
-    setShowVaccineSuggestions(true);
+  // ── Bulk Vaccination Handlers ──
+  const addVaccineRow = () => {
+    setBulkVaccines([...bulkVaccines, { id: Date.now(), vaccineName: '', dateAdministered: '', doseNumber: '', notes: '' }]);
   };
 
-  const handleSelectVaccineSuggestion = (suggestion) => {
-    setVaccineInput(suggestion.name);
-    setShowVaccineSuggestions(false);
+  const removeVaccineRow = (id) => {
+    setBulkVaccines(bulkVaccines.filter(v => v.id !== id));
+  };
+
+  const updateVaccineRow = (id, field, value) => {
+    setBulkVaccines(bulkVaccines.map(v => v.id === id ? { ...v, [field]: value } : v));
+    if (field === 'vaccineName') {
+      setVaccineSuggestions(searchVaccines(value));
+      setActiveVaccineRowId(id);
+    }
   };
 
   // ── Queries ──
@@ -312,18 +319,16 @@ const PatientProfilePage = () => {
     onError: () => toast.error('Failed to remove condition.'),
   });
 
-  const addVaccinationMutation = useMutation({
-    mutationFn: (data) => addVaccination(TEST_PATIENT_ID, data.vaccineName, data.dateAdministered, data.doseNumber, data.notes),
+  const addBulkVaccinationMutation = useMutation({
+    mutationFn: (data) => addBulkVaccinations(TEST_PATIENT_ID, data.vaccinations),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vaccinations', TEST_PATIENT_ID] });
-      toast.success('Vaccination added successfully');
+      toast.success('Vaccinations saved successfully');
       setIsAddVaccinationModalOpen(false);
-      setVaccineInput('');
-      setVaccineDateInput('');
-      setVaccineDoseInput('');
-      setVaccineNotes('');
+      // Reset bulk array back to a single empty row
+      setBulkVaccines([{ id: 'initial-row', vaccineName: '', dateAdministered: '', doseNumber: '', notes: '' }]);
     },
-    onError: () => toast.error('Failed to add vaccination.'),
+    onError: () => toast.error('Failed to add vaccinations.'),
   });
 
   const deleteVaccinationMutation = useMutation({
@@ -335,6 +340,32 @@ const PatientProfilePage = () => {
       setVaccinationToDelete(null);
     },
     onError: () => toast.error('Failed to remove vaccination.'),
+  });
+
+  const scanVaccinationMutation = useMutation({
+    mutationFn: (file) => scanVaccinationCard(TEST_PATIENT_ID, file),
+    onSuccess: (data) => {
+      toast.success('Card scanned successfully! Please verify details.');
+      // Data is an array of extracted vaccination objects
+      const extractedArray = Array.isArray(data) ? data : [data];
+      
+      const newBulkRows = extractedArray.map((item, index) => ({
+        id: Date.now() + index,
+        vaccineName: item.vaccineName || '',
+        dateAdministered: item.dateAdministered || '',
+        doseNumber: item.doseNumber || '',
+        notes: ''
+      }));
+
+      // Overwrite the single empty row with the newly extracted rows
+      if (newBulkRows.length > 0) {
+        setBulkVaccines(newBulkRows);
+      }
+    },
+    onError: (err) => {
+      const message = err?.response?.data?.message || 'Failed to scan card.';
+      toast.error(message);
+    }
   });
 
   // ── Handlers ──
@@ -362,6 +393,20 @@ const PatientProfilePage = () => {
     uploadPhotoMutation.mutate(file);
   };
 
+  const handleScanVaccineClick = () => scanVaccineInputRef.current?.click();
+
+  const handleScanVaccineChange = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    
+    if (!ALLOWED_PHOTO_TYPES.includes(file.type)) {
+      return toast.error('Please select a valid image file (JPEG, PNG, WEBP).');
+    }
+    
+    scanVaccinationMutation.mutate(file);
+  };
+
   const submitAddAllergy = (e) => {
     e.preventDefault();
     if (!allergenInput.trim()) return toast.error('Please enter or select an allergen.');
@@ -374,17 +419,25 @@ const PatientProfilePage = () => {
     addConditionMutation.mutate({ condition: conditionInput.trim(), diagnosedAt: diagnosedAtInput, notes: conditionNotes.trim(), isPriority: isPriorityInput });
   };
 
-  const submitAddVaccination = (e) => {
-    e.preventDefault();
-    if (!vaccineInput.trim() || !vaccineDateInput) {
-      return toast.error('Please enter the vaccine name and date.');
+  // Fixed the form submission logic for Bulk Vaccinations to trigger purely via onClick
+  const submitBulkVaccination = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    
+    // Filter out completely empty rows
+    const validVaccines = bulkVaccines.filter(v => v.vaccineName.trim() !== '' || v.dateAdministered.trim() !== '');
+    
+    if (validVaccines.length === 0) {
+      return toast.error('Please complete at least one vaccination record.');
     }
-    addVaccinationMutation.mutate({
-      vaccineName: vaccineInput.trim(),
-      dateAdministered: vaccineDateInput,
-      doseNumber: vaccineDoseInput.trim(),
-      notes: vaccineNotes.trim()
-    });
+
+    // Check if any row has a name but no date, or date but no name
+    const hasMissingFields = validVaccines.some(v => v.vaccineName.trim() === '' || v.dateAdministered.trim() === '');
+    
+    if (hasMissingFields) {
+      return toast.error('Please ensure both Vaccine Name and Date are filled for all active rows.');
+    }
+    
+    addBulkVaccinationMutation.mutate({ vaccinations: validVaccines });
   };
 
   const promptDeleteAllergy = (allergy) => {
@@ -400,6 +453,12 @@ const PatientProfilePage = () => {
   const promptDeleteVaccination = (vaccination) => {
     setVaccinationToDelete(vaccination);
     setIsDeleteVaccinationModalOpen(true);
+  };
+
+  const confirmDeleteAllergy = () => {
+    if (allergyToDelete) {
+      deleteAllergyMutation.mutate(allergyToDelete.id);
+    }
   };
 
   // ── Filter allergies by severity ──
@@ -681,7 +740,7 @@ const PatientProfilePage = () => {
                               <p className="text-xs text-slate-500 mt-0.5">Dose: {vaccine.dose_number}</p>
                             )}
                             {vaccine.notes && (
-                              <p className="text-xs text-slate-500 mt-0.5 italic text-slate-400">"{vaccine.notes}"</p>
+                              <p className="text-xs text-slate-500 mt-0.5 italic">"{vaccine.notes}"</p>
                             )}
                           </div>
                         </div>
@@ -698,7 +757,10 @@ const PatientProfilePage = () => {
                 )}
                 
                 <div className="mt-4 pt-4 border-t border-slate-100 flex justify-center">
-                  <Button variant="outline" onClick={() => { setVaccineSuggestions(searchVaccines('')); setIsAddVaccinationModalOpen(true); }} className="w-full sm:w-auto text-[#1E3A5F] border-[#1E3A5F]/20 hover:bg-[#1E3A5F]/5">
+                  <Button variant="outline" onClick={() => { 
+                    setBulkVaccines([{ id: 'initial-row', vaccineName: '', dateAdministered: '', doseNumber: '', notes: '' }]); 
+                    setIsAddVaccinationModalOpen(true); 
+                  }} className="w-full sm:w-auto text-[#1E3A5F] border-[#1E3A5F]/20 hover:bg-[#1E3A5F]/5">
                     <Plus size={16} className="mr-2" /> Add Vaccination
                   </Button>
                 </div>
@@ -822,47 +884,100 @@ const PatientProfilePage = () => {
         </Modal>
       )}
 
-      {/* ── Add Vaccination Modal ── */}
+      {/* ── Add Bulk Vaccination Modal (Upgraded) ── */}
       {isAddVaccinationModalOpen && (
-        <Modal isOpen={isAddVaccinationModalOpen} onClose={() => setIsAddVaccinationModalOpen(false)} title="Add Vaccination Record">
-          <form onSubmit={submitAddVaccination} className="space-y-5 p-1">
+        <Modal isOpen={isAddVaccinationModalOpen} onClose={() => setIsAddVaccinationModalOpen(false)} title="Add Vaccination Record(s)">
+          <div className="flex flex-col h-full max-h-[80vh]">
             
-            {/* Smart Autocomplete Field */}
-            <div className="flex flex-col gap-1 relative" ref={vaccineDropdownRef}>
-              <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Vaccine Name <span className="text-red-500">*</span></label>
-              <input type="text" placeholder="Start typing vaccine name..." className="w-full px-3 py-2 text-sm text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" value={vaccineInput} onChange={handleVaccineInputChange} onFocus={() => { setVaccineSuggestions(searchVaccines(vaccineInput)); setShowVaccineSuggestions(true); }} autoComplete="off" />
-              {showVaccineSuggestions && vaccineSuggestions.length > 0 && (
-               <div className="absolute top-15 left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-xl z-50 max-h-48 overflow-y-auto">
-                  {vaccineSuggestions.map((sugg, index) => (
-                    <div key={index} onClick={() => handleSelectVaccineSuggestion(sugg)} className="px-4 py-2.5 hover:bg-blue-50 cursor-pointer flex justify-between items-center border-b border-slate-50 last:border-0">
-                      <span className="text-sm font-medium text-slate-700">{sugg.name}</span>
-                      <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{sugg.category}</span>
+            {/* AI Scan Assistant Banner (Fixed at top) */}
+            <div className="mb-4 p-4 bg-blue-50 border border-blue-100 rounded-lg flex flex-col gap-2 shrink-0">
+              <div className="flex items-center gap-2 text-[#1E3A5F] font-semibold">
+                <ScanLine size={18} />
+                <span>Smart AI Scan</span>
+              </div>
+              <p className="text-xs text-slate-600">Save time! Upload a photo of the CHDR/vaccination card to automatically extract multiple entries at once.</p>
+              <Button type="button" variant="outline" onClick={handleScanVaccineClick} disabled={scanVaccinationMutation.isPending} className="w-full mt-2 bg-white">
+                {scanVaccinationMutation.isPending ? (
+                  <><Spinner size="sm" className="mr-2" /> Scanning Card...</>
+                ) : (
+                  <><Camera size={16} className="mr-2" /> Select Photo</>
+                )}
+              </Button>
+              <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" ref={scanVaccineInputRef} onChange={handleScanVaccineChange} />
+            </div>
+
+            {/* Scrollable Form Area for Bulk Rows */}
+            <div className="overflow-y-auto pr-2 space-y-4 pb-4">
+              
+              {bulkVaccines.map((row) => (
+                <div key={row.id} className="p-4 bg-slate-50 border border-slate-200 rounded-lg relative">
+                  
+                  {bulkVaccines.length > 1 && (
+                    <button type="button" onClick={() => removeVaccineRow(row.id)} className="absolute -top-2 -right-2 p-1.5 bg-red-100 text-red-600 hover:bg-red-200 rounded-full shadow-sm z-10" title="Remove Row">
+                      <X size={14} strokeWidth={3} />
+                    </button>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Smart Autocomplete Field (Row specific) */}
+                    <div className="flex flex-col gap-1 relative vaccine-autocomplete-container">
+                      <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Vaccine Name <span className="text-red-500">*</span></label>
+                      <input 
+                        type="text" 
+                        placeholder="E.g. BCG" 
+                        className="w-full px-3 py-2 text-sm text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" 
+                        value={row.vaccineName} 
+                        onChange={(e) => updateVaccineRow(row.id, 'vaccineName', e.target.value)} 
+                        onFocus={() => { setVaccineSuggestions(searchVaccines(row.vaccineName)); setActiveVaccineRowId(row.id); }} 
+                        autoComplete="off" 
+                      />
+                      {activeVaccineRowId === row.id && vaccineSuggestions.length > 0 && (
+                       <div className="absolute top-full left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-xl z-50 max-h-48 overflow-y-auto mt-1">
+                          {vaccineSuggestions.map((sugg, i) => (
+                            <div key={i} onClick={() => { updateVaccineRow(row.id, 'vaccineName', sugg.name); setActiveVaccineRowId(null); }} className="px-4 py-2.5 hover:bg-blue-50 cursor-pointer flex justify-between items-center border-b border-slate-50 last:border-0">
+                              <span className="text-sm font-medium text-slate-700">{sugg.name}</span>
+                              <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{sugg.category}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  ))}
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Date Administered <span className="text-red-500">*</span></label>
+                      <input 
+                        type="date" 
+                        className="w-full px-3 py-2 text-sm text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" 
+                        value={row.dateAdministered} 
+                        onChange={(e) => updateVaccineRow(row.id, 'dateAdministered', e.target.value)} 
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Dose (Optional)</label>
+                      <input type="text" placeholder="E.g. Birth, 6 Weeks" className="w-full px-3 py-2 text-sm text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" value={row.doseNumber} onChange={(e) => updateVaccineRow(row.id, 'doseNumber', e.target.value)} />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Notes (Optional)</label>
+                      <input type="text" placeholder="E.g. Given at GH" className="w-full px-3 py-2 text-sm text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" value={row.notes} onChange={(e) => updateVaccineRow(row.id, 'notes', e.target.value)} />
+                    </div>
+                  </div>
                 </div>
-              )}
+              ))}
+
+              <Button type="button" variant="outline" onClick={addVaccineRow} className="w-full text-slate-600 border-slate-300 border-dashed hover:bg-slate-50 py-3">
+                <Plus size={16} className="mr-2" /> Add Another Row
+              </Button>
             </div>
 
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Date Administered <span className="text-red-500">*</span></label>
-              <input type="date" className="w-full px-3 py-2 text-sm text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" value={vaccineDateInput} onChange={(e) => setVaccineDateInput(e.target.value)} required />
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Dose Number (Optional)</label>
-              <input type="text" placeholder="E.g. Dose 1, Booster" className="w-full px-3 py-2 text-sm text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" value={vaccineDoseInput} onChange={(e) => setVaccineDoseInput(e.target.value)} />
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Notes (Optional)</label>
-              <textarea placeholder="E.g. Given at General Hospital" rows={2} className="w-full px-3 py-2 text-sm text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] resize-none" value={vaccineNotes} onChange={(e) => setVaccineNotes(e.target.value)} />
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+            {/* Fixed Footer Buttons */}
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 shrink-0 mt-auto">
               <Button type="button" variant="secondary" onClick={() => setIsAddVaccinationModalOpen(false)}>Cancel</Button>
-              <Button type="submit" variant="primary" loading={addVaccinationMutation.isPending}>Save Record</Button>
+              <Button type="button" onClick={submitBulkVaccination} variant="primary" loading={addBulkVaccinationMutation.isPending}>Save All Records</Button>
             </div>
-          </form>
+
+          </div>
         </Modal>
       )}
 

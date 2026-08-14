@@ -186,6 +186,19 @@ export const addVaccination = async (patientId, vaccineName, dateAdministered, d
 };
 
 /**
+ * Adds an array of multiple vaccination records for a patient.
+ * @param {string} patientId - UUID of the patient
+ * @param {Array} vaccinations - Array of objects { vaccineName, dateAdministered, doseNumber, notes }
+ * @returns {Promise<Array>} The created vaccination objects
+ */
+export const addBulkVaccinations = async (patientId, vaccinations) => {
+  const response = await api.post(`/api/patients/${patientId}/vaccinations/bulk`, {
+    vaccinations
+  });
+  return response.data.data;
+};
+
+/**
  * Deletes a vaccination record for a patient.
  * @param {string} patientId - UUID of the patient
  * @param {string} vaccinationId - UUID of the vaccination
@@ -194,6 +207,23 @@ export const addVaccination = async (patientId, vaccineName, dateAdministered, d
 export const deleteVaccination = async (patientId, vaccinationId) => {
   const response = await api.delete(`/api/patients/${patientId}/vaccinations/${vaccinationId}`);
   return response.data;
+};
+
+/**
+ * Uploads an image of a vaccination card and returns AI-extracted details.
+ * Does not write to the database.
+ * @param {string} patientId - UUID of the patient
+ * @param {File} file - The image file selected by the user
+ * @returns {Promise<Array>} The extracted JSON array of objects
+ */
+export const scanVaccinationCard = async (patientId, file) => {
+  const formData = new FormData();
+  formData.append('image', file);
+
+  const response = await api.post(`/api/patients/${patientId}/vaccinations/scan`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data.data; 
 };
 
 /**
