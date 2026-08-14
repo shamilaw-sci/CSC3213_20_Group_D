@@ -147,9 +147,60 @@ const getDoctorAiInsightsController = async (req, res) => {
   }
 };
 
+/**
+ * Handles GET /api/doctors/search
+ * Searches for doctors by specialty and/or hospital name.
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const searchDoctorsController = async (req, res) => {
+  try {
+    const { specialty, hospital } = req.query;
+    const doctors = await doctorService.searchDoctors(specialty, hospital);
+
+    res.status(200).json({
+      success: true,
+      message: 'Doctors retrieved successfully',
+      data: doctors,
+    });
+
+  } catch (error) {
+    console.error('searchDoctorsController error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+/**
+ * Handles GET /api/doctors/:id/slots
+ * Returns next 3 available appointment slots for a doctor.
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const getAvailableSlotsController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const slots = await doctorService.getAvailableSlots(id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Available slots retrieved successfully',
+      data: slots,
+    });
+
+  } catch (error) {
+    console.error('getAvailableSlotsController error:', error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Internal server error',
+    });
+  }
+};
+
 module.exports = {
   getDoctorController,
   getAllDoctorsController,
+  searchDoctorsController,
+  getAvailableSlotsController,
   updateDoctorController,
   getDoctorAvailabilityController,
   updateDoctorAvailabilityController,
