@@ -5,7 +5,7 @@
  * @author I.M.L.S. Idirisinghe (S/21/389)
  */
 
-const { register, verifyOtp, login, forgotPassword, resetPassword } = require('./auth.service');
+const { register, verifyOtp, resendOtp, login, forgotPassword, resetPassword } = require('./auth.service');
 
 // Import repositories to fetch profile IDs
 const patientRepository = require('../patient/patient.repository');
@@ -76,6 +76,50 @@ const registerController = async (req, res) => {
         success:false,
         message: 'Internal server error'
       });
+    }
+};
+
+/**
+ * Handles POST /api/auth/resend-otp
+ * @param {object} req - Express request
+ * @param {object} res - Express response
+ */
+const resendOtpController = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email is required'
+            });
+        }
+
+        const result = await resendOtp(email);
+
+        return res.status(200).json({
+            success: true,
+            message: 'A new OTP has been sent.',
+            data: {
+                email: result.email,
+                otpExpiresAt: result.otpExpiresAt
+            }
+        });
+
+    } catch (error) {
+        console.error('resendOtpController error:', error);
+
+        if (error.message === 'No pending registration found for this email') {
+            return res.status(404).json({
+                success: false,
+                message: error.message
+            });
+        }
+
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
     }
 };
 
@@ -351,4 +395,4 @@ const resetPasswordController = async (req, res) => {
     }
 };
 
-module.exports = { registerController, verifyOtpController, loginController, logoutController, getMeController, forgotPasswordController, resetPasswordController };
+module.exports = { registerController, verifyOtpController, resendOtpController, loginController, logoutController, getMeController, forgotPasswordController, resetPasswordController };
