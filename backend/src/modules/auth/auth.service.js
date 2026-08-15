@@ -47,6 +47,31 @@ const register = async (email, phone, password, role, profileData) => {
 };
 
 /**
+ * Resends a fresh OTP for an existing pending registration. Reuses the
+ * already-stored registration data (phone, password hash, role,
+ * profile data) - only the OTP code and expiry are regenerated.
+ * @param {string} email - Email with a pending registration
+ * @returns {Promise<Object>} Email and new OTP expiry timestamp
+ */
+const resendOtp = async (email) => {
+    const pending = await findOtpByEmail(email);
+
+    if (!pending) {
+        throw new Error('No pending registration found for this email');
+    }
+
+    const otpCode = generateOtp();
+    const otpExpiresAt = getOtpExpiry(10);
+
+    await upsertOtpVerification(pending.email, pending.phone, pending.password_hash, pending.role, otpCode, otpExpiresAt, pending.profile_data);
+
+    // TODO(sms): Integrate real SMS/email OTP delivery here.
+    console.log(`\n=== RESENT OTP CODE FOR ${email} ===\n${otpCode}\n(Expires at ${otpExpiresAt.toISOString()})\n=========================================\n`);
+
+    return { email, otpExpiresAt };
+};
+
+/**
  * Verifies a pending registration's OTP and, if valid, creates the real
  * users row (and linked patient/doctor profile) from the pending data
  * stored in otp_verifications. The pending record is deleted afterward.
@@ -152,4 +177,4 @@ const resetPassword = async (token, newPassword) => {
     await markTokenAsUsed(token);
 };
 
-module.exports = { register, verifyOtp, login, forgotPassword, resetPassword };
+module.exports = { register, verifyOtp, resendOtp, login, forgotPassword, resetPassword };
