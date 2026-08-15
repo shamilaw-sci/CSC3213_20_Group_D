@@ -109,8 +109,35 @@ const approvePharmacyController = async (req, res) => {
   }
 };
 
+/**
+ * Handles GET /api/pharmacies/:id/dashboard
+ * Returns dashboard stats for a pharmacy.
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const getPharmacyDashboardController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const dashboard = await pharmacyService.getPharmacyDashboard(id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Pharmacy dashboard retrieved successfully',
+      data: dashboard,
+    });
+
+  } catch (error) {
+    console.error('getPharmacyDashboardController error:', error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Internal server error',
+    });
+  }
+};
+
 module.exports = {
   registerPharmacyController,
   getPharmacyController,
   approvePharmacyController,
+  getPharmacyDashboardController,
 };

@@ -13,6 +13,7 @@ const doctorRoutes = require('./src/modules/doctor/doctor.routes');
 const appointmentRoutes = require('./src/modules/appointment/appointment.routes');
 const prescriptionRoutes = require('./src/modules/prescription/prescription.routes');
 const pharmacyRoutes = require('./src/modules/pharmacy/pharmacy.routes');
+
 const app = express();
 
 // Security & Middleware

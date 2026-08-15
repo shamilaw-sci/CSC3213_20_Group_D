@@ -82,6 +82,37 @@ const approvePharmacy = async (id) => {
   );
   return result.rows[0] || null;
 };
+/**
+ * Gets dashboard statistics for a pharmacy.
+ * @param {string} pharmacyId - UUID of the pharmacy
+ * @returns {Promise<Object>} Dashboard stats object
+ */
+const getPharmacyDashboardStats = async (pharmacyId) => {
+  // Get today's verified prescription count
+  const todayResult = await pool.query(
+    `SELECT COUNT(*) as count
+     FROM prescriptions
+     WHERE status != 'active'
+     AND DATE(updated_at) = CURRENT_DATE`,
+    []
+  );
+
+  // Get recent 5 prescriptions that have been dispensed at this pharmacy
+  const recentResult = await pool.query(
+    `SELECT p.id, p.qr_code_value, p.status, p.expires_at,
+            p.created_at, p.notes
+     FROM prescriptions p
+     WHERE p.status IN ('completed', 'partially_filled')
+     ORDER BY p.updated_at DESC
+     LIMIT 5`,
+    []
+  );
+
+  return {
+    todayDispensed: parseInt(todayResult.rows[0].count),
+    recentPrescriptions: recentResult.rows,
+  };
+};
 
 module.exports = {
   createPharmacy,
@@ -89,4 +120,5 @@ module.exports = {
   getPharmacyByUserId,
   getPharmacyByLicense,
   approvePharmacy,
+  getPharmacyDashboardStats,
 };

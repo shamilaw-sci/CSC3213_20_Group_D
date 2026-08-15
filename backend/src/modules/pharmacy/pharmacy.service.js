@@ -100,8 +100,30 @@ const approvePharmacy = async (id) => {
   return updated;
 };
 
+/**
+ * Gets dashboard statistics for a pharmacy.
+ * @param {string} pharmacyId - UUID of the pharmacy
+ * @returns {Promise<Object>} Dashboard stats and recent prescriptions
+ */
+const getPharmacyDashboard = async (pharmacyId) => {
+  const pharmacy = await pharmacyRepository.getPharmacyById(pharmacyId);
+  if (!pharmacy) {
+    const error = new Error('Pharmacy not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const stats = await pharmacyRepository.getPharmacyDashboardStats(pharmacyId);
+
+  return {
+    pharmacy,
+    stats,
+  };
+};
+
 module.exports = {
   registerPharmacy,
   getPharmacyById,
   approvePharmacy,
+  getPharmacyDashboard,
 };
