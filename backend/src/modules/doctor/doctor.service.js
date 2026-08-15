@@ -52,10 +52,26 @@ const searchDoctors = async (specialty, hospitalName) => {
   return await doctorRepository.searchDoctors(specialty, hospitalName);
 };
 
+/**
+ * Gets the next available appointment slots for a doctor.
+ * @param {string} doctorId - UUID of the doctor
+ * @returns {Promise<Array>} List of next 3 available slot times
+ */
+const getAvailableSlots = async (doctorId) => {
+  const doctor = await doctorRepository.getDoctorById(doctorId);
+  if (!doctor) {
+    const error = new Error('Doctor not found');
+    error.statusCode = 404;
+    throw error;
+  }
+  return await doctorRepository.getAvailableSlots(doctorId, 3);
+};
+
 module.exports = {
   getDoctorProfile,
   getAllDoctors,
   searchDoctors,
+  getAvailableSlots,
   updateDoctorProfile,
   getDoctorAvailability,
   updateDoctorAvailability,
