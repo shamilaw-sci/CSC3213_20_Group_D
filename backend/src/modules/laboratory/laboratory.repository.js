@@ -175,6 +175,58 @@ const updateLabRequestStatus = async (id, status) => {
   return result.rows[0] || null;
 };
 
+/**
+ * Creates a new lab report for a completed test request.
+ * @param {string} labRequestId  - UUID of the lab test request
+ * @param {string} laboratoryId  - UUID of the laboratory
+ * @param {string} patientId     - UUID of the patient
+ * @param {string} reportUrl     - URL of the uploaded report file
+ * @param {string} findings      - Text findings from the lab
+ * @returns {Promise<Object>} The created lab report row
+ */
+const createLabReport = async (labRequestId, laboratoryId, patientId, reportUrl, findings) => {
+  const result = await pool.query(
+    `INSERT INTO lab_reports
+      (lab_request_id, laboratory_id, patient_id, report_url, findings, is_finalized)
+     VALUES ($1, $2, $3, $4, $5, true)
+     RETURNING *`,
+    [labRequestId, laboratoryId, patientId, reportUrl || null, findings || null]
+  );
+  return result.rows[0];
+};
+
+/**
+ * Gets a lab report by its request ID.
+ * @param {string} labRequestId - UUID of the lab test request
+ * @returns {Promise<Object|null>} Lab report or null
+ */
+const getLabReportByRequestId = async (labRequestId) => {
+  const result = await pool.query(
+    `SELECT * FROM lab_reports WHERE lab_request_id = $1`,
+    [labRequestId]
+  );
+  return result.rows[0] || null;
+};
+
+/**
+ * Gets all lab reports for a patient.
+ * @param {string} patientId - UUID of the patient
+ * @returns {Promise<Array>} List of lab reports
+ */
+const getLabReportsByPatient = async (patientId) => {
+  const result = await pool.query(
+    `SELECT lr.*, ltr.test_type, ltr.priority,
+            l.name as laboratory_name
+     FROM lab_reports lr
+     JOIN lab_test_requests ltr ON lr.lab_request_id = ltr.id
+     JOIN laboratories l ON lr.laboratory_id = l.id
+     WHERE lr.patient_id = $1
+     ORDER BY lr.created_at DESC`,
+    [patientId]
+  );
+  return result.rows;
+};
+
 module.exports = {
   createLaboratory,
   getLaboratoryById,
@@ -186,4 +238,7 @@ module.exports = {
   getLabRequestsByLaboratory,
   getLabRequestById,
   updateLabRequestStatus,
+  createLabReport,
+  getLabReportByRequestId,
+  getLabReportsByPatient,
 };

@@ -194,6 +194,67 @@ const updateLabRequestStatusController = async (req, res) => {
   }
 };
 
+/**
+ * Handles POST /api/laboratories/requests/:id/report
+ * Uploads a lab report for a completed test request.
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const uploadLabReportController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { findings, report_url } = req.body;
+
+    if (!findings) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed: findings are required',
+      });
+    }
+
+    const report = await laboratoryService.uploadLabReport(id, findings, report_url);
+
+    res.status(201).json({
+      success: true,
+      message: 'Lab report uploaded successfully',
+      data: report,
+    });
+
+  } catch (error) {
+    console.error('uploadLabReportController error:', error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Internal server error',
+    });
+  }
+};
+
+/**
+ * Handles GET /api/laboratories/patient/:patientId/reports
+ * Gets all lab reports for a patient.
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const getPatientLabReportsController = async (req, res) => {
+  try {
+    const { patientId } = req.params;
+    const reports = await laboratoryService.getLabReportsByPatient(patientId);
+
+    res.status(200).json({
+      success: true,
+      message: 'Lab reports retrieved successfully',
+      data: reports,
+    });
+
+  } catch (error) {
+    console.error('getPatientLabReportsController error:', error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Internal server error',
+    });
+  }
+};
+
 module.exports = {
   registerLaboratoryController,
   getLaboratoryController,
@@ -201,4 +262,6 @@ module.exports = {
   getAllLaboratoriesController,
   getLabRequestsController,
   updateLabRequestStatusController,
+  uploadLabReportController,
+  getPatientLabReportsController,
 };

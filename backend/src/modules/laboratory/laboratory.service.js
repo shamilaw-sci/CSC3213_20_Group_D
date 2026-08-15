@@ -145,6 +145,54 @@ const updateLabRequestStatus = async (id, status) => {
   return await laboratoryRepository.updateLabRequestStatus(id, status);
 };
 
+/**
+ * Uploads a lab report for a completed test request.
+ * @param {string} labRequestId - UUID of the lab test request
+ * @param {string} findings     - Text findings from the lab
+ * @param {string} reportUrl    - URL of the uploaded report
+ * @returns {Promise<Object>} The created lab report
+ */
+const uploadLabReport = async (labRequestId, findings, reportUrl) => {
+  // Step 1: Get the lab request
+  const request = await laboratoryRepository.getLabRequestById(labRequestId);
+  if (!request) {
+    const error = new Error('Lab test request not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  // Step 2: Check if report already exists
+  const existingReport = await laboratoryRepository.getLabReportByRequestId(labRequestId);
+  if (existingReport) {
+    const error = new Error('A report has already been uploaded for this request');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // Step 3: Create the report
+  const report = await laboratoryRepository.createLabReport(
+    labRequestId,
+    request.laboratory_id,
+    request.patient_id,
+    reportUrl,
+    findings
+  );
+
+  // Step 4: Update request status to completed
+  await laboratoryRepository.updateLabRequestStatus(labRequestId, 'completed');
+
+  return report;
+};
+
+/**
+ * Gets all lab reports for a patient.
+ * @param {string} patientId - UUID of the patient
+ * @returns {Promise<Array>} List of lab reports
+ */
+const getLabReportsByPatient = async (patientId) => {
+  return await laboratoryRepository.getLabReportsByPatient(patientId);
+};
+
 module.exports = {
   registerLaboratory,
   getLaboratoryById,
@@ -152,4 +200,6 @@ module.exports = {
   getAllVerifiedLaboratories,
   getLabRequestsByLaboratory,
   updateLabRequestStatus,
+  uploadLabReport,
+  getLabReportsByPatient,
 };
