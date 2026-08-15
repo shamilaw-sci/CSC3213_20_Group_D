@@ -2,7 +2,7 @@
  * @file    laboratory.routes.js
  * @module  Laboratory
  * @desc    API routes for laboratory registration,
- *          approval, and profile endpoints.
+ *          approval, profile, and test request endpoints.
  * @author  Pamudika Abayarathna (S/21/001)
  */
 
@@ -13,6 +13,8 @@ const {
   getLaboratoryController,
   approveLaboratoryController,
   getAllLaboratoriesController,
+  getLabRequestsController,
+  updateLabRequestStatusController,
 } = require('./laboratory.controller');
 
 // GET /api/laboratories — Get all verified laboratories
@@ -26,5 +28,11 @@ router.get('/:id', getLaboratoryController);
 
 // PUT /api/laboratories/:id/approve — Approve a laboratory (admin only)
 router.put('/:id/approve', approveLaboratoryController);
+
+// GET /api/laboratories/:id/requests — Get all test requests for a lab
+router.get('/:id/requests', getLabRequestsController);
+
+// PUT /api/lab-requests/:id/status — Update lab request status
+router.put('/requests/:id/status', updateLabRequestStatusController);
 
 module.exports = router;

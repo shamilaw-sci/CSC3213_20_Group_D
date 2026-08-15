@@ -95,6 +95,86 @@ const getAllVerifiedLaboratories = async () => {
   return result.rows;
 };
 
+/**
+ * Creates a new lab test request.
+ * @param {string} laboratoryId  - UUID of the laboratory
+ * @param {string} patientId     - UUID of the patient
+ * @param {string} doctorId      - UUID of the requesting doctor
+ * @param {string} appointmentId - UUID of the linked appointment
+ * @param {string} testType      - Type of test requested
+ * @param {string} priority      - normal or urgent
+ * @param {string} notes         - Optional notes from doctor
+ * @returns {Promise<Object>} The created lab test request row
+ */
+const createLabTestRequest = async (laboratoryId, patientId, doctorId, appointmentId, testType, priority, notes) => {
+  const result = await pool.query(
+    `INSERT INTO lab_test_requests
+      (laboratory_id, patient_id, doctor_id, appointment_id, test_type, priority, notes)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     RETURNING *`,
+    [laboratoryId, patientId, doctorId, appointmentId, testType, priority || 'normal', notes || null]
+  );
+  return result.rows[0];
+};
+
+/**
+ * Gets all test requests for a laboratory.
+ * @param {string} laboratoryId - UUID of the laboratory
+ * @returns {Promise<Array>} List of test requests with patient info
+ */
+const getLabRequestsByLaboratory = async (laboratoryId) => {
+  const result = await pool.query(
+    `SELECT lr.*,
+            p.full_name as patient_name,
+            d.full_name as doctor_name
+     FROM lab_test_requests lr
+     LEFT JOIN patients p ON lr.patient_id = p.id
+     LEFT JOIN doctors d ON lr.doctor_id = d.id
+     WHERE lr.laboratory_id = $1
+     ORDER BY 
+       CASE WHEN lr.priority = 'urgent' THEN 0 ELSE 1 END,
+       lr.created_at DESC`,
+    [laboratoryId]
+  );
+  return result.rows;
+};
+
+/**
+ * Gets a single lab test request by ID.
+ * @param {string} id - UUID of the request
+ * @returns {Promise<Object|null>} Lab test request or null
+ */
+const getLabRequestById = async (id) => {
+  const result = await pool.query(
+    `SELECT lr.*,
+            p.full_name as patient_name,
+            d.full_name as doctor_name
+     FROM lab_test_requests lr
+     LEFT JOIN patients p ON lr.patient_id = p.id
+     LEFT JOIN doctors d ON lr.doctor_id = d.id
+     WHERE lr.id = $1`,
+    [id]
+  );
+  return result.rows[0] || null;
+};
+
+/**
+ * Updates the status of a lab test request.
+ * @param {string} id     - UUID of the request
+ * @param {string} status - New status
+ * @returns {Promise<Object|null>} Updated request or null
+ */
+const updateLabRequestStatus = async (id, status) => {
+  const result = await pool.query(
+    `UPDATE lab_test_requests
+     SET status = $1, updated_at = NOW()
+     WHERE id = $2
+     RETURNING *`,
+    [status, id]
+  );
+  return result.rows[0] || null;
+};
+
 module.exports = {
   createLaboratory,
   getLaboratoryById,
@@ -102,4 +182,8 @@ module.exports = {
   getLaboratoryByLicense,
   approveLaboratory,
   getAllVerifiedLaboratories,
+  createLabTestRequest,
+  getLabRequestsByLaboratory,
+  getLabRequestById,
+  updateLabRequestStatus,
 };

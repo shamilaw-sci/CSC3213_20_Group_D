@@ -108,9 +108,48 @@ const getAllVerifiedLaboratories = async () => {
   return await laboratoryRepository.getAllVerifiedLaboratories();
 };
 
+/**
+ * Gets all test requests for a laboratory.
+ * @param {string} laboratoryId - UUID of the laboratory
+ * @returns {Promise<Array>} List of test requests
+ */
+const getLabRequestsByLaboratory = async (laboratoryId) => {
+  const laboratory = await laboratoryRepository.getLaboratoryById(laboratoryId);
+  if (!laboratory) {
+    const error = new Error('Laboratory not found');
+    error.statusCode = 404;
+    throw error;
+  }
+  return await laboratoryRepository.getLabRequestsByLaboratory(laboratoryId);
+};
+
+/**
+ * Updates the status of a lab test request.
+ * @param {string} id     - UUID of the request
+ * @param {string} status - New status
+ * @returns {Promise<Object>} Updated request
+ */
+const updateLabRequestStatus = async (id, status) => {
+  const VALID_STATUSES = ['pending', 'sample_collected', 'in_progress', 'completed', 'cancelled'];
+  if (!VALID_STATUSES.includes(status)) {
+    const error = new Error(`Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}`);
+    error.statusCode = 400;
+    throw error;
+  }
+  const request = await laboratoryRepository.getLabRequestById(id);
+  if (!request) {
+    const error = new Error('Lab test request not found');
+    error.statusCode = 404;
+    throw error;
+  }
+  return await laboratoryRepository.updateLabRequestStatus(id, status);
+};
+
 module.exports = {
   registerLaboratory,
   getLaboratoryById,
   approveLaboratory,
   getAllVerifiedLaboratories,
+  getLabRequestsByLaboratory,
+  updateLabRequestStatus,
 };

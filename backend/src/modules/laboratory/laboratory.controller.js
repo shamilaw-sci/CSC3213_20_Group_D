@@ -133,9 +133,72 @@ const getAllLaboratoriesController = async (req, res) => {
   }
 };
 
+/**
+ * Handles GET /api/laboratories/:id/requests
+ * Gets all test requests for a laboratory.
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const getLabRequestsController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const requests = await laboratoryService.getLabRequestsByLaboratory(id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Lab test requests retrieved successfully',
+      data: requests,
+    });
+
+  } catch (error) {
+    console.error('getLabRequestsController error:', error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Internal server error',
+    });
+  }
+};
+
+/**
+ * Handles PUT /api/lab-requests/:id/status
+ * Updates the status of a lab test request.
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const updateLabRequestStatusController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!status) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed: status is required',
+      });
+    }
+
+    const updated = await laboratoryService.updateLabRequestStatus(id, status);
+
+    res.status(200).json({
+      success: true,
+      message: 'Lab test request status updated successfully',
+      data: updated,
+    });
+
+  } catch (error) {
+    console.error('updateLabRequestStatusController error:', error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Internal server error',
+    });
+  }
+};
+
 module.exports = {
   registerLaboratoryController,
   getLaboratoryController,
   approveLaboratoryController,
   getAllLaboratoriesController,
+  getLabRequestsController,
+  updateLabRequestStatusController,
 };
