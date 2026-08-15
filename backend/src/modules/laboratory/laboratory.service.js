@@ -147,13 +147,14 @@ const updateLabRequestStatus = async (id, status) => {
 
 /**
  * Uploads a lab report for a completed test request.
+ * Also sends email notifications to doctor and patient.
  * @param {string} labRequestId - UUID of the lab test request
  * @param {string} findings     - Text findings from the lab
  * @param {string} reportUrl    - URL of the uploaded report
  * @returns {Promise<Object>} The created lab report
  */
 const uploadLabReport = async (labRequestId, findings, reportUrl) => {
-  // Step 1: Get the lab request
+  // Step 1: Get the lab request with patient and doctor info
   const request = await laboratoryRepository.getLabRequestById(labRequestId);
   if (!request) {
     const error = new Error('Lab test request not found');
@@ -169,7 +170,10 @@ const uploadLabReport = async (labRequestId, findings, reportUrl) => {
     throw error;
   }
 
-  // Step 3: Create the report
+  // Step 3: Get laboratory details
+  const laboratory = await laboratoryRepository.getLaboratoryById(request.laboratory_id);
+
+  // Step 4: Create the report
   const report = await laboratoryRepository.createLabReport(
     labRequestId,
     request.laboratory_id,
@@ -178,8 +182,37 @@ const uploadLabReport = async (labRequestId, findings, reportUrl) => {
     findings
   );
 
-  // Step 4: Update request status to completed
+  // Step 5: Update request status to completed
   await laboratoryRepository.updateLabRequestStatus(labRequestId, 'completed');
+
+  // Step 6: Send email notifications (non-blocking — don't fail if email fails)
+  try {
+    const { sendLabReportNotification } = require('../../utils/email');
+
+    // Get patient email
+    const { pool } = require('../../config/db');
+    const patientResult = await pool.query(
+      `SELECT u.email, p.full_name 
+       FROM patients p 
+       JOIN users u ON p.user_id = u.id 
+       WHERE p.id = $1`,
+      [request.patient_id]
+    );
+
+    if (patientResult.rows.length > 0) {
+      const patient = patientResult.rows[0];
+      await sendLabReportNotification(
+        patient.email,
+        patient.full_name,
+        request.test_type,
+        laboratory.name,
+        findings
+      );
+    }
+  } catch (emailErr) {
+    // Log but don't fail the request if email fails
+    console.error('Lab report notification email failed:', emailErr.message);
+  }
 
   return report;
 };
