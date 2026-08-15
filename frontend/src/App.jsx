@@ -22,6 +22,7 @@ import DoctorProfilePage      from './pages/doctor/DoctorProfilePage';
 import PharmacyLookupPage from './pages/pharmacy/PharmacyLookupPage';
 import PharmacyRegisterPage from './pages/pharmacy/PharmacyRegisterPage';
 import PharmacyDashboard from './pages/pharmacy/PharmacyDashboard';
+import PaymentHistoryPage from './pages/patient/PaymentHistoryPage';
 
 function App() {
   return (
@@ -58,6 +59,7 @@ function App() {
         <Route path="/pharmacy/register" element={<PharmacyRegisterPage />} />
         <Route path="/pharmacy/dashboard" element={<PharmacyDashboard />} />
 
+        <Route path="/patient/payments" element={<PaymentHistoryPage />} />
         {/* Other members will add their routes here */}
       </Routes>
     </BrowserRouter>
