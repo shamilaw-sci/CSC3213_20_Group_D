@@ -1,7 +1,7 @@
 /**
  * @file    emergency.controller.js
  * @module  Emergency
- * @desc    HTTP request handlers for emergency alerts.
+ * @desc    HTTP request handlers for emergency alerts and access auditing.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -30,6 +30,38 @@ const triggerSosController = async (req, res) => {
   }
 };
 
+const logEmergencyAccessController = async (req, res) => {
+  try {
+    const { patientId, reason } = req.body;
+    
+    // Securely pull the accessor's ID and role from their session
+    const accessedBy = req.session?.user?.id;
+    const userRole = req.session?.user?.role;
+
+    if (!accessedBy || !userRole) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized: Session user information is missing'
+      });
+    }
+
+    const accessLog = await emergencyService.logEmergencyAccess(patientId, accessedBy, userRole, reason);
+
+    res.status(201).json({
+      success: true,
+      message: 'Emergency access logged successfully',
+      data: accessLog
+    });
+  } catch (error) {
+    console.error('logEmergencyAccessController error:', error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Internal server error'
+    });
+  }
+};
+
 module.exports = {
-  triggerSosController
+  triggerSosController,
+  logEmergencyAccessController
 };
