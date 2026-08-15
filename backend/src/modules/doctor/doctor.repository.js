@@ -143,11 +143,101 @@ const getDoctorDashboardStats = async (doctorId) => {
   };
 };
 
+const searchDoctors = async (specialty, hospitalName) => {
+  let query = `
+    SELECT d.*, u.email, u.phone
+    FROM doctors d
+    JOIN users u ON d.user_id = u.id
+    WHERE d.is_verified = true
+  `;
+
+  const params = [];
+  let paramIndex = 1;
+
+  if (specialty) {
+    query += ` AND LOWER(d.specialization) LIKE LOWER($${paramIndex})`;
+    params.push(`%${specialty}%`);
+    paramIndex++;
+  }
+
+  if (hospitalName) {
+    query += ` AND LOWER(d.hospital_name) LIKE LOWER($${paramIndex})`;
+    params.push(`%${hospitalName}%`);
+    paramIndex++;
+  }
+
+  query += ` ORDER BY d.full_name ASC`;
+
+  const result = await pool.query(query, params);
+  return result.rows;
+};
+
+/**
+ * Gets the next available appointment slots for a doctor.
+ * @param {string} doctorId - UUID of the doctor
+ * @param {number} limit    - Number of slots to return
+ * @returns {Promise<Array>} List of available slot datetime strings
+ */
+const getAvailableSlots = async (doctorId, limit = 3) => {
+  const availabilityResult = await pool.query(
+    `SELECT * FROM doctor_availability
+     WHERE doctor_id = $1 AND is_active = true
+     ORDER BY day_of_week ASC`,
+    [doctorId]
+  );
+  const availability = availabilityResult.rows;
+  if (availability.length === 0) return [];
+
+  const bookedResult = await pool.query(
+    `SELECT scheduled_at FROM appointments
+     WHERE doctor_id = $1
+     AND scheduled_at > NOW()
+     AND status NOT IN ('cancelled')
+     ORDER BY scheduled_at ASC`,
+    [doctorId]
+  );
+  const bookedTimes = bookedResult.rows.map(r => new Date(r.scheduled_at).toISOString());
+
+  const slots = [];
+  const now = new Date();
+
+  for (let dayOffset = 0; dayOffset < 14 && slots.length < limit; dayOffset++) {
+    const date = new Date(now);
+    date.setDate(date.getDate() + dayOffset);
+    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const dayOfWeek = dayNames[date.getDay()];
+    const dayAvailability = availability.find(a => a.day_of_week === dayOfWeek);
+    if (!dayAvailability) continue;
+
+    const [startHour, startMin] = dayAvailability.start_time.split(':').map(Number);
+    const [endHour, endMin]     = dayAvailability.end_time.split(':').map(Number);
+    const slotDuration          = dayAvailability.slot_duration_minutes || 30;
+
+    let slotTime = new Date(date);
+    slotTime.setHours(startHour, startMin, 0, 0);
+    const endTime = new Date(date);
+    endTime.setHours(endHour, endMin, 0, 0);
+
+    while (slotTime < endTime && slots.length < limit) {
+      if (slotTime > now) {
+        const slotISO = slotTime.toISOString();
+        if (!bookedTimes.includes(slotISO)) {
+          slots.push(slotISO);
+        }
+      }
+      slotTime = new Date(slotTime.getTime() + slotDuration * 60000);
+    }
+  }
+  return slots;
+};
+
 module.exports = {
   getDoctorById,
   getDoctorByUserId,
   updateDoctor,
   getAllDoctors,
+  searchDoctors,
+  getAvailableSlots,
   getDoctorAvailability,
   updateDoctorAvailability,
   getTodayAppointments,

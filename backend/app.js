@@ -12,6 +12,8 @@ const patientRoutes = require('./src/modules/patient/patient.routes');
 const doctorRoutes = require('./src/modules/doctor/doctor.routes');
 const appointmentRoutes = require('./src/modules/appointment/appointment.routes');
 const prescriptionRoutes = require('./src/modules/prescription/prescription.routes');
+const pharmacyRoutes   = require('./src/modules/pharmacy/pharmacy.routes');
+const laboratoryRoutes = require('./src/modules/laboratory/laboratory.routes');
 const emergencyRoutes = require('./src/modules/emergency/emergency.routes'); // <-- Added
 
 const app = express();
@@ -46,6 +48,8 @@ app.use('/api/patients', patientRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);
+app.use('/api/pharmacies',   pharmacyRoutes);
+app.use('/api/laboratories', laboratoryRoutes);
 app.use('/api/emergencies', emergencyRoutes); // <-- Added
 
 module.exports = app;
