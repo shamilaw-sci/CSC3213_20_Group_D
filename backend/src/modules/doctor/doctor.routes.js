@@ -10,6 +10,7 @@ const router = express.Router();
 const {
   getDoctorController,
   getAllDoctorsController,
+  searchDoctorsController,
   updateDoctorController,
   getDoctorAvailabilityController,
   updateDoctorAvailabilityController,
@@ -21,6 +22,9 @@ const { auditMiddleware } = require('../../middleware/auditLog');
 
 // GET /api/doctors — get all verified doctors
 router.get('/', getAllDoctorsController);
+
+// GET /api/doctors/search — search doctors by specialty and hospital
+router.get('/search', searchDoctorsController);
 
 // GET /api/doctors/:id — get doctor profile by ID
 router.get('/:id', auditMiddleware('VIEW_DOCTOR_PROFILE', 'doctor'), getDoctorController);

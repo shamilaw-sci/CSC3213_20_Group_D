@@ -42,9 +42,20 @@ const getDoctorDashboardStats = async (doctorId) => {
   return stats;
 };
 
+/**
+ * Searches for doctors by specialty and/or hospital name.
+ * @param {string} specialty    - Optional specialty filter
+ * @param {string} hospitalName - Optional hospital name filter
+ * @returns {Promise<Array>} List of matching doctors
+ */
+const searchDoctors = async (specialty, hospitalName) => {
+  return await doctorRepository.searchDoctors(specialty, hospitalName);
+};
+
 module.exports = {
   getDoctorProfile,
   getAllDoctors,
+  searchDoctors,
   updateDoctorProfile,
   getDoctorAvailability,
   updateDoctorAvailability,

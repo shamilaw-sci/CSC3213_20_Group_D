@@ -143,11 +143,41 @@ const getDoctorDashboardStats = async (doctorId) => {
   };
 };
 
+const searchDoctors = async (specialty, hospitalName) => {
+  let query = `
+    SELECT d.*, u.email, u.phone
+    FROM doctors d
+    JOIN users u ON d.user_id = u.id
+    WHERE d.is_verified = true
+  `;
+
+  const params = [];
+  let paramIndex = 1;
+
+  if (specialty) {
+    query += ` AND LOWER(d.specialization) LIKE LOWER($${paramIndex})`;
+    params.push(`%${specialty}%`);
+    paramIndex++;
+  }
+
+  if (hospitalName) {
+    query += ` AND LOWER(d.hospital_name) LIKE LOWER($${paramIndex})`;
+    params.push(`%${hospitalName}%`);
+    paramIndex++;
+  }
+
+  query += ` ORDER BY d.full_name ASC`;
+
+  const result = await pool.query(query, params);
+  return result.rows;
+};
+
 module.exports = {
   getDoctorById,
   getDoctorByUserId,
   updateDoctor,
   getAllDoctors,
+  searchDoctors,
   getDoctorAvailability,
   updateDoctorAvailability,
   getTodayAppointments,
