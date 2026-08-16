@@ -9,10 +9,6 @@ const emergencyRepository = require('./emergency.repository');
 
 /**
  * Validates and triggers a new emergency SOS alert.
- * @param {string} patientId - UUID of the patient triggering the SOS
- * @param {number} latitude - GPS latitude (optional)
- * @param {number} longitude - GPS longitude (optional)
- * @returns {Promise<Object>} The created emergency alert record
  */
 const triggerSosAlert = async (patientId, latitude, longitude) => {
   if (!patientId) {
@@ -20,18 +16,11 @@ const triggerSosAlert = async (patientId, latitude, longitude) => {
     error.statusCode = 400;
     throw error;
   }
-
-  // Pass to repository to save to database
   return await emergencyRepository.logEmergencyAlert(patientId, latitude, longitude);
 };
 
 /**
  * Validates and logs a Break-Glass emergency access event.
- * @param {string} patientId - UUID of the patient being accessed
- * @param {string} accessedBy - UUID of the user accessing the record
- * @param {string} userRole - Role of the accessing user
- * @param {string} reason - The stated reason for emergency access
- * @returns {Promise<Object>} The created audit log record
  */
 const logEmergencyAccess = async (patientId, accessedBy, userRole, reason) => {
   if (!patientId || !accessedBy || !userRole || !reason) {
@@ -39,15 +28,11 @@ const logEmergencyAccess = async (patientId, accessedBy, userRole, reason) => {
     error.statusCode = 400;
     throw error;
   }
-
-  // Pass to repository to save to database
   return await emergencyRepository.logEmergencyAccess(patientId, accessedBy, userRole, reason);
 };
 
 /**
  * Retrieves the minimalist Break-Glass patient snapshot.
- * @param {string} patientId - UUID of the patient
- * @returns {Promise<Object>} The emergency snapshot data
  */
 const getEmergencySnapshot = async (patientId) => {
   if (!patientId) {
@@ -67,8 +52,38 @@ const getEmergencySnapshot = async (patientId) => {
   return snapshot;
 };
 
+/**
+ * Retrieves all active emergency alerts for the dashboard.
+ */
+const getActiveAlerts = async () => {
+  return await emergencyRepository.getActiveAlerts();
+};
+
+/**
+ * Resolves an active emergency alert.
+ */
+const resolveEmergencyAlert = async (alertId, resolvedBy) => {
+  if (!alertId) {
+    const error = new Error('Alert ID is required to resolve an emergency');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const updatedAlert = await emergencyRepository.resolveEmergencyAlert(alertId, resolvedBy);
+  
+  if (!updatedAlert) {
+    const error = new Error('Emergency alert not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return updatedAlert;
+};
+
 module.exports = {
   triggerSosAlert,
   logEmergencyAccess,
-  getEmergencySnapshot
+  getEmergencySnapshot,
+  getActiveAlerts,
+  resolveEmergencyAlert
 };

@@ -10,10 +10,7 @@ const emergencyService = require('./emergency.service');
 const triggerSosController = async (req, res) => {
   try {
     const { patientId, latitude, longitude } = req.body;
-    
-    // Fallback to session user ID if patientId isn't explicitly provided in the body
     const finalPatientId = patientId || req.session?.user?.profile_id;
-
     const alert = await emergencyService.triggerSosAlert(finalPatientId, latitude, longitude);
 
     res.status(201).json({
@@ -33,8 +30,6 @@ const triggerSosController = async (req, res) => {
 const logEmergencyAccessController = async (req, res) => {
   try {
     const { patientId, reason } = req.body;
-    
-    // Securely pull the accessor's ID and role from their session
     const accessedBy = req.session?.user?.id;
     const userRole = req.session?.user?.role;
 
@@ -80,8 +75,49 @@ const getEmergencySnapshotController = async (req, res) => {
   }
 };
 
+const getActiveAlertsController = async (req, res) => {
+  try {
+    const alerts = await emergencyService.getActiveAlerts();
+
+    res.status(200).json({
+      success: true,
+      message: 'Active emergency alerts retrieved successfully',
+      data: alerts
+    });
+  } catch (error) {
+    console.error('getActiveAlertsController error:', error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Internal server error'
+    });
+  }
+};
+
+const resolveAlertController = async (req, res) => {
+  try {
+    const { alertId } = req.params;
+    const resolvedBy = req.session?.user?.id;
+
+    const resolvedAlert = await emergencyService.resolveEmergencyAlert(alertId, resolvedBy);
+
+    res.status(200).json({
+      success: true,
+      message: 'Emergency alert resolved successfully',
+      data: resolvedAlert
+    });
+  } catch (error) {
+    console.error('resolveAlertController error:', error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Internal server error'
+    });
+  }
+};
+
 module.exports = {
   triggerSosController,
   logEmergencyAccessController,
-  getEmergencySnapshotController
+  getEmergencySnapshotController,
+  getActiveAlertsController,
+  resolveAlertController
 };

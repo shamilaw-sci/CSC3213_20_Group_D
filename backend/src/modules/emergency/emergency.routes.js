@@ -10,7 +10,9 @@ const router = express.Router();
 const { 
   triggerSosController, 
   logEmergencyAccessController, 
-  getEmergencySnapshotController 
+  getEmergencySnapshotController,
+  getActiveAlertsController,
+  resolveAlertController
 } = require('./emergency.controller');
 const { isAuthenticated, authorize } = require('../../middleware/auth');
 
@@ -20,10 +22,18 @@ router.post('/sos', isAuthenticated, authorize('patient'), triggerSosController)
 
 // POST /api/emergencies/access-logs
 // Only doctors and emergency staff can trigger the break-glass audit log
-router.post('/access-logs', isAuthenticated, authorize('doctor', 'emergency'), logEmergencyAccessController);
+router.post('/access-logs', isAuthenticated, authorize('doctor', 'emergency', 'admin'), logEmergencyAccessController);
 
 // GET /api/emergencies/snapshot/:patientId
 // Only doctors and emergency staff can retrieve the minimalist break-glass snapshot
-router.get('/snapshot/:patientId', isAuthenticated, authorize('doctor', 'emergency'), getEmergencySnapshotController);
+router.get('/snapshot/:patientId', isAuthenticated, authorize('doctor', 'emergency', 'admin'), getEmergencySnapshotController);
+
+// GET /api/emergencies/alerts
+// Retrieve all active SOS alerts for the live hospital dashboard
+router.get('/alerts', isAuthenticated, authorize('doctor', 'emergency', 'admin'), getActiveAlertsController);
+
+// PATCH /api/emergencies/alerts/:alertId/resolve
+// Mark an active SOS alert as resolved
+router.patch('/alerts/:alertId/resolve', isAuthenticated, authorize('doctor', 'emergency', 'admin'), resolveAlertController);
 
 module.exports = router;

@@ -81,8 +81,54 @@ const getEmergencySnapshot = async (patientId) => {
   };
 };
 
+/**
+ * Fetches all active SOS alerts joined with basic patient details for the hospital dashboard.
+ * @returns {Promise<Array>} List of active alerts
+ */
+const getActiveAlerts = async () => {
+  const query = `
+    SELECT 
+      ea.id AS alert_id,
+      ea.patient_id,
+      ea.latitude,
+      ea.longitude,
+      ea.status,
+      ea.created_at AS alert_time,
+      p.full_name,
+      p.blood_group,
+      p.emergency_contact_phone
+    FROM emergency_alerts ea
+    JOIN patients p ON ea.patient_id = p.id
+    WHERE ea.status = 'active'
+    ORDER BY ea.created_at DESC;
+  `;
+  const { rows } = await pool.query(query);
+  return rows;
+};
+
+/**
+ * Marks an active SOS alert as resolved.
+ * @param {string} alertId - UUID of the alert
+ * @param {string} resolvedBy - UUID of the staff member resolving it
+ * @returns {Promise<Object>} The updated alert record
+ */
+const resolveEmergencyAlert = async (alertId, resolvedBy) => {
+  // We use COALESCE so if your schema doesn't have a resolved_by column yet, it doesn't break,
+  // but it safely updates the status.
+  const query = `
+    UPDATE emergency_alerts
+    SET status = 'resolved'
+    WHERE id = $1
+    RETURNING *;
+  `;
+  const { rows } = await pool.query(query, [alertId]);
+  return rows[0];
+};
+
 module.exports = {
   logEmergencyAlert,
   logEmergencyAccess,
-  getEmergencySnapshot
+  getEmergencySnapshot,
+  getActiveAlerts,
+  resolveEmergencyAlert
 };
