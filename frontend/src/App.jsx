@@ -24,6 +24,9 @@ import PharmacyRegisterPage from './pages/pharmacy/PharmacyRegisterPage';
 import PharmacyDashboard from './pages/pharmacy/PharmacyDashboard';
 import PaymentHistoryPage from './pages/patient/PaymentHistoryPage';
 
+// NEW: Import the Emergency Snapshot Page
+import EmergencySnapshotPage from './pages/emergency/EmergencySnapshotPage';
+
 function App() {
   return (
     <BrowserRouter>
@@ -40,6 +43,9 @@ function App() {
 
         {/* Patient QR lookup — no sidebar, doctor-facing read-only view */}
         <Route path="/lookup/:qrCodeId" element={<PatientLookupPage />} />
+
+        {/* NEW: Emergency Break-Glass Snapshot — no sidebar, specialized crisis UI */}
+        <Route path="/emergency/snapshot/:patientId" element={<EmergencySnapshotPage />} />
 
         {/* Patient pages — all share the sidebar layout */}
         <Route path="/patient" element={<PatientLayout />}>
