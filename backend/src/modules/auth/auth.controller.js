@@ -1,13 +1,13 @@
 /**
- * @file auth.controller.js
- * @module auth
- * @desc Handles HTTP requests and responses for authentication.
- * @author I.M.L.S. Idirisinghe (S/21/389)
+ * @file    auth.controller.js
+ * @module  auth
+ * @desc    Handles HTTP requests and responses for authentication.
+ * @author  I.M.L.S. Idirisinghe (S/21/389)
  */
 
 const { register, verifyOtp, login, forgotPassword, resetPassword } = require('./auth.service');
 
-// Import repositories to fetch profile IDs
+// Import repositories to fetch profile IDs and names
 const patientRepository = require('../patient/patient.repository');
 const doctorRepository = require('../doctor/doctor.repository');
 
@@ -99,13 +99,15 @@ const verifyOtpController = async (req, res) => {
 
         const result = await verifyOtp(email, otpCode);
         const user = result.user;
+        const profile = result.profile;
 
-        // Save user to session, same shape as loginController
+        // Save user to session, including full_name
         req.session.user = {
             id: user.id,
             email: user.email,
             role: user.role,
-            profile_id: result.profile ? result.profile.id : null
+            profile_id: profile ? profile.id : null,
+            full_name: profile ? profile.full_name : null
         };
 
         return res.status(201).json({
@@ -116,9 +118,10 @@ const verifyOtpController = async (req, res) => {
                     id: user.id,
                     email: user.email,
                     role: user.role,
-                    profile_id: result.profile ? result.profile.id : null
+                    profile_id: profile ? profile.id : null,
+                    full_name: profile ? profile.full_name : null
                 },
-                profile: result.profile
+                profile: profile
             }
         });
 
@@ -155,9 +158,6 @@ const verifyOtpController = async (req, res) => {
 
 /**
  * Handles POST /api/auth/login
-
-/**
- * Handles POST /api/auth/login
  * @param {Object} req - Express request
  * @param {Object} res - Express response
  */
@@ -175,24 +175,32 @@ const loginController = async (req, res) => {
 
     const user = await login(email, password);
 
-    // Fetch the specific profile ID based on role
+    // Fetch the specific profile ID and Name based on role
     let profileId = null;
+    let fullName = null;
     const userRole = user.role?.toLowerCase();
     
     if (userRole === 'patient') {
       const patientProfile = await patientRepository.getPatientByUserId(user.id);
-      if (patientProfile) profileId = patientProfile.id;
+      if (patientProfile) {
+        profileId = patientProfile.id;
+        fullName = patientProfile.full_name;
+      }
     } else if (userRole === 'doctor') {
       const doctorProfile = await doctorRepository.getDoctorByUserId(user.id);
-      if (doctorProfile) profileId = doctorProfile.id;
+      if (doctorProfile) {
+        profileId = doctorProfile.id;
+        fullName = doctorProfile.full_name;
+      }
     }
 
-    // Save user to session, now including the profile_id
+    // Save user to session, now including full_name
     req.session.user = {
       id: user.id,
       email: user.email,
       role: user.role,
-      profile_id: profileId
+      profile_id: profileId,
+      full_name: fullName
     };
 
     return res.status(200).json({
@@ -202,7 +210,8 @@ const loginController = async (req, res) => {
         id: user.id,
         email: user.email,
         role: user.role,
-        profile_id: profileId
+        profile_id: profileId,
+        full_name: fullName
       }
     });
 
