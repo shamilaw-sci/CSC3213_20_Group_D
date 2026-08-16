@@ -23,6 +23,8 @@ import PharmacyLookupPage from './pages/pharmacy/PharmacyLookupPage';
 import PharmacyRegisterPage from './pages/pharmacy/PharmacyRegisterPage';
 import PharmacyDashboard from './pages/pharmacy/PharmacyDashboard';
 import PaymentHistoryPage from './pages/patient/PaymentHistoryPage';
+import PatientQRLookupPage from './pages/pharmacy/PatientQRLookupPage';
+import OrderTrackerPage    from './pages/patient/OrderTrackerPage';
 
 function App() {
   return (
@@ -58,7 +60,9 @@ function App() {
         <Route path="/pharmacy/:qrValue" element={<PharmacyLookupPage />} />
         <Route path="/pharmacy/register" element={<PharmacyRegisterPage />} />
         <Route path="/pharmacy/dashboard" element={<PharmacyDashboard />} />
-
+        <Route path="/pharmacy/patient-lookup" element={<PatientQRLookupPage />} />
+        <Route path="/pharmacy/patient-lookup"  element={<PatientQRLookupPage />} />
+        <Route path="/patient/orders"           element={<OrderTrackerPage />} /> 
         <Route path="/patient/payments" element={<PaymentHistoryPage />} />
         {/* Other members will add their routes here */}
       </Routes>
