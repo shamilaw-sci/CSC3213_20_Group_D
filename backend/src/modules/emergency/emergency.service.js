@@ -6,9 +6,11 @@
  */
 
 const emergencyRepository = require('./emergency.repository');
+const { sendEmergencySMS } = require('../../utils/sms.util');
 
 /**
  * Validates and triggers a new emergency SOS alert.
+ * Now includes automatic SMS dispatch to the emergency contact.
  */
 const triggerSosAlert = async (patientId, latitude, longitude) => {
   if (!patientId) {
@@ -16,7 +18,31 @@ const triggerSosAlert = async (patientId, latitude, longitude) => {
     error.statusCode = 400;
     throw error;
   }
-  return await emergencyRepository.logEmergencyAlert(patientId, latitude, longitude);
+
+  // 1. Log the alert in the database so it appears on the Hospital Dashboard
+  const alert = await emergencyRepository.logEmergencyAlert(patientId, latitude, longitude);
+
+  // 2. Fetch the patient's profile to get their emergency contact info
+  try {
+    const snapshot = await emergencyRepository.getEmergencySnapshot(patientId);
+    
+    if (snapshot && snapshot.patient && snapshot.patient.emergency_contact_phone) {
+      // 3. Dispatch the SMS (Using our Enterprise Mock Pattern)
+      await sendEmergencySMS(
+        snapshot.patient.emergency_contact_phone,
+        snapshot.patient.full_name,
+        latitude,
+        longitude
+      );
+    } else {
+      console.warn(`[SOS] Could not send SMS: No emergency contact found for patient ${patientId}`);
+    }
+  } catch (err) {
+    console.error('[SOS] Error during SMS dispatch phase:', err.message);
+    // We catch this error so the main SOS alert still succeeds even if SMS fails
+  }
+
+  return alert;
 };
 
 /**
