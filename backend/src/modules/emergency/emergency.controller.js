@@ -32,6 +32,9 @@ const logEmergencyAccessController = async (req, res) => {
     const { patientId, reason } = req.body;
     const accessedBy = req.session?.user?.id;
     const userRole = req.session?.user?.role;
+    
+    // Extract the doctor's full name from the session to use in the email alert
+    const doctorName = req.session?.user?.full_name || 'Medical Staff';
 
     if (!accessedBy || !userRole) {
       return res.status(401).json({
@@ -40,7 +43,7 @@ const logEmergencyAccessController = async (req, res) => {
       });
     }
 
-    const accessLog = await emergencyService.logEmergencyAccess(patientId, accessedBy, userRole, reason);
+    const accessLog = await emergencyService.logEmergencyAccess(patientId, accessedBy, userRole, reason, doctorName);
 
     res.status(201).json({
       success: true,

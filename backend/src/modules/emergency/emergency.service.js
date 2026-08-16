@@ -7,6 +7,7 @@
 
 const emergencyRepository = require('./emergency.repository');
 const { sendEmergencySMS } = require('../../utils/sms.util');
+const { sendEmergencyAccessAlert } = require('../../utils/email');
 
 /**
  * Validates and triggers a new emergency SOS alert.
@@ -27,7 +28,7 @@ const triggerSosAlert = async (patientId, latitude, longitude) => {
     const snapshot = await emergencyRepository.getEmergencySnapshot(patientId);
     
     if (snapshot && snapshot.patient && snapshot.patient.emergency_contact_phone) {
-      // 3. Dispatch the SMS (Using our Enterprise Mock Pattern)
+      // 3. Dispatch the Telegram Webhook / SMS
       await sendEmergencySMS(
         snapshot.patient.emergency_contact_phone,
         snapshot.patient.full_name,
@@ -35,10 +36,10 @@ const triggerSosAlert = async (patientId, latitude, longitude) => {
         longitude
       );
     } else {
-      console.warn(`[SOS] Could not send SMS: No emergency contact found for patient ${patientId}`);
+      console.warn(`[SOS] Could not send notification: No emergency contact found for patient ${patientId}`);
     }
   } catch (err) {
-    console.error('[SOS] Error during SMS dispatch phase:', err.message);
+    console.error('[SOS] Error during dispatch phase:', err.message);
     // We catch this error so the main SOS alert still succeeds even if SMS fails
   }
 
@@ -46,15 +47,39 @@ const triggerSosAlert = async (patientId, latitude, longitude) => {
 };
 
 /**
- * Validates and logs a Break-Glass emergency access event.
+ * Validates and logs a Break-Glass emergency access event, and emails the patient.
  */
-const logEmergencyAccess = async (patientId, accessedBy, userRole, reason) => {
+const logEmergencyAccess = async (patientId, accessedBy, userRole, reason, doctorName) => {
   if (!patientId || !accessedBy || !userRole || !reason) {
     const error = new Error('Patient ID, accessor ID, role, and reason are required to log emergency access');
     error.statusCode = 400;
     throw error;
   }
-  return await emergencyRepository.logEmergencyAccess(patientId, accessedBy, userRole, reason);
+  
+  // 1. Log the access in the database for the Admin Audit Trail
+  const accessLog = await emergencyRepository.logEmergencyAccess(patientId, accessedBy, userRole, reason);
+
+  // 2. Fetch patient details to send the automated security alert
+  try {
+    const snapshot = await emergencyRepository.getEmergencySnapshot(patientId);
+    
+    if (snapshot && snapshot.patient) {
+      // Use the patient's email if available, otherwise fallback for the demo
+      const targetEmail = 'wasanakarunanayaka2002@gmail.com'; 
+      
+      await sendEmergencyAccessAlert(
+        targetEmail,
+        snapshot.patient.full_name,
+        doctorName || 'Authorized Medical Staff',
+        reason
+      );
+    }
+  } catch (err) {
+    console.error('[Email] Failed to dispatch emergency access alert:', err.message);
+    // Don't crash the emergency access if the email API fails
+  }
+
+  return accessLog;
 };
 
 /**
