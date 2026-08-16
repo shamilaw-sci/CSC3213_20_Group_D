@@ -82,7 +82,7 @@ const EmergencySnapshotPage = () => {
         
         {/* Patient Identity & Blood Group */}
         <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 flex flex-col items-center justify-center text-center shadow-xl relative overflow-hidden">
-          <div className="absolute top-0 w-full h-2 bg-gradient-to-r from-red-600 to-rose-500"></div>
+          <div className="absolute top-0 w-full h-2 bg-linear-to-r from-red-600 to-rose-500"></div>
           
           <User className="w-16 h-16 text-slate-500 mb-4" />
           <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-8">{patient.full_name}</h2>
