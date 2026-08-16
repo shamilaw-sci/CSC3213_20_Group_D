@@ -61,7 +61,27 @@ const logEmergencyAccessController = async (req, res) => {
   }
 };
 
+const getEmergencySnapshotController = async (req, res) => {
+  try {
+    const { patientId } = req.params;
+    const snapshot = await emergencyService.getEmergencySnapshot(patientId);
+
+    res.status(200).json({
+      success: true,
+      message: 'Emergency patient snapshot retrieved successfully',
+      data: snapshot
+    });
+  } catch (error) {
+    console.error('getEmergencySnapshotController error:', error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Internal server error'
+    });
+  }
+};
+
 module.exports = {
   triggerSosController,
-  logEmergencyAccessController
+  logEmergencyAccessController,
+  getEmergencySnapshotController
 };

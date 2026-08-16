@@ -47,7 +47,42 @@ const logEmergencyAccess = async (patientId, accessedBy, userRole, reason) => {
   return rows[0];
 };
 
+/**
+ * Retrieves the minimalist Break-Glass patient snapshot for emergency crisis reading.
+ * Explicitly excludes full medical history to protect patient privacy.
+ * @param {string} patientId - UUID of the patient
+ * @returns {Promise<Object>} The emergency snapshot data
+ */
+const getEmergencySnapshot = async (patientId) => {
+  // 1. Get life-saving profile info (blood type, emergency contact)
+  const patientQuery = `
+    SELECT id, full_name, blood_group, emergency_contact_name, emergency_contact_phone
+    FROM patients
+    WHERE id = $1;
+  `;
+  const patientResult = await pool.query(patientQuery, [patientId]);
+  
+  if (patientResult.rows.length === 0) {
+    return null;
+  }
+
+  // 2. Get allergies (critical for crisis care)
+  const allergyQuery = `
+    SELECT allergen, severity
+    FROM patient_allergies
+    WHERE patient_id = $1;
+  `;
+  const allergyResult = await pool.query(allergyQuery, [patientId]);
+
+  // Consolidate the snapshot
+  return {
+    patient: patientResult.rows[0],
+    allergies: allergyResult.rows,
+  };
+};
+
 module.exports = {
   logEmergencyAlert,
-  logEmergencyAccess
+  logEmergencyAccess,
+  getEmergencySnapshot
 };

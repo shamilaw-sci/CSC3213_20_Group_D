@@ -44,7 +44,31 @@ const logEmergencyAccess = async (patientId, accessedBy, userRole, reason) => {
   return await emergencyRepository.logEmergencyAccess(patientId, accessedBy, userRole, reason);
 };
 
+/**
+ * Retrieves the minimalist Break-Glass patient snapshot.
+ * @param {string} patientId - UUID of the patient
+ * @returns {Promise<Object>} The emergency snapshot data
+ */
+const getEmergencySnapshot = async (patientId) => {
+  if (!patientId) {
+    const error = new Error('Patient ID is required to retrieve the emergency snapshot');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const snapshot = await emergencyRepository.getEmergencySnapshot(patientId);
+  
+  if (!snapshot) {
+    const error = new Error('Patient not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return snapshot;
+};
+
 module.exports = {
   triggerSosAlert,
-  logEmergencyAccess
+  logEmergencyAccess,
+  getEmergencySnapshot
 };
