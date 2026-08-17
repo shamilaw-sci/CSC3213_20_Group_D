@@ -14,6 +14,7 @@ import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Card from '../../components/common/Card';
 import Alert from '../../components/common/Alert';
+import { searchMedicines } from '../../utils/medicineSearch';
 
 const IssuePrescriptionPage = () => {
   const [medicines, setMedicines] = useState([
@@ -22,6 +23,8 @@ const IssuePrescriptionPage = () => {
   const [qrValue, setQrValue] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(null);
+  const [suggestions, setSuggestions] = useState([]);
 
   const { register, handleSubmit, formState: { errors } } = useForm();
 
@@ -45,6 +48,25 @@ const IssuePrescriptionPage = () => {
     updated[index][field] = value;
     setMedicines(updated);
   };
+
+  const handleMedicineNameChange = (index, value) => {
+  updateMedicine(index, 'medicine_name', value);
+  setActiveSuggestionIndex(index);
+  setSuggestions(searchMedicines(value));
+};
+
+const selectSuggestion = (index, medicine) => {
+  const updated = [...medicines];
+  updated[index] = {
+    ...updated[index],
+    medicine_name: medicine.name,
+    dosage: medicine.defaultDosage,
+    frequency: medicine.defaultFrequency,
+  };
+  setMedicines(updated);
+  setActiveSuggestionIndex(null);
+  setSuggestions([]);
+};
 
   const onSubmit = async (data) => {
     setLoading(true);
@@ -178,13 +200,39 @@ const IssuePrescriptionPage = () => {
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
-                    <Input
-                      label="Medicine Name"
-                      value={medicine.medicine_name}
-                      onChange={(e) => updateMedicine(index, 'medicine_name', e.target.value)}
-                      placeholder="e.g. Paracetamol"
-                      required
-                    />
+                    <div className="relative">
+  <Input
+    label="Medicine Name"
+    value={medicine.medicine_name}
+    onChange={(e) => handleMedicineNameChange(index, e.target.value)}
+    onBlur={() => setTimeout(() => setActiveSuggestionIndex(null), 150)}
+    placeholder="e.g. Paracetamol"
+    autoComplete="off"
+    required
+  />
+  {activeSuggestionIndex === index && suggestions.length > 0 && (
+    <ul className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+      {suggestions.map((med, i) => (
+       <li
+  key={i}
+  onMouseDown={(e) => {
+    e.preventDefault();
+    selectSuggestion(index, med);
+  }}
+  className="px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 cursor-pointer"
+>
+          <span className="font-medium">{med.name}</span>
+          <span className="text-slate-400 text-xs ml-2">{med.category}</span>
+        </li>
+      ))}
+    </ul>
+  )}
+  {activeSuggestionIndex === index && suggestions.length === 0 && medicine.medicine_name.trim().length >= 2 && (
+    <p className="absolute z-10 w-full mt-1 px-3 py-2 text-xs text-slate-400 bg-white border border-slate-200 rounded-lg shadow-lg">
+      No matches — you can still type it manually
+    </p>
+  )}
+</div>
                     <Input
                       label="Dosage"
                       value={medicine.dosage}
