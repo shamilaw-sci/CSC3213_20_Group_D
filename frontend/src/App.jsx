@@ -23,10 +23,8 @@ import PharmacyLookupPage from './pages/pharmacy/PharmacyLookupPage';
 import PharmacyRegisterPage from './pages/pharmacy/PharmacyRegisterPage';
 import PharmacyDashboard from './pages/pharmacy/PharmacyDashboard';
 import PaymentHistoryPage from './pages/patient/PaymentHistoryPage';
-import HospitalDashboardPage from './pages/hospital/HospitalDashboardPage';
-
-// NEW: Import the Emergency Snapshot Page
-import EmergencySnapshotPage from './pages/emergency/EmergencySnapshotPage';
+import PatientQRLookupPage from './pages/pharmacy/PatientQRLookupPage';
+import OrderTrackerPage    from './pages/patient/OrderTrackerPage';
 
 function App() {
   return (
@@ -45,12 +43,6 @@ function App() {
         {/* Patient QR lookup — no sidebar, doctor-facing read-only view */}
         <Route path="/lookup/:qrCodeId" element={<PatientLookupPage />} />
 
-        {/* NEW: Emergency Break-Glass Snapshot — no sidebar, specialized crisis UI */}
-        <Route path="/emergency/snapshot/:patientId" element={<EmergencySnapshotPage />} />
-
-        {/* NEW: Live Hospital Dashboard for dispatchers */}
-        <Route path="/emergency/dashboard" element={<HospitalDashboardPage />} />
-
         {/* Patient pages — all share the sidebar layout */}
         <Route path="/patient" element={<PatientLayout />}>
           <Route path="profile"         element={<PatientProfilePage />} />
@@ -68,7 +60,9 @@ function App() {
         <Route path="/pharmacy/:qrValue" element={<PharmacyLookupPage />} />
         <Route path="/pharmacy/register" element={<PharmacyRegisterPage />} />
         <Route path="/pharmacy/dashboard" element={<PharmacyDashboard />} />
-
+        <Route path="/pharmacy/patient-lookup" element={<PatientQRLookupPage />} />
+        <Route path="/pharmacy/patient-lookup"  element={<PatientQRLookupPage />} />
+        <Route path="/patient/orders"           element={<OrderTrackerPage />} /> 
         <Route path="/patient/payments" element={<PaymentHistoryPage />} />
         {/* Other members will add their routes here */}
       </Routes>

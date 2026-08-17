@@ -157,6 +157,18 @@ const PharmacyDashboard = () => {
               Look Up
             </button>
           </form>
+          <div className="mt-4 pt-4 border-t border-slate-100">
+  <p className="text-xs text-slate-500 mb-2">
+    Patient without smartphone?
+  </p>
+  <button
+    onClick={() => navigate('/pharmacy/patient-lookup')}
+    className="w-full py-2.5 rounded-lg text-sm font-semibold border-2 text-teal-700"
+    style={{ borderColor: '#006B6B' }}
+  >
+    👤 Look Up Patient by QR Card
+  </button>
+</div>
         </div>
 
         {/* ── Recent Prescriptions ── */}
