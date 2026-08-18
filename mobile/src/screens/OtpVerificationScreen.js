@@ -7,8 +7,8 @@
  * @author  I.M.L.S. Idirisinghe (S/21/389)
  */
 
-import React, { useState } from 'react';
-import { verifyOtp } from '../services/auth.service';
+import React, { useState, useEffect } from 'react';
+import { verifyOtp, resendOtp } from '../services/auth.service';
 import {
   View,
   Text,
@@ -25,6 +25,18 @@ export default function OtpVerificationScreen({ email, onVerifySuccess, onBackTo
   const [otpCode, setOtpCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
+  const [resending, setResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendMessage, setResendMessage] = useState('');
+
+  // Countdown timer for resend cooldown
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
 
   // Validate input
   const validate = () => {
@@ -56,6 +68,34 @@ export default function OtpVerificationScreen({ email, onVerifySuccess, onBackTo
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Handle resend - requests a fresh OTP, starts a 30s cooldown
+  const handleResend = async () => {
+    if (resendCooldown > 0) return;
+
+    setResending(true);
+    setError('');
+    setResendMessage('');
+
+    try {
+      const data = await resendOtp(email);
+
+      if (data.success) {
+        setResendMessage('A new code has been sent.');
+        setResendCooldown(30);
+      } else {
+        setError(data.message || 'Could not resend code. Please try again.');
+      }
+
+    } catch (error) {
+      setError(
+        error.response?.data?.message ||
+        'Cannot connect to server. Please check your connection.'
+      );
+    } finally {
+      setResending(false);
     }
   };
 
@@ -111,6 +151,21 @@ export default function OtpVerificationScreen({ email, onVerifySuccess, onBackTo
               ? <ActivityIndicator color="#FFFFFF" />
               : <Text style={styles.buttonText}>Verify & Continue</Text>
             }
+          </TouchableOpacity>
+
+          {/* Resend success message */}
+          {resendMessage !== '' && (
+            <Text style={styles.resendSuccessText}>{resendMessage}</Text>
+          )}
+
+          {/* Resend link */}
+          <TouchableOpacity onPress={handleResend} disabled={resending || resendCooldown > 0}>
+            <Text style={[styles.registerText, (resending || resendCooldown > 0) && styles.registerTextDisabled]}>
+              Didn't get a code?{' '}
+              <Text style={styles.registerLink}>
+                {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : resending ? 'Sending...' : 'Resend code'}
+              </Text>
+            </Text>
           </TouchableOpacity>
 
           {/* Back to register link */}
@@ -233,6 +288,15 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#64748B',
     marginTop: 20,
+  },
+  registerTextDisabled: {
+    opacity: 0.5,
+  },
+  resendSuccessText: {
+    textAlign: 'center',
+    fontSize: 12,
+    color: '#1F7A1F',
+    marginTop: 16,
   },
   registerLink: {
     color: '#1E3A5F',
