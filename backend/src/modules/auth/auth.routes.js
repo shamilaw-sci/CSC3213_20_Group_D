@@ -23,6 +23,9 @@ router.post('/register', registerController);
 // POST /api/auth/verify-otp
 router.post('/verify-otp', verifyOtpController);
 
+// POST /api/auth/resend-otp
+router.post('/resend-otp', resendOtpController);
+
 // POST /api/auth/login
 router.post('/login', loginController);
 
