@@ -2,7 +2,7 @@
  * @file      LabReportsScreen.js
  * @module    Patient
  * @desc      Mobile screen showing a patient's completed lab reports.
- *            Tap any record to view the PDF report.
+ *            Tap any record to view the PDF report and mark it as read.
  * @author    Wasana Karunanayaka (S/21/081)
  */
 import React, { useEffect, useState } from 'react';
@@ -17,7 +17,7 @@ import {
   Linking,
   Alert
 } from 'react-native';
-import { getLabReports } from '../services/patient.service';
+import { getLabReports, markLabReportAsRead } from '../services/patient.service';
 
 // TEMPORARY — replace with session user when auth is ready
 const TEST_PATIENT_ID = '006761d1-8279-440e-a786-a492df7abd53';
@@ -57,15 +57,24 @@ const LabReportsScreen = () => {
     fetchReports();
   }, []);
 
-  const handleOpenReport = async (url) => {
-    if (!url) {
+  const handleOpenReport = async (report) => {
+    if (!report.report_url) {
       Alert.alert('Unavailable', 'No PDF document linked to this report.');
       return;
     }
     try {
-      const supported = await Linking.canOpenURL(url);
+      const supported = await Linking.canOpenURL(report.report_url);
       if (supported) {
-        await Linking.openURL(url);
+        await Linking.openURL(report.report_url);
+
+        // Mark as read in the background
+        if (!report.is_read) {
+          await markLabReportAsRead(TEST_PATIENT_ID, report.id);
+          // Update the local state to clear the badge instantly
+          setReports(prevReports => 
+            prevReports.map(r => r.id === report.id ? { ...r, is_read: true } : r)
+          );
+        }
       } else {
         Alert.alert('Error', 'Cannot open this file type on your device.');
       }
@@ -91,6 +100,8 @@ const LabReportsScreen = () => {
     );
   }
 
+  const unreadCount = reports.filter(r => r.status === 'completed' && !r.is_read).length;
+
   return (
     <SafeAreaView style={styles.safeArea}>
       {/* ── Page Header ── */}
@@ -111,10 +122,10 @@ const LabReportsScreen = () => {
               ? 'No completed reports'
               : `${reports.length} report${reports.length !== 1 ? 's' : ''} available`}
           </Text>
-          {reports.length > 0 && (
+          {unreadCount > 0 && (
             <View style={styles.readyBadge}>
               <View style={styles.readyDot} />
-              <Text style={styles.readyBadgeText}>New Ready</Text>
+              <Text style={styles.readyBadgeText}>{unreadCount} New</Text>
             </View>
           )}
         </View>
@@ -131,14 +142,14 @@ const LabReportsScreen = () => {
           <TouchableOpacity
             key={report.id}
             style={styles.card}
-            onPress={() => handleOpenReport(report.report_url)}
+            onPress={() => handleOpenReport(report)}
             activeOpacity={0.7}
           >
             <View style={styles.cardLeft}>
               {/* Status badge */}
-              <View style={styles.statusBadge}>
-                <Text style={styles.statusBadgeText}>
-                  {report.status === 'completed' ? 'READY' : report.status.toUpperCase()}
+              <View style={[styles.statusBadge, report.is_read && { backgroundColor: '#F1F5F9' }]}>
+                <Text style={[styles.statusBadgeText, report.is_read && { color: '#64748B' }]}>
+                  {!report.is_read ? 'NEW RESULT' : 'VIEWED'}
                 </Text>
               </View>
               

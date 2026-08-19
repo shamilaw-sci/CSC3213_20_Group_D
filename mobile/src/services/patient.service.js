@@ -116,3 +116,21 @@ export const getLabReports = async (patientId) => {
     throw error.response?.data || error;
   }
 };
+
+/**
+ * Marks a lab report as read.
+ * @param {string} patientId
+ * @param {string} reportId
+ * @returns {Promise<Object>}
+ */
+export const markLabReportAsRead = async (patientId, reportId) => {
+  try {
+    const response = await api.put(`/api/patients/${patientId}/lab-reports/${reportId}/read`);
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to mark report as read');
+    }
+    return response.data.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
