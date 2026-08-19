@@ -235,3 +235,17 @@ export const getPatientHistorySummary = async (patientId) => {
   const response = await api.get(`/api/patients/${patientId}/summary`);
   return response.data.data;
 };
+
+/**
+ * Fetches all completed lab reports for a patient.
+ * @param {string} patientId
+ * @returns {Promise<Array>}
+ */
+export const getLabReports = async (patientId) => {
+  const response = await api.get(`/api/patients/${patientId}/lab-reports`);
+  
+  if (!response.data.success) {
+    throw new Error(response.data.message || 'Failed to fetch lab reports');
+  }
+  return response.data.data;
+};
