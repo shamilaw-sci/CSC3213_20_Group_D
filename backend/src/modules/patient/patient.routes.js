@@ -25,7 +25,8 @@ const {
   getPatientPrescriptionsController,
   getPatientByQrCodeController,
   getPatientHistorySummaryController,
-  extractVaccinationDataController
+  extractVaccinationDataController,
+  getLabReportsController
 } = require('./patient.controller');
 
 const { upload } = require('../../middleware/upload');
@@ -54,5 +55,8 @@ router.delete('/:id/vaccinations/:vaccinationId', deleteVaccinationController);
 
 router.get('/:id/prescriptions', getPatientPrescriptionsController);
 router.get('/:id/summary', getPatientHistorySummaryController);
+
+// Lab Reports Route
+router.get('/:id/lab-reports', getLabReportsController);
 
 module.exports = router;

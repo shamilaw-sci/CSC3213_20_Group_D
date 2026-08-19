@@ -195,6 +195,16 @@ const uploadPatientPhotoController = async (req, res) => {
   }
 };
 
+const getLabReportsController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const reports = await patientService.getLabReports(id);
+    res.status(200).json({ success: true, message: 'Lab reports retrieved', data: reports });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ success: false, message: error.message || 'Internal server error' });
+  }
+};
+
 module.exports = {
   getPatientController,
   updatePatientController,
@@ -207,11 +217,12 @@ module.exports = {
   deleteConditionController,
   getVaccinationsController,
   addVaccinationController,
-  addBulkVaccinationsController, // Export new controller
+  addBulkVaccinationsController, 
   deleteVaccinationController,
   getPatientPrescriptionsController,
   getPatientByQrCodeController,
   getPatientHistorySummaryController,
   uploadPatientPhotoController,
-  extractVaccinationDataController 
+  extractVaccinationDataController,
+  getLabReportsController
 };
