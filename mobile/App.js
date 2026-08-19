@@ -18,13 +18,15 @@ import PatientProfileScreen from './src/screens/PatientProfileScreen';
 import PatientQRCardScreen  from './src/screens/PatientQRCardScreen';
 import PrescriptionsScreen  from './src/screens/PrescriptionsScreen';
 import MedicalRecordsScreen from './src/screens/MedicalRecordsScreen';
-import EmergencySOS         from './src/components/EmergencySOS'; // <-- Added import
+import EmergencySOS         from './src/components/EmergencySOS'; 
+import LabReportsScreen from './src/screens/LabReportsScreen';
 
 const TABS = [
   { key: 'profile',       label: 'My Profile'    },
   { key: 'records',       label: 'Records'       },
   { key: 'prescriptions', label: 'Prescriptions' },
   { key: 'qrcard',        label: 'QR Card'       },
+  { key: 'labreports',    label: 'Lab Reports'   },
 ];
 
 export default function App() {
@@ -117,6 +119,7 @@ export default function App() {
         {activeTab === 'records'        && <MedicalRecordsScreen />}
         {activeTab === 'prescriptions'  && <PrescriptionsScreen  />}
         {activeTab === 'qrcard'         && <PatientQRCardScreen  />}
+        {activeTab === 'labreports'     && <LabReportsScreen     />}
         
         {/* Floating Emergency SOS Component */}
         <EmergencySOS /> 

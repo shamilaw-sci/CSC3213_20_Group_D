@@ -99,3 +99,20 @@ export const scanVaccinationCard = async (patientId, imageUri, mimeType) => {
   });
   return response.data.data; 
 };
+
+/**
+ * Fetches all completed lab reports for a patient.
+ * @param {string} patientId
+ * @returns {Promise<Array>}
+ */
+export const getLabReports = async (patientId) => {
+  try {
+    const response = await api.get(`/api/patients/${patientId}/lab-reports`);
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to fetch lab reports');
+    }
+    return response.data.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
