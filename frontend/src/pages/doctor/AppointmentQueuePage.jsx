@@ -19,7 +19,7 @@ const AppointmentQueuePage = () => {
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [notesModalAppointmentId, setNotesModalAppointmentId] = useState(null);
+  const [notesModalAppointment, setNotesModalAppointment] = useState(null);
 
   const fetchAppointments = async () => {
     try {
@@ -114,7 +114,7 @@ const AppointmentQueuePage = () => {
                 )}
                 {appt.status === 'in_progress' && (
                   <button
-                    onClick={() => setNotesModalAppointmentId(appt.id)}
+                    onClick={() => setNotesModalAppointment(appt)}
                     className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700"
                   >
                     Add Notes & Complete
@@ -135,10 +135,12 @@ const AppointmentQueuePage = () => {
       )}
 
       <ConsultationNotesModal
-        isOpen={!!notesModalAppointmentId}
-        onClose={() => setNotesModalAppointmentId(null)}
-        appointmentId={notesModalAppointmentId}
-        onSaved={() => updateStatus(notesModalAppointmentId, 'completed')}
+        isOpen={!!notesModalAppointment}
+        onClose={() => setNotesModalAppointment(null)}
+        appointmentId={notesModalAppointment?.id}
+        patientId={notesModalAppointment?.patient_id}
+        doctorId={DOCTOR_ID}
+        onSaved={() => updateStatus(notesModalAppointment?.id, 'completed')}
       />
     </div>
   );
