@@ -44,6 +44,10 @@ export const register = async (email, phone, password, role, profileData) => {
  * @param {string} otpCode - 6-digit OTP entered by the user
  * @returns {Promise<Object>} The response data ({ success, message, data: { user, profile } })
  */
+export const verifyOtp = async (email, otpCode) => {
+  const response = await api.post('/api/auth/verify-otp', { email, otpCode });
+  return response.data;
+};
 
 /**
  * Requests a fresh OTP for an existing pending registration.
