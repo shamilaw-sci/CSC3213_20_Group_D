@@ -472,6 +472,30 @@ const getLabReports = async (patientId) => {
   return await patientRepository.getLabReports(patientId);
 };
 
+/**
+ * Marks a lab report as read.
+ * @param {string} patientId - UUID of the patient
+ * @param {string} reportId - UUID of the lab report
+ * @returns {Promise<Object>}
+ */
+const markLabReportAsRead = async (patientId, reportId) => {
+  const existing = await patientRepository.getPatientById(patientId);
+  if (!existing) {
+    const error = new Error('Patient not found');
+    error.statusCode = 404;
+    throw error;
+  }
+  
+  const updatedReport = await patientRepository.markLabReportAsRead(patientId, reportId);
+  if (!updatedReport) {
+    const error = new Error('Lab report not found or does not belong to this patient');
+    error.statusCode = 404;
+    throw error;
+  }
+  
+  return updatedReport;
+};
+
 module.exports = {
   getPatientProfile,
   updatePatientProfile,
@@ -492,4 +516,5 @@ module.exports = {
   getPatientHistorySummary,
   extractVaccinationDataFromImage,
   getLabReports,
+  markLabReportAsRead,
 };

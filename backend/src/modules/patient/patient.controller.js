@@ -205,6 +205,16 @@ const getLabReportsController = async (req, res) => {
   }
 };
 
+const markLabReportAsReadController = async (req, res) => {
+  try {
+    const { id, reportId } = req.params;
+    const updated = await patientService.markLabReportAsRead(id, reportId);
+    res.status(200).json({ success: true, message: 'Lab report marked as read', data: updated });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ success: false, message: error.message || 'Internal server error' });
+  }
+};
+
 module.exports = {
   getPatientController,
   updatePatientController,
@@ -224,5 +234,6 @@ module.exports = {
   getPatientHistorySummaryController,
   uploadPatientPhotoController,
   extractVaccinationDataController,
-  getLabReportsController
+  getLabReportsController,
+  markLabReportAsReadController,
 };

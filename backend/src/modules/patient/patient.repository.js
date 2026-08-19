@@ -443,6 +443,7 @@ async function getLabReports(patientId) {
       lr.findings,
       lr.report_url,
       lr.created_at,
+      lr.is_read,  -- Add this line
       ltr.test_type,
       ltr.status,
       l.name AS lab_name,
@@ -456,6 +457,23 @@ async function getLabReports(patientId) {
     [patientId]
   );
   return result.rows;
+}
+
+/**
+ * Marks a specific lab report as read by the patient and logs the view time.
+ * @param {string} patientId - UUID of the patient
+ * @param {string} reportId - UUID of the lab report
+ * @returns {Promise<Object|null>} The updated report row or null
+ */
+async function markLabReportAsRead(patientId, reportId) {
+  const result = await pool.query(
+    `UPDATE lab_reports
+     SET is_read = true, viewed_at = NOW()
+     WHERE id = $1 AND patient_id = $2
+     RETURNING *`,
+    [reportId, patientId]
+  );
+  return result.rows[0] || null;
 }
 
 module.exports = {
@@ -476,4 +494,5 @@ module.exports = {
   getPatientPrescriptions,
   getPatientByQrCodeId,
   getLabReports,
+  markLabReportAsRead,
 };
