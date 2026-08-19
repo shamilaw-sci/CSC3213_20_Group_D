@@ -2,7 +2,7 @@
  * @file    patient.service.js
  * @module  Patient
  * @desc    Business logic for patient profile management.
- * Sits between the controller and the repository.
+ *          Sits between the controller and the repository.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -455,6 +455,23 @@ const extractVaccinationDataFromImage = async (file) => {
   }
 };
 
+/**
+ * Retrieves all completed laboratory reports for a patient.
+ * @param {string} patientId - UUID of the patient
+ * @returns {Promise<Array>}
+ */
+const getLabReports = async (patientId) => {
+  // Ensure the patient exists before querying for their reports
+  const existing = await patientRepository.getPatientById(patientId);
+  if (!existing) {
+    const error = new Error('Patient not found');
+    error.statusCode = 404;
+    throw error;
+  }
+  
+  return await patientRepository.getLabReports(patientId);
+};
+
 module.exports = {
   getPatientProfile,
   updatePatientProfile,
@@ -468,10 +485,11 @@ module.exports = {
   deleteCondition,
   getVaccinations,
   addVaccination,
-  addBulkVaccinations, // New Bulk Insert Function
+  addBulkVaccinations, 
   deleteVaccination,
   getPatientPrescriptions,
   getPatientByQrCode,
   getPatientHistorySummary,
-  extractVaccinationDataFromImage 
+  extractVaccinationDataFromImage,
+  getLabReports,
 };

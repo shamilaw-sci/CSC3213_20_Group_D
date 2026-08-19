@@ -430,6 +430,34 @@ async function getPatientByQrCodeId(qrCodeId) {
   return result.rows[0] || null;
 }
 
+/**
+ * Fetches all completed laboratory reports for a patient, ordered newest first.
+ * Joins with lab_test_requests to get test details, and laboratories for the lab name.
+ * @param {string} patientId - UUID of the patient
+ * @returns {Promise<Array>} Array of lab report rows (empty array if none)
+ */
+async function getLabReports(patientId) {
+  const result = await pool.query(
+    `SELECT 
+      lr.id,
+      lr.findings,
+      lr.report_url,
+      lr.created_at,
+      ltr.test_type,
+      ltr.status,
+      l.name AS lab_name,
+      d.full_name AS doctor_name
+    FROM lab_reports lr
+    JOIN lab_test_requests ltr ON lr.lab_request_id = ltr.id
+    JOIN laboratories l ON lr.laboratory_id = l.id
+    LEFT JOIN doctors d ON ltr.doctor_id = d.id
+    WHERE lr.patient_id = $1
+    ORDER BY lr.created_at DESC`,
+    [patientId]
+  );
+  return result.rows;
+}
+
 module.exports = {
   getPatientById,
   getPatientByUserId,
@@ -447,4 +475,5 @@ module.exports = {
   deleteVaccination,
   getPatientPrescriptions,
   getPatientByQrCodeId,
+  getLabReports,
 };
