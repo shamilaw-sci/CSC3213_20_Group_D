@@ -231,6 +231,37 @@ const getAvailableSlots = async (doctorId, limit = 3) => {
   return slots;
 };
 
+/**
+ * Creates a new lab test request from the doctor's side.
+ * @param {Object} data - { patientId, doctorId, appointmentId, laboratoryId, testType, priority, notes }
+ * @returns {Promise<Object>} The created lab test request row
+ */
+const createLabTestRequest = async (data) => {
+  const { patientId, doctorId, appointmentId, laboratoryId, testType, priority, notes } = data;
+  const result = await pool.query(
+    `INSERT INTO lab_test_requests
+       (patient_id, doctor_id, appointment_id, laboratory_id, test_type, priority, status, notes)
+     VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7)
+     RETURNING *`,
+    [patientId, doctorId, appointmentId || null, laboratoryId, testType, priority, notes || null]
+  );
+  return result.rows[0];
+};
+
+/**
+ * Gets all active, verified laboratories for the lab-selection dropdown.
+ * @returns {Promise<Array>} List of { id, name, available_tests } rows
+ */
+const getActiveLaboratories = async () => {
+  const result = await pool.query(
+    `SELECT id, name, available_tests
+     FROM laboratories
+     WHERE is_active = true AND is_verified = true
+     ORDER BY name ASC`
+  );
+  return result.rows;
+};
+
 module.exports = {
   getDoctorById,
   getDoctorByUserId,
@@ -242,4 +273,6 @@ module.exports = {
   updateDoctorAvailability,
   getTodayAppointments,
   getDoctorDashboardStats,
+  createLabTestRequest,
+  getActiveLaboratories,
 };
