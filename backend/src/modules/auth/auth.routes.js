@@ -8,13 +8,14 @@
 const express = require('express');
 const router = express.Router();
 const {
-    registerController,
-    verifyOtpController,
-    loginController,
-    logoutController,
-    getMeController,
-    forgotPasswordController,
-    resetPasswordController
+  registerController,
+  verifyOtpController,
+  resendOtpController,
+  loginController,
+  logoutController,
+  getMeController,
+  forgotPasswordController,
+  resetPasswordController
 } = require('./auth.controller');
 
 // POST /api/auth/register
