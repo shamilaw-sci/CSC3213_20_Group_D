@@ -83,7 +83,7 @@ export default function AIChatWidget() {
         <div className={`bg-white shadow-2xl overflow-hidden flex flex-col transition-all duration-300 ease-in-out ${
           isFullScreen 
             ? 'w-full h-full rounded-none border-none' 
-            : 'w-[350px] sm:w-[400px] h-125 max-h-[75vh] rounded-2xl border border-slate-200 mb-4'
+            : 'w-87.5 sm:w-100 h-125 max-h-[75vh] rounded-2xl border border-slate-200 mb-4'
         }`}>
           
           {/* Header */}
