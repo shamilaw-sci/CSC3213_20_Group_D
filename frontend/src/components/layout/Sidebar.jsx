@@ -39,13 +39,9 @@ export default function Sidebar() {
     retry: false, 
   });
 
-  // Check if any report was completed in the last 7 days
-  const hasNewReports = reports.some(report => {
-    const reportDate = new Date(report.created_at);
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    return reportDate > sevenDaysAgo && report.status === 'completed';
-  });
+  // Check if there are any completed reports that haven't been read yet
+  const unreadCount = reports.filter(report => report.status === 'completed' && !report.is_read).length;
+  const hasNewReports = unreadCount > 0;
 
   return (
     <aside style={{
