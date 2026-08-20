@@ -19,31 +19,29 @@ import IssuePrescriptionPage  from './pages/doctor/IssuePrescriptionPage';
 import DoctorDashboard        from './pages/doctor/DoctorDashboard';
 import AppointmentQueuePage   from './pages/doctor/AppointmentQueuePage';
 import DoctorProfilePage      from './pages/doctor/DoctorProfilePage';
-import PharmacyLookupPage from './pages/pharmacy/PharmacyLookupPage';
-import PharmacyRegisterPage from './pages/pharmacy/PharmacyRegisterPage';
-import PharmacyDashboard from './pages/pharmacy/PharmacyDashboard';
-import PaymentHistoryPage from './pages/patient/PaymentHistoryPage';
-import PatientQRLookupPage from './pages/pharmacy/PatientQRLookupPage';
-import OrderTrackerPage    from './pages/patient/OrderTrackerPage';
-import LabReportsPage from './pages/patient/LabReportsPage';
-import DoctorSearchPage from './pages/patient/DoctorSearchPage'; 
-import BookAppointmentPage from './pages/patient/BookAppointmentPage';
+import PharmacyLookupPage     from './pages/pharmacy/PharmacyLookupPage';
+import PharmacyRegisterPage   from './pages/pharmacy/PharmacyRegisterPage';
+import PharmacyDashboard      from './pages/pharmacy/PharmacyDashboard';
+import PaymentHistoryPage     from './pages/patient/PaymentHistoryPage';
+import PatientQRLookupPage    from './pages/pharmacy/PatientQRLookupPage';
+import OrderTrackerPage       from './pages/patient/OrderTrackerPage';
+import LabReportsPage         from './pages/patient/LabReportsPage';
+import DoctorSearchPage       from './pages/patient/DoctorSearchPage';
+import BookAppointmentPage    from './pages/patient/BookAppointmentPage';
+import MyAppointmentsPage     from './pages/patient/MyAppointmentsPage'; // NEW IMPORT
 
 function App() {
   return (
     <BrowserRouter>
       <Toaster position="top-right" />
       <Routes>
-        {/* Default redirect */}
         <Route path="/" element={<Navigate to="/login" replace />} />
 
-        {/* Auth pages — no sidebar */}
         <Route path="/login"    element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password"  element={<ResetPasswordPage />} />
 
-        {/* Patient QR lookup — no sidebar, doctor-facing read-only view */}
         <Route path="/lookup/:qrCodeId" element={<PatientLookupPage />} />
 
         {/* Patient pages — all share the sidebar layout */}
@@ -51,25 +49,23 @@ function App() {
           <Route path="profile"         element={<PatientProfilePage />} />
           <Route path="medical-records" element={<MedicalRecordsPage />} />
           <Route path="prescriptions"   element={<PrescriptionsPage />} />
-          <Route path="lab-reports" element={<LabReportsPage />} />
-          <Route path="doctors" element={<DoctorSearchPage />} /> 
+          <Route path="lab-reports"     element={<LabReportsPage />} />
+          <Route path="doctors"         element={<DoctorSearchPage />} />
+          <Route path="appointments"    element={<MyAppointmentsPage />} /> {/* NEW ROUTE */}
           <Route path="book-appointment/:doctorId" element={<BookAppointmentPage />} />
         </Route>
 
-        {/* Doctor routes */}
         <Route path="/doctor/dashboard"          element={<DoctorDashboard />} />
         <Route path="/doctor/queue"              element={<AppointmentQueuePage />} />
         <Route path="/doctor/profile"            element={<DoctorProfilePage />} />
         <Route path="/doctor/issue-prescription" element={<IssuePrescriptionPage />} />
 
-        {/* Pharmacy routes */}
         <Route path="/pharmacy/:qrValue" element={<PharmacyLookupPage />} />
         <Route path="/pharmacy/register" element={<PharmacyRegisterPage />} />
         <Route path="/pharmacy/dashboard" element={<PharmacyDashboard />} />
         <Route path="/pharmacy/patient-lookup" element={<PatientQRLookupPage />} />
         
-        {/* Other patient routes currently outside layout */}
-        <Route path="/patient/orders"           element={<OrderTrackerPage />} /> 
+        <Route path="/patient/orders"   element={<OrderTrackerPage />} /> 
         <Route path="/patient/payments" element={<PaymentHistoryPage />} />
       </Routes>
     </BrowserRouter>
