@@ -262,6 +262,48 @@ const getActiveLaboratories = async () => {
   return result.rows;
 };
 
+/**
+ * Gets all finalized lab reports for a doctor's ordered tests that the
+ * doctor hasn't reviewed yet (drives the dashboard notification badge).
+ * @param {string} doctorId - UUID of the doctor
+ * @returns {Promise<Array>} List of unreviewed reports with patient/test context
+ */
+const getUnreviewedLabReports = async (doctorId) => {
+  const result = await pool.query(
+    `SELECT lr.id, lr.report_url, lr.findings, lr.created_at,
+            ltr.test_type, ltr.priority, ltr.patient_id,
+            p.full_name AS patient_name
+     FROM lab_reports lr
+     JOIN lab_test_requests ltr ON lr.lab_request_id = ltr.id
+     JOIN patients p ON ltr.patient_id = p.id
+     WHERE ltr.doctor_id = $1
+       AND lr.is_finalized = true
+       AND lr.doctor_reviewed_at IS NULL
+     ORDER BY lr.created_at ASC`,
+    [doctorId]
+  );
+  return result.rows;
+};
+
+/**
+ * Marks a lab report as reviewed by the doctor and saves their remark.
+ * @param {string} reportId - UUID of the lab report
+ * @param {string} remark - Doctor's short remark on the report
+ * @returns {Promise<Object>} The updated lab report row
+ */
+const reviewLabReport = async (reportId, remark) => {
+  const result = await pool.query(
+    `UPDATE lab_reports
+     SET doctor_reviewed_at = NOW(),
+         doctor_remark = $1,
+         updated_at = NOW()
+     WHERE id = $2
+     RETURNING *`,
+    [remark, reportId]
+  );
+  return result.rows[0] || null;
+};
+
 module.exports = {
   getDoctorById,
   getDoctorByUserId,
@@ -275,4 +317,6 @@ module.exports = {
   getDoctorDashboardStats,
   createLabTestRequest,
   getActiveLaboratories,
+  getUnreviewedLabReports,
+  reviewLabReport,
 };
