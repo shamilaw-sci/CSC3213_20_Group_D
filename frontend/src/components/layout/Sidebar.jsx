@@ -25,6 +25,7 @@ const handleLogout = async () => {
 
 const NAV_ITEMS = [
   { to: '/patient/profile',         label: 'My Profile' },
+  { to: '/patient/doctors',         label: 'Find a Doctor' }, // NEW ITEM
   { to: '/patient/medical-records', label: 'Medical Records' },
   { to: '/patient/prescriptions',   label: 'Prescriptions' },
   { to: '/patient/lab-reports',     label: 'Lab Reports',  hasBadge: true },

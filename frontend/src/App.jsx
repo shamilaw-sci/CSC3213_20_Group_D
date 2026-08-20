@@ -26,6 +26,7 @@ import PaymentHistoryPage from './pages/patient/PaymentHistoryPage';
 import PatientQRLookupPage from './pages/pharmacy/PatientQRLookupPage';
 import OrderTrackerPage    from './pages/patient/OrderTrackerPage';
 import LabReportsPage from './pages/patient/LabReportsPage';
+import DoctorSearchPage from './pages/patient/DoctorSearchPage'; // NEW IMPORT
 
 function App() {
   return (
@@ -50,6 +51,7 @@ function App() {
           <Route path="medical-records" element={<MedicalRecordsPage />} />
           <Route path="prescriptions"   element={<PrescriptionsPage />} />
           <Route path="lab-reports" element={<LabReportsPage />} />
+          <Route path="doctors" element={<DoctorSearchPage />} /> {/* NEW ROUTE */}
         </Route>
 
         {/* Doctor routes */}
@@ -63,10 +65,10 @@ function App() {
         <Route path="/pharmacy/register" element={<PharmacyRegisterPage />} />
         <Route path="/pharmacy/dashboard" element={<PharmacyDashboard />} />
         <Route path="/pharmacy/patient-lookup" element={<PatientQRLookupPage />} />
-        <Route path="/pharmacy/patient-lookup"  element={<PatientQRLookupPage />} />
+        
+        {/* Other patient routes currently outside layout */}
         <Route path="/patient/orders"           element={<OrderTrackerPage />} /> 
         <Route path="/patient/payments" element={<PaymentHistoryPage />} />
-        {/* Other members will add their routes here */}
       </Routes>
     </BrowserRouter>
   );
