@@ -10,6 +10,7 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { CheckCircle2 } from 'lucide-react';
 import Badge from '../../components/common/Badge';
 import Spinner from '../../components/common/Spinner';
 import ConsultationNotesModal from '../../components/doctor/ConsultationNotesModal';
@@ -23,6 +24,7 @@ const AppointmentQueuePage = () => {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notesModalAppointment, setNotesModalAppointment] = useState(null);
+  const [updatingId, setUpdatingId] = useState(null);
 
   // silent = true for background polling (no spinner, no layout flash)
   const fetchAppointments = async ({ silent = false } = {}) => {
@@ -49,15 +51,18 @@ const AppointmentQueuePage = () => {
   }, []);
 
   const updateStatus = async (appointmentId, newStatus) => {
+    setUpdatingId(appointmentId);
     try {
       await fetch(`${API_URL}/api/appointments/${appointmentId}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       });
-      fetchAppointments({ silent: true });
+      await fetchAppointments({ silent: true });
     } catch (error) {
       console.error('Status update error:', error);
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -91,57 +96,65 @@ const AppointmentQueuePage = () => {
 
       {/* Appointment List */}
       {appointments.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-8 text-center">
-          <p className="text-slate-500">No appointments scheduled for today.</p>
+        <div className="bg-white rounded-lg shadow p-12 text-center flex flex-col items-center gap-3">
+          <CheckCircle2 className="text-green-500" size={40} />
+          <p className="text-slate-600 font-medium">You're all caught up!</p>
+          <p className="text-slate-400 text-sm">No patients in the queue right now.</p>
         </div>
       ) : (
         <div className="space-y-4">
-          {appointments.map((appt) => (
-            <div
-              key={appt.id}
-              className="bg-white rounded-lg shadow p-6"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-slate-800">
-                    {appt.patient_name}
-                  </h3>
-                  <p className="text-sm text-slate-500 mt-1">
-                    {new Date(appt.scheduled_at).toLocaleTimeString()} — {appt.type.toUpperCase()}
-                  </p>
+          {appointments.map((appt) => {
+            const isUpdating = updatingId === appt.id;
+            return (
+              <div
+                key={appt.id}
+                className="bg-white rounded-lg shadow p-6"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-800">
+                      {appt.patient_name}
+                    </h3>
+                    <p className="text-sm text-slate-500 mt-1">
+                      {new Date(appt.scheduled_at).toLocaleTimeString()} — {appt.type.toUpperCase()}
+                    </p>
+                  </div>
+                  <Badge status={appt.status} />
                 </div>
-                <Badge status={appt.status} />
-              </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-3 mt-4">
-                {appt.status === 'scheduled' && (
-                  <button
-                    onClick={() => updateStatus(appt.id, 'in_progress')}
-                    className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
-                  >
-                    Start Consultation
-                  </button>
-                )}
-                {appt.status === 'in_progress' && (
-                  <button
-                    onClick={() => setNotesModalAppointment(appt)}
-                    className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700"
-                  >
-                    Add Notes & Complete
-                  </button>
-                )}
-                {(appt.status === 'scheduled' || appt.status === 'in_progress') && (
-                  <button
-                    onClick={() => updateStatus(appt.id, 'cancelled')}
-                    className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700"
-                  >
-                    Cancel
-                  </button>
-                )}
+                {/* Action Buttons */}
+                <div className="flex gap-3 mt-4">
+                  {appt.status === 'scheduled' && (
+                    <button
+                      onClick={() => updateStatus(appt.id, 'in_progress')}
+                      disabled={isUpdating}
+                      className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isUpdating ? 'Updating...' : 'Start Consultation'}
+                    </button>
+                  )}
+                  {appt.status === 'in_progress' && (
+                    <button
+                      onClick={() => setNotesModalAppointment(appt)}
+                      disabled={isUpdating}
+                      className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isUpdating ? 'Updating...' : 'Add Notes & Complete'}
+                    </button>
+                  )}
+                  {(appt.status === 'scheduled' || appt.status === 'in_progress') && (
+                    <button
+                      onClick={() => updateStatus(appt.id, 'cancelled')}
+                      disabled={isUpdating}
+                      className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isUpdating ? 'Updating...' : 'Cancel'}
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
