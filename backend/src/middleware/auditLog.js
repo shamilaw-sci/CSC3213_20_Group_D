@@ -34,6 +34,12 @@ const logAudit = async (userId, action, entityType, entityId, details = {}, ipAd
 /**
  * Express middleware that automatically logs every API request.
  * Attach to any route to enable automatic audit logging.
+ *
+ * Resolves entityId from req.params — checks `:id` first (the most common
+ * name), then falls back to whatever the first route param actually is
+ * (e.g. `:reportId`, `:appointmentId`), so routes that don't name their
+ * param "id" still get the correct entity logged instead of null.
+ *
  * @param {string} action     - Action name to log
  * @param {string} entityType - Entity type being affected
  */
@@ -41,7 +47,8 @@ const auditMiddleware = (action, entityType) => {
   return async (req, res, next) => {
     try {
       const userId = req.session?.user?.id || null;
-      const entityId = req.params?.id || null;
+      const paramValues = Object.values(req.params || {});
+      const entityId = req.params?.id || paramValues[0] || null;
       const ipAddress = req.ip || req.connection?.remoteAddress || null;
       const details = {
         method: req.method,
