@@ -3,6 +3,8 @@
  * @module  Doctor
  * @desc    Today's appointment queue for the doctor.
  *          Shows all patients scheduled for today with status management.
+ *          Auto-refreshes in the background so the doctor never has to
+ *          manually reload to see queue changes.
  * @author  Tharindu (S/21/166)
  */
 
@@ -14,6 +16,7 @@ import ConsultationNotesModal from '../../components/doctor/ConsultationNotesMod
 
 const DOCTOR_ID = 'd04b8bcf-fe8a-4d3b-affc-5ab87e78cfc3';
 const API_URL = 'http://localhost:5000';
+const AUTO_REFRESH_INTERVAL_MS = 20000; // 20s — background refresh, no manual reload needed
 
 const AppointmentQueuePage = () => {
   const navigate = useNavigate();
@@ -21,20 +24,28 @@ const AppointmentQueuePage = () => {
   const [loading, setLoading] = useState(true);
   const [notesModalAppointment, setNotesModalAppointment] = useState(null);
 
-  const fetchAppointments = async () => {
+  // silent = true for background polling (no spinner, no layout flash)
+  const fetchAppointments = async ({ silent = false } = {}) => {
     try {
+      if (!silent) setLoading(true);
       const res = await fetch(`${API_URL}/api/doctors/${DOCTOR_ID}/appointments/today`);
       const data = await res.json();
       setAppointments(data.data);
     } catch (error) {
       console.error('Queue fetch error:', error);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchAppointments();
+
+    const intervalId = setInterval(() => {
+      fetchAppointments({ silent: true });
+    }, AUTO_REFRESH_INTERVAL_MS);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   const updateStatus = async (appointmentId, newStatus) => {
@@ -44,7 +55,7 @@ const AppointmentQueuePage = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       });
-      fetchAppointments();
+      fetchAppointments({ silent: true });
     } catch (error) {
       console.error('Status update error:', error);
     }
