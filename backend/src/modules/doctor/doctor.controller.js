@@ -147,13 +147,125 @@ const getDoctorAiInsightsController = async (req, res) => {
   }
 };
 
+/**
+ * Handles GET /api/doctors/search
+ * Searches for doctors by specialty and/or hospital name.
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const searchDoctorsController = async (req, res) => {
+  try {
+    const { specialty, hospital } = req.query;
+    const doctors = await doctorService.searchDoctors(specialty, hospital);
+
+    res.status(200).json({
+      success: true,
+      message: 'Doctors retrieved successfully',
+      data: doctors,
+    });
+
+  } catch (error) {
+    console.error('searchDoctorsController error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+/**
+ * Handles GET /api/doctors/:id/slots
+ * Returns next 3 available appointment slots for a doctor.
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const getAvailableSlotsController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const slots = await doctorService.getAvailableSlots(id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Available slots retrieved successfully',
+      data: slots,
+    });
+
+  } catch (error) {
+    console.error('getAvailableSlotsController error:', error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Internal server error',
+    });
+  }
+};
+
+/**
+ * Handles POST /api/doctors/:id/lab-test-requests
+ * Creates a new lab test request ordered by the doctor.
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const orderLabTestController = async (req, res) => {
+  try {
+    const { id } = req.params; // doctorId
+    const { patientId, appointmentId, laboratoryId, testType, priority, notes } = req.body;
+
+    const request = await doctorService.orderLabTest({
+      patientId,
+      doctorId: id,
+      appointmentId,
+      laboratoryId,
+      testType,
+      priority,
+      notes,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Lab test request created successfully',
+      data: request,
+    });
+
+  } catch (error) {
+    console.error('orderLabTestController error:', error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Internal server error',
+    });
+  }
+};
+
+/**
+ * Handles GET /api/doctors/laboratories
+ * Returns all active, verified laboratories for the lab-selection dropdown.
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const getActiveLaboratoriesController = async (req, res) => {
+  try {
+    const laboratories = await doctorService.getActiveLaboratories();
+    res.status(200).json({
+      success: true,
+      message: 'Laboratories retrieved successfully',
+      data: laboratories,
+    });
+  } catch (error) {
+    console.error('getActiveLaboratoriesController error:', error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Internal server error',
+    });
+  }
+};
+
 module.exports = {
   getDoctorController,
   getAllDoctorsController,
+  searchDoctorsController,
+  getAvailableSlotsController,
   updateDoctorController,
   getDoctorAvailabilityController,
   updateDoctorAvailabilityController,
   getTodayAppointmentsController,
   getDoctorDashboardStatsController,
   getDoctorAiInsightsController,
+  orderLabTestController,
+  getActiveLaboratoriesController,
 };

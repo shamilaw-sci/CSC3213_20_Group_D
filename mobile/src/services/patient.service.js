@@ -55,3 +55,82 @@ export const deleteCondition = async (patientId, conditionId) => {
   const response = await api.delete(`/api/patients/${patientId}/conditions/${conditionId}`);
   return response.data;
 };
+
+export const getVaccinations = async (patientId) => {
+  const response = await api.get(`/api/patients/${patientId}/vaccinations`);
+  return response.data.data;
+};
+
+export const addVaccination = async (patientId, vaccineName, dateAdministered, doseNumber, notes) => {
+  const response = await api.post(`/api/patients/${patientId}/vaccinations`, {
+    vaccineName,
+    dateAdministered,
+    doseNumber,
+    notes
+  });
+  return response.data.data;
+};
+
+export const addBulkVaccinations = async (patientId, vaccinations) => {
+  const response = await api.post(`/api/patients/${patientId}/vaccinations/bulk`, { vaccinations });
+  return response.data.data;
+};
+
+export const deleteVaccination = async (patientId, vaccinationId) => {
+  const response = await api.delete(`/api/patients/${patientId}/vaccinations/${vaccinationId}`);
+  return response.data;
+};
+
+/**
+ * Uploads an image of a vaccination card and returns AI-extracted details.
+ * Specifically formatted for React Native's implementation of FormData.
+ */
+export const scanVaccinationCard = async (patientId, imageUri, mimeType) => {
+  const formData = new FormData();
+  
+  formData.append('image', {
+    uri: imageUri,
+    type: mimeType || 'image/jpeg',
+    name: 'scan.jpg' // A generic name is required for RN to parse it as a file
+  });
+
+  const response = await api.post(`/api/patients/${patientId}/vaccinations/scan`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data.data; 
+};
+
+/**
+ * Fetches all completed lab reports for a patient.
+ * @param {string} patientId
+ * @returns {Promise<Array>}
+ */
+export const getLabReports = async (patientId) => {
+  try {
+    const response = await api.get(`/api/patients/${patientId}/lab-reports`);
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to fetch lab reports');
+    }
+    return response.data.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+/**
+ * Marks a lab report as read.
+ * @param {string} patientId
+ * @param {string} reportId
+ * @returns {Promise<Object>}
+ */
+export const markLabReportAsRead = async (patientId, reportId) => {
+  try {
+    const response = await api.put(`/api/patients/${patientId}/lab-reports/${reportId}/read`);
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to mark report as read');
+    }
+    return response.data.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};

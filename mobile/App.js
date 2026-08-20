@@ -18,12 +18,15 @@ import PatientProfileScreen from './src/screens/PatientProfileScreen';
 import PatientQRCardScreen  from './src/screens/PatientQRCardScreen';
 import PrescriptionsScreen  from './src/screens/PrescriptionsScreen';
 import MedicalRecordsScreen from './src/screens/MedicalRecordsScreen';
+import EmergencySOS         from './src/components/EmergencySOS'; 
+import LabReportsScreen from './src/screens/LabReportsScreen';
 
 const TABS = [
   { key: 'profile',       label: 'My Profile'    },
   { key: 'records',       label: 'Records'       },
   { key: 'prescriptions', label: 'Prescriptions' },
   { key: 'qrcard',        label: 'QR Card'       },
+  { key: 'labreports',    label: 'Lab Reports'   },
 ];
 
 export default function App() {
@@ -33,52 +36,52 @@ export default function App() {
   const [pendingEmail, setPendingEmail] = useState('');  // email awaiting OTP verification
 
   const handleLogout = async () => {
-  setUser(null);
-  setAuthScreen('login');
+    setUser(null);
+    setAuthScreen('login');
 
-  try {
-    await api.post('/api/auth/logout');
-  } catch (error) {
-    console.error('Logout error:', error);
-  }
-};
+    try {
+      await api.post('/api/auth/logout');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   if (!user) {
-  if (authScreen === 'register') {
+    if (authScreen === 'register') {
+      return (
+        <RegisterScreen
+          onRegisterSuccess={({ email }) => {
+            setPendingEmail(email);
+            setAuthScreen('verify-otp');
+          }}
+          onBackToLogin={() => setAuthScreen('login')}
+        />
+      );
+    }
+    if (authScreen === 'verify-otp') {
+      return (
+        <OtpVerificationScreen
+          email={pendingEmail}
+          onVerifySuccess={({ user }) => setUser(user)}
+          onBackToRegister={() => setAuthScreen('register')}
+        />
+      );
+    }
+    if (authScreen === 'forgot-password') {
+      return <ForgotPasswordScreen onBackToLogin={() => setAuthScreen('login')}
+      onResetPassword={() => setAuthScreen('reset-password')} />;
+    }
+    if (authScreen === 'reset-password') {
+      return <ResetPasswordScreen onBackToLogin={() => setAuthScreen('login')} />;
+    }
     return (
-      <RegisterScreen
-        onRegisterSuccess={({ email }) => {
-          setPendingEmail(email);
-          setAuthScreen('verify-otp');
-        }}
-        onBackToLogin={() => setAuthScreen('login')}
+      <LoginScreen
+        onLoginSuccess={(userData) => setUser(userData)}
+        onForgotPassword={() => setAuthScreen('forgot-password')}
+        onRegister={() => setAuthScreen('register')}
       />
     );
   }
-  if (authScreen === 'verify-otp') {
-    return (
-      <OtpVerificationScreen
-        email={pendingEmail}
-        onVerifySuccess={({ user }) => setUser(user)}
-        onBackToRegister={() => setAuthScreen('register')}
-      />
-    );
-  }
-  if (authScreen === 'forgot-password') {
-    return <ForgotPasswordScreen onBackToLogin={() => setAuthScreen('login')}
-    onResetPassword={() => setAuthScreen('reset-password')} />;
-  }
-  if (authScreen === 'reset-password') {
-    return <ResetPasswordScreen onBackToLogin={() => setAuthScreen('login')} />;
-  }
-  return (
-    <LoginScreen
-      onLoginSuccess={(userData) => setUser(userData)}
-      onForgotPassword={() => setAuthScreen('forgot-password')}
-      onRegister={() => setAuthScreen('register')}
-    />
-  );
-}
 
   // Full doctor dashboard is separate, larger work outside this scope -
   // this shows a minimal own-profile view instead of 404ing on the
@@ -116,6 +119,10 @@ export default function App() {
         {activeTab === 'records'        && <MedicalRecordsScreen />}
         {activeTab === 'prescriptions'  && <PrescriptionsScreen  />}
         {activeTab === 'qrcard'         && <PatientQRCardScreen  />}
+        {activeTab === 'labreports'     && <LabReportsScreen     />}
+        
+        {/* Floating Emergency SOS Component */}
+        <EmergencySOS /> 
       </View>
 
       {/* Bottom Tab Bar */}

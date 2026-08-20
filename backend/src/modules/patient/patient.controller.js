@@ -2,303 +2,216 @@
  * @file    patient.controller.js
  * @module  Patient
  * @desc    HTTP request handlers for the patient module.
- * Reads request data, calls the service, and sends responses.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
 const patientService = require('./patient.service');
 
-/**
- * Handles GET /api/patients/:id
- * Returns the full profile of a patient by their UUID.
- */
 const getPatientController = async (req, res) => {
   try {
     const { id } = req.params;
     const patient = await patientService.getPatientProfile(id);
-
-    res.status(200).json({
-      success: true,
-      message: 'Patient profile retrieved successfully',
-      data: patient,
-    });
+    res.status(200).json({ success: true, message: 'Patient profile retrieved', data: patient });
   } catch (error) {
-    console.error('getPatientController error:', error);
-    const statusCode = error.statusCode || 500;
-    const message = error.statusCode ? error.message : 'Internal server error';
-    res.status(statusCode).json({ success: false, message });
+    res.status(error.statusCode || 500).json({ success: false, message: error.message || 'Internal server error' });
   }
 };
 
-/**
- * Handles PUT /api/patients/:id
- * Updates editable fields on a patient profile.
- */
 const updatePatientController = async (req, res) => {
   try {
     const { id } = req.params;
     const updated = await patientService.updatePatientProfile(id, req.body);
-
-    res.status(200).json({
-      success: true,
-      message: 'Patient profile updated successfully',
-      data: updated,
-    });
+    res.status(200).json({ success: true, message: 'Patient profile updated', data: updated });
   } catch (error) {
-    console.error('updatePatientController error:', error);
-    const statusCode = error.statusCode || 500;
-    const message = error.statusCode ? error.message : 'Internal server error';
-    res.status(statusCode).json({ success: false, message });
+    res.status(error.statusCode || 500).json({ success: false, message: error.message || 'Internal server error' });
   }
 };
 
-/**
- * Handles GET /api/patients/:id/medical-records
- * Returns all medical records for a patient, newest first.
- */
 const getMedicalRecordsController = async (req, res) => {
   try {
     const { id } = req.params;
     const records = await patientService.getMedicalRecords(id);
-
-    res.status(200).json({
-      success: true,
-      message: 'Medical records retrieved successfully',
-      data: records,
-    });
+    res.status(200).json({ success: true, message: 'Medical records retrieved', data: records });
   } catch (error) {
-    console.error('getMedicalRecordsController error:', error);
-    const statusCode = error.statusCode || 500;
-    const message = error.statusCode ? error.message : 'Internal server error';
-    res.status(statusCode).json({ success: false, message });
+    res.status(error.statusCode || 500).json({ success: false, message: error.message || 'Internal server error' });
   }
 };
 
-/**
- * Handles GET /api/patients/:id/allergies
- * Returns all allergy records for a patient.
- */
 const getAllergiesController = async (req, res) => {
   try {
     const { id } = req.params;
     const allergies = await patientService.getAllergies(id);
-
-    res.status(200).json({
-      success: true,
-      message: 'Allergies retrieved successfully',
-      data: allergies,
-    });
+    res.status(200).json({ success: true, message: 'Allergies retrieved', data: allergies });
   } catch (error) {
-    console.error('getAllergiesController error:', error);
-    const statusCode = error.statusCode || 500;
-    const message = error.statusCode ? error.message : 'Internal server error';
-    res.status(statusCode).json({ success: false, message });
+    res.status(error.statusCode || 500).json({ success: false, message: error.message || 'Internal server error' });
   }
 };
 
-/**
- * Handles POST /api/patients/:id/allergies
- * Adds a new allergy record for a patient.
- * Body: { allergen, severity, notes (optional) }
- */
 const addAllergyController = async (req, res) => {
   try {
     const { id } = req.params;
-    const { allergen, severity, notes } = req.body;
-
+    const { allergen, severity, notes } = req.body || {};
     const allergy = await patientService.addAllergy(id, allergen, severity, notes);
-
-    res.status(201).json({
-      success: true,
-      message: 'Allergy added successfully',
-      data: allergy,
-    });
+    res.status(201).json({ success: true, message: 'Allergy added', data: allergy });
   } catch (error) {
-    console.error('addAllergyController error:', error);
-    const statusCode = error.statusCode || 500;
-    const message = error.statusCode ? error.message : 'Internal server error';
-    res.status(statusCode).json({ success: false, message });
+    res.status(error.statusCode || 500).json({ success: false, message: error.message || 'Internal server error' });
   }
 };
 
-/**
- * Handles DELETE /api/patients/:id/allergies/:allergyId
- * Deletes a specific allergy record for a patient.
- */
 const deleteAllergyController = async (req, res) => {
   try {
     const { id, allergyId } = req.params;
     await patientService.deleteAllergy(id, allergyId);
-
-    res.status(200).json({
-      success: true,
-      message: 'Allergy deleted successfully',
-    });
+    res.status(200).json({ success: true, message: 'Allergy deleted successfully' });
   } catch (error) {
-    console.error('deleteAllergyController error:', error);
-    const statusCode = error.statusCode || 500;
-    const message = error.statusCode ? error.message : 'Internal server error';
-    res.status(statusCode).json({ success: false, message });
+    res.status(error.statusCode || 500).json({ success: false, message: error.message || 'Internal server error' });
   }
 };
 
-/**
- * Handles GET /api/patients/:id/conditions
- * Returns all chronic conditions for a patient.
- */
 const getConditionsController = async (req, res) => {
   try {
     const { id } = req.params;
     const conditions = await patientService.getConditions(id);
-
-    res.status(200).json({
-      success: true,
-      message: 'Conditions retrieved successfully',
-      data: conditions,
-    });
+    res.status(200).json({ success: true, message: 'Conditions retrieved', data: conditions });
   } catch (error) {
-    console.error('getConditionsController error:', error);
-    const statusCode = error.statusCode || 500;
-    const message = error.statusCode ? error.message : 'Internal server error';
-    res.status(statusCode).json({ success: false, message });
+    res.status(error.statusCode || 500).json({ success: false, message: error.message || 'Internal server error' });
   }
 };
 
-/**
- * Handles POST /api/patients/:id/conditions
- * Adds a new chronic condition record for a patient.
- * Body: { condition, diagnosedAt, notes, isPriority }
- */
 const addConditionController = async (req, res) => {
   try {
     const { id } = req.params;
-    const { condition, diagnosedAt, notes, isPriority } = req.body;
-
-    const newCondition = await patientService.addCondition(
-      id,
-      condition,
-      diagnosedAt,
-      notes,
-      isPriority
-    );
-
-    res.status(201).json({
-      success: true,
-      message: 'Condition added successfully',
-      data: newCondition,
-    });
+    const { condition, diagnosedAt, notes, isPriority } = req.body || {};
+    const newCondition = await patientService.addCondition(id, condition, diagnosedAt, notes, isPriority);
+    res.status(201).json({ success: true, message: 'Condition added', data: newCondition });
   } catch (error) {
-    console.error('addConditionController error:', error);
-    const statusCode = error.statusCode || 500;
-    const message = error.statusCode ? error.message : 'Internal server error';
-    res.status(statusCode).json({ success: false, message });
+    res.status(error.statusCode || 500).json({ success: false, message: error.message || 'Internal server error' });
   }
 };
 
-/**
- * Handles DELETE /api/patients/:id/conditions/:conditionId
- * Deletes a specific chronic condition record for a patient.
- */
 const deleteConditionController = async (req, res) => {
   try {
     const { id, conditionId } = req.params;
     await patientService.deleteCondition(id, conditionId);
-
-    res.status(200).json({
-      success: true,
-      message: 'Condition deleted successfully',
-    });
+    res.status(200).json({ success: true, message: 'Condition deleted successfully' });
   } catch (error) {
-    console.error('deleteConditionController error:', error);
-    const statusCode = error.statusCode || 500;
-    const message = error.statusCode ? error.message : 'Internal server error';
-    res.status(statusCode).json({ success: false, message });
+    res.status(error.statusCode || 500).json({ success: false, message: error.message || 'Internal server error' });
+  }
+};
+
+const getVaccinationsController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const vaccinations = await patientService.getVaccinations(id);
+    res.status(200).json({ success: true, message: 'Vaccinations retrieved', data: vaccinations });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ success: false, message: error.message || 'Internal server error' });
+  }
+};
+
+const addVaccinationController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { vaccineName, dateAdministered, doseNumber, notes } = req.body || {};
+    const newVaccination = await patientService.addVaccination(id, vaccineName, dateAdministered, doseNumber, notes);
+    res.status(201).json({ success: true, message: 'Vaccination added', data: newVaccination });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ success: false, message: error.message || 'Internal server error' });
   }
 };
 
 /**
- * Handles GET /api/patients/:id/prescriptions
- * Returns all prescriptions for a patient with their medicine items.
+ * Handles POST /api/patients/:id/vaccinations/bulk
+ * Saves an array of parsed vaccinations.
  */
+const addBulkVaccinationsController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { vaccinations } = req.body || {}; // expecting { vaccinations: [...] }
+    const savedRecords = await patientService.addBulkVaccinations(id, vaccinations);
+    res.status(201).json({ success: true, message: 'Batch vaccinations saved', data: savedRecords });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ success: false, message: error.message || 'Internal server error' });
+  }
+};
+
+const deleteVaccinationController = async (req, res) => {
+  try {
+    const { id, vaccinationId } = req.params;
+    await patientService.deleteVaccination(id, vaccinationId);
+    res.status(200).json({ success: true, message: 'Vaccination deleted successfully' });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ success: false, message: error.message || 'Internal server error' });
+  }
+};
+
+const extractVaccinationDataController = async (req, res) => {
+  try {
+    const extractedDataArray = await patientService.extractVaccinationDataFromImage(req.file);
+    res.status(200).json({ success: true, message: 'Vaccination data extracted successfully', data: extractedDataArray });
+  } catch (error) {
+    console.error('extractVaccinationDataController error:', error);
+    res.status(error.statusCode || 500).json({ success: false, message: error.message || 'Internal server error' });
+  }
+};
+
 const getPatientPrescriptionsController = async (req, res) => {
   try {
     const { id } = req.params;
     const prescriptions = await patientService.getPatientPrescriptions(id);
-
-    res.status(200).json({
-      success: true,
-      message: 'Prescriptions retrieved successfully',
-      data: prescriptions,
-    });
+    res.status(200).json({ success: true, message: 'Prescriptions retrieved', data: prescriptions });
   } catch (error) {
-    console.error('getPatientPrescriptionsController error:', error);
-    const statusCode = error.statusCode || 500;
-    const message = error.statusCode ? error.message : 'Internal server error';
-    res.status(statusCode).json({ success: false, message });
+    res.status(error.statusCode || 500).json({ success: false, message: error.message || 'Internal server error' });
   }
 };
 
-/**
- * Handles GET /api/patients/qr/:qrCodeId
- * Returns a patient's full profile looked up by their QR code ID.
- */
 const getPatientByQrCodeController = async (req, res) => {
   try {
     const { qrCodeId } = req.params;
     const patient = await patientService.getPatientByQrCode(qrCodeId);
-    res.status(200).json({
-      success: true,
-      message: 'Patient found',
-      data: patient,
-    });
+    res.status(200).json({ success: true, message: 'Patient found', data: patient });
   } catch (error) {
-    const statusCode = error.statusCode || 500;
-    const message = error.statusCode ? error.message : 'Internal server error';
-    res.status(statusCode).json({ success: false, message });
+    res.status(error.statusCode || 500).json({ success: false, message: error.message || 'Internal server error' });
   }
 };
 
-/**
- * Handles generating an AI summary of the patient's history.
- */
 const getPatientHistorySummaryController = async (req, res) => {
   try {
     const { id } = req.params;
     const data = await patientService.getPatientHistorySummary(id);
-    res.status(200).json({
-      success: true,
-      message: 'AI summary generated successfully',
-      data,
-    });
+    res.status(200).json({ success: true, message: 'AI summary generated', data });
   } catch (error) {
-    console.error('getPatientHistorySummaryController Error:', error);
-    res.status(error.statusCode || 500).json({
-      success: false,
-      message: error.message || 'Failed to generate AI summary',
-    });
+    res.status(error.statusCode || 500).json({ success: false, message: error.message || 'Failed to generate AI summary' });
   }
 };
 
-/**
- * Handles POST /api/patients/:id/photo
- * Uploads a new profile photo for a patient. Expects a multipart/form-data
- * body with a single file field named "photo" (handled by multer upstream).
- */
 const uploadPatientPhotoController = async (req, res) => {
   try {
     const { id } = req.params;
     const updated = await patientService.uploadPatientPhoto(id, req.file);
-
-    res.status(200).json({
-      success: true,
-      message: 'Patient photo uploaded successfully',
-      data: updated,
-    });
+    res.status(200).json({ success: true, message: 'Patient photo uploaded', data: updated });
   } catch (error) {
-    console.error('uploadPatientPhotoController error:', error);
-    const statusCode = error.statusCode || 500;
-    const message = error.statusCode ? error.message : 'Internal server error';
-    res.status(statusCode).json({ success: false, message });
+    res.status(error.statusCode || 500).json({ success: false, message: error.message || 'Internal server error' });
+  }
+};
+
+const getLabReportsController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const reports = await patientService.getLabReports(id);
+    res.status(200).json({ success: true, message: 'Lab reports retrieved', data: reports });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ success: false, message: error.message || 'Internal server error' });
+  }
+};
+
+const markLabReportAsReadController = async (req, res) => {
+  try {
+    const { id, reportId } = req.params;
+    const updated = await patientService.markLabReportAsRead(id, reportId);
+    res.status(200).json({ success: true, message: 'Lab report marked as read', data: updated });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ success: false, message: error.message || 'Internal server error' });
   }
 };
 
@@ -312,8 +225,15 @@ module.exports = {
   getConditionsController,
   addConditionController,
   deleteConditionController,
+  getVaccinationsController,
+  addVaccinationController,
+  addBulkVaccinationsController, 
+  deleteVaccinationController,
   getPatientPrescriptionsController,
   getPatientByQrCodeController,
   getPatientHistorySummaryController,
-  uploadPatientPhotoController
+  uploadPatientPhotoController,
+  extractVaccinationDataController,
+  getLabReportsController,
+  markLabReportAsReadController,
 };

@@ -19,7 +19,7 @@ const createPrescriptionController = async (req, res) => {
 
     const { patientId, appointmentId, items, notes } = req.body;
 
-    if (!patientId || !appointmentId || !items || items.length === 0) {
+    if (!patientId || !items || items.length === 0) {
       return res.status(400).json({
         success: false,
         message: 'Validation failed: patientId, appointmentId and items are required'

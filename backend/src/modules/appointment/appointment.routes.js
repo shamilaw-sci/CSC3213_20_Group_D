@@ -10,7 +10,8 @@ const router = express.Router();
 const {
   updateAppointmentStatusController,
   addConsultationNotesController,
-  bookAppointmentController
+  bookAppointmentController,
+  summarizeNotesController
 } = require('./appointment.controller');
 
 // POST /api/appointments — Book a new appointment
@@ -21,5 +22,8 @@ router.put('/:id/status', updateAppointmentStatusController);
 
 // POST /api/appointments/:id/notes — add consultation notes
 router.post('/:id/notes', addConsultationNotesController);
+
+// POST /api/appointments/:id/summarize-notes — AI-generate a structured draft from free-text observations
+router.post('/:id/summarize-notes', summarizeNotesController);
 
 module.exports = router; 

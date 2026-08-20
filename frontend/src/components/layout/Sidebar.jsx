@@ -1,10 +1,15 @@
 /**
  * @component Sidebar
  * @desc      Patient portal sidebar with Care4U logo, NavLink navigation,
- *            and active state highlighting.
+ *            active state highlighting, and a dynamic Lab Reports notification badge.
  * @author    Wasana Karunanayaka (S/21/081)
  */
 import { NavLink } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { getLabReports } from '../../services/patient.service';
+
+// TEMPORARY: hardcoded test patient UUID until auth is integrated
+const TEST_PATIENT_ID = '006761d1-8279-440e-a786-a492df7abd53';
 
 const handleLogout = async () => {
   try {
@@ -22,9 +27,22 @@ const NAV_ITEMS = [
   { to: '/patient/profile',         label: 'My Profile' },
   { to: '/patient/medical-records', label: 'Medical Records' },
   { to: '/patient/prescriptions',   label: 'Prescriptions' },
+  { to: '/patient/lab-reports',     label: 'Lab Reports',  hasBadge: true },
 ];
 
 export default function Sidebar() {
+  // Fetch lab reports to check if we need to show the notification badge
+  const { data: reports = [] } = useQuery({
+    queryKey: ['labReports', TEST_PATIENT_ID],
+    queryFn: () => getLabReports(TEST_PATIENT_ID),
+    // Silent fail if network error, don't break the sidebar
+    retry: false, 
+  });
+
+  // Check if there are any completed reports that haven't been read yet
+  const unreadCount = reports.filter(report => report.status === 'completed' && !report.is_read).length;
+  const hasNewReports = unreadCount > 0;
+
   return (
     <aside style={{
       width: '220px',
@@ -73,7 +91,9 @@ export default function Sidebar() {
             key={item.to}
             to={item.to}
             style={({ isActive }) => ({
-              display: 'block',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
               padding: '10px 12px',
               marginBottom: '4px',
               borderRadius: '8px',
@@ -85,7 +105,22 @@ export default function Sidebar() {
               borderLeft:      isActive ? '3px solid #FFFFFF' : '3px solid transparent',
             })}
           >
-            {item.label}
+            <span>{item.label}</span>
+            
+            {/* Conditional Notification Badge */}
+            {item.hasBadge && hasNewReports && (
+               <span style={{
+                 backgroundColor: '#EF4444', // Tailwind red-500
+                 color: 'white',
+                 fontSize: '10px',
+                 fontWeight: 'bold',
+                 padding: '2px 6px',
+                 borderRadius: '10px',
+                 boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+               }}>
+                 New
+               </span>
+            )}
           </NavLink>
         ))}
       </nav>

@@ -10,20 +10,37 @@ const router = express.Router();
 const {
   getDoctorController,
   getAllDoctorsController,
+  searchDoctorsController,
+  getAvailableSlotsController,
   updateDoctorController,
   getDoctorAvailabilityController,
   updateDoctorAvailabilityController,
   getTodayAppointmentsController,
   getDoctorDashboardStatsController,
   getDoctorAiInsightsController,
+  orderLabTestController,
+  getActiveLaboratoriesController,
 } = require('./doctor.controller');
 const { auditMiddleware } = require('../../middleware/auditLog');
 
 // GET /api/doctors — get all verified doctors
 router.get('/', getAllDoctorsController);
 
+// GET /api/doctors/search — search doctors by specialty and hospital
+router.get('/search', searchDoctorsController);
+
+// GET /api/doctors/laboratories — get active laboratories for the lab-order dropdown
+// Must come before GET /:id, otherwise Express treats "laboratories" as a doctor ID
+router.get('/laboratories', getActiveLaboratoriesController);
+
+// GET /api/doctors/:id/slots — get next 3 available appointment slots
+router.get('/:id/slots', getAvailableSlotsController);
+
 // GET /api/doctors/:id — get doctor profile by ID
 router.get('/:id', auditMiddleware('VIEW_DOCTOR_PROFILE', 'doctor'), getDoctorController);
+
+// GET /api/doctors/:id/slots — get next 3 available appointment slots
+router.get('/:id/slots', getAvailableSlotsController);
 
 // PUT /api/doctors/:id — update doctor profile
 router.put('/:id', auditMiddleware('UPDATE_DOCTOR_PROFILE', 'doctor'), updateDoctorController);
@@ -42,5 +59,8 @@ router.get('/:id/dashboard-stats', auditMiddleware('VIEW_DASHBOARD_STATS', 'doct
 
 // GET /api/doctors/:id/ai-insights — get AI insights (placeholder until Epic 9.5)
 router.get('/:id/ai-insights', auditMiddleware('VIEW_AI_INSIGHTS', 'doctor'), getDoctorAiInsightsController);
+
+// POST /api/doctors/:id/lab-test-requests — doctor orders a new lab test
+router.post('/:id/lab-test-requests', auditMiddleware('ORDER_LAB_TEST', 'doctor'), orderLabTestController);
 
 module.exports = router;

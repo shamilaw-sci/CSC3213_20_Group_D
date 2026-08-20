@@ -157,6 +157,76 @@ export const deleteCondition = async (patientId, conditionId) => {
 };
 
 /**
+ * Fetches all vaccination records for a patient.
+ * @param {string} patientId - UUID of the patient
+ * @returns {Promise<Array>} Array of vaccination objects
+ */
+export const getVaccinations = async (patientId) => {
+  const response = await api.get(`/api/patients/${patientId}/vaccinations`);
+  return response.data.data;
+};
+
+/**
+ * Adds a new vaccination record for a patient.
+ * @param {string} patientId - UUID of the patient
+ * @param {string} vaccineName - Name of the vaccine
+ * @param {string} dateAdministered - Date administered (ISO string)
+ * @param {string} doseNumber - Optional dose number
+ * @param {string} notes - Optional notes
+ * @returns {Promise<Object>} The created vaccination object
+ */
+export const addVaccination = async (patientId, vaccineName, dateAdministered, doseNumber, notes) => {
+  const response = await api.post(`/api/patients/${patientId}/vaccinations`, {
+    vaccineName,
+    dateAdministered,
+    doseNumber,
+    notes
+  });
+  return response.data.data;
+};
+
+/**
+ * Adds an array of multiple vaccination records for a patient.
+ * @param {string} patientId - UUID of the patient
+ * @param {Array} vaccinations - Array of objects { vaccineName, dateAdministered, doseNumber, notes }
+ * @returns {Promise<Array>} The created vaccination objects
+ */
+export const addBulkVaccinations = async (patientId, vaccinations) => {
+  const response = await api.post(`/api/patients/${patientId}/vaccinations/bulk`, {
+    vaccinations
+  });
+  return response.data.data;
+};
+
+/**
+ * Deletes a vaccination record for a patient.
+ * @param {string} patientId - UUID of the patient
+ * @param {string} vaccinationId - UUID of the vaccination
+ * @returns {Promise<Object>} The success response object
+ */
+export const deleteVaccination = async (patientId, vaccinationId) => {
+  const response = await api.delete(`/api/patients/${patientId}/vaccinations/${vaccinationId}`);
+  return response.data;
+};
+
+/**
+ * Uploads an image of a vaccination card and returns AI-extracted details.
+ * Does not write to the database.
+ * @param {string} patientId - UUID of the patient
+ * @param {File} file - The image file selected by the user
+ * @returns {Promise<Array>} The extracted JSON array of objects
+ */
+export const scanVaccinationCard = async (patientId, file) => {
+  const formData = new FormData();
+  formData.append('image', file);
+
+  const response = await api.post(`/api/patients/${patientId}/vaccinations/scan`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data.data; 
+};
+
+/**
  * Fetches an AI-generated clinical summary of a patient's medical history.
  * @param {string} patientId - UUID of the patient
  * @returns {Promise<Object>} Object containing the { summary } string
@@ -164,4 +234,36 @@ export const deleteCondition = async (patientId, conditionId) => {
 export const getPatientHistorySummary = async (patientId) => {
   const response = await api.get(`/api/patients/${patientId}/summary`);
   return response.data.data;
+};
+
+/**
+ * Fetches all completed lab reports for a patient.
+ * @param {string} patientId
+ * @returns {Promise<Array>}
+ */
+export const getLabReports = async (patientId) => {
+  const response = await api.get(`/api/patients/${patientId}/lab-reports`);
+  
+  if (!response.data.success) {
+    throw new Error(response.data.message || 'Failed to fetch lab reports');
+  }
+  return response.data.data;
+};
+
+/**
+ * Marks a lab report as read.
+ * @param {string} patientId
+ * @param {string} reportId
+ * @returns {Promise<Object>}
+ */
+export const markLabReportAsRead = async (patientId, reportId) => {
+  try {
+    const response = await api.put(`/api/patients/${patientId}/lab-reports/${reportId}/read`);
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to mark report as read');
+    }
+    return response.data.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
 };
