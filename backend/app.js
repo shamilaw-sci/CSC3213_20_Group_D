@@ -16,6 +16,7 @@ const pharmacyRoutes   = require('./src/modules/pharmacy/pharmacy.routes');
 const laboratoryRoutes = require('./src/modules/laboratory/laboratory.routes');
 const emergencyRoutes = require('./src/modules/emergency/emergency.routes'); 
 const orderRoutes = require('./src/modules/order/order.routes');
+const interactionRoutes = require('./src/modules/interaction/interaction.routes');
 
 const app = express();
 
@@ -53,5 +54,6 @@ app.use('/api/pharmacies',   pharmacyRoutes);
 app.use('/api/laboratories', laboratoryRoutes);
 app.use('/api/emergencies', emergencyRoutes); 
 app.use('/api/orders', orderRoutes);
+app.use('/api/interactions', interactionRoutes);
 
 module.exports = app;

@@ -15,6 +15,13 @@ import Input from '../../components/common/Input';
 import Card from '../../components/common/Card';
 import Alert from '../../components/common/Alert';
 import { searchMedicines } from '../../utils/medicineSearch';
+import { checkDrugInteractions } from '../../services/interaction.service';
+
+const SEVERITY_STYLES = {
+  severe: 'border-red-300 bg-red-50 text-red-700',
+  moderate: 'border-orange-300 bg-orange-50 text-orange-700',
+  mild: 'border-yellow-300 bg-yellow-50 text-yellow-700',
+};
 
 const IssuePrescriptionPage = () => {
   const [medicines, setMedicines] = useState([
@@ -25,8 +32,10 @@ const IssuePrescriptionPage = () => {
   const [loading, setLoading] = useState(false);
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
+  const [warnings, setWarnings] = useState({}); // { [medicineIndex]: [warningObj, ...] }
+  const [dismissedWarnings, setDismissedWarnings] = useState(new Set());
 
-  const { register, handleSubmit, formState: { errors } } = useForm();
+  const { register, handleSubmit, watch, formState: { errors } } = useForm();
 
   // Add a new empty medicine row
   const addMedicine = () => {
@@ -40,6 +49,8 @@ const IssuePrescriptionPage = () => {
   const removeMedicine = (index) => {
     if (medicines.length === 1) return; // keep at least one row
     setMedicines(medicines.filter((_, i) => i !== index));
+    // Reset dismissed state on remove so a re-shown row never silently hides a real warning
+    setDismissedWarnings(new Set());
   };
 
   // Update a specific field in a medicine row
@@ -53,7 +64,32 @@ const IssuePrescriptionPage = () => {
   updateMedicine(index, 'medicine_name', value);
   setActiveSuggestionIndex(index);
   setSuggestions(searchMedicines(value));
+  setWarnings((prev) => ({ ...prev, [index]: [] }));
 };
+
+  // Checks the given medicine name against the current patient's allergies
+  // and active prescriptions. Never blocks the doctor — fails silently on error.
+  const runConflictCheck = async (index, medicineName) => {
+    const patientId = watch('patientId');
+    if (!patientId || !medicineName || !medicineName.trim()) {
+      setWarnings((prev) => ({ ...prev, [index]: [] }));
+      return;
+    }
+    try {
+      const result = await checkDrugInteractions(patientId, medicineName);
+      setWarnings((prev) => ({ ...prev, [index]: result }));
+    } catch (err) {
+      setWarnings((prev) => ({ ...prev, [index]: [] }));
+    }
+  };
+
+  const dismissWarning = (index, warning) => {
+    setDismissedWarnings((prev) => {
+      const updated = new Set(prev);
+      updated.add(`${index}-${warning.type}-${warning.conflictWith}`);
+      return updated;
+    });
+  };
 
 const selectSuggestion = (index, medicine) => {
   const updated = [...medicines];
@@ -66,6 +102,7 @@ const selectSuggestion = (index, medicine) => {
   setMedicines(updated);
   setActiveSuggestionIndex(null);
   setSuggestions([]);
+  runConflictCheck(index, medicine.name);
 };
 
   const onSubmit = async (data) => {
@@ -205,7 +242,10 @@ const selectSuggestion = (index, medicine) => {
     label="Medicine Name"
     value={medicine.medicine_name}
     onChange={(e) => handleMedicineNameChange(index, e.target.value)}
-    onBlur={() => setTimeout(() => setActiveSuggestionIndex(null), 150)}
+    onBlur={() => setTimeout(() => {
+      setActiveSuggestionIndex(null);
+      runConflictCheck(index, medicine.medicine_name);
+    }, 150)}
     placeholder="e.g. Paracetamol"
     autoComplete="off"
     required
@@ -232,6 +272,29 @@ const selectSuggestion = (index, medicine) => {
       No matches — you can still type it manually
     </p>
   )}
+  {(warnings[index] || [])
+    .filter((w) => !dismissedWarnings.has(`${index}-${w.type}-${w.conflictWith}`))
+    .map((w, wi) => (
+      <div
+        key={wi}
+        className={`mt-2 rounded-lg border px-3 py-2 text-xs flex justify-between items-start gap-2 ${SEVERITY_STYLES[w.severity] || SEVERITY_STYLES.moderate}`}
+      >
+        <div>
+          <span className="font-semibold uppercase">
+            {w.severity} — {w.type === 'allergy' ? 'Allergy Conflict' : 'Drug Interaction'}
+          </span>
+          <p className="mt-0.5">{w.message}</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => dismissWarning(index, w)}
+          className="text-current opacity-60 hover:opacity-100 font-bold leading-none"
+          aria-label="Dismiss warning"
+        >
+          ×
+        </button>
+      </div>
+    ))}
 </div>
                     <Input
                       label="Dosage"

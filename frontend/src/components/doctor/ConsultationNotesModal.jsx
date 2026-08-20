@@ -5,7 +5,7 @@
  * @author  Tharindu (S/21/166)
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
 import Input from '../common/Input';
@@ -22,7 +22,7 @@ const initialForm = {
   is_confidential: false,
 };
 
-const ConsultationNotesModal = ({ isOpen, onClose, appointmentId, onSaved }) => {
+const ConsultationNotesModal = ({ isOpen, onClose, appointmentId, patientId, doctorId, onSaved }) => {
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -30,6 +30,26 @@ const ConsultationNotesModal = ({ isOpen, onClose, appointmentId, onSaved }) => 
 const [summarizing, setSummarizing] = useState(false);
 const [summarizeError, setSummarizeError] = useState('');
 const [aiFilled, setAiFilled] = useState(false);
+
+  const [labs, setLabs] = useState([]);
+  const [selectedLab, setSelectedLab] = useState('');
+  const [testType, setTestType] = useState('');
+  const [priority, setPriority] = useState('routine');
+  const [labNotes, setLabNotes] = useState('');
+  const [orderingLab, setOrderingLab] = useState(false);
+  const [labOrderError, setLabOrderError] = useState('');
+  const [labOrderSuccess, setLabOrderSuccess] = useState('');
+
+  useEffect(() => {
+    if (isOpen) {
+      fetch(`${API_URL}/api/doctors/laboratories`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) setLabs(data.data);
+        })
+        .catch((err) => console.error('Failed to load laboratories:', err));
+    }
+  }, [isOpen]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -77,6 +97,49 @@ const [aiFilled, setAiFilled] = useState(false);
   }
 };
 
+  const handleOrderLabTest = async () => {
+    setLabOrderError('');
+    setLabOrderSuccess('');
+
+    if (!selectedLab || !testType) {
+      setLabOrderError('Please select a laboratory and test type.');
+      return;
+    }
+
+    setOrderingLab(true);
+    try {
+      const res = await fetch(`${API_URL}/api/doctors/${doctorId}/lab-test-requests`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          patientId,
+          appointmentId,
+          laboratoryId: selectedLab,
+          testType,
+          priority,
+          notes: labNotes,
+        }),
+      });
+      const data = await res.json();
+
+      if (!data.success) {
+        setLabOrderError(data.message || 'Failed to order lab test.');
+        return;
+      }
+
+      setLabOrderSuccess(`${testType} ordered successfully.`);
+      setSelectedLab('');
+      setTestType('');
+      setPriority('routine');
+      setLabNotes('');
+    } catch (err) {
+      console.error('handleOrderLabTest error:', err);
+      setLabOrderError('Something went wrong. Please try again.');
+    } finally {
+      setOrderingLab(false);
+    }
+  };
+
   const handleSubmit = async () => {
     setError('');
 
@@ -102,6 +165,12 @@ const [aiFilled, setAiFilled] = useState(false);
       setForm(initialForm);
       setObservations('');
       setAiFilled(false);
+      setSelectedLab('');
+      setTestType('');
+      setPriority('routine');
+      setLabNotes('');
+      setLabOrderSuccess('');
+      setLabOrderError('');
       onSaved?.(data.data);
       onClose();
     } catch (err) {
@@ -111,6 +180,9 @@ const [aiFilled, setAiFilled] = useState(false);
       setSaving(false);
     }
   };
+
+  const selectedLabObj = labs.find((lab) => lab.id === selectedLab);
+  const availableTests = selectedLabObj?.available_tests || [];
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Add Consultation Notes" size="lg">
@@ -198,6 +270,70 @@ const [aiFilled, setAiFilled] = useState(false);
             placeholder="Prescribed treatment, medication, advice"
             className="w-full px-3 py-2 text-sm text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] focus:border-transparent"
           />
+        </div>
+
+        <div className="flex flex-col gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+          <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+            Order Lab Test (optional)
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <select
+              value={selectedLab}
+              onChange={(e) => { setSelectedLab(e.target.value); setTestType(''); }}
+              className="w-full px-3 py-2 text-sm text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] focus:border-transparent"
+            >
+              <option value="">Select laboratory</option>
+              {labs.map((lab) => (
+                <option key={lab.id} value={lab.id}>{lab.name}</option>
+              ))}
+            </select>
+            <select
+              value={testType}
+              onChange={(e) => setTestType(e.target.value)}
+              disabled={!selectedLab}
+              className="w-full px-3 py-2 text-sm text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] focus:border-transparent disabled:bg-slate-100"
+            >
+              <option value="">Select test type</option>
+              {availableTests.map((test) => (
+                <option key={test} value={test}>{test}</option>
+              ))}
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <select
+              value={priority}
+              onChange={(e) => setPriority(e.target.value)}
+              className="w-full px-3 py-2 text-sm text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] focus:border-transparent"
+            >
+              <option value="routine">Routine</option>
+              <option value="urgent">Urgent</option>
+              <option value="stat">Stat (Immediate)</option>
+            </select>
+            <input
+              type="text"
+              value={labNotes}
+              onChange={(e) => setLabNotes(e.target.value)}
+              placeholder="Notes for the lab (optional)"
+              className="w-full px-3 py-2 text-sm text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] focus:border-transparent"
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleOrderLabTest}
+              loading={orderingLab}
+              disabled={orderingLab}
+            >
+              {orderingLab ? 'Ordering...' : '🧪 Order Lab Test'}
+            </Button>
+            {labOrderSuccess && (
+              <span className="text-xs text-green-700 bg-green-100 px-2 py-1 rounded-full">
+                {labOrderSuccess}
+              </span>
+            )}
+          </div>
+          {labOrderError && <p className="text-xs text-red-600">{labOrderError}</p>}
         </div>
 
         <div className="flex flex-col gap-1">

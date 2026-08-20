@@ -196,6 +196,65 @@ const getAvailableSlotsController = async (req, res) => {
   }
 };
 
+/**
+ * Handles POST /api/doctors/:id/lab-test-requests
+ * Creates a new lab test request ordered by the doctor.
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const orderLabTestController = async (req, res) => {
+  try {
+    const { id } = req.params; // doctorId
+    const { patientId, appointmentId, laboratoryId, testType, priority, notes } = req.body;
+
+    const request = await doctorService.orderLabTest({
+      patientId,
+      doctorId: id,
+      appointmentId,
+      laboratoryId,
+      testType,
+      priority,
+      notes,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Lab test request created successfully',
+      data: request,
+    });
+
+  } catch (error) {
+    console.error('orderLabTestController error:', error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Internal server error',
+    });
+  }
+};
+
+/**
+ * Handles GET /api/doctors/laboratories
+ * Returns all active, verified laboratories for the lab-selection dropdown.
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const getActiveLaboratoriesController = async (req, res) => {
+  try {
+    const laboratories = await doctorService.getActiveLaboratories();
+    res.status(200).json({
+      success: true,
+      message: 'Laboratories retrieved successfully',
+      data: laboratories,
+    });
+  } catch (error) {
+    console.error('getActiveLaboratoriesController error:', error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Internal server error',
+    });
+  }
+};
+
 module.exports = {
   getDoctorController,
   getAllDoctorsController,
@@ -207,4 +266,6 @@ module.exports = {
   getTodayAppointmentsController,
   getDoctorDashboardStatsController,
   getDoctorAiInsightsController,
+  orderLabTestController,
+  getActiveLaboratoriesController,
 };
