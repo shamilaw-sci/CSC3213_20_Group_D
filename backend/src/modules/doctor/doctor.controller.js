@@ -255,6 +255,58 @@ const getActiveLaboratoriesController = async (req, res) => {
   }
 };
 
+/**
+ * Handles GET /api/doctors/:id/unreviewed-lab-reports
+ * Returns finalized lab reports for the doctor's ordered tests that
+ * haven't been reviewed yet (powers the dashboard notification badge).
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const getUnreviewedLabReportsController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const reports = await doctorService.getUnreviewedLabReports(id);
+    res.status(200).json({
+      success: true,
+      message: 'Unreviewed lab reports retrieved successfully',
+      data: reports,
+    });
+  } catch (error) {
+    console.error('getUnreviewedLabReportsController error:', error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Internal server error',
+    });
+  }
+};
+
+/**
+ * Handles PUT /api/doctors/lab-reports/:reportId/review
+ * Marks a lab report as reviewed by the doctor and saves their remark.
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const reviewLabReportController = async (req, res) => {
+  try {
+    const { reportId } = req.params;
+    const { remark } = req.body;
+
+    const updated = await doctorService.reviewLabReport(reportId, remark);
+
+    res.status(200).json({
+      success: true,
+      message: 'Lab report marked as reviewed',
+      data: updated,
+    });
+  } catch (error) {
+    console.error('reviewLabReportController error:', error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Internal server error',
+    });
+  }
+};
+
 module.exports = {
   getDoctorController,
   getAllDoctorsController,
@@ -268,4 +320,6 @@ module.exports = {
   getDoctorAiInsightsController,
   orderLabTestController,
   getActiveLaboratoriesController,
+  getUnreviewedLabReportsController,
+  reviewLabReportController,
 };

@@ -20,6 +20,8 @@ const {
   getDoctorAiInsightsController,
   orderLabTestController,
   getActiveLaboratoriesController,
+  getUnreviewedLabReportsController,
+  reviewLabReportController,
 } = require('./doctor.controller');
 const { auditMiddleware } = require('../../middleware/auditLog');
 
@@ -32,6 +34,10 @@ router.get('/search', searchDoctorsController);
 // GET /api/doctors/laboratories — get active laboratories for the lab-order dropdown
 // Must come before GET /:id, otherwise Express treats "laboratories" as a doctor ID
 router.get('/laboratories', getActiveLaboratoriesController);
+
+// PUT /api/doctors/lab-reports/:reportId/review — doctor marks a lab report as reviewed
+// Must come before PUT /:id, otherwise Express treats "lab-reports" as a doctor ID
+router.put('/lab-reports/:reportId/review', auditMiddleware('REVIEW_LAB_REPORT', 'doctor'), reviewLabReportController);
 
 // GET /api/doctors/:id/slots — get next 3 available appointment slots
 router.get('/:id/slots', getAvailableSlotsController);
@@ -62,5 +68,8 @@ router.get('/:id/ai-insights', auditMiddleware('VIEW_AI_INSIGHTS', 'doctor'), ge
 
 // POST /api/doctors/:id/lab-test-requests — doctor orders a new lab test
 router.post('/:id/lab-test-requests', auditMiddleware('ORDER_LAB_TEST', 'doctor'), orderLabTestController);
+
+// GET /api/doctors/:id/unreviewed-lab-reports — finalized lab reports awaiting doctor review
+router.get('/:id/unreviewed-lab-reports', auditMiddleware('VIEW_UNREVIEWED_LAB_REPORTS', 'doctor'), getUnreviewedLabReportsController);
 
 module.exports = router;
