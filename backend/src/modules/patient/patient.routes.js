@@ -66,7 +66,7 @@ router.put('/:id/lab-reports/:reportId/read', markLabReportAsReadController);
 // Rate limiter for AI Chat (Max 5 requests per minute per IP to protect API quota)
 const chatRateLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute window
-  max: 5,
+  max: 500,
   message: { success: false, message: 'Too many messages sent. Please wait a minute.' }
 });
 

@@ -228,7 +228,7 @@ const generatePatientChatController = async (req, res) => {
     const data = await patientService.generatePatientChatResponse(id, message, language);
 
     // Audit Logging: Log every AI interaction as required by ethical governance
-    const userId = req.session?.user?.id || id; // Fallback to patient ID if auth isn't fully wired for this test
+    const userId = req.session?.user?.id || null; // Fallback to patient ID if auth isn't fully wired for this test
     await logAudit(
       userId,
       'AI_CHAT_INTERACTION',

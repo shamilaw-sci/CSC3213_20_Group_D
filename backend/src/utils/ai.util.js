@@ -34,10 +34,10 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
  */
 const generateAIResponse = async (prompt) => {
   try {
-      // --- PRIMARY SERVICE: Groq (Llama 3.3 70B - High Speed & High Reasoning) ---
+      // --- PRIMARY SERVICE: Groq (Llama 3.1 70B - High Speed & High Reasoning) ---
       const groqResponse = await groq.chat.completions.create({
         messages: [{ role: 'user', content: prompt }],
-        model: 'llama-3.3-70b-versatile', // Upgraded to 70B for strict prompt adherence
+        model: 'llama3-70b-8192', // Upgraded to 70B for strict prompt adherence
         temperature: 0.1, // Low, near-deterministic — avoids inconsistent judgment calls on repeated generations
         seed: 42,          // Fixed seed for reproducibility across calls with identical input
       });
