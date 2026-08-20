@@ -26,6 +26,7 @@ import PaymentHistoryPage from './pages/patient/PaymentHistoryPage';
 import PatientQRLookupPage from './pages/pharmacy/PatientQRLookupPage';
 import OrderTrackerPage    from './pages/patient/OrderTrackerPage';
 import LabReportsPage from './pages/patient/LabReportsPage';
+import AIChatWidget from './components/chat/AIChatWidget';
 
 function App() {
   return (
@@ -44,12 +45,22 @@ function App() {
         {/* Patient QR lookup — no sidebar, doctor-facing read-only view */}
         <Route path="/lookup/:qrCodeId" element={<PatientLookupPage />} />
 
-        {/* Patient pages — all share the sidebar layout */}
-        <Route path="/patient" element={<PatientLayout />}>
+        {/* Patient pages — all share the sidebar layout AND the AI Chat Widget */}
+        <Route 
+          path="/patient" 
+          element={
+            <>
+              <PatientLayout />
+              <AIChatWidget />
+            </>
+          }
+        >
           <Route path="profile"         element={<PatientProfilePage />} />
           <Route path="medical-records" element={<MedicalRecordsPage />} />
           <Route path="prescriptions"   element={<PrescriptionsPage />} />
-          <Route path="lab-reports" element={<LabReportsPage />} />
+          <Route path="lab-reports"     element={<LabReportsPage />} />
+          <Route path="orders"          element={<OrderTrackerPage />} /> 
+          <Route path="payments"        element={<PaymentHistoryPage />} />
         </Route>
 
         {/* Doctor routes */}
@@ -63,9 +74,7 @@ function App() {
         <Route path="/pharmacy/register" element={<PharmacyRegisterPage />} />
         <Route path="/pharmacy/dashboard" element={<PharmacyDashboard />} />
         <Route path="/pharmacy/patient-lookup" element={<PatientQRLookupPage />} />
-        <Route path="/pharmacy/patient-lookup"  element={<PatientQRLookupPage />} />
-        <Route path="/patient/orders"           element={<OrderTrackerPage />} /> 
-        <Route path="/patient/payments" element={<PaymentHistoryPage />} />
+        
         {/* Other members will add their routes here */}
       </Routes>
     </BrowserRouter>
