@@ -8,9 +8,10 @@
 const express = require('express');
 const router = express.Router();
 const { checkConflictsController } = require('./interaction.controller');
-const { auditMiddleware } = require('../../middleware/auditLog');
 
 // POST /api/interactions/check — check a candidate medicine against allergies + active prescriptions
-router.post('/check', auditMiddleware('CHECK_DRUG_INTERACTION', 'interaction'), checkConflictsController);
+// Audit logging handled explicitly inside the controller (patientId comes from
+// the request body, not a route param, so the generic auditMiddleware can't capture it).
+router.post('/check', checkConflictsController);
 
 module.exports = router;
