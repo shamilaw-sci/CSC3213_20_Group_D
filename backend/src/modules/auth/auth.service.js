@@ -7,13 +7,16 @@
 
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const MAX_FAILED_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_MINUTES = 15;
 const { generateOtp, getOtpExpiry } = require('../../utils/otp');
 const { generatePatientQR } = require('../../utils/qr');
 const {
     createUser, createPatient, createDoctor, findUserByEmail,
     savePasswordResetToken, getValidPasswordResetToken,
     markTokenAsUsed, updateUserPassword,
-    upsertOtpVerification, findOtpByEmail, deleteOtpByEmail
+    upsertOtpVerification, findOtpByEmail, deleteOtpByEmail,
+    incrementFailedLoginAttempts, resetFailedLoginAttempts
 } = require('./auth.repository');
 
 /**
@@ -110,7 +113,11 @@ const verifyOtp = async (email, otpCode) => {
 };
 
 /**
- * Logs in a user by verifying email and password.
+ * Logs in a user by verifying email and password. Enforces account
+ * lockout after repeated failed attempts (see incrementFailedLoginAttempts).
+ * Lockout is never revealed distinctly from a wrong password - both
+ * return the same generic message, so a caller cannot tell whether an
+ * account exists or is currently locked.
  * @param {string} email - User email
  * @param {string} password - Plain text password
  * @returns {Promise<object>} User object if login successful
@@ -125,10 +132,17 @@ const login = async (email, password) => {
         throw new Error('Account is deactivated. Please contact admin.');
     }
 
-    const isMatch = await bcrypt.compare(password, user.password_hash);
-    if (!isMatch) {
+    if (user.locked_until && new Date(user.locked_until) > new Date()) {
         throw new Error('Invalid email or password');
     }
+
+    const isMatch = await bcrypt.compare(password, user.password_hash);
+    if (!isMatch) {
+        await incrementFailedLoginAttempts(user.id, MAX_FAILED_LOGIN_ATTEMPTS, LOCKOUT_MINUTES);
+        throw new Error('Invalid email or password');
+    }
+
+    await resetFailedLoginAttempts(user.id);
 
     return user;
 };

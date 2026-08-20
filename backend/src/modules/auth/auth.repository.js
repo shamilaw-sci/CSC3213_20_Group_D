@@ -192,6 +192,43 @@ const deleteOtpByEmail = async (email) => {
     );
 };
 
+/**
+ * Increments a user's failed login attempt count. If the count reaches
+ * the lockout threshold, also sets locked_until to now + cooldown period,
+ * blocking further login attempts on this account until it passes.
+ * @param {string} userId - UUID of the user
+ * @param {number} maxAttempts - Number of failures before locking
+ * @param {number} cooldownMinutes - Lockout duration in minutes
+ * @returns {Promise<object>} Updated row (failed_login_attempts, locked_until)
+ */
+const incrementFailedLoginAttempts = async (userId, maxAttempts, cooldownMinutes) => {
+    const result = await pool.query(
+        `UPDATE users
+         SET failed_login_attempts = failed_login_attempts + 1,
+             locked_until = CASE
+                WHEN failed_login_attempts + 1 >= $2
+                THEN CURRENT_TIMESTAMP + ($3 || ' minutes')::interval
+                ELSE locked_until
+             END
+         WHERE id = $1
+         RETURNING failed_login_attempts, locked_until`,
+        [userId, maxAttempts, cooldownMinutes]
+    );
+    return result.rows[0];
+};
+
+/**
+ * Resets a user's failed login attempt count and clears any lockout.
+ * Called after a successful login.
+ * @param {string} userId - UUID of the user
+ */
+const resetFailedLoginAttempts = async (userId) => {
+    await pool.query(
+        `UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE id = $1`,
+        [userId]
+    );
+};
+
 module.exports = {
     createUser,
     createPatient,
@@ -203,5 +240,7 @@ module.exports = {
     updateUserPassword,
     upsertOtpVerification,
     findOtpByEmail,
-    deleteOtpByEmail
+    deleteOtpByEmail,
+    incrementFailedLoginAttempts,
+    resetFailedLoginAttempts
 };
