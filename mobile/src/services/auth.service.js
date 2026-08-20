@@ -50,6 +50,16 @@ export const verifyOtp = async (email, otpCode) => {
 };
 
 /**
+ * Requests a fresh OTP for an existing pending registration.
+ * @param {string} email - Email with a pending registration
+ * @returns {Promise<Object>} The response data ({ success, message, data: { email, otpExpiresAt } })
+ */
+export const resendOtp = async (email) => {
+  const response = await api.post('/api/auth/resend-otp', { email });
+  return response.data;
+};
+
+/**
  * Resets a user's password using a valid reset token.
  * @param {string} token       - The password reset token
  * @param {string} newPassword - The new plain text password
