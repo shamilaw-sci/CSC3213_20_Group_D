@@ -14,12 +14,13 @@ import OtpVerificationScreen from './src/screens/OtpVerificationScreen';
 import ForgotPasswordScreen  from './src/screens/ForgotPasswordScreen';
 import ResetPasswordScreen   from './src/screens/ResetPasswordScreen';
 import DoctorProfileScreen   from './src/screens/DoctorProfileScreen';
-import PatientProfileScreen from './src/screens/PatientProfileScreen';
-import PatientQRCardScreen  from './src/screens/PatientQRCardScreen';
-import PrescriptionsScreen  from './src/screens/PrescriptionsScreen';
-import MedicalRecordsScreen from './src/screens/MedicalRecordsScreen';
-import EmergencySOS         from './src/components/EmergencySOS'; 
-import LabReportsScreen from './src/screens/LabReportsScreen';
+import PatientProfileScreen  from './src/screens/PatientProfileScreen';
+import PatientQRCardScreen   from './src/screens/PatientQRCardScreen';
+import PrescriptionsScreen   from './src/screens/PrescriptionsScreen';
+import MedicalRecordsScreen  from './src/screens/MedicalRecordsScreen';
+import EmergencySOS          from './src/components/EmergencySOS'; 
+import LabReportsScreen      from './src/screens/LabReportsScreen';
+import AIChatScreen          from './src/screens/AIChatScreen';
 
 const TABS = [
   { key: 'profile',       label: 'My Profile'    },
@@ -27,6 +28,7 @@ const TABS = [
   { key: 'prescriptions', label: 'Prescriptions' },
   { key: 'qrcard',        label: 'QR Card'       },
   { key: 'labreports',    label: 'Lab Reports'   },
+  { key: 'aichat',        label: 'AI Assist'     },
 ];
 
 export default function App() {
@@ -121,8 +123,11 @@ export default function App() {
         {activeTab === 'qrcard'         && <PatientQRCardScreen  />}
         {activeTab === 'labreports'     && <LabReportsScreen     />}
         
-        {/* Floating Emergency SOS Component */}
-        <EmergencySOS /> 
+        {/* Pass the patientId to the chat screen */}
+        {activeTab === 'aichat'         && <AIChatScreen patientId={user.profile_id} />}
+        
+        {/* Hide Floating Emergency SOS Component when in chat so it doesn't block the Send button */}
+        {activeTab !== 'aichat' && <EmergencySOS />} 
       </View>
 
       {/* Bottom Tab Bar */}

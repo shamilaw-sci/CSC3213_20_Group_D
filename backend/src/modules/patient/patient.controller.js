@@ -215,12 +215,13 @@ const markLabReportAsReadController = async (req, res) => {
 
 /**
  * Context-Aware AI Chat Controller (RAG Architecture)
- * Injects deeply-nested DB data directly into the prompt!
+ * Injects deeply-nested DB data and chat history directly into the prompt!
  */
 const generatePatientChatController = async (req, res) => {
   try {
     const { id } = req.params;
-    const { message, language = 'English' } = req.body;
+    // Extract history from the request body
+    const { message, language = 'English', history = [] } = req.body;
 
     if (!message) {
       return res.status(400).json({ success: false, message: 'Message is required' });
@@ -234,7 +235,7 @@ const generatePatientChatController = async (req, res) => {
       patientService.getAllergies(id).catch(() => [])
     ]);
 
-    // 2. Extract Name and Age (from getPatientById)
+    // 2. Extract Name and Age
     const name = patientProfile.full_name || patientProfile.firstName || 'Patient';
     let age = 'Unknown';
     if (patientProfile.date_of_birth) {
@@ -243,7 +244,6 @@ const generatePatientChatController = async (req, res) => {
     }
 
     // 3. Extract Nested Data arrays
-    // Prescriptions have a nested 'items' array. We map through ALL items in ALL prescriptions.
     let activeMeds = 'None recorded';
     if (prescriptions.length > 0) {
       const allMeds = [];
@@ -257,17 +257,26 @@ const generatePatientChatController = async (req, res) => {
       if (allMeds.length > 0) activeMeds = allMeds.join(', ');
     }
       
-    // Extract Conditions (from getConditionsByPatientId)
     const chronicConditions = conditions.length > 0 
       ? conditions.map(c => c.condition || 'Unknown Condition').join(', ') 
       : 'None recorded';
       
-    // Extract Allergies (from getAllergies)
     const knownAllergies = allergies.length > 0 
       ? allergies.map(a => a.allergen || 'Unknown Allergen').join(', ') 
       : 'None recorded';
 
-    // 4. Build the System Prompt
+    // 4. Format Previous Chat History
+    let historyContext = '';
+    if (history && history.length > 0) {
+      historyContext = '\n--- PREVIOUS CONVERSATION HISTORY ---\n';
+      history.forEach(msg => {
+        // Map 'user' to Patient, and 'ai' to AI Assistant
+        const speaker = msg.role === 'user' ? 'Patient' : 'AI Assistant';
+        historyContext += `${speaker}: ${msg.content}\n`;
+      });
+    }
+
+    // 5. Build the System Prompt
     const systemPrompt = `
       You are the Care4U AI Medical Assistant. 
       You are talking directly to a patient on the Care4U app.
@@ -279,6 +288,7 @@ const generatePatientChatController = async (req, res) => {
       Active Prescriptions: ${activeMeds}
       Chronic Conditions: ${chronicConditions}
       Known Allergies: ${knownAllergies}
+      ${historyContext}
       
       --- STRICT GUARDRAILS ---
       1. Address the patient by their first name (${name.split(' ')[0]}) to be friendly.
@@ -288,14 +298,14 @@ const generatePatientChatController = async (req, res) => {
       5. NEVER use HTML tags like <br> in your response. Use standard sentences instead.
       6. Always respond in this language: ${language}.
 
-      --- PATIENT MESSAGE ---
+      --- CURRENT PATIENT MESSAGE ---
       "${message}"
     `;
 
-    // 5. Send to AI
+    // 6. Send to AI
     const reply = await generateAIResponse(systemPrompt);
 
-    // 6. Log interaction
+    // 7. Log interaction
     const userId = req.session?.user?.id || null;
     await logAudit(userId, 'AI_CHAT_INTERACTION', 'patient', id, { prompt: message, language }, req.ip);
 

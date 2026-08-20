@@ -60,6 +60,13 @@ export default function AIChatWidget() {
     if (!inputText.trim()) return;
 
     const userMessage = { id: Date.now(), sender: 'user', text: inputText };
+    
+    // Map the web state format to the format the backend expects
+    const formattedHistory = messages.map(msg => ({
+      role: msg.sender,
+      content: msg.text
+    }));
+
     setMessages(prev => [...prev, userMessage]);
     setInputText('');
     setIsLoading(true);
@@ -67,7 +74,8 @@ export default function AIChatWidget() {
     try {
       const response = await api.post(`/api/patients/${TEST_PATIENT_ID}/chat`, {
         message: userMessage.text,
-        language: language
+        language: language,
+        history: formattedHistory // <-- Sending the context here!
       });
 
       if (response.data.success) {
