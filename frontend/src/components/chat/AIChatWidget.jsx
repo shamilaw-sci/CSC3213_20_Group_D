@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, AlertTriangle, Globe, Maximize2, Minimize2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import api from '../../services/api';
+import remarkGfm from 'remark-gfm';
 
 // TEMPORARY: hardcoded test patient UUID until auth is integrated
 const TEST_PATIENT_ID = '006761d1-8279-440e-a786-a492df7abd53';
@@ -16,6 +17,17 @@ const MarkdownComponents = {
   li: ({ node, ...props }) => <li className="pl-1" {...props} />,
   h3: ({ node, ...props }) => <h3 className="font-bold text-base mt-4 mb-2 text-[#1E3A5F]" {...props} />,
   strong: ({ node, ...props }) => <strong className="font-semibold text-slate-900" {...props} />,
+  
+  // --- NEW: Beautiful Table Formatting ---
+  table: ({ node, ...props }) => (
+    <div className="overflow-x-auto my-3 rounded-lg border border-slate-200 shadow-sm">
+      <table className="min-w-full divide-y divide-slate-200 text-[13.5px]" {...props} />
+    </div>
+  ),
+  thead: ({ node, ...props }) => <thead className="bg-slate-100" {...props} />,
+  th: ({ node, ...props }) => <th className="px-4 py-2.5 text-left font-semibold text-slate-700" {...props} />,
+  tbody: ({ node, ...props }) => <tbody className="bg-white divide-y divide-slate-100" {...props} />,
+  td: ({ node, ...props }) => <td className="px-4 py-2.5 text-slate-600" {...props} />,
 };
 /* eslint-enable no-unused-vars */
 
@@ -144,7 +156,10 @@ export default function AIChatWidget() {
                   {msg.sender === 'user' ? (
                     msg.text
                   ) : (
-                    <ReactMarkdown components={MarkdownComponents}>
+                    <ReactMarkdown 
+                      components={MarkdownComponents}
+                      remarkPlugins={[remarkGfm]}
+                    >
                       {msg.text}
                     </ReactMarkdown>
                   )}

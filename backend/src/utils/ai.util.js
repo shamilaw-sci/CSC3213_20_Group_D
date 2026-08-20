@@ -37,7 +37,7 @@ const generateAIResponse = async (prompt) => {
       // --- PRIMARY SERVICE: Groq (Llama 3.1 70B - High Speed & High Reasoning) ---
       const groqResponse = await groq.chat.completions.create({
         messages: [{ role: 'user', content: prompt }],
-        model: 'llama3-70b-8192', // Upgraded to 70B for strict prompt adherence
+        model: 'openai/gpt-oss-20b', // Upgraded to 70B for strict prompt adherence
         temperature: 0.1, // Low, near-deterministic — avoids inconsistent judgment calls on repeated generations
         seed: 42,          // Fixed seed for reproducibility across calls with identical input
       });
