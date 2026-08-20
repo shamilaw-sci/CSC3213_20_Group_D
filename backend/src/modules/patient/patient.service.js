@@ -496,6 +496,43 @@ const markLabReportAsRead = async (patientId, reportId) => {
   return updatedReport;
 };
 
+/**
+ * Generates a safe, non-diagnostic AI response for the patient chat assistant.
+ * Incorporates strict system guardrails against medical diagnosis.
+ * @param {string} patientId - UUID of the patient
+ * @param {string} message - The user's input message
+ * @param {string} language - 'English' or 'Sinhala'
+ * @returns {Promise<Object>}
+ */
+const generatePatientChatResponse = async (patientId, message, language = 'English') => {
+  // 1. Verify patient exists
+  const existing = await patientRepository.getPatientById(patientId);
+  if (!existing) {
+    const error = new Error('Patient not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  // 2. Define strict AI guardrails
+  const systemPrompt = `
+    You are Care4U's AI Patient Assistant.
+    
+    STRICT GUARDRAILS:
+    1. YOU MUST NEVER DIAGNOSE MEDICAL CONDITIONS OR PRESCRIBE MEDICATION.
+    2. If the user asks for a medical diagnosis, politely refuse and advise them to book an appointment with a doctor through the Care4U app.
+    3. You may provide general, widely accepted first-aid advice for minor issues, but always remind the user that this is not professional medical advice.
+    4. You can help the user navigate the Care4U app (e.g., finding medical records, prescriptions, booking appointments).
+    5. You must respond entirely in ${language}. Keep responses concise, friendly, and highly readable.
+    
+    Patient's Message: "${message}"
+  `;
+
+  // 3. Call the centralized AI utility
+  const responseText = await generateAIResponse(systemPrompt);
+  
+  return { reply: responseText };
+};
+
 module.exports = {
   getPatientProfile,
   updatePatientProfile,
@@ -517,4 +554,5 @@ module.exports = {
   extractVaccinationDataFromImage,
   getLabReports,
   markLabReportAsRead,
+  generatePatientChatResponse,
 };

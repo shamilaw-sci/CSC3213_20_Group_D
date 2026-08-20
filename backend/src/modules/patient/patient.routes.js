@@ -7,6 +7,7 @@
 
 const express = require('express');
 const router = express.Router();
+const rateLimit = require('express-rate-limit');
 const {
   getPatientController,
   updatePatientController,
@@ -28,6 +29,7 @@ const {
   extractVaccinationDataController,
   getLabReportsController,
   markLabReportAsReadController,
+  generatePatientChatController,
 } = require('./patient.controller');
 
 const { upload } = require('../../middleware/upload');
@@ -60,5 +62,15 @@ router.get('/:id/summary', getPatientHistorySummaryController);
 // Lab Reports Route
 router.get('/:id/lab-reports', getLabReportsController);
 router.put('/:id/lab-reports/:reportId/read', markLabReportAsReadController);
+
+// Rate limiter for AI Chat (Max 5 requests per minute per IP to protect API quota)
+const chatRateLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute window
+  max: 5,
+  message: { success: false, message: 'Too many messages sent. Please wait a minute.' }
+});
+
+// POST /api/patients/:id/chat — AI Chat Assistant endpoint
+router.post('/:id/chat', chatRateLimiter, generatePatientChatController);
 
 module.exports = router;

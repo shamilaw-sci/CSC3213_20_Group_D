@@ -6,6 +6,7 @@
  */
 
 const patientService = require('./patient.service');
+const { logAudit } = require('../../middleware/auditLog');
 
 const getPatientController = async (req, res) => {
   try {
@@ -215,6 +216,34 @@ const markLabReportAsReadController = async (req, res) => {
   }
 };
 
+const generatePatientChatController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { message, language } = req.body;
+
+    if (!message) {
+      return res.status(400).json({ success: false, message: 'Message is required' });
+    }
+
+    const data = await patientService.generatePatientChatResponse(id, message, language);
+
+    // Audit Logging: Log every AI interaction as required by ethical governance
+    const userId = req.session?.user?.id || id; // Fallback to patient ID if auth isn't fully wired for this test
+    await logAudit(
+      userId,
+      'AI_CHAT_INTERACTION',
+      'patient',
+      id,
+      { prompt: message, language }, // We omit the full response to save DB space, but log the exact prompt
+      req.ip
+    );
+
+    res.status(200).json({ success: true, message: 'AI response generated', data });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ success: false, message: error.message || 'Internal server error' });
+  }
+};
+
 module.exports = {
   getPatientController,
   updatePatientController,
@@ -236,4 +265,5 @@ module.exports = {
   extractVaccinationDataController,
   getLabReportsController,
   markLabReportAsReadController,
+  generatePatientChatController,
 };
