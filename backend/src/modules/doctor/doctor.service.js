@@ -119,6 +119,43 @@ const getActiveLaboratories = async () => {
   return await doctorRepository.getActiveLaboratories();
 };
 
+/**
+ * Gets all finalized lab reports the doctor hasn't reviewed yet.
+ * @param {string} doctorId - UUID of the doctor
+ * @returns {Promise<Array>} List of unreviewed reports
+ */
+const getUnreviewedLabReports = async (doctorId) => {
+  return await doctorRepository.getUnreviewedLabReports(doctorId);
+};
+
+/**
+ * Marks a lab report as reviewed and saves the doctor's remark, after
+ * validating a remark was actually provided and the report exists.
+ * @param {string} reportId - UUID of the lab report
+ * @param {string} remark - Doctor's short remark on the report
+ * @returns {Promise<Object>} The updated lab report
+ */
+const reviewLabReport = async (reportId, remark) => {
+  if (!reportId) {
+    const error = new Error('Validation failed: reportId is required');
+    error.statusCode = 400;
+    throw error;
+  }
+  if (!remark || !remark.trim()) {
+    const error = new Error('Validation failed: a remark is required to mark a report as reviewed');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const updated = await doctorRepository.reviewLabReport(reportId, remark.trim());
+  if (!updated) {
+    const error = new Error('Lab report not found');
+    error.statusCode = 404;
+    throw error;
+  }
+  return updated;
+};
+
 module.exports = {
   getDoctorProfile,
   getAllDoctors,
@@ -131,4 +168,6 @@ module.exports = {
   getDoctorDashboardStats,
   orderLabTest,
   getActiveLaboratories,
+  getUnreviewedLabReports,
+  reviewLabReport,
 };
