@@ -476,6 +476,34 @@ async function markLabReportAsRead(patientId, reportId) {
   return result.rows[0] || null;
 }
 
+/**
+ * Fetches all appointments for a patient, including the doctor's name.
+ * @param {string} patientId - UUID of the patient
+ * @returns {Promise<Array>} Array of appointment rows
+ */
+async function getPatientAppointments(patientId) {
+  const result = await pool.query(
+    `SELECT 
+      a.id,
+      a.patient_id,
+      a.doctor_id,
+      a.scheduled_at,
+      a.status,
+      a.type,
+      a.notes,
+      a.created_at,
+      d.full_name AS doctor_name,
+      d.specialization AS doctor_specialization
+    FROM appointments a
+    JOIN doctors d ON a.doctor_id = d.id
+    WHERE a.patient_id = $1
+    ORDER BY a.scheduled_at DESC`,
+    [patientId]
+  );
+  return result.rows;
+}
+
+
 module.exports = {
   getPatientById,
   getPatientByUserId,
@@ -495,4 +523,5 @@ module.exports = {
   getPatientByQrCodeId,
   getLabReports,
   markLabReportAsRead,
+  getPatientAppointments,
 };

@@ -28,6 +28,7 @@ const {
   extractVaccinationDataController,
   getLabReportsController,
   markLabReportAsReadController,
+  getPatientAppointmentsController,
 } = require('./patient.controller');
 
 const { upload } = require('../../middleware/upload');
@@ -60,5 +61,7 @@ router.get('/:id/summary', getPatientHistorySummaryController);
 // Lab Reports Route
 router.get('/:id/lab-reports', getLabReportsController);
 router.put('/:id/lab-reports/:reportId/read', markLabReportAsReadController);
+
+router.get('/:id/appointments', getPatientAppointmentsController);
 
 module.exports = router;

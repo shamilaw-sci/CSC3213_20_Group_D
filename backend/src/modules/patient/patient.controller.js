@@ -215,6 +215,17 @@ const markLabReportAsReadController = async (req, res) => {
   }
 };
 
+const getPatientAppointmentsController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const appointments = await patientService.getPatientAppointments(id);
+    res.status(200).json({ success: true, message: 'Appointments retrieved', data: appointments });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ success: false, message: error.message || 'Internal server error' });
+  }
+};
+
+
 module.exports = {
   getPatientController,
   updatePatientController,
@@ -236,4 +247,5 @@ module.exports = {
   extractVaccinationDataController,
   getLabReportsController,
   markLabReportAsReadController,
+  getPatientAppointmentsController,
 };
