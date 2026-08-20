@@ -7,6 +7,7 @@
 
 const patientService = require('./patient.service');
 const { logAudit } = require('../../middleware/auditLog');
+const { generateAIResponse } = require('../../utils/ai.util');
 
 const getPatientController = async (req, res) => {
   try {
@@ -121,14 +122,10 @@ const addVaccinationController = async (req, res) => {
   }
 };
 
-/**
- * Handles POST /api/patients/:id/vaccinations/bulk
- * Saves an array of parsed vaccinations.
- */
 const addBulkVaccinationsController = async (req, res) => {
   try {
     const { id } = req.params;
-    const { vaccinations } = req.body || {}; // expecting { vaccinations: [...] }
+    const { vaccinations } = req.body || {};
     const savedRecords = await patientService.addBulkVaccinations(id, vaccinations);
     res.status(201).json({ success: true, message: 'Batch vaccinations saved', data: savedRecords });
   } catch (error) {
@@ -216,31 +213,97 @@ const markLabReportAsReadController = async (req, res) => {
   }
 };
 
+/**
+ * Context-Aware AI Chat Controller (RAG Architecture)
+ * Injects deeply-nested DB data directly into the prompt!
+ */
 const generatePatientChatController = async (req, res) => {
   try {
     const { id } = req.params;
-    const { message, language } = req.body;
+    const { message, language = 'English' } = req.body;
 
     if (!message) {
       return res.status(400).json({ success: false, message: 'Message is required' });
     }
 
-    const data = await patientService.generatePatientChatResponse(id, message, language);
+    // 1. Fetch ALL relevant patient data concurrently
+    const [patientProfile, prescriptions, conditions, allergies] = await Promise.all([
+      patientService.getPatientProfile(id).catch(() => ({})),
+      patientService.getPatientPrescriptions(id).catch(() => []),
+      patientService.getConditions(id).catch(() => []),
+      patientService.getAllergies(id).catch(() => [])
+    ]);
 
-    // Audit Logging: Log every AI interaction as required by ethical governance
-    const userId = req.session?.user?.id || null; // Fallback to patient ID if auth isn't fully wired for this test
-    await logAudit(
-      userId,
-      'AI_CHAT_INTERACTION',
-      'patient',
-      id,
-      { prompt: message, language }, // We omit the full response to save DB space, but log the exact prompt
-      req.ip
-    );
+    // 2. Extract Name and Age (from getPatientById)
+    const name = patientProfile.full_name || patientProfile.firstName || 'Patient';
+    let age = 'Unknown';
+    if (patientProfile.date_of_birth) {
+      const birthYear = new Date(patientProfile.date_of_birth).getFullYear();
+      age = new Date().getFullYear() - birthYear;
+    }
 
-    res.status(200).json({ success: true, message: 'AI response generated', data });
+    // 3. Extract Nested Data arrays
+    // Prescriptions have a nested 'items' array. We map through ALL items in ALL prescriptions.
+    let activeMeds = 'None recorded';
+    if (prescriptions.length > 0) {
+      const allMeds = [];
+      prescriptions.forEach(p => {
+        if (p.items && p.items.length > 0) {
+          p.items.forEach(item => {
+            if (item.medicine_name) allMeds.push(item.medicine_name);
+          });
+        }
+      });
+      if (allMeds.length > 0) activeMeds = allMeds.join(', ');
+    }
+      
+    // Extract Conditions (from getConditionsByPatientId)
+    const chronicConditions = conditions.length > 0 
+      ? conditions.map(c => c.condition || 'Unknown Condition').join(', ') 
+      : 'None recorded';
+      
+    // Extract Allergies (from getAllergies)
+    const knownAllergies = allergies.length > 0 
+      ? allergies.map(a => a.allergen || 'Unknown Allergen').join(', ') 
+      : 'None recorded';
+
+    // 4. Build the System Prompt
+    const systemPrompt = `
+      You are the Care4U AI Medical Assistant. 
+      You are talking directly to a patient on the Care4U app.
+
+      --- PATIENT'S MEDICAL PROFILE ---
+      Name: ${name}
+      Age: ${age}
+      Gender: ${patientProfile.gender || 'Unknown'}
+      Active Prescriptions: ${activeMeds}
+      Chronic Conditions: ${chronicConditions}
+      Known Allergies: ${knownAllergies}
+      
+      --- STRICT GUARDRAILS ---
+      1. Address the patient by their first name (${name.split(' ')[0]}) to be friendly.
+      2. If they ask about their medications or health, refer strictly to the profile above.
+      3. NEVER diagnose a new condition or prescribe actual medication.
+      4. Use markdown tables for formatting data when helpful.
+      5. NEVER use HTML tags like <br> in your response. Use standard sentences instead.
+      6. Always respond in this language: ${language}.
+
+      --- PATIENT MESSAGE ---
+      "${message}"
+    `;
+
+    // 5. Send to AI
+    const reply = await generateAIResponse(systemPrompt);
+
+    // 6. Log interaction
+    const userId = req.session?.user?.id || null;
+    await logAudit(userId, 'AI_CHAT_INTERACTION', 'patient', id, { prompt: message, language }, req.ip);
+
+    res.status(200).json({ success: true, message: 'AI response generated', data: { reply } });
+
   } catch (error) {
-    res.status(error.statusCode || 500).json({ success: false, message: error.message || 'Internal server error' });
+    console.error('Error generating AI response:', error);
+    res.status(500).json({ success: false, message: 'Failed to generate AI response' });
   }
 };
 
