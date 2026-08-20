@@ -26,7 +26,8 @@ import PaymentHistoryPage from './pages/patient/PaymentHistoryPage';
 import PatientQRLookupPage from './pages/pharmacy/PatientQRLookupPage';
 import OrderTrackerPage    from './pages/patient/OrderTrackerPage';
 import LabReportsPage from './pages/patient/LabReportsPage';
-import DoctorSearchPage from './pages/patient/DoctorSearchPage'; // NEW IMPORT
+import DoctorSearchPage from './pages/patient/DoctorSearchPage'; 
+import BookAppointmentPage from './pages/patient/BookAppointmentPage';
 
 function App() {
   return (
@@ -51,7 +52,8 @@ function App() {
           <Route path="medical-records" element={<MedicalRecordsPage />} />
           <Route path="prescriptions"   element={<PrescriptionsPage />} />
           <Route path="lab-reports" element={<LabReportsPage />} />
-          <Route path="doctors" element={<DoctorSearchPage />} /> {/* NEW ROUTE */}
+          <Route path="doctors" element={<DoctorSearchPage />} /> 
+          <Route path="book-appointment/:doctorId" element={<BookAppointmentPage />} />
         </Route>
 
         {/* Doctor routes */}

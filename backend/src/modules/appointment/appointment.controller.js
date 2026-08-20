@@ -200,7 +200,8 @@ Respond with JSON only.`;
  */
 const bookAppointmentController = async (req, res) => {
   try {
-    const currentUser = req.session?.user || { id: 'test-patient-uuid', role: 'patient' };
+    // FIXED: Using a valid PostgreSQL UUID format for the fallback demo user
+    const currentUser = req.session?.user || { id: '006761d1-8279-440e-a786-a492df7abd53', role: 'patient' };
     let { patientId, doctorId, scheduledAt, type, notes } = req.body;
 
     // Route logic based on role, explicitly prioritizing the session's profile_id
@@ -213,7 +214,8 @@ const bookAppointmentController = async (req, res) => {
       }
       doctorId = currentUser.profile_id || doctorId || currentUser.id;
     } else {
-      patientId = currentUser.profile_id || currentUser.id;
+      // FIXED: Prioritize session profile_id, then frontend body, then fallback id
+      patientId = currentUser.profile_id || patientId || currentUser.id;
     }
 
     if (!doctorId || !scheduledAt || !type) {
