@@ -29,6 +29,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Session Setup (No JWT — Session-based as per supervisor requirement)
 const isProduction = process.env.NODE_ENV === 'production';
+const sessionMaxAge = parseInt(process.env.SESSION_MAX_AGE_MS, 10) || (1000 * 60 * 60 * 24);
 
 app.use(session({
   store: new pgSession({ pool, tableName: 'session' }),
@@ -39,7 +40,7 @@ app.use(session({
     httpOnly: true,
     secure: isProduction,
     sameSite: isProduction ? 'none' : 'lax',
-    maxAge: 1000 * 60 * 60 * 24
+    maxAge: sessionMaxAge
   }
 }));
 
