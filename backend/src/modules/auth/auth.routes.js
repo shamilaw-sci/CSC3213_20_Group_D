@@ -18,6 +18,22 @@ const {
   resetPasswordController
 } = require('./auth.controller');
 
+const rateLimit = require('express-rate-limit');
+
+// Limits login attempts per IP, independent of the per-account lockout
+// in login() itself - this protects against distributing guesses
+// across many different accounts from one machine.
+const loginRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many login attempts. Please try again later.'
+  }
+});
+
 // POST /api/auth/register
 router.post('/register', registerController);
 
@@ -28,7 +44,7 @@ router.post('/verify-otp', verifyOtpController);
 router.post('/resend-otp', resendOtpController);
 
 // POST /api/auth/login
-router.post('/login', loginController);
+router.post('/login', loginRateLimiter, loginController);
 
 // POST /api/auth/logout
 router.post('/logout', logoutController);
