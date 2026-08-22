@@ -164,8 +164,102 @@ const sendEmergencyAccessAlert = async (toEmail, patientName, doctorName, reason
   }
 };
 
+/**
+ * Sends an OTP verification code for registration.
+ * @param {string} toEmail - Recipient email address
+ * @param {string} otpCode - 6-digit OTP code
+ * @returns {Promise<Object>} Resend response
+ */
+const sendOtpEmail = async (toEmail, otpCode) => {
+  try {
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [toEmail],
+      subject: `Your Care4U Verification Code`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #1E3A5F; padding: 24px; border-radius: 8px 8px 0 0;">
+            <h1 style="color: white; margin: 0; font-size: 24px;">Care4U</h1>
+            <p style="color: #93C5FD; margin: 4px 0 0 0; font-size: 14px;">Healthcare Ecosystem</p>
+          </div>
+          <div style="background-color: #F8FAFC; padding: 24px; border-radius: 0 0 8px 8px;">
+            <h2 style="color: #1E293B;">Verify Your Account</h2>
+            <p style="color: #64748B;">Use the code below to complete your registration:</p>
+            <div style="background-color: #EBF3FB; border-left: 4px solid #2E75B6; padding: 16px; border-radius: 4px; margin: 16px 0; text-align: center;">
+              <p style="color: #1E293B; margin: 0; font-size: 28px; font-weight: bold; letter-spacing: 4px;">${otpCode}</p>
+            </div>
+            <p style="color: #64748B;">This code will expire in 10 minutes.</p>
+            <p style="color: #64748B; font-size: 12px; margin-top: 24px;">
+              This is an automated notification from Care4U. Please do not reply to this email.
+            </p>
+          </div>
+        </div>
+      `,
+    });
+
+    if (error) {
+      console.error('[Email] Error sending OTP:', error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+
+  } catch (err) {
+    console.error('sendOtpEmail error:', err);
+    return { success: false, error: err.message };
+  }
+};
+
+/**
+ * Sends a password reset link containing the reset token.
+ * @param {string} toEmail - Recipient email address
+ * @param {string} resetToken - Password reset token
+ * @returns {Promise<Object>} Resend response
+ */
+const sendPasswordResetEmail = async (toEmail, resetToken) => {
+  const resetLink = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}`;
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [toEmail],
+      subject: `Reset Your Care4U Password`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #1E3A5F; padding: 24px; border-radius: 8px 8px 0 0;">
+            <h1 style="color: white; margin: 0; font-size: 24px;">Care4U</h1>
+            <p style="color: #93C5FD; margin: 4px 0 0 0; font-size: 14px;">Healthcare Ecosystem</p>
+          </div>
+          <div style="background-color: #F8FAFC; padding: 24px; border-radius: 0 0 8px 8px;">
+            <h2 style="color: #1E293B;">Reset Your Password</h2>
+            <p style="color: #64748B;">We received a request to reset your password. Click the link below to choose a new one:</p>
+            <p style="margin: 16px 0;"><a href="${resetLink}" style="color: #2E75B6;">${resetLink}</a></p>
+            <p style="color: #64748B;">This link will expire in 1 hour. If you didn't request this, you can safely ignore this email.</p>
+            <p style="color: #64748B; font-size: 12px; margin-top: 24px;">
+              This is an automated notification from Care4U. Please do not reply to this email.
+            </p>
+          </div>
+        </div>
+      `,
+    });
+
+    if (error) {
+      console.error('[Email] Error sending password reset email:', error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+
+  } catch (err) {
+    console.error('sendPasswordResetEmail error:', err);
+    return { success: false, error: err.message };
+  }
+};
+
 module.exports = {
   sendLabReportNotification,
   sendAppointmentReminder,
-  sendEmergencyAccessAlert
+  sendEmergencyAccessAlert,
+  sendOtpEmail,
+  sendPasswordResetEmail
 };

@@ -10,6 +10,7 @@ const crypto = require('crypto');
 const MAX_FAILED_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_MINUTES = 15;
 const { generateOtp, getOtpExpiry } = require('../../utils/otp');
+const { sendOtpEmail, sendPasswordResetEmail } = require('../../utils/email');
 const { generatePatientQR } = require('../../utils/qr');
 const {
     createUser, createPatient, createDoctor, findUserByEmail,
@@ -42,8 +43,11 @@ const register = async (email, phone, password, role, profileData) => {
 
     await upsertOtpVerification(email, phone, passwordHash, role, otpCode, otpExpiresAt, profileData);
 
-    // TODO(sms): Integrate real SMS/email OTP delivery here. Academic
-    // project - OTP is logged to console instead of being sent for real.
+    const emailResult = await sendOtpEmail(email, otpCode);
+    if (!emailResult.success) {
+      console.error(`[OTP] Failed to email ${email}, falling back to console log:`, emailResult.error);
+    }
+    // Dev-convenience fallback: always log too, in case RESEND_API_KEY isn't configured locally
     console.log(`\n=== OTP CODE FOR ${email} ===\n${otpCode}\n(Expires at ${otpExpiresAt.toISOString()})\n=========================================\n`);
 
     return { email, otpExpiresAt };
@@ -68,7 +72,10 @@ const resendOtp = async (email) => {
 
     await upsertOtpVerification(pending.email, pending.phone, pending.password_hash, pending.role, otpCode, otpExpiresAt, pending.profile_data);
 
-    // TODO(sms): Integrate real SMS/email OTP delivery here.
+    const emailResult = await sendOtpEmail(email, otpCode);
+    if (!emailResult.success) {
+      console.error(`[OTP] Failed to email ${email}, falling back to console log:`, emailResult.error);
+    }
     console.log(`\n=== RESENT OTP CODE FOR ${email} ===\n${otpCode}\n(Expires at ${otpExpiresAt.toISOString()})\n=========================================\n`);
 
     return { email, otpExpiresAt };
@@ -166,7 +173,10 @@ const forgotPassword = async (email) => {
 
     await savePasswordResetToken(token, user.id, expiresAt);
 
-    // TODO(email): Integrate Resend email service here.
+    const emailResult = await sendPasswordResetEmail(email, token);
+    if (!emailResult.success) {
+      console.error(`[PasswordReset] Failed to email ${email}, falling back to console log:`, emailResult.error);
+    }
     console.log(`\n=== PASSWORD RESET TOKEN FOR ${email} ===\n${token}\n=========================================\n`);
 
     return { message: 'If an account exists for this email, a password reset link has been sent.' };
