@@ -32,7 +32,11 @@ const isProduction = process.env.NODE_ENV === 'production';
 const sessionMaxAge = parseInt(process.env.SESSION_MAX_AGE_MS, 10) || (1000 * 60 * 60 * 24);
 
 app.use(session({
-  store: new pgSession({ pool, tableName: 'session' }),
+  store: new pgSession({
+    pool,
+    tableName: 'session',
+    pruneSessionInterval: 60 * 15 // prune expired sessions every 15 minutes
+  }),
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
