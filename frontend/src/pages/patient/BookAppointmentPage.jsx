@@ -1,48 +1,63 @@
 /**
  * @file    BookAppointmentPage.jsx
  * @module  Patient
- * @desc    Patient UI for selecting an AI-suggested appointment slot.
+ * @desc    Patient UI for selecting an AI-suggested appointment slot, with reschedule support.
  * @author  Member 2 (S/21/081)
  */
 
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Calendar, Clock, User, CheckCircle2, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getDoctorProfile, getAvailableSlots } from '../../services/doctor.service';
-import { bookAppointment } from '../../services/appointment.service';
+import { bookAppointment, updateAppointmentStatus } from '../../services/appointment.service';
 
-// TEMPORARY: hardcoded test patient UUID until auth is integrated
 const TEST_PATIENT_ID = '006761d1-8279-440e-a786-a492df7abd53';
 
 export default function BookAppointmentPage() {
   const { doctorId } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  
+  const [searchParams] = useSearchParams();
+  const rescheduleId = searchParams.get('reschedule');
 
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [reason, setReason] = useState('');
 
-  // Fetch Doctor details
+  // STRICT CHECK: Is the ID missing or literally the word "undefined"?
+  const isInvalidId = !doctorId || doctorId === 'undefined';
+
   const { data: doctor, isLoading: isLoadingDoctor } = useQuery({
     queryKey: ['doctor', doctorId],
     queryFn: () => getDoctorProfile(doctorId),
+    enabled: !isInvalidId, // Don't run query if ID is broken
   });
 
-  // Fetch Next 3 Available Slots
   const { data: slots = [], isLoading: isLoadingSlots } = useQuery({
     queryKey: ['slots', doctorId],
     queryFn: () => getAvailableSlots(doctorId),
+    enabled: !isInvalidId,
   });
 
-  // Booking Mutation
   const bookMutation = useMutation({
     mutationFn: (appointmentData) => bookAppointment(appointmentData),
-    onSuccess: () => {
-      toast.success('Appointment booked successfully!');
-      // We will navigate to "My Appointments" in the next ticket. 
-      // For now, go back to the search page.
-      navigate('/patient/doctors'); 
+    onSuccess: async () => {
+      if (rescheduleId) {
+        try {
+          await updateAppointmentStatus(rescheduleId, 'cancelled');
+          toast.success('Appointment rescheduled successfully!');
+        } catch (error) {
+          console.error("Cancellation error:", error);
+          toast.error('Booked new time, but failed to cancel old appointment.');
+        }
+      } else {
+        toast.success('Appointment booked successfully!');
+      }
+      
+      await queryClient.invalidateQueries({ queryKey: ['patientAppointments'] });
+      navigate('/patient/appointments'); 
     },
     onError: (error) => {
       toast.error(error.response?.data?.message || 'Failed to book appointment');
@@ -51,16 +66,13 @@ export default function BookAppointmentPage() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!selectedSlot) {
-      toast.error('Please select an appointment slot');
-      return;
-    }
+    if (!selectedSlot) return toast.error('Please select an appointment slot');
     
     bookMutation.mutate({
       doctorId,
       patientId: TEST_PATIENT_ID,
       scheduledAt: selectedSlot,
-      type: 'opd', 
+      type: 'opd',
       notes: reason || 'Regular checkup'
     });
   };
@@ -72,6 +84,20 @@ export default function BookAppointmentPage() {
       hour: 'numeric', minute: '2-digit', hour12: true
     }).format(date);
   };
+
+  // IF INVALID URL: Show graceful fallback instead of crashing
+  if (isInvalidId) {
+    return (
+      <div className="max-w-3xl mx-auto p-10 text-center space-y-4 mt-10 bg-white rounded-xl shadow-sm border border-gray-100">
+        <AlertCircle className="h-16 w-16 text-red-500 mx-auto" />
+        <h1 className="text-2xl font-bold text-[#1E3A5F]">Invalid Doctor Link</h1>
+        <p className="text-gray-500">We couldn't identify the doctor for this booking.</p>
+        <button onClick={() => navigate('/patient/doctors')} className="mt-4 px-6 py-2 bg-[#2E75B6] text-white rounded-lg hover:bg-[#1E3A5F]">
+          Return to Doctor Search
+        </button>
+      </div>
+    );
+  }
 
   if (isLoadingDoctor || isLoadingSlots) {
     return (
@@ -95,14 +121,14 @@ export default function BookAppointmentPage() {
 
   return (
     <div className="max-w-3xl mx-auto p-6 space-y-8">
-      {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-[#1E3A5F]">Book Appointment</h1>
+        <h1 className="text-2xl font-bold text-[#1E3A5F]">
+          {rescheduleId ? 'Reschedule Appointment' : 'Book Appointment'}
+        </h1>
         <p className="text-gray-500 mt-1">Select an available slot below to confirm your booking.</p>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        {/* Doctor Info Card */}
         <div className="p-6 bg-gray-50 border-b border-gray-100 flex items-center gap-4">
           <div className="bg-[#EBF5FF] p-4 rounded-full text-[#2E75B6]">
             <User className="h-8 w-8" />
@@ -114,9 +140,7 @@ export default function BookAppointmentPage() {
           </div>
         </div>
 
-        {/* Booking Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Smart Slot Selection */}
           <div>
             <label className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
               <Calendar className="h-4 w-4 text-[#2E75B6]" />
@@ -154,7 +178,6 @@ export default function BookAppointmentPage() {
             )}
           </div>
 
-          {/* Reason Input */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Reason for Visit (Optional)</label>
             <input
@@ -167,14 +190,13 @@ export default function BookAppointmentPage() {
             />
           </div>
 
-          {/* Submit Button */}
           <div className="pt-4 border-t border-gray-100">
             <button
               type="submit"
               disabled={!selectedSlot || bookMutation.isPending || slots.length === 0}
               className="w-full py-3 bg-[#2E75B6] hover:bg-[#1E3A5F] text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {bookMutation.isPending ? 'Booking...' : 'Confirm Appointment'}
+              {bookMutation.isPending ? 'Booking...' : (rescheduleId ? 'Confirm Reschedule' : 'Confirm Appointment')}
             </button>
           </div>
         </form>
