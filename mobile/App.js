@@ -45,7 +45,7 @@ export default function App() {
   
   // Used to overlay screens that don't belong to the bottom tabs
   const [overlayScreen, setOverlayScreen] = useState(null); 
-  const [bookingDoctorId, setBookingDoctorId] = useState(null);
+  const [bookingParams, setBookingParams] = useState({}); // Holds both doctorId & rescheduleId
 
   const handleLogout = async () => {
     setUser(null);
@@ -58,14 +58,14 @@ export default function App() {
     // If navigating to a main bottom tab, clear overlays
     if (TABS.some(t => t.key === screenName)) {
       setOverlayScreen(null);
-      setBookingDoctorId(null);
+      setBookingParams({});
       setActiveTab(screenName);
       return;
     }
 
     // Handle specific overlays
     if (screenName === 'BookAppointment') {
-      setBookingDoctorId(params.doctorId);
+      setBookingParams(params);
       setOverlayScreen('BookAppointment');
     } else {
       // For records, prescriptions, etc. (launched from Home screen)
@@ -107,7 +107,13 @@ export default function App() {
 
       <View style={styles.screen}>
         {/* OVERLAYS (Hide bottom tabs) */}
-        {overlayScreen === 'BookAppointment' && <BookAppointmentScreen doctorId={bookingDoctorId} navigate={manualNavigate} />}
+        {overlayScreen === 'BookAppointment' && (
+          <BookAppointmentScreen 
+            doctorId={bookingParams.doctorId} 
+            rescheduleId={bookingParams.rescheduleId} 
+            navigate={manualNavigate} 
+          />
+        )}
         {overlayScreen === 'records' && <MedicalRecordsScreen />}
         {overlayScreen === 'prescriptions' && <PrescriptionsScreen />}
         {overlayScreen === 'labreports' && <LabReportsScreen />}

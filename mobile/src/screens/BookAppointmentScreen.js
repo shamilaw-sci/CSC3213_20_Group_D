@@ -2,27 +2,16 @@
  * @file    BookAppointmentScreen.js
  * @module  Patient
  * @desc    Mobile screen for selecting an available slot and booking an appointment.
- * @author  Member 2 (S/21/081)
  */
 
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  ActivityIndicator, 
-  StyleSheet,
-  ScrollView,
-  Alert
-} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet, ScrollView, Alert } from 'react-native';
 import { getDoctorProfile, getAvailableSlots } from '../services/doctor.service';
-import { bookAppointment } from '../services/appointment.service';
+import { bookAppointment, updateAppointmentStatus } from '../services/appointment.service';
 
 const TEST_PATIENT_ID = '006761d1-8279-440e-a786-a492df7abd53';
 
-// FIXED: Accepting doctorId directly from App.js, and our custom navigate function
-export default function BookAppointmentScreen({ doctorId, navigate }) {
+export default function BookAppointmentScreen({ doctorId, rescheduleId, navigate }) {
   const [doctor, setDoctor] = useState(null);
   const [slots, setSlots] = useState([]);
   const [selectedSlot, setSelectedSlot] = useState(null);
@@ -34,7 +23,7 @@ export default function BookAppointmentScreen({ doctorId, navigate }) {
   useEffect(() => {
     if (!doctorId) {
       Alert.alert('Error', 'Invalid Doctor ID.');
-      navigate('DoctorSearch'); // Go back to search
+      navigate('search'); // FIXED: Resolves to proper Search Tab to prevent blank screen
       return;
     }
     
@@ -49,7 +38,6 @@ export default function BookAppointmentScreen({ doctorId, navigate }) {
         setSlots(slotsData || []);
       } catch (error) {
         Alert.alert('Error', 'Failed to load booking details.');
-        console.error('Fetch booking data error:', error);
       } finally {
         setIsLoading(false);
       }
@@ -66,6 +54,7 @@ export default function BookAppointmentScreen({ doctorId, navigate }) {
 
     setIsBooking(true);
     try {
+      // 1. Book the new appointment slot
       await bookAppointment({
         doctorId,
         patientId: TEST_PATIENT_ID,
@@ -74,10 +63,19 @@ export default function BookAppointmentScreen({ doctorId, navigate }) {
         notes: reason || 'Regular checkup'
       });
       
+      // 2. If rescheduling, explicitly cancel the old one
+      if (rescheduleId) {
+        try {
+          await updateAppointmentStatus(rescheduleId, 'cancelled');
+        } catch (cancelError) {
+          console.log("Failed to cancel old appointment:", cancelError);
+        }
+      }
+      
       Alert.alert(
         'Success', 
-        'Appointment booked successfully!',
-        [{ text: 'OK', onPress: () => navigate('MyAppointments') }] 
+        rescheduleId ? 'Appointment rescheduled successfully!' : 'Appointment booked successfully!',
+        [{ text: 'OK', onPress: () => navigate('appointments') }] // FIXED: Resolves to proper Appointments Tab
       );
     } catch (error) {
       Alert.alert('Booking Failed', error.response?.data?.message || 'Failed to book appointment');
@@ -107,7 +105,7 @@ export default function BookAppointmentScreen({ doctorId, navigate }) {
     return (
       <View style={styles.centerContent}>
         <Text style={styles.emptyTitle}>Doctor not found</Text>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigate('DoctorSearch')}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigate('search')}>
           <Text style={styles.backButtonText}>Return to Search</Text>
         </TouchableOpacity>
       </View>
@@ -118,7 +116,8 @@ export default function BookAppointmentScreen({ doctorId, navigate }) {
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
       
       <View style={styles.headerRow}>
-         <TouchableOpacity style={styles.backArrow} onPress={() => navigate('DoctorSearch')}>
+         {/* FIXED: Dynamic back button based on origin */}
+         <TouchableOpacity style={styles.backArrow} onPress={() => navigate(rescheduleId ? 'appointments' : 'search')}>
             <Text style={styles.backArrowText}>← Back</Text>
          </TouchableOpacity>
       </View>
@@ -135,7 +134,9 @@ export default function BookAppointmentScreen({ doctorId, navigate }) {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Suggested Available Slots</Text>
+        <Text style={styles.sectionTitle}>
+           {rescheduleId ? 'Select New Time Slot' : 'Suggested Available Slots'}
+        </Text>
         
         {slots.length === 0 ? (
           <View style={styles.emptyState}>
@@ -181,7 +182,9 @@ export default function BookAppointmentScreen({ doctorId, navigate }) {
         {isBooking ? (
           <ActivityIndicator color="#FFFFFF" />
         ) : (
-          <Text style={styles.confirmButtonText}>Confirm Appointment</Text>
+          <Text style={styles.confirmButtonText}>
+            {rescheduleId ? 'Confirm Reschedule' : 'Confirm Appointment'}
+          </Text>
         )}
       </TouchableOpacity>
     </ScrollView>

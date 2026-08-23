@@ -2,19 +2,10 @@
  * @file    MyAppointmentsScreen.js
  * @module  Patient
  * @desc    Mobile dashboard for managing appointments (cancel/reschedule).
- * @author  Member 2 (S/21/081)
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  View, 
-  Text, 
-  FlatList, 
-  TouchableOpacity, 
-  ActivityIndicator, 
-  StyleSheet,
-  Alert
-} from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import { getPatientAppointments, updateAppointmentStatus } from '../services/appointment.service';
 
 const TEST_PATIENT_ID = '006761d1-8279-440e-a786-a492df7abd53';
@@ -30,13 +21,11 @@ export default function MyAppointmentsScreen({ navigate }) {
       setAppointments(data || []);
     } catch (error) {
       Alert.alert('Error', 'Failed to load appointments');
-      console.error(error);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // Fetch when the component mounts
   useEffect(() => {
     fetchAppointments();
   }, [fetchAppointments]);
@@ -54,7 +43,7 @@ export default function MyAppointmentsScreen({ navigate }) {
             try {
               await updateAppointmentStatus(appointmentId, 'cancelled');
               Alert.alert('Success', 'Appointment cancelled.');
-              fetchAppointments(); // Refresh the list
+              fetchAppointments(); 
             } catch (error) {
               Alert.alert('Error', 'Failed to cancel appointment.');
             }
@@ -74,15 +63,14 @@ export default function MyAppointmentsScreen({ navigate }) {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'scheduled': return { bg: '#DBEAFE', text: '#1E40AF' }; // Blue
-      case 'completed': return { bg: '#D1FAE5', text: '#065F46' }; // Green
-      case 'cancelled': return { bg: '#FEE2E2', text: '#991B1B' }; // Red
-      case 'in_progress': return { bg: '#FEF3C7', text: '#92400E' }; // Yellow
-      default: return { bg: '#F3F4F6', text: '#374151' }; // Gray
+      case 'scheduled': return { bg: '#DBEAFE', text: '#1E40AF' }; 
+      case 'completed': return { bg: '#D1FAE5', text: '#065F46' }; 
+      case 'cancelled': return { bg: '#FEE2E2', text: '#991B1B' }; 
+      case 'in_progress': return { bg: '#FEF3C7', text: '#92400E' }; 
+      default: return { bg: '#F3F4F6', text: '#374151' }; 
     }
   };
 
-  // Smart sorting: Active first, cancelled last
   const sortedAppointments = [...appointments].sort((a, b) => {
     const priority = { 'in_progress': 1, 'scheduled': 2, 'completed': 3, 'cancelled': 4 };
     const pA = priority[a.status] || 5;
@@ -97,8 +85,6 @@ export default function MyAppointmentsScreen({ navigate }) {
 
     return (
       <View style={[styles.card, isCancelled && styles.cardCancelled]}>
-        
-        {/* Header Row */}
         <View style={styles.cardHeader}>
           <View style={styles.doctorInfo}>
             <Text style={[styles.doctorName, isCancelled && styles.textCancelled]}>
@@ -113,13 +99,11 @@ export default function MyAppointmentsScreen({ navigate }) {
           </View>
         </View>
 
-        {/* Details Row */}
         <View style={styles.detailsRow}>
           <Text style={styles.detailsText}>🗓 {formatDateTime(item.scheduled_at)}</Text>
           <Text style={styles.detailsText}>📋 {item.type.toUpperCase()}</Text>
         </View>
 
-        {/* Actions Row */}
         {item.status === 'scheduled' && (
           <View style={styles.actionRow}>
             <TouchableOpacity 
@@ -127,12 +111,11 @@ export default function MyAppointmentsScreen({ navigate }) {
               onPress={() => {
                 const targetId = item.doctor_id || item.doctorId || item.doctor?.id;
                 if (!targetId) {
-                  Alert.alert('Error', 'Missing doctor ID. Please book a new appointment.');
+                  Alert.alert('Error', 'Missing doctor ID.');
                   return;
                 }
-                // HACK: To support reschedule on mobile without URL params, we just cancel it 
-                // implicitly when they confirm the new one, but for now we just navigate to book.
-                navigate('BookAppointment', { doctorId: targetId });
+                // FIXED: Now we pass rescheduleId exactly like the web platform!
+                navigate('BookAppointment', { doctorId: targetId, rescheduleId: item.id });
               }}
             >
               <Text style={styles.rescheduleText}>Reschedule</Text>
@@ -167,7 +150,7 @@ export default function MyAppointmentsScreen({ navigate }) {
           <Text style={styles.emptyTitle}>No appointments found</Text>
           <TouchableOpacity 
             style={styles.findDoctorButton} 
-            onPress={() => navigate('DoctorSearch')}
+            onPress={() => navigate('search')} 
           >
             <Text style={styles.findDoctorButtonText}>Find a Doctor</Text>
           </TouchableOpacity>
