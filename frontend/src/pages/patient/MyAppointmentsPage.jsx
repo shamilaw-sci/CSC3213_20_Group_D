@@ -2,7 +2,7 @@
  * @file    MyAppointmentsPage.jsx
  * @module  Patient
  * @desc    Dashboard view for a patient to manage their appointments.
- * @author  Member 2 (S/21/081)
+ * @author  Wasana Karunanayaka (S/21/081)
  */
 
 import React, { useMemo } from 'react';
@@ -148,9 +148,9 @@ export default function MyAppointmentsPage() {
                   <>
                     <button
                       onClick={() => {
+                        // SAFE FALLBACK: Grab the ID whether it's snake_case or camelCase
                         const targetId = apt.doctor_id || apt.doctorId;
                         
-                        // STRICT VALIDATION
                         if (!targetId || String(targetId) === 'undefined') {
                           toast.error("Database error: Doctor ID missing. Please book a new appointment.");
                           return; 
