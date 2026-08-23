@@ -118,7 +118,7 @@ export default function BookAppointmentPage() {
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Smart Slot Selection */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
               <Calendar className="h-4 w-4 text-[#2E75B6]" />
               Suggested Available Slots
             </label>

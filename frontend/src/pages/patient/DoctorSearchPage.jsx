@@ -135,7 +135,7 @@ export default function DoctorSearchPage() {
                   
                   <div className="mt-6 space-y-3">
                     <div className="flex items-center gap-3 text-sm text-gray-600">
-                      <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                      <MapPin className="h-4 w-4 text-gray-400 shrink-0" />
                       <span className="truncate">{doctor.hospital_name || 'Independent Clinic'}</span>
                     </div>
                     {doctor.qualifications && (
