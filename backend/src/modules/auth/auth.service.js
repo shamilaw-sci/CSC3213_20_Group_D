@@ -143,6 +143,10 @@ const login = async (email, password) => {
         throw new Error('Invalid email or password');
     }
 
+    if (user.verification_status === 'pending') {
+        throw new Error('Account pending admin approval');
+    }
+
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
         await incrementFailedLoginAttempts(user.id, MAX_FAILED_LOGIN_ATTEMPTS, LOCKOUT_MINUTES);

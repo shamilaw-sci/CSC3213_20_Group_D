@@ -29,10 +29,10 @@ const registerController = async (req, res) => {
         }
 
         //Validate role
-        if (!['patient','doctor'].includes(role)){
+        if (!['patient','doctor','pharmacist','lab_technician','hospital_staff'].includes(role)){
             return res.status(400).json({
                 success: false,
-                message:'Role must be patient or doctor'
+                message:'Role must be patient, doctor, pharmacist, lab_technician, or hospital_staff'
             });
         }
 
@@ -270,6 +270,13 @@ const loginController = async (req, res) => {
     }
 
     if (error.message === 'Account is deactivated. Please contact admin.') {
+      return res.status(403).json({
+        success: false,
+        message: error.message
+      });
+    }
+
+        if (error.message === 'Account pending admin approval') {
       return res.status(403).json({
         success: false,
         message: error.message

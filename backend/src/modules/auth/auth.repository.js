@@ -19,11 +19,14 @@ const { pool } = require('../../config/db');
  */
 
 const createUser = async (email, phone, passwordHash, role) =>{
+    const requiresApproval = ['pharmacist', 'lab_technician', 'hospital_staff'].includes(role);
+    const verificationStatus = requiresApproval ? 'pending' : 'approved';
+
     const result = await pool.query (
-        `INSERT INTO users (email, phone, password_hash, role, is_verified)
-         VALUES ($1, $2, $3, $4, true)
-         RETURNING id, email, phone, role, is_verified, is_active, created_at`,
-        [email, phone, passwordHash, role]
+        `INSERT INTO users (email, phone, password_hash, role, is_verified, verification_status)
+         VALUES ($1, $2, $3, $4, true, $5)
+         RETURNING id, email, phone, role, is_verified, is_active, verification_status, created_at`,
+        [email, phone, passwordHash, role, verificationStatus]
     );
     return result.rows[0]
 };
