@@ -1,11 +1,10 @@
 /**
  * @file    doctor.service.js
  * @module  Services
- * @desc    Minimal frontend service for the Doctor module (mobile).
- *          Currently only supports viewing the logged-in doctor's own
- *          profile - full doctor dashboard is a separate, larger piece
- *          of work outside this scope.
+ * @desc    Frontend service for the Doctor module (mobile).
+ *          Supports doctor profile viewing, doctor search, and slot availability.
  * @author  I.M.L.S. Idirisinghe (S/21/389)
+ * @author  Wasana Karunanayaka (S/21/081)
  */
 
 import api from './api';
@@ -17,5 +16,25 @@ import api from './api';
  */
 export const getDoctorProfile = async (doctorId) => {
   const response = await api.get(`/api/doctors/${doctorId}`);
+  return response.data.data;
+};
+
+/**
+ * Searches for doctors based on specialty and hospital.
+ * @param {Object} params - { specialty, hospitalName }
+ * @returns {Promise<Array>} List of doctors
+ */
+export const searchDoctors = async (params) => {
+  const response = await api.get('/api/doctors/search', { params });
+  return response.data.data;
+};
+
+/**
+ * Gets available appointment slots for a doctor.
+ * @param {string} doctorId - UUID of the doctor
+ * @returns {Promise<Array>} List of available slot datetime strings
+ */
+export const getAvailableSlots = async (doctorId) => {
+  const response = await api.get(`/api/doctors/${doctorId}/slots`);
   return response.data.data;
 };
