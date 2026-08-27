@@ -1,0 +1,64 @@
+/**
+ * @file admin.service.js
+ * @module admin
+ * @desc Business logic for admin approval of pending user registrations.
+ */
+
+const { sendRejectionEmail } = require('../../utils/email');
+const { findPendingUsers, findUserById, approveUser, rejectUser } = require('./admin.repository');
+
+/**
+ * Gets all users currently pending admin approval.
+ * @returns {Promise<Array>} List of pending users
+ */
+const getPendingUsers = async () => {
+    return await findPendingUsers();
+};
+
+/**
+ * Approves a pending user's registration.
+ * @param {string} userId - UUID of the user to approve
+ * @returns {Promise<object>} Updated user row
+ */
+const approvePendingUser = async (userId) => {
+    const user = await findUserById(userId);
+
+    if (!user) {
+        throw new Error('User not found');
+    }
+
+    if (user.verification_status !== 'pending') {
+        throw new Error('User is not pending approval');
+    }
+
+    return await approveUser(userId);
+};
+
+/**
+ * Rejects a pending user's registration and emails them the reason.
+ * @param {string} userId - UUID of the user to reject
+ * @param {string} reason - Reason for rejection, shown to the applicant
+ * @returns {Promise<object>} Updated user row
+ */
+const rejectPendingUser = async (userId, reason) => {
+    const user = await findUserById(userId);
+
+    if (!user) {
+        throw new Error('User not found');
+    }
+
+    if (user.verification_status !== 'pending') {
+        throw new Error('User is not pending approval');
+    }
+
+    const updatedUser = await rejectUser(userId);
+
+    const emailResult = await sendRejectionEmail(user.email, reason);
+    if (!emailResult.success) {
+        console.error(`[AdminReject] Failed to email ${user.email}:`, emailResult.error);
+    }
+
+    return updatedUser;
+};
+
+module.exports = { getPendingUsers, approvePendingUser, rejectPendingUser };
