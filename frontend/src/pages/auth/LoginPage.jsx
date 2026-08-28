@@ -65,6 +65,8 @@ const LoginPage = () => {
           window.location.href = '/patient/profile';
         } else if (data.data.role === 'doctor') {
           window.location.href = '/doctor/dashboard';
+        } else if (data.data.role === 'admin') {
+          window.location.href = '/admin/approvals';
         } else {
           window.location.href = '/';
         }
