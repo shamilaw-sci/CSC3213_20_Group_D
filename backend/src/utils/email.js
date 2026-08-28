@@ -256,10 +256,58 @@ const sendPasswordResetEmail = async (toEmail, resetToken) => {
   }
 };
 
+/**
+ * Sends a notification that a registration application was rejected.
+ * @param {string} toEmail - Recipient email address
+ * @param {string} reason - Reason for rejection, provided by the admin
+ * @returns {Promise<Object>} Resend response
+ */
+const sendRejectionEmail = async (toEmail, reason) => {
+  try {
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [toEmail],
+      subject: `Your Care4U Registration Application`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #1E3A5F; padding: 24px; border-radius: 8px 8px 0 0;">
+            <h1 style="color: white; margin: 0; font-size: 24px;">Care4U</h1>
+            <p style="color: #93C5FD; margin: 4px 0 0 0; font-size: 14px;">Healthcare Ecosystem</p>
+          </div>
+          <div style="background-color: #F8FAFC; padding: 24px; border-radius: 0 0 8px 8px;">
+            <h2 style="color: #1E293B;">Registration Not Approved</h2>
+            <p style="color: #64748B;">We're sorry to inform you that your registration application could not be approved at this time.</p>
+            <div style="background-color: #fee2e2; border-left: 4px solid #dc2626; padding: 16px; border-radius: 4px; margin: 16px 0;">
+              <p style="color: #991b1b; margin: 0;"><strong>Reason:</strong></p>
+              <p style="color: #991b1b; margin: 8px 0 0 0;">${reason}</p>
+            </div>
+            <p style="color: #64748B;">If you believe this was a mistake or have questions, please contact Care4U administration.</p>
+            <p style="color: #64748B; font-size: 12px; margin-top: 24px;">
+              This is an automated notification from Care4U. Please do not reply to this email.
+            </p>
+          </div>
+        </div>
+      `,
+    });
+
+    if (error) {
+      console.error('[Email] Error sending rejection email:', error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+
+  } catch (err) {
+    console.error('sendRejectionEmail error:', err);
+    return { success: false, error: err.message };
+  }
+};
+
 module.exports = {
   sendLabReportNotification,
   sendAppointmentReminder,
   sendEmergencyAccessAlert,
   sendOtpEmail,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  sendRejectionEmail
 };

@@ -147,6 +147,10 @@ const login = async (email, password) => {
         throw new Error('Account pending admin approval');
     }
 
+    if (user.verification_status === 'rejected') {
+        throw new Error('Account registration was not approved');
+    }
+
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
         await incrementFailedLoginAttempts(user.id, MAX_FAILED_LOGIN_ATTEMPTS, LOCKOUT_MINUTES);
