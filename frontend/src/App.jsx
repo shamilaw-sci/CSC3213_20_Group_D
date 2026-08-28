@@ -26,6 +26,7 @@ import PaymentHistoryPage from './pages/patient/PaymentHistoryPage';
 import PatientQRLookupPage from './pages/pharmacy/PatientQRLookupPage';
 import OrderTrackerPage    from './pages/patient/OrderTrackerPage';
 import LabReportsPage from './pages/patient/LabReportsPage';
+import AdminApprovalsPage from './pages/admin/AdminApprovalsPage';
 
 function App() {
   return (
@@ -66,6 +67,10 @@ function App() {
         <Route path="/pharmacy/patient-lookup"  element={<PatientQRLookupPage />} />
         <Route path="/patient/orders"           element={<OrderTrackerPage />} /> 
         <Route path="/patient/payments" element={<PaymentHistoryPage />} />
+
+        {/* Admin routes */}
+        <Route path="/admin/approvals" element={<AdminApprovalsPage />} />
+
         {/* Other members will add their routes here */}
       </Routes>
     </BrowserRouter>
