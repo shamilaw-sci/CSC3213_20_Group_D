@@ -31,6 +31,71 @@ const getPendingUsersController = async (req, res) => {
 };
 
 /**
+ * Static RBAC matrix, manually maintained from the actual authorize()
+ * calls across the codebase (see each module's *.routes.js). This is a
+ * transparency/demo view, not a live scan - if a route's authorize()
+ * call changes, this list must be updated to match.
+ * Last verified against codebase: see CARE4U-251.
+ */
+const RBAC_MATRIX = [
+    {
+        resourceGroup: 'Admin (all /api/admin/* routes)',
+        allowedRoles: ['admin'],
+        notes: 'Approval center, account management, RBAC panel'
+    },
+    {
+        resourceGroup: 'Emergency — SOS Trigger',
+        allowedRoles: ['patient'],
+        notes: null
+    },
+    {
+        resourceGroup: 'Emergency — Access Logs',
+        allowedRoles: ['doctor', 'emergency', 'admin'],
+        notes: "'emergency' role is defined in code but not currently assigned to any real account"
+    },
+    {
+        resourceGroup: 'Emergency — Patient Snapshot',
+        allowedRoles: ['doctor', 'emergency', 'admin'],
+        notes: "'emergency' role is defined in code but not currently assigned to any real account"
+    },
+    {
+        resourceGroup: 'Emergency — Active Alerts',
+        allowedRoles: ['doctor', 'emergency', 'admin'],
+        notes: "'emergency' role is defined in code but not currently assigned to any real account"
+    },
+    {
+        resourceGroup: 'Emergency — Resolve Alert',
+        allowedRoles: ['doctor', 'emergency', 'admin'],
+        notes: "'emergency' role is defined in code but not currently assigned to any real account"
+    },
+    {
+        resourceGroup: 'Auth — Register/Login/Forgot Password',
+        allowedRoles: ['public'],
+        notes: 'No authentication required by design'
+    },
+    {
+        resourceGroup: 'Patients, Doctors, Appointments, Prescriptions, Pharmacies, Laboratories, Orders, Interactions',
+        allowedRoles: ['any authenticated user'],
+        notes: 'Requires login, but no role-specific restriction currently enforced'
+    }
+];
+
+/**
+ * Handles GET /api/admin/rbac-matrix
+ * Returns a static, manually-maintained matrix of which roles can access
+ * which resource groups, based on the codebase's actual authorize() calls.
+ * @param {object} req - Express request
+ * @param {object} res - Express response
+ */
+const getRbacMatrixController = (req, res) => {
+    return res.status(200).json({
+        success: true,
+        message: 'RBAC matrix retrieved successfully',
+        data: RBAC_MATRIX
+    });
+};
+
+/**
  * Handles GET /api/admin/users
  * Supports optional query params: search, role, status ('active'/'inactive')
  * @param {object} req - Express request
@@ -166,4 +231,4 @@ const rejectUserController = async (req, res) => {
     }
 };
 
-module.exports = { getPendingUsersController, approveUserController, rejectUserController, getAllUsersController, toggleActiveController };
+module.exports = { getPendingUsersController, approveUserController, rejectUserController, getAllUsersController, toggleActiveController, getRbacMatrixController };

@@ -14,7 +14,8 @@ const {
     approveUserController,
     rejectUserController,
     getAllUsersController,
-    toggleActiveController
+    toggleActiveController,
+    getRbacMatrixController
 } = require('./admin.controller');
 
 router.get('/pending-users', isAuthenticated, authorize('admin'), getPendingUsersController);
@@ -22,5 +23,6 @@ router.post('/users/:id/approve', isAuthenticated, authorize('admin'), approveUs
 router.post('/users/:id/reject', isAuthenticated, authorize('admin'), rejectUserController);
 router.get('/users', isAuthenticated, authorize('admin'), getAllUsersController);
 router.post('/users/:id/toggle-active', isAuthenticated, authorize('admin'), toggleActiveController);
+router.get('/rbac-matrix', isAuthenticated, authorize('admin'), getRbacMatrixController);
 
 module.exports = router;
