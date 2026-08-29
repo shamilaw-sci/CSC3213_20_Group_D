@@ -5,6 +5,7 @@
  * @author I.M.L.S. Idirisinghe (S/21/389)
  */
 
+const { pool } = require('../config/db');
 /**
  * Checks if the user is logged in via session.
  * Blocks request with 401 if no session exists.
@@ -12,14 +13,39 @@
  * @param {Object} res - Express response
  * @param {Function} next - Next middleware
  */
-const isAuthenticated = (req, res, next) => {
-  if (req.session && req.session.user) {
-    return next();
+const isAuthenticated = async (req, res, next) => {
+  if (!req.session || !req.session.user) {
+    return res.status(401).json({
+      success: false,
+      message: 'Not authenticated. Please log in.'
+    });
   }
-  return res.status(401).json({
-    success: false,
-    message: 'Not authenticated. Please log in.'
-  });
+
+  try {
+    const result = await pool.query(
+      `SELECT is_active FROM users WHERE id = $1`,
+      [req.session.user.id]
+    );
+
+    const user = result.rows[0];
+
+    if (!user || !user.is_active) {
+      req.session.destroy(() => {});
+      return res.status(403).json({
+        success: false,
+        message: 'Account is deactivated. Please contact admin.'
+      });
+    }
+
+    return next();
+
+  } catch (error) {
+    console.error('isAuthenticated middleware error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
 };
 
 /**

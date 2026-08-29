@@ -4,7 +4,7 @@
  * @desc Handles HTTP requests and responses for admin approval actions.
  */
 
-const { getPendingUsers, approvePendingUser, rejectPendingUser } = require('./admin.service');
+const { getPendingUsers, approvePendingUser, rejectPendingUser, getAllUsers, toggleActive } = require('./admin.service');
 
 /**
  * Handles GET /api/admin/pending-users
@@ -23,6 +23,64 @@ const getPendingUsersController = async (req, res) => {
 
     } catch (error) {
         console.error('getPendingUsersController error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+/**
+ * Handles GET /api/admin/users
+ * Supports optional query params: search, role, status ('active'/'inactive')
+ * @param {object} req - Express request
+ * @param {object} res - Express response
+ */
+const getAllUsersController = async (req, res) => {
+    try {
+        const { search, role, status } = req.query;
+
+        const users = await getAllUsers({ search, role, status });
+
+        return res.status(200).json({
+            success: true,
+            message: 'Users retrieved successfully',
+            data: users
+        });
+
+    } catch (error) {
+        console.error('getAllUsersController error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+/**
+ * Handles POST /api/admin/users/:id/toggle-active
+ * @param {object} req - Express request
+ * @param {object} res - Express response
+ */
+const toggleActiveController = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const user = await toggleActive(id);
+
+        return res.status(200).json({
+            success: true,
+            message: `User ${user.is_active ? 'activated' : 'deactivated'} successfully`,
+            data: user
+        });
+
+    } catch (error) {
+        console.error('toggleActiveController error:', error);
+
+        if (error.message === 'User not found') {
+            return res.status(404).json({ success: false, message: error.message });
+        }
+
         return res.status(500).json({
             success: false,
             message: 'Internal server error'
@@ -108,4 +166,4 @@ const rejectUserController = async (req, res) => {
     }
 };
 
-module.exports = { getPendingUsersController, approveUserController, rejectUserController };
+module.exports = { getPendingUsersController, approveUserController, rejectUserController, getAllUsersController, toggleActiveController };

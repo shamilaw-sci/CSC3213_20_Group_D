@@ -5,7 +5,7 @@
  */
 
 const { sendRejectionEmail } = require('../../utils/email');
-const { findPendingUsers, findUserById, approveUser, rejectUser } = require('./admin.repository');
+const { findPendingUsers, findUserById, approveUser, rejectUser, findAllUsers, toggleUserActive } = require('./admin.repository');
 
 /**
  * Gets all users currently pending admin approval.
@@ -13,6 +13,30 @@ const { findPendingUsers, findUserById, approveUser, rejectUser } = require('./a
  */
 const getPendingUsers = async () => {
     return await findPendingUsers();
+};
+
+/**
+ * Gets all users, optionally filtered by search term, role, or active status.
+ * @param {object} filters - Optional filters (search, role, status)
+ * @returns {Promise<Array>} List of matching users
+ */
+const getAllUsers = async (filters) => {
+    return await findAllUsers(filters);
+};
+
+/**
+ * Toggles a user's active status (activate/deactivate).
+ * @param {string} userId - UUID of the user to toggle
+ * @returns {Promise<object>} Updated user row
+ */
+const toggleActive = async (userId) => {
+    const user = await findUserById(userId);
+
+    if (!user) {
+        throw new Error('User not found');
+    }
+
+    return await toggleUserActive(userId);
 };
 
 /**
@@ -61,4 +85,4 @@ const rejectPendingUser = async (userId, reason) => {
     return updatedUser;
 };
 
-module.exports = { getPendingUsers, approvePendingUser, rejectPendingUser };
+module.exports = { getPendingUsers, approvePendingUser, rejectPendingUser, getAllUsers, toggleActive };

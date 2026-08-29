@@ -12,11 +12,15 @@ const { isAuthenticated, authorize } = require('../../middleware/auth');
 const {
     getPendingUsersController,
     approveUserController,
-    rejectUserController
+    rejectUserController,
+    getAllUsersController,
+    toggleActiveController
 } = require('./admin.controller');
 
 router.get('/pending-users', isAuthenticated, authorize('admin'), getPendingUsersController);
 router.post('/users/:id/approve', isAuthenticated, authorize('admin'), approveUserController);
 router.post('/users/:id/reject', isAuthenticated, authorize('admin'), rejectUserController);
+router.get('/users', isAuthenticated, authorize('admin'), getAllUsersController);
+router.post('/users/:id/toggle-active', isAuthenticated, authorize('admin'), toggleActiveController);
 
 module.exports = router;
