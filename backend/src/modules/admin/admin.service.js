@@ -5,7 +5,7 @@
  */
 
 const { sendRejectionEmail } = require('../../utils/email');
-const { findPendingUsers, findUserById, approveUser, rejectUser, findAllUsers, toggleUserActive } = require('./admin.repository');
+const { findPendingUsers, findUserById, approveUser, rejectUser, findAllUsers, toggleUserActive, findAuditLogs, findDistinctAuditActions } = require('./admin.repository');
 
 /**
  * Gets all users currently pending admin approval.
@@ -22,6 +22,24 @@ const getPendingUsers = async () => {
  */
 const getAllUsers = async (filters) => {
     return await findAllUsers(filters);
+};
+
+/**
+ * Gets paginated, filtered audit log entries.
+ * @param {object} filters - Optional filters (email, action, startDate, endDate, page, pageSize)
+ * @returns {Promise<object>} { rows, totalCount }
+ */
+const getAuditLogs = async (filters) => {
+    return await findAuditLogs(filters);
+};
+
+/**
+ * Gets all distinct action types currently present in the audit log,
+ * for populating a filter dropdown.
+ * @returns {Promise<Array<string>>} List of distinct action strings
+ */
+const getDistinctAuditActions = async () => {
+    return await findDistinctAuditActions();
 };
 
 /**
@@ -85,4 +103,4 @@ const rejectPendingUser = async (userId, reason) => {
     return updatedUser;
 };
 
-module.exports = { getPendingUsers, approvePendingUser, rejectPendingUser, getAllUsers, toggleActive };
+module.exports = { getPendingUsers, approvePendingUser, rejectPendingUser, getAllUsers, toggleActive, getAuditLogs, getDistinctAuditActions };

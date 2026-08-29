@@ -4,7 +4,7 @@
  * @desc Handles HTTP requests and responses for admin approval actions.
  */
 
-const { getPendingUsers, approvePendingUser, rejectPendingUser, getAllUsers, toggleActive } = require('./admin.service');
+const { getPendingUsers, approvePendingUser, rejectPendingUser, getAllUsers, toggleActive, getAuditLogs, getDistinctAuditActions } = require('./admin.service');
 
 /**
  * Handles GET /api/admin/pending-users
@@ -93,6 +93,70 @@ const getRbacMatrixController = (req, res) => {
         message: 'RBAC matrix retrieved successfully',
         data: RBAC_MATRIX
     });
+};
+
+/**
+ * Handles GET /api/admin/audit-logs
+ * Supports optional query params: email, action, startDate, endDate, page, pageSize
+ * @param {object} req - Express request
+ * @param {object} res - Express response
+ */
+const getAuditLogsController = async (req, res) => {
+    try {
+        const { email, action, startDate, endDate, page, pageSize } = req.query;
+
+        const result = await getAuditLogs({
+            email,
+            action,
+            startDate,
+            endDate,
+            page: page ? parseInt(page, 10) : undefined,
+            pageSize: pageSize ? parseInt(pageSize, 10) : undefined
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: 'Audit logs retrieved successfully',
+            data: result.rows,
+            pagination: {
+                totalCount: result.totalCount,
+                page: page ? parseInt(page, 10) : 1,
+                pageSize: pageSize ? parseInt(pageSize, 10) : 25
+            }
+        });
+
+    } catch (error) {
+        console.error('getAuditLogsController error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+/**
+ * Handles GET /api/admin/audit-logs/actions
+ * Returns the distinct list of action types for the filter dropdown.
+ * @param {object} req - Express request
+ * @param {object} res - Express response
+ */
+const getDistinctAuditActionsController = async (req, res) => {
+    try {
+        const actions = await getDistinctAuditActions();
+
+        return res.status(200).json({
+            success: true,
+            message: 'Distinct actions retrieved successfully',
+            data: actions
+        });
+
+    } catch (error) {
+        console.error('getDistinctAuditActionsController error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
 };
 
 /**
@@ -231,4 +295,4 @@ const rejectUserController = async (req, res) => {
     }
 };
 
-module.exports = { getPendingUsersController, approveUserController, rejectUserController, getAllUsersController, toggleActiveController, getRbacMatrixController };
+module.exports = { getPendingUsersController, approveUserController, rejectUserController, getAllUsersController, toggleActiveController, getRbacMatrixController, getAuditLogsController, getDistinctAuditActionsController };
