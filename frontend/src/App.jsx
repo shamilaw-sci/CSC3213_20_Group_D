@@ -28,6 +28,7 @@ import OrderTrackerPage    from './pages/patient/OrderTrackerPage';
 import LabReportsPage from './pages/patient/LabReportsPage';
 import AdminApprovalsPage from './pages/admin/AdminApprovalsPage';
 import AdminAccountManagementPage from './pages/admin/AdminAccountManagementPage';
+import AdminRbacPanelPage from './pages/admin/AdminRbacPanelPage';
 
 function App() {
   return (
@@ -72,6 +73,7 @@ function App() {
         {/* Admin routes */}
         <Route path="/admin/approvals" element={<AdminApprovalsPage />} />
         <Route path="/admin/accounts" element={<AdminAccountManagementPage />} />
+        <Route path="/admin/rbac" element={<AdminRbacPanelPage />} />
 
         {/* Other members will add their routes here */}
       </Routes>
