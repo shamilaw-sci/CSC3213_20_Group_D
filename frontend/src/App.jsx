@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
 import PatientLayout          from './components/layout/PatientLayout';
+import AdminLayout            from './components/layout/AdminLayout';
 import PatientProfilePage     from './pages/patient/PatientProfilePage';
 import MedicalRecordsPage     from './pages/patient/MedicalRecordsPage';
 import PrescriptionsPage      from './pages/patient/PrescriptionsPage';
@@ -51,7 +52,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password"  element={<ResetPasswordPage />} />
         <Route path="/verify-otp"      element={<OtpVerificationPage />} />
-        
+
         {/* Patient QR lookup — no sidebar, doctor-facing read-only view */}
         <Route path="/lookup/:qrCodeId" element={<PatientLookupPage />} />
 
@@ -78,16 +79,18 @@ function App() {
         <Route path="/patient/orders"           element={<OrderTrackerPage />} /> 
         <Route path="/patient/payments" element={<PaymentHistoryPage />} />
 
-        {/* Admin routes */}
-        <Route path="/admin/approvals" element={<AdminApprovalsPage />} />
-        <Route path="/admin/accounts" element={<AdminAccountManagementPage />} />
-        <Route path="/admin/rbac" element={<AdminRbacPanelPage />} />
-        <Route path="/admin/audit-log" element={<AdminAuditLogPage />} />
-        <Route path="/admin/health-content" element={<AdminHealthContentPage />} />
-        <Route path="/admin/emergency-oversight" element={<AdminEmergencyOversightPage />} />
-        <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
-        <Route path="/admin/qr-reissue" element={<AdminQrReissuePage />} />
-        <Route path="/admin/settings" element={<AdminSystemSettingsPage />} />
+        {/* Admin pages — all share the AdminSidebar layout */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route path="approvals" element={<AdminApprovalsPage />} />
+          <Route path="accounts" element={<AdminAccountManagementPage />} />
+          <Route path="rbac" element={<AdminRbacPanelPage />} />
+          <Route path="audit-log" element={<AdminAuditLogPage />} />
+          <Route path="health-content" element={<AdminHealthContentPage />} />
+          <Route path="emergency-oversight" element={<AdminEmergencyOversightPage />} />
+          <Route path="analytics" element={<AdminAnalyticsPage />} />
+          <Route path="qr-reissue" element={<AdminQrReissuePage />} />
+          <Route path="settings" element={<AdminSystemSettingsPage />} />
+        </Route>
                 
         {/* Other members will add their routes here */}
       </Routes>
