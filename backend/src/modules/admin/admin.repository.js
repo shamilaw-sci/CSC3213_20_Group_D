@@ -256,6 +256,33 @@ const reissuePatientQr = async (patientId, newQrCodeId) => {
 };
 
 /**
+ * Retrieves all system settings.
+ * @returns {Promise<Array>} List of setting rows
+ */
+const findAllSettings = async () => {
+    const result = await pool.query(
+        `SELECT key, value, description, updated_at FROM system_settings ORDER BY key ASC`
+    );
+    return result.rows;
+};
+
+/**
+ * Updates a single system setting's value by key.
+ * @param {string} key - The setting's key
+ * @param {string} value - The new value
+ * @returns {Promise<object|null>} Updated setting row, or null if key doesn't exist
+ */
+const updateSetting = async (key, value) => {
+    const result = await pool.query(
+        `UPDATE system_settings SET value = $2, updated_at = NOW()
+         WHERE key = $1
+         RETURNING key, value, description, updated_at`,
+        [key, value]
+    );
+    return result.rows[0] || null;
+};
+
+/**
  * Approves a pending user, setting verification_status to 'approved'.
  * @param {string} userId - UUID of the user
  * @returns {Promise<object>} Updated user row
@@ -283,4 +310,4 @@ const rejectUser = async (userId) => {
     return result.rows[0];
 };
 
-module.exports = { findPendingUsers, findUserById, approveUser, rejectUser, findAllUsers, toggleUserActive, findAuditLogs, findDistinctAuditActions, findEmergencyAccessLogs, findAnalyticsSummary, searchPatients, reissuePatientQr };
+module.exports = { findPendingUsers, findUserById, approveUser, rejectUser, findAllUsers, toggleUserActive, findAuditLogs, findDistinctAuditActions, findEmergencyAccessLogs, findAnalyticsSummary, searchPatients, reissuePatientQr, findAllSettings, updateSetting };

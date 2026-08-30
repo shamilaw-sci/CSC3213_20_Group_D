@@ -7,7 +7,7 @@
 const { sendRejectionEmail } = require('../../utils/email');
 const { generatePatientQR } = require('../../utils/qr');
 const { pool } = require('../../config/db');
-const { findPendingUsers, findUserById, approveUser, rejectUser, findAllUsers, toggleUserActive, findAuditLogs, findDistinctAuditActions, findEmergencyAccessLogs, findAnalyticsSummary, searchPatients, reissuePatientQr } = require('./admin.repository');
+const { findPendingUsers, findUserById, approveUser, rejectUser, findAllUsers, toggleUserActive, findAuditLogs, findDistinctAuditActions, findEmergencyAccessLogs, findAnalyticsSummary, searchPatients, reissuePatientQr, findAllSettings, updateSetting } = require('./admin.repository');
 
 /**
  * Gets all users currently pending admin approval.
@@ -97,6 +97,30 @@ const reissueQrCode = async (patientId, adminUserId) => {
 };
 
 /**
+ * Gets all system settings.
+ * @returns {Promise<Array>} List of settings
+ */
+const getAllSettings = async () => {
+    return await findAllSettings();
+};
+
+/**
+ * Updates a single system setting's value.
+ * @param {string} key - The setting's key
+ * @param {string} value - The new value
+ * @returns {Promise<object>} Updated setting
+ */
+const updateSystemSetting = async (key, value) => {
+    const updated = await updateSetting(key, value);
+
+    if (!updated) {
+        throw new Error('Setting not found');
+    }
+
+    return updated;
+};
+
+/**
  * Toggles a user's active status (activate/deactivate).
  * @param {string} userId - UUID of the user to toggle
  * @returns {Promise<object>} Updated user row
@@ -157,4 +181,4 @@ const rejectPendingUser = async (userId, reason) => {
     return updatedUser;
 };
 
-module.exports = { getPendingUsers, approvePendingUser, rejectPendingUser, getAllUsers, toggleActive, getAuditLogs, getDistinctAuditActions, getEmergencyAccessLogs, getAnalyticsSummary, findPatients, reissueQrCode };
+module.exports = { getPendingUsers, approvePendingUser, rejectPendingUser, getAllUsers, toggleActive, getAuditLogs, getDistinctAuditActions, getEmergencyAccessLogs, getAnalyticsSummary, findPatients, reissueQrCode, getAllSettings, updateSystemSetting };

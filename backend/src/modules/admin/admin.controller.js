@@ -4,7 +4,7 @@
  * @desc Handles HTTP requests and responses for admin approval actions.
  */
 
-const { getPendingUsers, approvePendingUser, rejectPendingUser, getAllUsers, toggleActive, getAuditLogs, getDistinctAuditActions, getEmergencyAccessLogs, getAnalyticsSummary, findPatients, reissueQrCode } = require('./admin.service');
+const { getPendingUsers, approvePendingUser, rejectPendingUser, getAllUsers, toggleActive, getAuditLogs, getDistinctAuditActions, getEmergencyAccessLogs, getAnalyticsSummary, findPatients, reissueQrCode, getAllSettings, updateSystemSetting } = require('./admin.service');
 
 /**
  * Handles GET /api/admin/pending-users
@@ -271,6 +271,69 @@ const reissueQrCodeController = async (req, res) => {
 };
 
 /**
+ * Handles GET /api/admin/settings
+ * @param {object} req - Express request
+ * @param {object} res - Express response
+ */
+const getAllSettingsController = async (req, res) => {
+    try {
+        const settings = await getAllSettings();
+
+        return res.status(200).json({
+            success: true,
+            message: 'Settings retrieved successfully',
+            data: settings
+        });
+
+    } catch (error) {
+        console.error('getAllSettingsController error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+/**
+ * Handles PUT /api/admin/settings/:key
+ * @param {object} req - Express request
+ * @param {object} res - Express response
+ */
+const updateSettingController = async (req, res) => {
+    try {
+        const { key } = req.params;
+        const { value } = req.body;
+
+        if (value === undefined || value === null || value === '') {
+            return res.status(400).json({
+                success: false,
+                message: 'Value is required'
+            });
+        }
+
+        const updated = await updateSystemSetting(key, value);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Setting updated successfully',
+            data: updated
+        });
+
+    } catch (error) {
+        console.error('updateSettingController error:', error);
+
+        if (error.message === 'Setting not found') {
+            return res.status(404).json({ success: false, message: error.message });
+        }
+
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+/**
  * Handles GET /api/admin/users
  * Supports optional query params: search, role, status ('active'/'inactive')
  * @param {object} req - Express request
@@ -406,4 +469,4 @@ const rejectUserController = async (req, res) => {
     }
 };
 
-module.exports = { getPendingUsersController, approveUserController, rejectUserController, getAllUsersController, toggleActiveController, getRbacMatrixController, getAuditLogsController, getDistinctAuditActionsController, getEmergencyAccessLogsController, getAnalyticsSummaryController, searchPatientsController, reissueQrCodeController };
+module.exports = { getPendingUsersController, approveUserController, rejectUserController, getAllUsersController, toggleActiveController, getRbacMatrixController, getAuditLogsController, getDistinctAuditActionsController, getEmergencyAccessLogsController, getAnalyticsSummaryController, searchPatientsController, reissueQrCodeController, getAllSettingsController, updateSettingController };

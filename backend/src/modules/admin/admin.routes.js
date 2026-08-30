@@ -21,7 +21,9 @@ const {
     getEmergencyAccessLogsController,
     getAnalyticsSummaryController,
     searchPatientsController,
-    reissueQrCodeController
+    reissueQrCodeController,
+    getAllSettingsController,
+    updateSettingController
 } = require('./admin.controller');
 
 router.get('/pending-users', isAuthenticated, authorize('admin'), getPendingUsersController);
@@ -36,5 +38,7 @@ router.get('/emergency-access-logs', isAuthenticated, authorize('admin'), getEme
 router.get('/analytics', isAuthenticated, authorize('admin'), getAnalyticsSummaryController);
 router.get('/patients/search', isAuthenticated, authorize('admin'), searchPatientsController);
 router.post('/patients/:patientId/reissue-qr', isAuthenticated, authorize('admin'), reissueQrCodeController);
+router.get('/settings', isAuthenticated, authorize('admin'), getAllSettingsController);
+router.put('/settings/:key', isAuthenticated, authorize('admin'), updateSettingController);
 
 module.exports = router;
