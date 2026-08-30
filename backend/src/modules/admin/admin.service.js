@@ -5,7 +5,7 @@
  */
 
 const { sendRejectionEmail } = require('../../utils/email');
-const { findPendingUsers, findUserById, approveUser, rejectUser, findAllUsers, toggleUserActive, findAuditLogs, findDistinctAuditActions } = require('./admin.repository');
+const { findPendingUsers, findUserById, approveUser, rejectUser, findAllUsers, toggleUserActive, findAuditLogs, findDistinctAuditActions, findEmergencyAccessLogs } = require('./admin.repository');
 
 /**
  * Gets all users currently pending admin approval.
@@ -40,6 +40,14 @@ const getAuditLogs = async (filters) => {
  */
 const getDistinctAuditActions = async () => {
     return await findDistinctAuditActions();
+};
+
+/**
+ * Gets all Break-the-Glass emergency access log entries.
+ * @returns {Promise<Array>} List of emergency access logs
+ */
+const getEmergencyAccessLogs = async () => {
+    return await findEmergencyAccessLogs();
 };
 
 /**
@@ -103,4 +111,4 @@ const rejectPendingUser = async (userId, reason) => {
     return updatedUser;
 };
 
-module.exports = { getPendingUsers, approvePendingUser, rejectPendingUser, getAllUsers, toggleActive, getAuditLogs, getDistinctAuditActions };
+module.exports = { getPendingUsers, approvePendingUser, rejectPendingUser, getAllUsers, toggleActive, getAuditLogs, getDistinctAuditActions, getEmergencyAccessLogs };

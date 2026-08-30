@@ -176,6 +176,25 @@ const findDistinctAuditActions = async () => {
 };
 
 /**
+ * Retrieves all Break-the-Glass emergency access log entries, joined
+ * with users (for the accessing staff member's email/role) and patients
+ * (for the patient's name), ordered most recent first.
+ * @returns {Promise<Array>} List of emergency access log rows
+ */
+const findEmergencyAccessLogs = async () => {
+    const result = await pool.query(
+        `SELECT eal.id, eal.reason, eal.created_at,
+                eal.accessed_by, staff.email AS staff_email, eal.user_role,
+                eal.patient_id, p.full_name AS patient_name
+         FROM emergency_access_logs eal
+         LEFT JOIN users staff ON eal.accessed_by = staff.id
+         LEFT JOIN patients p ON eal.patient_id = p.id
+         ORDER BY eal.created_at DESC`
+    );
+    return result.rows;
+};
+
+/**
  * Approves a pending user, setting verification_status to 'approved'.
  * @param {string} userId - UUID of the user
  * @returns {Promise<object>} Updated user row
@@ -203,4 +222,4 @@ const rejectUser = async (userId) => {
     return result.rows[0];
 };
 
-module.exports = { findPendingUsers, findUserById, approveUser, rejectUser, findAllUsers, toggleUserActive, findAuditLogs, findDistinctAuditActions };
+module.exports = { findPendingUsers, findUserById, approveUser, rejectUser, findAllUsers, toggleUserActive, findAuditLogs, findDistinctAuditActions, findEmergencyAccessLogs };

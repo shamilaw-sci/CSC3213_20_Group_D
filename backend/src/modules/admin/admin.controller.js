@@ -4,7 +4,7 @@
  * @desc Handles HTTP requests and responses for admin approval actions.
  */
 
-const { getPendingUsers, approvePendingUser, rejectPendingUser, getAllUsers, toggleActive, getAuditLogs, getDistinctAuditActions } = require('./admin.service');
+const { getPendingUsers, approvePendingUser, rejectPendingUser, getAllUsers, toggleActive, getAuditLogs, getDistinctAuditActions, getEmergencyAccessLogs } = require('./admin.service');
 
 /**
  * Handles GET /api/admin/pending-users
@@ -160,6 +160,32 @@ const getDistinctAuditActionsController = async (req, res) => {
 };
 
 /**
+ * Handles GET /api/admin/emergency-access-logs
+ * Returns all Break-the-Glass emergency access events, with staff and
+ * patient info resolved for readability.
+ * @param {object} req - Express request
+ * @param {object} res - Express response
+ */
+const getEmergencyAccessLogsController = async (req, res) => {
+    try {
+        const logs = await getEmergencyAccessLogs();
+
+        return res.status(200).json({
+            success: true,
+            message: 'Emergency access logs retrieved successfully',
+            data: logs
+        });
+
+    } catch (error) {
+        console.error('getEmergencyAccessLogsController error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+/**
  * Handles GET /api/admin/users
  * Supports optional query params: search, role, status ('active'/'inactive')
  * @param {object} req - Express request
@@ -295,4 +321,4 @@ const rejectUserController = async (req, res) => {
     }
 };
 
-module.exports = { getPendingUsersController, approveUserController, rejectUserController, getAllUsersController, toggleActiveController, getRbacMatrixController, getAuditLogsController, getDistinctAuditActionsController };
+module.exports = { getPendingUsersController, approveUserController, rejectUserController, getAllUsersController, toggleActiveController, getRbacMatrixController, getAuditLogsController, getDistinctAuditActionsController, getEmergencyAccessLogsController };
