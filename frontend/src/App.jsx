@@ -33,6 +33,7 @@ import AdminAuditLogPage from './pages/admin/AdminAuditLogPage';
 import AdminHealthContentPage from './pages/admin/AdminHealthContentPage';
 import AdminEmergencyOversightPage from './pages/admin/AdminEmergencyOversightPage';
 import AdminAnalyticsPage from './pages/admin/AdminAnalyticsPage';
+import AdminQrReissuePage from './pages/admin/AdminQrReissuePage';
 
 function App() {
   return (
@@ -82,7 +83,8 @@ function App() {
         <Route path="/admin/health-content" element={<AdminHealthContentPage />} />
         <Route path="/admin/emergency-oversight" element={<AdminEmergencyOversightPage />} />
         <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
-        
+        <Route path="/admin/qr-reissue" element={<AdminQrReissuePage />} />
+                
         {/* Other members will add their routes here */}
       </Routes>
     </BrowserRouter>
