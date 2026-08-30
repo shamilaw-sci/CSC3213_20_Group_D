@@ -34,6 +34,7 @@ import AdminHealthContentPage from './pages/admin/AdminHealthContentPage';
 import AdminEmergencyOversightPage from './pages/admin/AdminEmergencyOversightPage';
 import AdminAnalyticsPage from './pages/admin/AdminAnalyticsPage';
 import AdminQrReissuePage from './pages/admin/AdminQrReissuePage';
+import AdminSystemSettingsPage from './pages/admin/AdminSystemSettingsPage';
 
 function App() {
   return (
@@ -84,6 +85,7 @@ function App() {
         <Route path="/admin/emergency-oversight" element={<AdminEmergencyOversightPage />} />
         <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
         <Route path="/admin/qr-reissue" element={<AdminQrReissuePage />} />
+        <Route path="/admin/settings" element={<AdminSystemSettingsPage />} />
                 
         {/* Other members will add their routes here */}
       </Routes>
