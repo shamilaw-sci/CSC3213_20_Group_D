@@ -90,4 +90,15 @@ app.use('/api/interactions', interactionRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/admin/health-content', healthContentRoutes);
 
+// Global error handler - catches anything that escapes individual route
+// try/catch blocks (e.g. errors thrown in middleware itself). Always
+// returns a generic message, never the raw error, regardless of NODE_ENV.
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({
+    success: false,
+    message: 'Internal server error'
+  });
+});
+
 module.exports = app;
