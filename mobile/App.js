@@ -102,6 +102,29 @@ export default function App() {
     );
   }
 
+  // Pharmacist, lab_technician, and hospital_staff have no dedicated
+  // mobile screens yet - show an honest placeholder instead of silently
+  // falling back to PatientProfileScreen's hardcoded test patient, which
+  // was misleadingly showing an unrelated patient's data.
+  if (user.role !== 'patient') {
+    return (
+      <View style={styles.root}>
+        <View style={styles.topBar}>
+          <Text style={styles.topBarTitle}>Care4U</Text>
+          <TouchableOpacity onPress={handleLogout}>
+            <Text style={styles.logoutText}>🔓 Logout</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={[styles.screen, styles.centeredMessage]}>
+          <Text style={styles.placeholderText}>
+            The mobile app doesn't have a dashboard for your role ({user.role}) yet.
+            Please use the web app for now.
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.root}>
 
@@ -176,6 +199,17 @@ const styles = StyleSheet.create({
   },
   screen: {
     flex: 1,
+  },
+  centeredMessage: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  placeholderText: {
+    fontSize: 14,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 20,
   },
   tabBar: {
     flexDirection:   'row',
