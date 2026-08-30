@@ -32,6 +32,7 @@ import AdminRbacPanelPage from './pages/admin/AdminRbacPanelPage';
 import AdminAuditLogPage from './pages/admin/AdminAuditLogPage';
 import AdminHealthContentPage from './pages/admin/AdminHealthContentPage';
 import AdminEmergencyOversightPage from './pages/admin/AdminEmergencyOversightPage';
+import AdminAnalyticsPage from './pages/admin/AdminAnalyticsPage';
 
 function App() {
   return (
@@ -80,6 +81,7 @@ function App() {
         <Route path="/admin/audit-log" element={<AdminAuditLogPage />} />
         <Route path="/admin/health-content" element={<AdminHealthContentPage />} />
         <Route path="/admin/emergency-oversight" element={<AdminEmergencyOversightPage />} />
+        <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
         
         {/* Other members will add their routes here */}
       </Routes>
