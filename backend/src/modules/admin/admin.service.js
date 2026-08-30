@@ -5,7 +5,9 @@
  */
 
 const { sendRejectionEmail } = require('../../utils/email');
-const { findPendingUsers, findUserById, approveUser, rejectUser, findAllUsers, toggleUserActive, findAuditLogs, findDistinctAuditActions, findEmergencyAccessLogs, findAnalyticsSummary } = require('./admin.repository');
+const { generatePatientQR } = require('../../utils/qr');
+const { pool } = require('../../config/db');
+const { findPendingUsers, findUserById, approveUser, rejectUser, findAllUsers, toggleUserActive, findAuditLogs, findDistinctAuditActions, findEmergencyAccessLogs, findAnalyticsSummary, searchPatients, reissuePatientQr } = require('./admin.repository');
 
 /**
  * Gets all users currently pending admin approval.
@@ -56,6 +58,42 @@ const getEmergencyAccessLogs = async () => {
  */
 const getAnalyticsSummary = async () => {
     return await findAnalyticsSummary();
+};
+
+/**
+ * Searches for patients by name or NIC.
+ * @param {string} search - Search term
+ * @returns {Promise<Array>} List of matching patients
+ */
+const findPatients = async (search) => {
+    if (!search) {
+        return [];
+    }
+    return await searchPatients(search);
+};
+
+/**
+ * Deactivates a patient's current QR code and issues a fresh one,
+ * writing an audit log entry for the action.
+ * @param {string} patientId - UUID of the patient
+ * @param {string} adminUserId - UUID of the admin performing the action
+ * @returns {Promise<object>} Updated patient row with new qr_code_id
+ */
+const reissueQrCode = async (patientId, adminUserId) => {
+    const newQrCodeId = generatePatientQR();
+    const updatedPatient = await reissuePatientQr(patientId, newQrCodeId);
+
+    if (!updatedPatient) {
+        throw new Error('Patient not found');
+    }
+
+    await pool.query(
+        `INSERT INTO audit_logs (user_id, action, entity_type, entity_id, details)
+         VALUES ($1, 'REISSUE_PATIENT_QR', 'patient', $2, $3)`,
+        [adminUserId, patientId, JSON.stringify({ newQrCodeId })]
+    );
+
+    return updatedPatient;
 };
 
 /**
@@ -119,4 +157,4 @@ const rejectPendingUser = async (userId, reason) => {
     return updatedUser;
 };
 
-module.exports = { getPendingUsers, approvePendingUser, rejectPendingUser, getAllUsers, toggleActive, getAuditLogs, getDistinctAuditActions, getEmergencyAccessLogs, getAnalyticsSummary };
+module.exports = { getPendingUsers, approvePendingUser, rejectPendingUser, getAllUsers, toggleActive, getAuditLogs, getDistinctAuditActions, getEmergencyAccessLogs, getAnalyticsSummary, findPatients, reissueQrCode };

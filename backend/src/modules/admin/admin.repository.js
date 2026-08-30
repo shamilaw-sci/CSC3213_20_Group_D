@@ -221,6 +221,41 @@ const findAnalyticsSummary = async () => {
 };
 
 /**
+ * Searches for patients by name or NIC, for the admin QR reissue screen.
+ * @param {string} search - Matches against full_name or nic
+ * @returns {Promise<Array>} List of matching patient rows
+ */
+const searchPatients = async (search) => {
+    const result = await pool.query(
+        `SELECT id, full_name, nic, qr_code_id
+         FROM patients
+         WHERE full_name ILIKE $1 OR nic ILIKE $1
+         ORDER BY full_name ASC
+         LIMIT 20`,
+        [`%${search}%`]
+    );
+    return result.rows;
+};
+
+/**
+ * Overwrites a patient's qr_code_id with a freshly generated value.
+ * The old QR code is not retained anywhere, so any lookup using it
+ * fails instantly (no matching row exists).
+ * @param {string} patientId - UUID of the patient
+ * @param {string} newQrCodeId - The newly generated QR code value
+ * @returns {Promise<object>} Updated patient row
+ */
+const reissuePatientQr = async (patientId, newQrCodeId) => {
+    const result = await pool.query(
+        `UPDATE patients SET qr_code_id = $2, updated_at = NOW()
+         WHERE id = $1
+         RETURNING id, full_name, qr_code_id`,
+        [patientId, newQrCodeId]
+    );
+    return result.rows[0];
+};
+
+/**
  * Approves a pending user, setting verification_status to 'approved'.
  * @param {string} userId - UUID of the user
  * @returns {Promise<object>} Updated user row
@@ -248,4 +283,4 @@ const rejectUser = async (userId) => {
     return result.rows[0];
 };
 
-module.exports = { findPendingUsers, findUserById, approveUser, rejectUser, findAllUsers, toggleUserActive, findAuditLogs, findDistinctAuditActions, findEmergencyAccessLogs, findAnalyticsSummary };
+module.exports = { findPendingUsers, findUserById, approveUser, rejectUser, findAllUsers, toggleUserActive, findAuditLogs, findDistinctAuditActions, findEmergencyAccessLogs, findAnalyticsSummary, searchPatients, reissuePatientQr };

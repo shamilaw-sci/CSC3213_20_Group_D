@@ -4,7 +4,7 @@
  * @desc Handles HTTP requests and responses for admin approval actions.
  */
 
-const { getPendingUsers, approvePendingUser, rejectPendingUser, getAllUsers, toggleActive, getAuditLogs, getDistinctAuditActions, getEmergencyAccessLogs, getAnalyticsSummary } = require('./admin.service');
+const { getPendingUsers, approvePendingUser, rejectPendingUser, getAllUsers, toggleActive, getAuditLogs, getDistinctAuditActions, getEmergencyAccessLogs, getAnalyticsSummary, findPatients, reissueQrCode } = require('./admin.service');
 
 /**
  * Handles GET /api/admin/pending-users
@@ -211,6 +211,66 @@ const getAnalyticsSummaryController = async (req, res) => {
 };
 
 /**
+ * Handles GET /api/admin/patients/search
+ * Supports ?search= query param
+ * @param {object} req - Express request
+ * @param {object} res - Express response
+ */
+const searchPatientsController = async (req, res) => {
+    try {
+        const { search } = req.query;
+        const patients = await findPatients(search);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Patients retrieved successfully',
+            data: patients
+        });
+
+    } catch (error) {
+        console.error('searchPatientsController error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+/**
+ * Handles POST /api/admin/patients/:patientId/reissue-qr
+ * Deactivates the patient's old QR (overwritten, so it fails lookup
+ * immediately) and assigns a fresh one. Audit-logged.
+ * @param {object} req - Express request
+ * @param {object} res - Express response
+ */
+const reissueQrCodeController = async (req, res) => {
+    try {
+        const { patientId } = req.params;
+        const adminUserId = req.session.user.id;
+
+        const updatedPatient = await reissueQrCode(patientId, adminUserId);
+
+        return res.status(200).json({
+            success: true,
+            message: 'QR code reissued successfully',
+            data: updatedPatient
+        });
+
+    } catch (error) {
+        console.error('reissueQrCodeController error:', error);
+
+        if (error.message === 'Patient not found') {
+            return res.status(404).json({ success: false, message: error.message });
+        }
+
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+/**
  * Handles GET /api/admin/users
  * Supports optional query params: search, role, status ('active'/'inactive')
  * @param {object} req - Express request
@@ -346,4 +406,4 @@ const rejectUserController = async (req, res) => {
     }
 };
 
-module.exports = { getPendingUsersController, approveUserController, rejectUserController, getAllUsersController, toggleActiveController, getRbacMatrixController, getAuditLogsController, getDistinctAuditActionsController, getEmergencyAccessLogsController, getAnalyticsSummaryController };
+module.exports = { getPendingUsersController, approveUserController, rejectUserController, getAllUsersController, toggleActiveController, getRbacMatrixController, getAuditLogsController, getDistinctAuditActionsController, getEmergencyAccessLogsController, getAnalyticsSummaryController, searchPatientsController, reissueQrCodeController };
