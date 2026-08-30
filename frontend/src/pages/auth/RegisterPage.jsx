@@ -5,10 +5,12 @@
  */
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Input  from '../../components/common/Input';
 import Button from '../../components/common/Button';
 
 const RegisterPage = () => {
+  const navigate = useNavigate();
   const [step, setStep] = useState(1); // Step 1: Basic info, Step 2: Role info
 
   const [formData, setFormData] = useState({
@@ -20,6 +22,7 @@ const RegisterPage = () => {
     // Patient fields
     fullName: '',
     nic: '',
+    dateOfBirth: '',
     // Doctor fields
     slmcRegNumber: '',
     specialization: '',
@@ -62,6 +65,9 @@ const RegisterPage = () => {
     if (formData.role === 'patient' && !formData.nic) {
       newErrors.nic = 'NIC is required for patients';
     }
+    if (formData.role === 'patient' && !formData.dateOfBirth) {
+      newErrors.dateOfBirth = 'Date of birth is required for patients';
+    }
     if (formData.role === 'doctor') {
       if (!formData.slmcRegNumber)  newErrors.slmcRegNumber  = 'SLMC number is required';
       if (!formData.specialization) newErrors.specialization = 'Specialization is required';
@@ -92,7 +98,7 @@ const RegisterPage = () => {
 
     try {
       const profileData = formData.role === 'patient'
-        ? { fullName: formData.fullName, nic: formData.nic }
+        ? { fullName: formData.fullName, nic: formData.nic, dateOfBirth: formData.dateOfBirth }
         : { fullName: formData.fullName, slmcRegNumber: formData.slmcRegNumber, specialization: formData.specialization };
 
       const response = await fetch('http://localhost:5000/api/auth/register', {
@@ -111,8 +117,7 @@ const RegisterPage = () => {
       const data = await response.json();
 
       if (data.success) {
-        alert('Registration successful! Please login.');
-        window.location.href = '/login';
+        navigate('/verify-otp', { state: { email: formData.email } });
       }else {
         setServerError(data.message || 'Registration failed. Please try again.');
       }
@@ -250,16 +255,27 @@ const RegisterPage = () => {
               />
 
               {formData.role === 'patient' && (
-                <Input
-                  label="NIC Number"
-                  name="nic"
-                  type="text"
-                  value={formData.nic}
-                  onChange={handleChange}
-                  placeholder="e.g. 200012345678"
-                  error={errors.nic}
-                  required
-                />
+                <>
+                  <Input
+                    label="NIC Number"
+                    name="nic"
+                    type="text"
+                    value={formData.nic}
+                    onChange={handleChange}
+                    placeholder="e.g. 200012345678"
+                    error={errors.nic}
+                    required
+                  />
+                  <Input
+                    label="Date of Birth"
+                    name="dateOfBirth"
+                    type="date"
+                    value={formData.dateOfBirth}
+                    onChange={handleChange}
+                    error={errors.dateOfBirth}
+                    required
+                  />
+                </>
               )}
 
               {formData.role === 'doctor' && (
