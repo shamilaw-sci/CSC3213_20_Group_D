@@ -30,6 +30,7 @@ import AdminApprovalsPage from './pages/admin/AdminApprovalsPage';
 import AdminAccountManagementPage from './pages/admin/AdminAccountManagementPage';
 import AdminRbacPanelPage from './pages/admin/AdminRbacPanelPage';
 import AdminAuditLogPage from './pages/admin/AdminAuditLogPage';
+import AdminHealthContentPage from './pages/admin/AdminHealthContentPage';
 
 function App() {
   return (
@@ -76,6 +77,7 @@ function App() {
         <Route path="/admin/accounts" element={<AdminAccountManagementPage />} />
         <Route path="/admin/rbac" element={<AdminRbacPanelPage />} />
         <Route path="/admin/audit-log" element={<AdminAuditLogPage />} />
+        <Route path="/admin/health-content" element={<AdminHealthContentPage />} />
 
         {/* Other members will add their routes here */}
       </Routes>
