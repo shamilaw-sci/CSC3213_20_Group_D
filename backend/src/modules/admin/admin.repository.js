@@ -195,6 +195,32 @@ const findEmergencyAccessLogs = async () => {
 };
 
 /**
+ * Retrieves anonymized aggregate analytics counts. No per-patient or
+ * per-user identifiable data is returned - only totals, per the
+ * charter's "no personally identifiable data in analytics" rule.
+ * @returns {Promise<object>} { totalPatients, appointmentsThisMonth, prescriptionsIssued, emergencyOverrides }
+ */
+const findAnalyticsSummary = async () => {
+    const totalPatientsResult = await pool.query(`SELECT COUNT(*) FROM patients`);
+
+    const appointmentsThisMonthResult = await pool.query(
+        `SELECT COUNT(*) FROM appointments
+         WHERE date_trunc('month', scheduled_at) = date_trunc('month', CURRENT_DATE)`
+    );
+
+    const prescriptionsIssuedResult = await pool.query(`SELECT COUNT(*) FROM prescriptions`);
+
+    const emergencyOverridesResult = await pool.query(`SELECT COUNT(*) FROM emergency_access_logs`);
+
+    return {
+        totalPatients: parseInt(totalPatientsResult.rows[0].count, 10),
+        appointmentsThisMonth: parseInt(appointmentsThisMonthResult.rows[0].count, 10),
+        prescriptionsIssued: parseInt(prescriptionsIssuedResult.rows[0].count, 10),
+        emergencyOverrides: parseInt(emergencyOverridesResult.rows[0].count, 10)
+    };
+};
+
+/**
  * Approves a pending user, setting verification_status to 'approved'.
  * @param {string} userId - UUID of the user
  * @returns {Promise<object>} Updated user row
@@ -222,4 +248,4 @@ const rejectUser = async (userId) => {
     return result.rows[0];
 };
 
-module.exports = { findPendingUsers, findUserById, approveUser, rejectUser, findAllUsers, toggleUserActive, findAuditLogs, findDistinctAuditActions, findEmergencyAccessLogs };
+module.exports = { findPendingUsers, findUserById, approveUser, rejectUser, findAllUsers, toggleUserActive, findAuditLogs, findDistinctAuditActions, findEmergencyAccessLogs, findAnalyticsSummary };

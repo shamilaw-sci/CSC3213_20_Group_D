@@ -5,7 +5,7 @@
  */
 
 const { sendRejectionEmail } = require('../../utils/email');
-const { findPendingUsers, findUserById, approveUser, rejectUser, findAllUsers, toggleUserActive, findAuditLogs, findDistinctAuditActions, findEmergencyAccessLogs } = require('./admin.repository');
+const { findPendingUsers, findUserById, approveUser, rejectUser, findAllUsers, toggleUserActive, findAuditLogs, findDistinctAuditActions, findEmergencyAccessLogs, findAnalyticsSummary } = require('./admin.repository');
 
 /**
  * Gets all users currently pending admin approval.
@@ -48,6 +48,14 @@ const getDistinctAuditActions = async () => {
  */
 const getEmergencyAccessLogs = async () => {
     return await findEmergencyAccessLogs();
+};
+
+/**
+ * Gets anonymized aggregate analytics counts.
+ * @returns {Promise<object>} { totalPatients, appointmentsThisMonth, prescriptionsIssued, emergencyOverrides }
+ */
+const getAnalyticsSummary = async () => {
+    return await findAnalyticsSummary();
 };
 
 /**
@@ -111,4 +119,4 @@ const rejectPendingUser = async (userId, reason) => {
     return updatedUser;
 };
 
-module.exports = { getPendingUsers, approvePendingUser, rejectPendingUser, getAllUsers, toggleActive, getAuditLogs, getDistinctAuditActions, getEmergencyAccessLogs };
+module.exports = { getPendingUsers, approvePendingUser, rejectPendingUser, getAllUsers, toggleActive, getAuditLogs, getDistinctAuditActions, getEmergencyAccessLogs, getAnalyticsSummary };

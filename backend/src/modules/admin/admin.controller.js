@@ -4,7 +4,7 @@
  * @desc Handles HTTP requests and responses for admin approval actions.
  */
 
-const { getPendingUsers, approvePendingUser, rejectPendingUser, getAllUsers, toggleActive, getAuditLogs, getDistinctAuditActions, getEmergencyAccessLogs } = require('./admin.service');
+const { getPendingUsers, approvePendingUser, rejectPendingUser, getAllUsers, toggleActive, getAuditLogs, getDistinctAuditActions, getEmergencyAccessLogs, getAnalyticsSummary } = require('./admin.service');
 
 /**
  * Handles GET /api/admin/pending-users
@@ -186,6 +186,31 @@ const getEmergencyAccessLogsController = async (req, res) => {
 };
 
 /**
+ * Handles GET /api/admin/analytics
+ * Returns anonymized aggregate counts only - no per-patient breakdowns.
+ * @param {object} req - Express request
+ * @param {object} res - Express response
+ */
+const getAnalyticsSummaryController = async (req, res) => {
+    try {
+        const summary = await getAnalyticsSummary();
+
+        return res.status(200).json({
+            success: true,
+            message: 'Analytics summary retrieved successfully',
+            data: summary
+        });
+
+    } catch (error) {
+        console.error('getAnalyticsSummaryController error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+/**
  * Handles GET /api/admin/users
  * Supports optional query params: search, role, status ('active'/'inactive')
  * @param {object} req - Express request
@@ -321,4 +346,4 @@ const rejectUserController = async (req, res) => {
     }
 };
 
-module.exports = { getPendingUsersController, approveUserController, rejectUserController, getAllUsersController, toggleActiveController, getRbacMatrixController, getAuditLogsController, getDistinctAuditActionsController, getEmergencyAccessLogsController };
+module.exports = { getPendingUsersController, approveUserController, rejectUserController, getAllUsersController, toggleActiveController, getRbacMatrixController, getAuditLogsController, getDistinctAuditActionsController, getEmergencyAccessLogsController, getAnalyticsSummaryController };
