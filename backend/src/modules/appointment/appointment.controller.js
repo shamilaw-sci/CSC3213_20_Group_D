@@ -2,13 +2,16 @@
  * @file    appointment.controller.js
  * @module  Appointment
  * @desc    Request handlers for the Appointment module.
- * @author  Tharindu (S/21/166)
+ * @author  Tharindu (S/21/166) & Wasana Karunanayaka (S/21/081)
  */
 
 const appointmentRepository = require('./appointment.repository');
+const patientRepository = require('../patient/patient.repository');
+const doctorRepository = require('../doctor/doctor.repository');
 
 const { generateAIResponse } = require('../../utils/ai.util');
 const { logAudit } = require('../../middleware/auditLog');
+const { sendAppointmentConfirmation, sendAppointmentCancellation } = require('../../utils/email');
 
 const VALID_STATUSES = ['scheduled', 'confirmed', 'in_progress', 'completed', 'cancelled'];
 const summarizeSessionCounts = new Map();
@@ -42,6 +45,20 @@ const updateAppointmentStatusController = async (req, res) => {
     }
 
     const updated = await appointmentRepository.updateAppointmentStatus(id, status);
+
+    // --- NEW: SIMULATED EMAIL LOGIC ---
+    if (status === 'cancelled') {
+      try {
+        const patientData = await patientRepository.getPatientById(existing.patient_id);
+        if (patientData && patientData.email) {
+          sendAppointmentCancellation(patientData.email, patientData.full_name);
+          console.log(`[Email] Cancellation sent to ${patientData.email}`);
+        }
+      } catch (emailErr) {
+        console.error("[Email] Failed to send cancellation:", emailErr);
+      }
+    }
+    // ------------------------------------
 
     res.status(200).json({
       success: true,
@@ -200,11 +217,10 @@ Respond with JSON only.`;
  */
 const bookAppointmentController = async (req, res) => {
   try {
-    // FIXED: Using a valid PostgreSQL UUID format for the fallback demo user
     const currentUser = req.session?.user || { id: '006761d1-8279-440e-a786-a492df7abd53', role: 'patient' };
     let { patientId, doctorId, scheduledAt, type, notes } = req.body;
 
-    // Route logic based on role, explicitly prioritizing the session's profile_id
+    // Route logic based on role
     if (currentUser.role?.toLowerCase() === 'doctor') {
       if (!patientId) {
         return res.status(400).json({
@@ -214,7 +230,6 @@ const bookAppointmentController = async (req, res) => {
       }
       doctorId = currentUser.profile_id || doctorId || currentUser.id;
     } else {
-      // FIXED: Prioritize session profile_id, then frontend body, then fallback id
       patientId = currentUser.profile_id || patientId || currentUser.id;
     }
 
@@ -225,7 +240,6 @@ const bookAppointmentController = async (req, res) => {
       });
     }
 
-    // Check for conflicts
     const conflict = await appointmentRepository.checkAppointmentConflict(
       doctorId,
       scheduledAt
@@ -245,6 +259,28 @@ const bookAppointmentController = async (req, res) => {
       type,
       notes
     );
+
+    // --- NEW: SIMULATED EMAIL LOGIC ---
+    try {
+      const [patientData, doctorData] = await Promise.all([
+        patientRepository.getPatientById(patientId),
+        doctorRepository.getDoctorById(doctorId)
+      ]);
+      
+      if (patientData && patientData.email && doctorData) {
+        const formattedDate = new Intl.DateTimeFormat('en-US', {
+          weekday: 'short', month: 'short', day: 'numeric',
+          hour: 'numeric', minute: '2-digit', hour12: true
+        }).format(new Date(scheduledAt));
+        
+        // Asynchronous, fire-and-forget
+        sendAppointmentConfirmation(patientData.email, patientData.full_name, doctorData.full_name, formattedDate);
+        console.log(`[Email] Confirmation sent to ${patientData.email}`);
+      }
+    } catch (emailErr) {
+      console.error("[Email] Failed to send confirmation:", emailErr);
+    }
+    // ------------------------------------
 
     res.status(201).json({
       success: true,

@@ -2,8 +2,9 @@
  * @file    email.js
  * @module  Utils
  * @desc    Email sending utility using Resend.
- *          Used for lab report notifications, appointment reminders, and emergency alerts.
- * @author  Pamudika Abayarathna (S/21/001)
+ *          Used for lab report notifications, appointment reminders, emergency alerts,
+ *          and booking confirmations/cancellations.
+ * @author  Pamudika Abayarathna (S/21/001) & Wasana Karunanayaka (S/21/081)
  */
 
 const { Resend } = require('resend');
@@ -164,8 +165,92 @@ const sendEmergencyAccessAlert = async (toEmail, patientName, doctorName, reason
   }
 };
 
+/**
+ * Sends an appointment confirmation email.
+ * @param {string} toEmail         - Patient email
+ * @param {string} toName          - Patient name
+ * @param {string} doctorName      - Doctor name
+ * @param {string} appointmentDate - Formatted appointment date
+ * @returns {Promise<Object>} Resend response
+ */
+const sendAppointmentConfirmation = async (toEmail, toName, doctorName, appointmentDate) => {
+  try {
+    // TEMPORARY FIX FOR FREE RESEND ACCOUNT: Override destination to your registered email
+    const DEMO_EMAIL = 'wasanakarunanayaka2002@gmail.com';
+    
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [DEMO_EMAIL],
+      subject: `Appointment Confirmed — Care4U`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #1E3A5F; padding: 24px; border-radius: 8px 8px 0 0;">
+            <h1 style="color: white; margin: 0; font-size: 24px;">Care4U</h1>
+            <p style="color: #93C5FD; margin: 4px 0 0 0; font-size: 14px;">Healthcare Ecosystem</p>
+          </div>
+          <div style="background-color: #F8FAFC; padding: 24px; border-radius: 0 0 8px 8px;">
+            <h2 style="color: #1E293B;">Appointment Confirmed!</h2>
+            <p style="color: #64748B;">Dear ${toName},</p>
+            <p style="color: #64748B;">Your appointment has been successfully booked.</p>
+            <div style="background-color: #EBF3FB; border-left: 4px solid #2E75B6; padding: 16px; border-radius: 4px; margin: 16px 0;">
+              <p style="color: #1E293B; margin: 0;"><strong>Doctor:</strong> Dr. ${doctorName}</p>
+              <p style="color: #1E293B; margin: 8px 0 0 0;"><strong>Date & Time:</strong> ${appointmentDate}</p>
+            </div>
+            <p style="color: #64748B;">Please log in to your Care4U app to manage your visits.</p>
+          </div>
+        </div>
+      `,
+    });
+    if (error) console.error('Email send error:', error);
+    return { success: !error, data };
+  } catch (err) {
+    console.error('sendAppointmentConfirmation error:', err);
+    return { success: false, error: err.message };
+  }
+};
+
+/**
+ * Sends an appointment cancellation email.
+ * @param {string} toEmail - Patient email
+ * @param {string} toName  - Patient name
+ * @returns {Promise<Object>} Resend response
+ */
+const sendAppointmentCancellation = async (toEmail, toName) => {
+  try {
+    // TEMPORARY FIX FOR FREE RESEND ACCOUNT: Override destination to your registered email
+    const DEMO_EMAIL = 'wasanakarunanayaka2002@gmail.com';
+    
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [DEMO_EMAIL],
+      subject: `Appointment Cancelled — Care4U`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #dc2626; padding: 24px; border-radius: 8px 8px 0 0;">
+            <h1 style="color: white; margin: 0; font-size: 24px;">Care4U</h1>
+            <p style="color: #fca5a5; margin: 4px 0 0 0; font-size: 14px;">Healthcare Ecosystem</p>
+          </div>
+          <div style="background-color: #F8FAFC; padding: 24px; border-radius: 0 0 8px 8px;">
+            <h2 style="color: #1E293B;">Appointment Cancelled</h2>
+            <p style="color: #64748B;">Dear ${toName},</p>
+            <p style="color: #64748B;">As requested, your appointment has been successfully cancelled.</p>
+            <p style="color: #64748B; margin-top: 16px;">If you need to rebook, you can easily find another slot using the Care4U mobile app or website.</p>
+          </div>
+        </div>
+      `,
+    });
+    if (error) console.error('Email send error:', error);
+    return { success: !error, data };
+  } catch (err) {
+    console.error('sendAppointmentCancellation error:', err);
+    return { success: false, error: err.message };
+  }
+};
+
 module.exports = {
   sendLabReportNotification,
   sendAppointmentReminder,
-  sendEmergencyAccessAlert
+  sendEmergencyAccessAlert,
+  sendAppointmentConfirmation,
+  sendAppointmentCancellation
 };
