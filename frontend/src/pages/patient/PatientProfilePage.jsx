@@ -9,6 +9,7 @@
  * Chronic conditions management added in CARE4U-79.
  * Vaccination Records added in CARE4U-148.
  * AI Vaccination Bulk Card Scanning added in CARE4U-154.
+ * Smart Health Awareness Feed added in CARE4U-280 (Epic 8.13).
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -42,6 +43,7 @@ import Input from '../../components/common/Input';
 import Spinner from '../../components/common/Spinner';
 import Alert from '../../components/common/Alert';
 import Modal from '../../components/common/Modal'; 
+import HealthAwarenessFeed from '../../components/common/HealthAwarenessFeed';
 
 // ─── TEMPORARY: hardcoded test patient UUID until auth is integrated ──────────
 const TEST_PATIENT_ID = '006761d1-8279-440e-a786-a492df7abd53';
@@ -537,6 +539,9 @@ const PatientProfilePage = () => {
         {/* ── VIEW MODE ── */}
         {!isEditing && (
           <>
+            {/* ── Smart Health Feed Widget (CARE4U-280) ── */}
+            <HealthAwarenessFeed patientAllergies={allergies} />
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card title="Personal Information">
                 <div className="space-y-4">

@@ -2,13 +2,37 @@
  * @file    PatientHomeScreen.js
  * @module  Patient
  * @desc    Main landing dashboard with quick-access tiles to reduce tab clutter.
- * @author  Group D
+ *          Smart Health Awareness Feed added in CARE4U-280 (Epic 8.13).
+ * @author  Wasana Karunanayaka (S/21/081)
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import api from '../services/api';
+import HealthAwarenessFeed from '../components/HealthAwarenessFeed';
 
 export default function PatientHomeScreen({ navigate }) {
+  const [allergies, setAllergies] = useState([]);
+
+  useEffect(() => {
+    const fetchAllergies = async () => {
+      try {
+        // First get the logged-in user's profile ID
+        const userRes = await api.get('/api/auth/me');
+        const patientId = userRes.data?.data?.profile_id;
+        
+        // Then fetch their specific allergies for the smart filter
+        if (patientId) {
+          const allergyRes = await api.get(`/api/patients/${patientId}/allergies`);
+          setAllergies(allergyRes.data?.data || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch allergies for feed:', error);
+      }
+    };
+    fetchAllergies();
+  }, []);
+
   const QUICK_ACTIONS = [
     { id: 'records',       title: 'Medical Records', icon: '📁', color: '#DBEAFE', textColor: '#1E40AF' },
     { id: 'prescriptions', title: 'Prescriptions',   icon: '💊', color: '#D1FAE5', textColor: '#065F46' },
@@ -36,6 +60,9 @@ export default function PatientHomeScreen({ navigate }) {
         ))}
       </View>
 
+      {/* Smart Health Awareness Feed Widget */}
+      <HealthAwarenessFeed patientAllergies={allergies} />
+
       {/* Quick Action for Booking */}
       <TouchableOpacity style={styles.bookBanner} onPress={() => navigate('search')}>
         <View>
@@ -57,7 +84,7 @@ const styles = StyleSheet.create({
   tile: { width: '47%', padding: 20, borderRadius: 16, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2, marginBottom: 16 },
   tileIcon: { fontSize: 32, marginBottom: 12 },
   tileTitle: { fontSize: 14, fontWeight: 'bold', textAlign: 'center' },
-  bookBanner: { margin: 16, backgroundColor: '#1E3A5F', borderRadius: 12, padding: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  bookBanner: { margin: 16, marginTop: 8, backgroundColor: '#1E3A5F', borderRadius: 12, padding: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   bookBannerTitle: { color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' },
   bookBannerSub: { color: '#93C5FD', fontSize: 12, marginTop: 4 },
   bookBannerArrow: { color: '#FFFFFF', fontSize: 24, fontWeight: 'bold' }
