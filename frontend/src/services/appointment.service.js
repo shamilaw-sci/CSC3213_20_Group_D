@@ -2,23 +2,22 @@
  * @file    appointment.service.js
  * @module  Appointment
  * @desc    Frontend service for the Appointment module.
+ * @author  Member 2 (S/21/081)
  */
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+import api from './api';
 
 export const bookAppointment = async (appointmentData) => {
-  const response = await fetch(`${API_URL}/api/appointments`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    credentials: 'include',
-    body: JSON.stringify(appointmentData), // Added this line to send the data!
-  });
+  const response = await api.post('/api/appointments', appointmentData);
+  return response.data.data;
+};
 
-  const data = await response.json();
-  if (!data.success) {
-    throw new Error(data.message || 'Failed to book appointment');
-  }
-  return data.data;
+export const getPatientAppointments = async (patientId) => {
+  const response = await api.get(`/api/patients/${patientId}/appointments`);
+  return response.data.data;
+};
+
+export const updateAppointmentStatus = async (appointmentId, status) => {
+  const response = await api.put(`/api/appointments/${appointmentId}/status`, { status });
+  return response.data.data;
 };

@@ -496,6 +496,12 @@ const markLabReportAsRead = async (patientId, reportId) => {
   return updatedReport;
 };
 
+const getPatientAppointments = async (patientId) => {
+  return await patientRepository.getPatientAppointments(patientId);
+};
+
+
+
 module.exports = {
   getPatientProfile,
   updatePatientProfile,
@@ -517,4 +523,5 @@ module.exports = {
   extractVaccinationDataFromImage,
   getLabReports,
   markLabReportAsRead,
+  getPatientAppointments,
 };

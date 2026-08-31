@@ -143,6 +143,12 @@ const getDoctorDashboardStats = async (doctorId) => {
   };
 };
 
+/**
+ * Searches for doctors based on name/specialty and hospital.
+ * @param {string} specialty - Search term for specialty OR doctor name
+ * @param {string} hospitalName - Search term for hospital name
+ * @returns {Promise<Array>} List of verified doctors
+ */
 const searchDoctors = async (specialty, hospitalName) => {
   let query = `
     SELECT d.*, u.email, u.phone
@@ -155,7 +161,8 @@ const searchDoctors = async (specialty, hospitalName) => {
   let paramIndex = 1;
 
   if (specialty) {
-    query += ` AND LOWER(d.specialization) LIKE LOWER($${paramIndex})`;
+    // UPDATED: Now checks if the search term matches the specialty OR the doctor's name
+    query += ` AND (LOWER(d.specialization) LIKE LOWER($${paramIndex}) OR LOWER(d.full_name) LIKE LOWER($${paramIndex}))`;
     params.push(`%${specialty}%`);
     paramIndex++;
   }

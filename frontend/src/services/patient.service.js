@@ -267,3 +267,8 @@ export const markLabReportAsRead = async (patientId, reportId) => {
     throw error.response?.data || error;
   }
 };
+
+export const getPatientAppointments = async (patientId) => {
+  const response = await api.get(`/api/patients/${patientId}/appointments`);
+  return response.data.data;
+};
