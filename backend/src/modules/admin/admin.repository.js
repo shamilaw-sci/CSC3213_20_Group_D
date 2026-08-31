@@ -221,6 +221,18 @@ const findAnalyticsSummary = async () => {
 };
 
 /**
+ * Retrieves a count of users grouped by role, for the admin overview
+ * page's bar chart.
+ * @returns {Promise<Array>} List of { role, count } rows
+ */
+const findUserCountsByRole = async () => {
+    const result = await pool.query(
+        `SELECT role, COUNT(*) as count FROM users GROUP BY role ORDER BY role ASC`
+    );
+    return result.rows.map(row => ({ role: row.role, count: parseInt(row.count, 10) }));
+};
+
+/**
  * Searches for patients by name or NIC, for the admin QR reissue screen.
  * @param {string} search - Matches against full_name or nic
  * @returns {Promise<Array>} List of matching patient rows
@@ -310,4 +322,4 @@ const rejectUser = async (userId) => {
     return result.rows[0];
 };
 
-module.exports = { findPendingUsers, findUserById, approveUser, rejectUser, findAllUsers, toggleUserActive, findAuditLogs, findDistinctAuditActions, findEmergencyAccessLogs, findAnalyticsSummary, searchPatients, reissuePatientQr, findAllSettings, updateSetting };
+module.exports = { findPendingUsers, findUserById, approveUser, rejectUser, findAllUsers, toggleUserActive, findAuditLogs, findDistinctAuditActions, findEmergencyAccessLogs, findAnalyticsSummary, searchPatients, reissuePatientQr, findAllSettings, updateSetting, findUserCountsByRole };

@@ -18,15 +18,15 @@ const handleLogout = async () => {
 };
 
 const NAV_ITEMS = [
-  { to: '/admin/approvals',           label: 'Pending Approvals' },
-  { to: '/admin/accounts',            label: 'Account Management' },
-  { to: '/admin/rbac',                label: 'RBAC Visibility' },
-  { to: '/admin/audit-log',           label: 'Audit Log' },
-  { to: '/admin/health-content',      label: 'Health Content' },
-  { to: '/admin/emergency-oversight', label: 'Emergency Oversight' },
-  { to: '/admin/analytics',           label: 'Analytics' },
-  { to: '/admin/qr-reissue',          label: 'QR Reissue' },
-  { to: '/admin/settings',            label: 'System Settings' },
+  { to: '/admin/approvals',           label: 'Pending Approvals',   icon: '✓' },
+  { to: '/admin/accounts',            label: 'Account Management',  icon: '👤' },
+  { to: '/admin/rbac',                label: 'RBAC Visibility',     icon: '🔒' },
+  { to: '/admin/audit-log',           label: 'Audit Log',           icon: '📋' },
+  { to: '/admin/health-content',      label: 'Health Content',      icon: '📰' },
+  { to: '/admin/emergency-oversight', label: 'Emergency Oversight', icon: '🚨' },
+  { to: '/admin/analytics',           label: 'Analytics',           icon: '📊' },
+  { to: '/admin/qr-reissue',          label: 'QR Reissue',          icon: '⬜' },
+  { to: '/admin/settings',            label: 'System Settings',     icon: '⚙️' },
 ];
 
 export default function AdminSidebar() {
@@ -77,20 +77,25 @@ export default function AdminSidebar() {
           <NavLink
             key={item.to}
             to={item.to}
+            className="admin-nav-link"
             style={({ isActive }) => ({
-              display: 'block',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
               padding: '10px 12px',
               marginBottom: '4px',
-              borderRadius: '8px',
+              borderRadius: '10px',
               textDecoration: 'none',
               fontSize: '14px',
               color:           isActive ? '#FFFFFF' : '#93C5FD',
-              backgroundColor: isActive ? '#2E75B6' : 'transparent',
+              backgroundColor: isActive ? 'rgba(46, 117, 182, 0.9)' : 'transparent',
               fontWeight:      isActive ? '600'     : '400',
-              borderLeft:      isActive ? '3px solid #FFFFFF' : '3px solid transparent',
+              boxShadow:       isActive ? '0 2px 6px rgba(0,0,0,0.15)' : 'none',
+              transition:      'background-color 0.15s ease',
             })}
           >
-            {item.label}
+            <span style={{ fontSize: '14px', width: '18px', textAlign: 'center' }}>{item.icon}</span>
+            <span>{item.label}</span>
           </NavLink>
         ))}
       </nav>

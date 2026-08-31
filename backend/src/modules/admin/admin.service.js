@@ -7,7 +7,7 @@
 const { sendRejectionEmail } = require('../../utils/email');
 const { generatePatientQR } = require('../../utils/qr');
 const { pool } = require('../../config/db');
-const { findPendingUsers, findUserById, approveUser, rejectUser, findAllUsers, toggleUserActive, findAuditLogs, findDistinctAuditActions, findEmergencyAccessLogs, findAnalyticsSummary, searchPatients, reissuePatientQr, findAllSettings, updateSetting } = require('./admin.repository');
+const { findPendingUsers, findUserById, approveUser, rejectUser, findAllUsers, toggleUserActive, findAuditLogs, findDistinctAuditActions, findEmergencyAccessLogs, findAnalyticsSummary, searchPatients, reissuePatientQr, findAllSettings, updateSetting, findUserCountsByRole } = require('./admin.repository');
 
 /**
  * Gets all users currently pending admin approval.
@@ -58,6 +58,14 @@ const getEmergencyAccessLogs = async () => {
  */
 const getAnalyticsSummary = async () => {
     return await findAnalyticsSummary();
+};
+
+/**
+ * Gets a count of users grouped by role.
+ * @returns {Promise<Array>} List of { role, count }
+ */
+const getUserCountsByRole = async () => {
+    return await findUserCountsByRole();
 };
 
 /**
@@ -181,4 +189,4 @@ const rejectPendingUser = async (userId, reason) => {
     return updatedUser;
 };
 
-module.exports = { getPendingUsers, approvePendingUser, rejectPendingUser, getAllUsers, toggleActive, getAuditLogs, getDistinctAuditActions, getEmergencyAccessLogs, getAnalyticsSummary, findPatients, reissueQrCode, getAllSettings, updateSystemSetting };
+module.exports = { getPendingUsers, approvePendingUser, rejectPendingUser, getAllUsers, toggleActive, getAuditLogs, getDistinctAuditActions, getEmergencyAccessLogs, getAnalyticsSummary, findPatients, reissueQrCode, getAllSettings, updateSystemSetting, getUserCountsByRole };

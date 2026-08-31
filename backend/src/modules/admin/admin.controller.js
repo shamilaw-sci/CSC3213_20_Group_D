@@ -4,7 +4,7 @@
  * @desc Handles HTTP requests and responses for admin approval actions.
  */
 
-const { getPendingUsers, approvePendingUser, rejectPendingUser, getAllUsers, toggleActive, getAuditLogs, getDistinctAuditActions, getEmergencyAccessLogs, getAnalyticsSummary, findPatients, reissueQrCode, getAllSettings, updateSystemSetting } = require('./admin.service');
+const { getPendingUsers, approvePendingUser, rejectPendingUser, getAllUsers, toggleActive, getAuditLogs, getDistinctAuditActions, getEmergencyAccessLogs, getAnalyticsSummary, findPatients, reissueQrCode, getAllSettings, updateSystemSetting, getUserCountsByRole } = require('./admin.service');
 
 /**
  * Handles GET /api/admin/pending-users
@@ -203,6 +203,31 @@ const getAnalyticsSummaryController = async (req, res) => {
 
     } catch (error) {
         console.error('getAnalyticsSummaryController error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+/**
+ * Handles GET /api/admin/analytics/users-by-role
+ * Returns a count of users grouped by role, for a bar chart.
+ * @param {object} req - Express request
+ * @param {object} res - Express response
+ */
+const getUserCountsByRoleController = async (req, res) => {
+    try {
+        const counts = await getUserCountsByRole();
+
+        return res.status(200).json({
+            success: true,
+            message: 'User counts by role retrieved successfully',
+            data: counts
+        });
+
+    } catch (error) {
+        console.error('getUserCountsByRoleController error:', error);
         return res.status(500).json({
             success: false,
             message: 'Internal server error'
@@ -469,4 +494,4 @@ const rejectUserController = async (req, res) => {
     }
 };
 
-module.exports = { getPendingUsersController, approveUserController, rejectUserController, getAllUsersController, toggleActiveController, getRbacMatrixController, getAuditLogsController, getDistinctAuditActionsController, getEmergencyAccessLogsController, getAnalyticsSummaryController, searchPatientsController, reissueQrCodeController, getAllSettingsController, updateSettingController };
+module.exports = { getPendingUsersController, approveUserController, rejectUserController, getAllUsersController, toggleActiveController, getRbacMatrixController, getAuditLogsController, getDistinctAuditActionsController, getEmergencyAccessLogsController, getAnalyticsSummaryController, searchPatientsController, reissueQrCodeController, getAllSettingsController, updateSettingController, getUserCountsByRoleController };
