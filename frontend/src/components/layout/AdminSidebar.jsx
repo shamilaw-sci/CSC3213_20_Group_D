@@ -3,7 +3,7 @@
  * @desc      Admin panel sidebar with Care4U logo and NavLink navigation
  *            to all admin screens, matching the patient portal's Sidebar style.
  */
-import { NavLink } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 
 const handleLogout = async () => {
   try {
@@ -40,14 +40,18 @@ export default function AdminSidebar() {
       flexShrink: 0,
     }}>
 
-      {/* Logo block */}
-      <div style={{
-        padding: '24px 20px 16px',
-        borderBottom: '1px solid rgba(255,255,255,0.1)',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '10px',
-      }}>
+      {/* Logo block — clickable, links to admin overview */}
+      <Link
+        to="/admin"
+        style={{
+          padding: '24px 20px 16px',
+          borderBottom: '1px solid rgba(255,255,255,0.1)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          textDecoration: 'none',
+        }}
+      >
         <img
           src="/logo.png"
           alt="Care4U"
@@ -61,7 +65,7 @@ export default function AdminSidebar() {
             Admin Panel
           </div>
         </div>
-      </div>
+      </Link>
 
       {/* Navigation */}
       <nav style={{ padding: '16px 12px', flex: 1, overflowY: 'auto' }}>

@@ -33,6 +33,7 @@ import BookAppointmentPage    from './pages/patient/BookAppointmentPage';
 import MyAppointmentsPage     from './pages/patient/MyAppointmentsPage';
 
 import AdminApprovalsPage from './pages/admin/AdminApprovalsPage';
+import AdminOverviewPage from './pages/admin/AdminOverviewPage';
 import AdminAccountManagementPage from './pages/admin/AdminAccountManagementPage';
 import AdminRbacPanelPage from './pages/admin/AdminRbacPanelPage';
 import AdminAuditLogPage from './pages/admin/AdminAuditLogPage';
@@ -83,6 +84,7 @@ function App() {
 
         {/* Admin pages — all share the AdminSidebar layout */}
         <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AdminOverviewPage />} />
           <Route path="approvals" element={<AdminApprovalsPage />} />
           <Route path="accounts" element={<AdminAccountManagementPage />} />
           <Route path="rbac" element={<AdminRbacPanelPage />} />
