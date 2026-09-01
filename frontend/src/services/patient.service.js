@@ -50,11 +50,12 @@ export const uploadPatientPhoto = async (patientId, file) => {
 /**
  * Fetches all medical records for a patient.
  * @param {string} patientId - UUID of the patient
- * @returns {Promise<Array>} Array of medical record objects
+ * @param {string} role - (Optional) The role of the user requesting the data
  */
-export const getMedicalRecords = async (patientId) => {
-  const response = await api.get(`/api/patients/${patientId}/medical-records`);
-  return response.data.data;   // unwrap { success, message, data }
+export const getMedicalRecords = async (patientId, role) => {
+  const url = role ? `/api/patients/${patientId}/medical-records?role=${role}` : `/api/patients/${patientId}/medical-records`;
+  const response = await api.get(url);
+  return response.data.data;  
 };
 
 /**
@@ -228,11 +229,10 @@ export const scanVaccinationCard = async (patientId, file) => {
 
 /**
  * Fetches an AI-generated clinical summary of a patient's medical history.
- * @param {string} patientId - UUID of the patient
- * @returns {Promise<Object>} Object containing the { summary } string
  */
-export const getPatientHistorySummary = async (patientId) => {
-  const response = await api.get(`/api/patients/${patientId}/summary`);
+export const getPatientHistorySummary = async (patientId, role) => {
+  const url = role ? `/api/patients/${patientId}/summary?role=${role}` : `/api/patients/${patientId}/summary`;
+  const response = await api.get(url);
   return response.data.data;
 };
 
@@ -271,4 +271,27 @@ export const markLabReportAsRead = async (patientId, reportId) => {
 export const getPatientAppointments = async (patientId) => {
   const response = await api.get(`/api/patients/${patientId}/appointments`);
   return response.data.data;
+};
+
+/**
+ * Retrieves privacy and consent settings for a patient.
+ * @param {string} patientId 
+ * @returns {Promise<Array>} Array of locked category names
+ */
+export const getConsentSettings = async (patientId) => {
+    const response = await api.get(`/api/patients/${patientId}/consent`);
+    return response.data?.data?.locked_categories || [];
+};
+
+/**
+ * Updates privacy and consent settings.
+ * @param {string} patientId 
+ * @param {Array<string>} lockedCategories 
+ * @returns {Promise<Array>}
+ */
+export const updateConsentSettings = async (patientId, lockedCategories) => {
+    const response = await api.put(`/api/patients/${patientId}/consent`, {
+        lockedCategories
+    });
+    return response.data?.data;
 };

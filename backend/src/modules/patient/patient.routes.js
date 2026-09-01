@@ -31,12 +31,19 @@ const {
   getPatientAppointmentsController,
 } = require('./patient.controller');
 
+// Import the new Consent Controller (Epic 8.12)
+const consentController = require('./consent.controller');
 const { upload } = require('../../middleware/upload');
 
 router.get('/qr/:qrCodeId', getPatientByQrCodeController);
 router.get('/:id', getPatientController);
 router.put('/:id', updatePatientController);
 router.post('/:id/photo', upload.single('photo'), uploadPatientPhotoController);
+
+// Privacy & Consent Settings Routes
+router.get('/:id/consent', consentController.getConsent);
+router.put('/:id/consent', consentController.updateConsent);
+
 router.get('/:id/medical-records', getMedicalRecordsController);
 router.get('/:id/allergies', getAllergiesController);
 router.post('/:id/allergies', addAllergyController);
