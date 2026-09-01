@@ -10,6 +10,7 @@ import { Sparkles, FlaskConical, CheckCircle2 } from 'lucide-react';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
 import Input from '../common/Input';
+import { searchLabTests } from '../../utils/labTestSearch';
 
 const API_URL = 'http://localhost:5000';
 
@@ -35,6 +36,8 @@ const [aiFilled, setAiFilled] = useState(false);
   const [labs, setLabs] = useState([]);
   const [selectedLab, setSelectedLab] = useState('');
   const [testType, setTestType] = useState('');
+  const [testTypeSuggestions, setTestTypeSuggestions] = useState([]);
+  const [showTestSuggestions, setShowTestSuggestions] = useState(false);
   const [priority, setPriority] = useState('routine');
   const [labNotes, setLabNotes] = useState('');
   const [orderingLab, setOrderingLab] = useState(false);
@@ -185,6 +188,18 @@ const [aiFilled, setAiFilled] = useState(false);
   const selectedLabObj = labs.find((lab) => lab.id === selectedLab);
   const availableTests = selectedLabObj?.available_tests || [];
 
+  const handleTestTypeChange = (value) => {
+    setTestType(value);
+    setTestTypeSuggestions(value.trim() === '' ? availableTests : searchLabTests(availableTests, value));
+    setShowTestSuggestions(true);
+  };
+
+  const selectTestType = (test) => {
+    setTestType(test);
+    setTestTypeSuggestions([]);
+    setShowTestSuggestions(false);
+  };
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Add Consultation Notes" size="lg">
       <div className="flex flex-col gap-4">
@@ -283,7 +298,12 @@ const [aiFilled, setAiFilled] = useState(false);
           <div className="grid grid-cols-2 gap-3">
             <select
               value={selectedLab}
-              onChange={(e) => { setSelectedLab(e.target.value); setTestType(''); }}
+              onChange={(e) => {
+                setSelectedLab(e.target.value);
+                setTestType('');
+                setTestTypeSuggestions([]);
+                setShowTestSuggestions(false);
+              }}
               className="w-full px-3 py-2 text-sm text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] focus:border-transparent"
             >
               <option value="">Select laboratory</option>
@@ -291,17 +311,43 @@ const [aiFilled, setAiFilled] = useState(false);
                 <option key={lab.id} value={lab.id}>{lab.name}</option>
               ))}
             </select>
-            <select
-              value={testType}
-              onChange={(e) => setTestType(e.target.value)}
-              disabled={!selectedLab}
-              className="w-full px-3 py-2 text-sm text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] focus:border-transparent disabled:bg-slate-100"
-            >
-              <option value="">Select test type</option>
-              {availableTests.map((test) => (
-                <option key={test} value={test}>{test}</option>
-              ))}
-            </select>
+            <div className="relative">
+              <input
+                type="text"
+                value={testType}
+                onChange={(e) => handleTestTypeChange(e.target.value)}
+                onFocus={() => {
+                  setShowTestSuggestions(true);
+                  if (!testType.trim()) setTestTypeSuggestions(availableTests);
+                }}
+                onBlur={() => setTimeout(() => setShowTestSuggestions(false), 150)}
+                disabled={!selectedLab}
+                autoComplete="off"
+                placeholder={selectedLab ? 'Type to search test type' : 'Select a laboratory first'}
+                className="w-full px-3 py-2 text-sm text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] focus:border-transparent disabled:bg-slate-100"
+              />
+              {showTestSuggestions && testTypeSuggestions.length > 0 && (
+                <ul className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                  {testTypeSuggestions.map((test, i) => (
+                    <li
+                      key={i}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        selectTestType(test);
+                      }}
+                      className="px-3 py-2 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-800 cursor-pointer transition-colors duration-150"
+                    >
+                      {test}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {showTestSuggestions && testType.trim().length >= 2 && testTypeSuggestions.length === 0 && (
+                <p className="absolute z-10 w-full mt-1 px-3 py-2 text-xs text-slate-400 bg-white border border-slate-200 rounded-lg shadow-lg">
+                  No matches in this lab's test list
+                </p>
+              )}
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <select
