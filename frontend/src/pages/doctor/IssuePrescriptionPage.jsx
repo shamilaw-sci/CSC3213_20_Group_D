@@ -9,6 +9,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { QRCodeSVG } from 'qrcode.react';
+import { AlertTriangle } from 'lucide-react';
 import { createPrescription } from '../../services/prescription.service';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
@@ -251,7 +252,7 @@ const selectSuggestion = (index, medicine) => {
     required
   />
   {activeSuggestionIndex === index && suggestions.length > 0 && (
-    <ul className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+    <ul className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
       {suggestions.map((med, i) => (
        <li
   key={i}
@@ -259,7 +260,7 @@ const selectSuggestion = (index, medicine) => {
     e.preventDefault();
     selectSuggestion(index, med);
   }}
-  className="px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 cursor-pointer"
+  className="px-3 py-2 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-800 cursor-pointer transition-colors duration-150"
 >
           <span className="font-medium">{med.name}</span>
           <span className="text-slate-400 text-xs ml-2">{med.category}</span>
@@ -268,7 +269,7 @@ const selectSuggestion = (index, medicine) => {
     </ul>
   )}
   {activeSuggestionIndex === index && suggestions.length === 0 && medicine.medicine_name.trim().length >= 2 && (
-    <p className="absolute z-10 w-full mt-1 px-3 py-2 text-xs text-slate-400 bg-white border border-slate-200 rounded-lg shadow-lg">
+    <p className="absolute z-10 w-full mt-1 px-3 py-2 text-xs text-slate-400 bg-white border border-slate-200 rounded-xl shadow-lg">
       No matches — you can still type it manually
     </p>
   )}
@@ -277,13 +278,16 @@ const selectSuggestion = (index, medicine) => {
     .map((w, wi) => (
       <div
         key={wi}
-        className={`mt-2 rounded-lg border px-3 py-2 text-xs flex justify-between items-start gap-2 ${SEVERITY_STYLES[w.severity] || SEVERITY_STYLES.moderate}`}
+        className={`mt-2 rounded-xl border px-3 py-2 text-xs flex justify-between items-start gap-2 ${SEVERITY_STYLES[w.severity] || SEVERITY_STYLES.moderate}`}
       >
-        <div>
-          <span className="font-semibold uppercase">
-            {w.severity} — {w.type === 'allergy' ? 'Allergy Conflict' : 'Drug Interaction'}
-          </span>
-          <p className="mt-0.5">{w.message}</p>
+        <div className="flex items-start gap-1.5">
+          <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+          <div>
+            <span className="font-semibold uppercase">
+              {w.severity} — {w.type === 'allergy' ? 'Allergy Conflict' : 'Drug Interaction'}
+            </span>
+            <p className="mt-0.5">{w.message}</p>
+          </div>
         </div>
         <button
           type="button"
