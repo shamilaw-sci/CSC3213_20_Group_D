@@ -7,6 +7,7 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, UserRound, CalendarClock } from 'lucide-react';
 import Spinner from '../../components/common/Spinner';
 import Alert from '../../components/common/Alert';
 
@@ -125,19 +126,20 @@ const DoctorProfilePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
+    <div className="min-h-screen bg-gradient-to-b from-slate-100 to-blue-50 p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-8 bg-gradient-to-r from-slate-900 to-blue-950 rounded-xl shadow-md p-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Doctor Profile</h1>
-          <p className="text-sm text-slate-500">
+          <h1 className="text-2xl font-bold text-white">Doctor Profile</h1>
+          <p className="text-sm text-blue-200 mt-1">
             SLMC: {doctor?.slmc_reg_number} — {doctor?.email}
           </p>
         </div>
         <button
           onClick={() => navigate('/doctor/dashboard')}
-          className="text-sm text-blue-600 hover:underline cursor-pointer"
+          className="flex items-center gap-1.5 bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-sm text-blue-100 hover:bg-white/20 hover:text-white transition-all duration-150 cursor-pointer"
         >
+          <ArrowLeft size={16} />
           Back to Dashboard
         </button>
       </div>
@@ -150,10 +152,13 @@ const DoctorProfilePage = () => {
       )}
 
       {/* Profile Form */}
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <h2 className="text-xl font-semibold text-slate-700 mb-4">
-          Profile Information
-        </h2>
+      <div className="bg-white rounded-xl shadow-sm border border-slate-100 border-l-4 border-l-blue-800 p-6 mb-6">
+        <div className="flex items-center gap-2 mb-4">
+          <UserRound size={18} className="text-blue-800" />
+          <h2 className="text-xl font-semibold text-slate-700">
+            Profile Information
+          </h2>
+        </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="text-xs text-slate-500">Specialization</label>
@@ -161,7 +166,7 @@ const DoctorProfilePage = () => {
               type="text"
               value={profileForm.specialization}
               onChange={(e) => setProfileForm({ ...profileForm, specialization: e.target.value })}
-              className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-700"
             />
           </div>
           <div>
@@ -170,7 +175,7 @@ const DoctorProfilePage = () => {
               type="text"
               value={profileForm.qualifications}
               onChange={(e) => setProfileForm({ ...profileForm, qualifications: e.target.value })}
-              className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-700"
             />
           </div>
           <div>
@@ -179,7 +184,7 @@ const DoctorProfilePage = () => {
               type="number"
               value={profileForm.years_experience}
               onChange={(e) => setProfileForm({ ...profileForm, years_experience: e.target.value })}
-              className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-700"
             />
           </div>
           <div>
@@ -188,34 +193,42 @@ const DoctorProfilePage = () => {
               type="text"
               value={profileForm.hospital_name}
               onChange={(e) => setProfileForm({ ...profileForm, hospital_name: e.target.value })}
-              className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-700"
             />
           </div>
         </div>
         <button
           onClick={handleProfileSave}
           disabled={saving}
-          className="mt-4 px-6 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          className="mt-4 px-6 py-2 bg-blue-700 text-white text-sm rounded-lg hover:bg-blue-800 disabled:opacity-50 transition-colors duration-150"
         >
           {saving ? 'Saving...' : 'Save Profile'}
         </button>
       </div>
 
       {/* Availability */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold text-slate-700 mb-4">
-          Availability Schedule
-        </h2>
-        <div className="space-y-4">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-100 border-l-4 border-l-teal-600 p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <CalendarClock size={18} className="text-teal-600" />
+          <h2 className="text-xl font-semibold text-slate-700">
+            Availability Schedule
+          </h2>
+        </div>
+        <div className="space-y-2">
           {DAYS.map((day) => {
             const slot = availability.find((s) => s.day_of_week === day);
             return (
-              <div key={day} className="flex items-center gap-4">
+              <div
+                key={day}
+                className={`flex items-center gap-4 rounded-lg px-3 py-2 transition-colors duration-150 ${
+                  slot ? 'bg-blue-50/60' : ''
+                }`}
+              >
                 <input
                   type="checkbox"
                   checked={!!slot}
                   onChange={() => toggleDay(day)}
-                  className="w-4 h-4"
+                  className="w-4 h-4 accent-blue-700"
                 />
                 <span className="text-sm font-medium text-slate-700 w-24 capitalize">
                   {day}
@@ -251,7 +264,7 @@ const DoctorProfilePage = () => {
         <button
           onClick={handleAvailabilitySave}
           disabled={saving}
-          className="mt-6 px-6 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          className="mt-6 px-6 py-2 bg-teal-600 text-white text-sm rounded-lg hover:bg-teal-700 disabled:opacity-50 transition-colors duration-150"
         >
           {saving ? 'Saving...' : 'Save Availability'}
         </button>
