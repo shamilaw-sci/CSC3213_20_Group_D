@@ -3,10 +3,12 @@
  * @module  Patient
  * @desc    Business logic for patient profile management.
  *          Sits between the controller and the repository.
+ *          Doctor privacy and consent enforcement added in CARE4U-284 (Epic 8.12).
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
 const patientRepository = require('./patient.repository');
+const consentRepository = require('./consent.repository'); // Import for Epic 8.12 Privacy Checks
 const { generateAIResponse, generateAIVisionResponse } = require('../../utils/ai.util');
 const { supabase } = require('../../config/supabase');
 
@@ -93,15 +95,49 @@ const uploadPatientPhoto = async (patientId, file) => {
 
 /**
  * Retrieves all medical records for a patient.
+ * EPIC 8.12: Enforces Privacy & Consent Locks if the requester is a doctor.
+ * Features Smart Keyword Filtering across the entire record.
  */
-const getMedicalRecords = async (patientId) => {
+const getMedicalRecords = async (patientId, requestingUser) => {
   const existing = await patientRepository.getPatientById(patientId);
   if (!existing) {
     const error = new Error('Patient not found');
     error.statusCode = 404;
     throw error;
   }
-  return await patientRepository.getMedicalRecords(patientId);
+  
+  // 1. Fetch all records from the database
+  const records = await patientRepository.getMedicalRecords(patientId);
+
+  // 2. OWNER BYPASS: If the user requesting the records IS the patient themselves, 
+  // NEVER hide the records. This fixes testing cookie mix-ups!
+  if (requestingUser && requestingUser.id === existing.user_id) {
+    return records;
+  }
+
+  // 3. PRIVACY ENFORCEMENT LOGIC
+  // If the requester is a doctor (and NOT the patient themselves), enforce the locks.
+  if (requestingUser && requestingUser.role?.toLowerCase() === 'doctor') {
+    const consentSettings = await consentRepository.getConsentSettings(patientId);
+    
+    // Convert locked categories to lowercase for easy matching
+    const lockedCategories = (consentSettings.locked_categories || []).map(cat => cat.toLowerCase());
+    
+    // Smart Filter: Hide the record if the locked keyword appears anywhere in the text
+    const allowedRecords = records.filter(record => {
+      const searchText = `${record.record_type} ${record.title} ${record.description} ${record.chief_complaint} ${record.diagnosis}`.toLowerCase();
+      
+      const hasLockedKeyword = lockedCategories.some(lockedCat => searchText.includes(lockedCat));
+      
+      // Only return the record if it DOES NOT contain a locked keyword
+      return !hasLockedKeyword;
+    });
+    
+    return allowedRecords;
+  }
+
+  // If it's anyone else (like a system admin), they see everything.
+  return records;
 };
 
 /**
@@ -333,9 +369,11 @@ const getPatientByQrCode = async (qrCodeId) => {
 
 /**
  * Uses AI to generate a highly precise clinical summary of a patient's medical history.
+ * EPIC 8.12: Now respects privacy locks by passing the requesting user to getMedicalRecords.
  */
-const getPatientHistorySummary = async (patientId) => {
-  const records = await getMedicalRecords(patientId);
+const getPatientHistorySummary = async (patientId, requestingUser) => {
+  // Pass the requestingUser down! The AI will now only summarize ALLOWED records.
+  const records = await getMedicalRecords(patientId, requestingUser);
   const conditions = await patientRepository.getConditionsByPatientId(patientId);
 
   const formattedRecords = records.length > 0 
@@ -499,8 +537,6 @@ const markLabReportAsRead = async (patientId, reportId) => {
 const getPatientAppointments = async (patientId) => {
   return await patientRepository.getPatientAppointments(patientId);
 };
-
-
 
 module.exports = {
   getPatientProfile,
