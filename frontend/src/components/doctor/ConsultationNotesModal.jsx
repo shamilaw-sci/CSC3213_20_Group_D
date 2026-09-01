@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { Sparkles, FlaskConical, CheckCircle2 } from 'lucide-react';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
 import Input from '../common/Input';
@@ -195,8 +196,9 @@ const [aiFilled, setAiFilled] = useState(false);
           placeholder="e.g. Follow-up consultation"
           required
         />
-        <div className="flex flex-col gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
-  <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+        <div className="flex flex-col gap-2 p-3 bg-teal-50/50 border border-teal-100 border-l-4 border-l-teal-600 rounded-lg">
+  <label className="flex items-center gap-1.5 text-xs font-medium text-slate-500 uppercase tracking-wide">
+    <Sparkles size={13} className="text-teal-600" />
     Observations (optional — for AI summary)
   </label>
   <textarea
@@ -214,10 +216,11 @@ const [aiFilled, setAiFilled] = useState(false);
       loading={summarizing}
       disabled={summarizing}
     >
-      {summarizing ? 'Analyzing...' : '✨ Summarize with AI'}
+      {summarizing ? 'Analyzing...' : 'Summarize with AI'}
     </Button>
     {aiFilled && (
-      <span className="text-xs text-green-700 bg-green-100 px-2 py-1 rounded-full">
+      <span className="flex items-center gap-1 text-xs text-green-700 bg-green-100 px-2 py-1 rounded-full">
+        <CheckCircle2 size={12} />
         AI-filled — please review
       </span>
     )}
@@ -225,7 +228,7 @@ const [aiFilled, setAiFilled] = useState(false);
   {summarizeError && <p className="text-xs text-red-600">{summarizeError}</p>}
   {aiFilled && !summarizeError && (
     <p className="text-xs text-slate-500 italic">
-      ⚠️ AI-generated draft — not a medical diagnosis. Please review and edit before saving.
+      AI-generated draft — not a medical diagnosis. Please review and edit before saving.
     </p>
   )}
 </div>
@@ -272,8 +275,9 @@ const [aiFilled, setAiFilled] = useState(false);
           />
         </div>
 
-        <div className="flex flex-col gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
-          <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+        <div className="flex flex-col gap-2 p-3 bg-blue-50/50 border border-blue-100 border-l-4 border-l-blue-700 rounded-lg">
+          <label className="flex items-center gap-1.5 text-xs font-medium text-slate-500 uppercase tracking-wide">
+            <FlaskConical size={13} className="text-blue-700" />
             Order Lab Test (optional)
           </label>
           <div className="grid grid-cols-2 gap-3">
@@ -325,10 +329,11 @@ const [aiFilled, setAiFilled] = useState(false);
               loading={orderingLab}
               disabled={orderingLab}
             >
-              {orderingLab ? 'Ordering...' : '🧪 Order Lab Test'}
+              {orderingLab ? 'Ordering...' : 'Order Lab Test'}
             </Button>
             {labOrderSuccess && (
-              <span className="text-xs text-green-700 bg-green-100 px-2 py-1 rounded-full">
+              <span className="flex items-center gap-1 text-xs text-green-700 bg-green-100 px-2 py-1 rounded-full">
+                <CheckCircle2 size={12} />
                 {labOrderSuccess}
               </span>
             )}
