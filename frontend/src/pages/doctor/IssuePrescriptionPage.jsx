@@ -3,13 +3,16 @@
  * @desc      Allows a doctor to issue a digital prescription.
  *            Doctor fills in patient ID, medicines, and submits.
  *            On success, displays the generated QR code.
+ *            When opened from the Appointment Queue ("Issue Prescription"
+ *            button), the patient is already picked — no manual ID entry.
  * @author    S/21/001
  */
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { useLocation } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, User } from 'lucide-react';
 import { createPrescription } from '../../services/prescription.service';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
@@ -25,6 +28,13 @@ const SEVERITY_STYLES = {
 };
 
 const IssuePrescriptionPage = () => {
+  const location = useLocation();
+  // Passed in from AppointmentQueuePage's "Issue Prescription" button.
+  // If missing (page opened directly), the doctor falls back to typing the ID.
+  const preselectedPatientId = location.state?.patientId || '';
+  const preselectedPatientName = location.state?.patientName || '';
+  const preselectedAppointmentId = location.state?.appointmentId || '';
+
   const [medicines, setMedicines] = useState([
     { medicine_name: '', dosage: '', frequency: '', duration_days: '', quantity_prescribed: '', special_notes: '' }
   ]);
@@ -36,7 +46,12 @@ const IssuePrescriptionPage = () => {
   const [warnings, setWarnings] = useState({}); // { [medicineIndex]: [warningObj, ...] }
   const [dismissedWarnings, setDismissedWarnings] = useState(new Set());
 
-  const { register, handleSubmit, watch, formState: { errors } } = useForm();
+  const { register, handleSubmit, watch, formState: { errors } } = useForm({
+    defaultValues: {
+      patientId: preselectedPatientId,
+      appointmentId: preselectedAppointmentId,
+    },
+  });
 
   // Add a new empty medicine row
   const addMedicine = () => {
@@ -183,14 +198,29 @@ const selectSuggestion = (index, medicine) => {
               )}
 
               <div className="grid grid-cols-1 gap-4 mt-4">
-                <Input
-                  label="Patient ID"
-                  name="patientId"
-                  placeholder="Enter patient UUID"
-                  required
-                  {...register('patientId', { required: 'Patient ID is required' })}
-                  error={errors.patientId?.message}
-                />
+                {preselectedPatientId ? (
+                  // Came from the Appointment Queue — patient already picked.
+                  <div className="flex items-center gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
+                    <div className="w-9 h-9 rounded-full bg-blue-700 text-white flex items-center justify-center shrink-0">
+                      <User size={18} />
+                    </div>
+                    <div>
+                      <p className="text-xs text-blue-500 font-medium">Patient</p>
+                      <p className="text-sm font-semibold text-slate-800">{preselectedPatientName || 'Selected patient'}</p>
+                    </div>
+                    {/* Hidden field so react-hook-form still submits the patient's ID */}
+                    <input type="hidden" {...register('patientId', { required: true })} />
+                  </div>
+                ) : (
+                  <Input
+                    label="Patient ID"
+                    name="patientId"
+                    placeholder="Enter patient UUID"
+                    required
+                    {...register('patientId', { required: 'Patient ID is required' })}
+                    error={errors.patientId?.message}
+                  />
+                )}
                 <Input
                   label="Appointment ID (optional)"
                   name="appointmentId"
