@@ -4,6 +4,7 @@
  * @desc    Mobile screen showing patient profile information, known allergies,
  * chronic conditions, and an inline edit form for updatable fields.
  * Now includes AI Camera Scanning for bulk vaccination records.
+ * Privacy & Consent Controls added in CARE4U-284 (Epic 8.12).
  * @author  Wasana Karunanayaka (S/21/081)
  */
 import React, { useEffect, useState } from 'react';
@@ -37,7 +38,9 @@ import {
   getVaccinations,
   addBulkVaccinations,
   deleteVaccination,
-  scanVaccinationCard
+  scanVaccinationCard,
+  getConsentSettings,
+  updateConsentSettings
 } from '../services/patient.service';
 import { searchAllergens } from '../utils/allergenSearch';
 import { searchVaccines } from '../utils/vaccineSearch';
@@ -47,6 +50,7 @@ const TEST_PATIENT_ID = '006761d1-8279-440e-a786-a492df7abd53';
 const BLOOD_GROUP_OPTIONS   = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
 const RELATIONSHIP_OPTIONS  = ['spouse', 'parent', 'sibling', 'child', 'friend', 'other'];
 const SEVERITY_OPTIONS      = ['mild', 'moderate', 'severe'];
+const SENSITIVE_CATEGORIES  = ['Mental Health', 'Reproductive Health', 'Substance Abuse', 'STD/STI Records'];
 
 const severityColor = (severity) => {
   if (severity === 'severe')   return '#C00000';
@@ -123,6 +127,7 @@ export default function PatientProfileScreen({ patientId }) {
   const [allergies, setAllergies] = useState([]);
   const [conditions, setConditions] = useState([]);
   const [vaccinations, setVaccinations] = useState([]);
+  const [lockedCategories, setLockedCategories] = useState([]); // Privacy Settings
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -167,10 +172,13 @@ export default function PatientProfileScreen({ patientId }) {
       const allergyData = await getPatientAllergies(activePatientId);
       const conditionData = await getConditions(activePatientId);
       const vaccinationData = await getVaccinations(activePatientId);
+      const consentData = await getConsentSettings(activePatientId);
+      
       setPatient(profileData);
       setAllergies(allergyData);
       setConditions(conditionData);
       setVaccinations(vaccinationData);
+      setLockedCategories(consentData);
     } catch (err) {
       setError('Failed to load profile. Please try again.');
     } finally {
@@ -209,6 +217,29 @@ export default function PatientProfileScreen({ patientId }) {
   };
 
   const updateField = (field, value) => setFormData((prev) => ({ ...prev, [field]: value }));
+
+  // --- Privacy & Consent Toggle Logic ---
+  const handleToggleConsent = async (category) => {
+    const isLocked = lockedCategories.includes(category);
+    let newCategories;
+    
+    if (isLocked) {
+      newCategories = lockedCategories.filter(c => c !== category);
+    } else {
+      newCategories = [...lockedCategories, category];
+    }
+    
+    // Optimistic UI Update
+    setLockedCategories(newCategories);
+    
+    try {
+      await updateConsentSettings(activePatientId, newCategories);
+    } catch (error) {
+      // Revert if failed
+      setLockedCategories(lockedCategories);
+      Alert.alert('Error', 'Failed to update privacy settings.');
+    }
+  };
 
   // --- Allergy Logic ---
   const handleSearchAllergens = (text) => {
@@ -603,6 +634,40 @@ export default function PatientProfileScreen({ patientId }) {
                 )}
               </View>
 
+              {/* ── NEW: Privacy & Consent Controls (Epic 8.12) ── */}
+              <View style={styles.card}>
+                <Text style={styles.cardTitle}>Privacy & Consent Controls</Text>
+                <Text style={styles.consentSubTitle}>
+                  Lock specific medical record categories. Doctors will require your explicit permission to view locked records.
+                </Text>
+                
+                <View style={styles.consentGrid}>
+                  {SENSITIVE_CATEGORIES.map(category => {
+                    const isLocked = lockedCategories.includes(category);
+                    return (
+                      <View key={category} style={[styles.consentItem, isLocked && styles.consentItemLocked]}>
+                        <View style={styles.consentHeader}>
+                          <View style={[styles.consentIcon, isLocked ? styles.consentIconLocked : styles.consentIconUnlocked]}>
+                            <Text style={styles.consentIconText}>{isLocked ? '🔒' : '🔓'}</Text>
+                          </View>
+                          <Switch
+                            value={isLocked}
+                            onValueChange={() => handleToggleConsent(category)}
+                            trackColor={{ false: '#E2E8F0', true: '#FCA5A5' }}
+                            thumbColor={isLocked ? '#DC2626' : '#FFFFFF'}
+                            ios_backgroundColor="#E2E8F0"
+                          />
+                        </View>
+                        <Text style={styles.consentCategoryName}>{category}</Text>
+                        <Text style={[styles.consentStatusText, isLocked ? styles.consentStatusTextLocked : styles.consentStatusTextUnlocked]}>
+                          {isLocked ? 'Locked (Requires Approval)' : 'Unlocked (Default Access)'}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
+
               <TouchableOpacity style={styles.editButton} onPress={handleEditPress} activeOpacity={0.85}>
                 <Text style={styles.editButtonText}>✎  Edit Profile</Text>
               </TouchableOpacity>
@@ -968,6 +1033,21 @@ const styles = StyleSheet.create({
   priorityBadge: { backgroundColor: '#DC2626', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
   priorityBadgeText: { fontSize: 10, color: '#FFFFFF', fontWeight: '700', letterSpacing: 0.5 },
 
+  // --- NEW PRIVACY & CONSENT STYLES ---
+  consentSubTitle: { fontSize: 12, color: '#64748B', marginBottom: 16, lineHeight: 18 },
+  consentGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'space-between' },
+  consentItem: { width: '48%', backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 12, marginBottom: 4 },
+  consentItemLocked: { borderColor: '#FCA5A5', backgroundColor: '#FEF2F2' },
+  consentHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  consentIcon: { width: 32, height: 32, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
+  consentIconUnlocked: { backgroundColor: '#F0FDFA' },
+  consentIconLocked: { backgroundColor: '#FEE2E2' },
+  consentIconText: { fontSize: 14 },
+  consentCategoryName: { fontSize: 13, fontWeight: '700', color: '#1E293B', marginBottom: 4 },
+  consentStatusText: { fontSize: 10, fontWeight: '600' },
+  consentStatusTextUnlocked: { color: '#0D9488' },
+  consentStatusTextLocked: { color: '#DC2626' },
+
   editButton: { backgroundColor: '#1E3A5F', marginHorizontal: 16, marginTop: 16, borderRadius: 10, paddingVertical: 14, alignItems: 'center' },
   editButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '600' },
 
@@ -1010,7 +1090,6 @@ const styles = StyleSheet.create({
   suggestionName: { fontSize: 14, color: '#1E293B', fontWeight: '500' },
   suggestionCat: { fontSize: 11, color: '#94A3B8', textTransform: 'uppercase' },
 
-  // Bulk UI & AI Banner Styles
   aiBanner: { backgroundColor: '#EFF6FF', borderRadius: 12, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: '#DBEAFE' },
   aiBannerTitle: { fontSize: 15, fontWeight: 'bold', color: '#1E3A5F', marginBottom: 4 },
   aiBannerText: { fontSize: 12, color: '#475569', marginBottom: 12, lineHeight: 18 },
