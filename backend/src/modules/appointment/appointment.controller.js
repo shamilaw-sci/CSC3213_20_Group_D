@@ -130,6 +130,27 @@ const addConsultationNotesController = async (req, res) => {
   }
 };
 
+/**
+ * Handles GET /api/appointments/patients/:patientId/notes
+ * Returns all past consultation notes for a patient, newest first.
+ * Lets the doctor review what was recorded in previous visits.
+ */
+const getPatientConsultationNotesController = async (req, res) => {
+  try {
+    const { patientId } = req.params;
+
+    const notes = await appointmentRepository.getConsultationNotesByPatientId(patientId);
+
+    res.status(200).json({
+      success: true,
+      data: notes,
+    });
+  } catch (error) {
+    console.error('getPatientConsultationNotesController error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
 const summarizeNotesController = async (req, res) => {
   try {
     const { id } = req.params;
@@ -266,13 +287,13 @@ const bookAppointmentController = async (req, res) => {
         patientRepository.getPatientById(patientId),
         doctorRepository.getDoctorById(doctorId)
       ]);
-      
+
       if (patientData && patientData.email && doctorData) {
         const formattedDate = new Intl.DateTimeFormat('en-US', {
           weekday: 'short', month: 'short', day: 'numeric',
           hour: 'numeric', minute: '2-digit', hour12: true
         }).format(new Date(scheduledAt));
-        
+
         // Asynchronous, fire-and-forget
         sendAppointmentConfirmation(patientData.email, patientData.full_name, doctorData.full_name, formattedDate);
         console.log(`[Email] Confirmation sent to ${patientData.email}`);
@@ -300,6 +321,7 @@ const bookAppointmentController = async (req, res) => {
 module.exports = {
   updateAppointmentStatusController,
   addConsultationNotesController,
+  getPatientConsultationNotesController,
   bookAppointmentController,
   summarizeNotesController
 };

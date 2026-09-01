@@ -10,6 +10,7 @@ const router = express.Router();
 const {
   updateAppointmentStatusController,
   addConsultationNotesController,
+  getPatientConsultationNotesController,
   bookAppointmentController,
   summarizeNotesController
 } = require('./appointment.controller');
@@ -17,6 +18,9 @@ const { auditMiddleware } = require('../../middleware/auditLog');
 
 // POST /api/appointments — Book a new appointment
 router.post('/', bookAppointmentController);
+
+// GET /api/appointments/patients/:patientId/notes — doctor views a patient's past consultation notes
+router.get('/patients/:patientId/notes', auditMiddleware('VIEW_CONSULTATION_NOTES', 'appointment'), getPatientConsultationNotesController);
 
 // PUT /api/appointments/:id/status — update appointment status
 router.put('/:id/status', auditMiddleware('UPDATE_APPOINTMENT_STATUS', 'appointment'), updateAppointmentStatusController);

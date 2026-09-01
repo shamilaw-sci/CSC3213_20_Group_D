@@ -14,6 +14,7 @@ import { CheckCircle2, ArrowLeft, Clock } from 'lucide-react';
 import Badge from '../../components/common/Badge';
 import Spinner from '../../components/common/Spinner';
 import ConsultationNotesModal from '../../components/doctor/ConsultationNotesModal';
+import PatientNotesModal from '../../components/doctor/PatientNotesModal';
 
 const DOCTOR_ID = 'd04b8bcf-fe8a-4d3b-affc-5ab87e78cfc3';
 const API_URL = 'http://localhost:5000';
@@ -32,6 +33,7 @@ const AppointmentQueuePage = () => {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notesModalAppointment, setNotesModalAppointment] = useState(null);
+  const [historyModalAppointment, setHistoryModalAppointment] = useState(null);
   const [updatingId, setUpdatingId] = useState(null);
 
   // silent = true for background polling (no spinner, no layout flash)
@@ -174,6 +176,13 @@ const AppointmentQueuePage = () => {
                       Issue Prescription
                     </button>
                   )}
+                  <button
+                    onClick={() => setHistoryModalAppointment(appt)}
+                    disabled={isUpdating}
+                    className="px-4 py-2 bg-slate-100 text-slate-700 text-sm rounded-lg hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+                  >
+                    View Notes
+                  </button>
                   {(appt.status === 'scheduled' || appt.status === 'in_progress') && (
                     <button
                       onClick={() => updateStatus(appt.id, 'cancelled')}
@@ -197,6 +206,13 @@ const AppointmentQueuePage = () => {
         patientId={notesModalAppointment?.patient_id}
         doctorId={DOCTOR_ID}
         onSaved={() => updateStatus(notesModalAppointment?.id, 'completed')}
+      />
+
+      <PatientNotesModal
+        isOpen={!!historyModalAppointment}
+        onClose={() => setHistoryModalAppointment(null)}
+        patientId={historyModalAppointment?.patient_id}
+        patientName={historyModalAppointment?.patient_name}
       />
     </div>
   );
