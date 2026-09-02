@@ -28,7 +28,7 @@ import * as ImagePicker from 'expo-image-picker';
 
 import {
   getPatientProfile,
-  getPatientAllergies,
+  getAllergies,
   updatePatientProfile,
   addAllergy,
   deleteAllergy,
@@ -169,7 +169,7 @@ export default function PatientProfileScreen({ patientId }) {
   const fetchData = async () => {
     try {
       const profileData = await getPatientProfile(activePatientId);
-      const allergyData = await getPatientAllergies(activePatientId);
+      const allergyData = await  getAllergies(activePatientId);
       const conditionData = await getConditions(activePatientId);
       const vaccinationData = await getVaccinations(activePatientId);
       const consentData = await getConsentSettings(activePatientId);
@@ -180,6 +180,7 @@ export default function PatientProfileScreen({ patientId }) {
       setVaccinations(vaccinationData);
       setLockedCategories(consentData);
     } catch (err) {
+      console.error('Profile fetch error:', err);
       setError('Failed to load profile. Please try again.');
     } finally {
       setLoading(false);
@@ -255,7 +256,7 @@ export default function PatientProfileScreen({ patientId }) {
     setAddingAllergy(true);
     try {
       await addAllergy(activePatientId, allergenInput.trim(), selectedSeverity, allergyNotes.trim());
-      const updatedAllergies = await getPatientAllergies(activePatientId);
+      const updatedAllergies = await  getAllergies(activePatientId);
       setAllergies(updatedAllergies);
       setIsAddModalOpen(false);
       setAllergenInput('');
@@ -280,7 +281,7 @@ export default function PatientProfileScreen({ patientId }) {
           onPress: async () => {
             try {
               await deleteAllergy(activePatientId, allergy.id);
-              const updatedAllergies = await getPatientAllergies(activePatientId);
+              const updatedAllergies = await  getAllergies(activePatientId);
               setAllergies(updatedAllergies);
             } catch (err) {
               Alert.alert('Error', 'Failed to remove allergy.');
