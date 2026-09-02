@@ -22,6 +22,7 @@ import PrescriptionsScreen   from './src/screens/PrescriptionsScreen';
 import MedicalRecordsScreen  from './src/screens/MedicalRecordsScreen';
 import LabReportsScreen      from './src/screens/LabReportsScreen';
 import EmergencySOS          from './src/components/EmergencySOS'; 
+import AIChatScreen          from './src/screens/AIChatScreen';
 
 // NEW SCREENS
 import PatientHomeScreen     from './src/screens/PatientHomeScreen';
@@ -31,10 +32,10 @@ import MyAppointmentsScreen  from './src/screens/MyAppointmentsScreen';
 
 // SLEEK 4-TAB SYSTEM
 const TABS = [
-  { key: 'home',          label: 'Home',         icon: '🏠' },
-  { key: 'search',        label: 'Find Doctor',  icon: '🔍' },
-  { key: 'appointments',  label: 'Visits',       icon: '🗓️' },
-  { key: 'profile',       label: 'Profile',      icon: '👤' },
+  { key: 'home',         label: 'Home',         icon: '🏠' },
+  { key: 'search',       label: 'Find Doctor',  icon: '🔍' },
+  { key: 'appointments', label: 'Visits',       icon: '🗓️' },
+  { key: 'profile',      label: 'Profile',      icon: '👤' },
 ];
 
 export default function App() {
@@ -68,7 +69,7 @@ export default function App() {
       setBookingParams(params);
       setOverlayScreen('BookAppointment');
     } else {
-      // For records, prescriptions, etc. (launched from Home screen)
+      // For records, prescriptions, aichat, etc. (launched from Home screen)
       setOverlayScreen(screenName);
     }
   };
@@ -140,6 +141,7 @@ export default function App() {
         {overlayScreen === 'prescriptions' && <PrescriptionsScreen />}
         {overlayScreen === 'labreports' && <LabReportsScreen />}
         {overlayScreen === 'qrcard' && <PatientQRCardScreen />}
+        {overlayScreen === 'aichat' && <AIChatScreen patientId={user.profile_id} />}
 
         {/* MAIN TABS */}
         {!overlayScreen && (
@@ -223,6 +225,14 @@ const styles = StyleSheet.create({
   tabItem: {
     flex:       1,
     alignItems: 'center',
+  },
+  tabIcon: {
+    fontSize: 20,
+    marginBottom: 4,
+    opacity: 0.7,
+  },
+  tabIconActive: {
+    opacity: 1,
   },
   tabLabel: {
     fontSize:   12,

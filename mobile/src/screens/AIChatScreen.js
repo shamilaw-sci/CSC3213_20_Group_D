@@ -69,7 +69,7 @@ const AIChatScreen = ({ patientId }) => {
       setLoading(false);
     }
   };
-  
+
   /**
    * Toggles the preferred language for the AI prompt.
    */

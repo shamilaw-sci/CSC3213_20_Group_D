@@ -12,10 +12,11 @@ import { Calendar, Clock, User, CheckCircle2, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getDoctorProfile, getAvailableSlots } from '../../services/doctor.service';
 import { bookAppointment, updateAppointmentStatus } from '../../services/appointment.service';
-
-const TEST_PATIENT_ID = '006761d1-8279-440e-a786-a492df7abd53';
+import useAuthStore from '../../store/authStore';
 
 export default function BookAppointmentPage() {
+  const user = useAuthStore((state) => state.user);
+  const TEST_PATIENT_ID = user?.profile_id || user?.id || '';
   const { doctorId } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();

@@ -8,8 +8,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../services/api';
-
-const TEST_PATIENT_ID = '006761d1-8279-440e-a786-a492df7abd53';
+import useAuthStore from '../../store/authStore';
 
 const formatDate = (iso) => {
   if (!iso) return '—';
@@ -90,6 +89,8 @@ const ReceiptModal = ({ payment, onClose }) => (
 );
 
 const PaymentHistoryPage = () => {
+  const user = useAuthStore((state) => state.user);
+  const TEST_PATIENT_ID = user?.profile_id || user?.id || '';
   const [selectedPayment, setSelectedPayment] = useState(null);
 
   const { data, isLoading, isError } = useQuery({
