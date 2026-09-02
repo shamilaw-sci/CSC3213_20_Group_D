@@ -3,22 +3,14 @@
  * @desc      Patient portal sidebar with Care4U navigation.
  * @author    Wasana Karunanayaka (S/21/081)
  */
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getLabReports } from '../../services/patient.service';
-
-const TEST_PATIENT_ID = '006761d1-8279-440e-a786-a492df7abd53';
-
-const handleLogout = async () => {
-  try {
-    await fetch('http://localhost:5000/api/auth/logout', { method: 'POST', credentials: 'include' });
-  } catch { /* ignore */ }
-  window.location.href = '/login';
-};
+import useAuthStore from '../../store/authStore';
 
 const NAV_ITEMS = [
   { to: '/patient/profile',         label: 'My Profile' },
-  { to: '/patient/appointments',    label: 'My Appointments' }, // NEW ITEM
+  { to: '/patient/appointments',    label: 'My Appointments' }, 
   { to: '/patient/doctors',         label: 'Find a Doctor' },
   { to: '/patient/medical-records', label: 'Medical Records' },
   { to: '/patient/prescriptions',   label: 'Prescriptions' },
@@ -26,14 +18,32 @@ const NAV_ITEMS = [
 ];
 
 export default function Sidebar() {
+  const navigate = useNavigate();
+  // Wire in Zustand
+  const { user, clearUser } = useAuthStore();
+  
+  // Use dynamic user ID, default to empty string to avoid undefined crashes
+  const currentUserId = user?.id || '';
+
   const { data: reports = [] } = useQuery({
-    queryKey: ['labReports', TEST_PATIENT_ID],
-    queryFn: () => getLabReports(TEST_PATIENT_ID),
+    queryKey: ['labReports', currentUserId],
+    queryFn: () => getLabReports(currentUserId),
+    enabled: !!currentUserId, // Only run the query if we have an ID
     retry: false, 
   });
 
   const unreadCount = reports.filter(report => report.status === 'completed' && !report.is_read).length;
   const hasNewReports = unreadCount > 0;
+
+  const handleLogout = async () => {
+    try {
+      await fetch('http://localhost:5000/api/auth/logout', { method: 'POST', credentials: 'include' });
+    } catch { /* ignore network error on logout */ }
+    
+    // Clear Zustand store and route to login
+    clearUser();
+    navigate('/login', { replace: true });
+  };
 
   return (
     <aside style={{ width: '220px', minHeight: '100vh', backgroundColor: '#1E3A5F', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
