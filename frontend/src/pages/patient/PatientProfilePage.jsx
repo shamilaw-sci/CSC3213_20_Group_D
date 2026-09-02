@@ -47,38 +47,7 @@ import Spinner from '../../components/common/Spinner';
 import Alert from '../../components/common/Alert';
 import Modal from '../../components/common/Modal'; 
 import HealthAwarenessFeed from '../../components/common/HealthAwarenessFeed';
-
-// Patient ID is now resolved from the real logged-in session via
-// GET /api/auth/me, not hardcoded. See usePatientId() below.
-/**
- * Fetches the currently logged-in patient's real ID from the session,
- * replacing what used to be a hardcoded TEST_PATIENT_ID.
- */
-const usePatientId = () => {
-  const [patientId, setPatientId] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchMe = async () => {
-      try {
-        const res = await fetch('http://localhost:5000/api/auth/me', {
-          credentials: 'include',
-        });
-        const data = await res.json();
-        if (data.success && data.data?.profile_id) {
-          setPatientId(data.data.profile_id);
-        }
-      } catch (err) {
-        console.error('Failed to fetch current user:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchMe();
-  }, []);
-
-  return { patientId, loading };
-};
+import useAuthStore from '../../store/authStore';
 
 // ─── Sensitive Categories for Consent ──────────
 const SENSITIVE_CATEGORIES = ['Mental Health', 'Reproductive Health', 'Substance Abuse', 'STD/STI Records'];
@@ -176,7 +145,8 @@ const BannerAnimationStyles = () => (
 
 // ─── Main Page Component ──────────────────────────────────────────────────────
 const PatientProfilePage = () => {
-  const { patientId: TEST_PATIENT_ID, loading: patientIdLoading } = usePatientId();
+  const user = useAuthStore((state) => state.user);
+  const TEST_PATIENT_ID = user?.profile_id || user?.id || '';
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
 
