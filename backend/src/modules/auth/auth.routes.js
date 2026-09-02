@@ -7,6 +7,7 @@
 
 const express = require('express');
 const router = express.Router();
+const { isAuthenticated } = require('../../middleware/auth');
 const {
   registerController,
   verifyOtpController,
@@ -47,10 +48,10 @@ router.post('/resend-otp', resendOtpController);
 router.post('/login', loginRateLimiter, loginController);
 
 // POST /api/auth/logout
-router.post('/logout', logoutController);
+router.post('/logout', isAuthenticated, logoutController);
 
 // GET /api/auth/me
-router.get('/me', getMeController);
+router.get('/me', isAuthenticated, getMeController);
 
 // POST /api/auth/forgot-password
 router.post('/forgot-password', forgotPasswordController);

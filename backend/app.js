@@ -19,6 +19,7 @@ const orderRoutes = require('./src/modules/order/order.routes');
 const interactionRoutes = require('./src/modules/interaction/interaction.routes');
 const adminRoutes = require('./src/modules/admin/admin.routes');
 const healthContentRoutes = require('./src/modules/health-content/healthContent.routes');
+const paymentRoutes = require('./src/modules/payment/payment.routes');
 
 const app = express();
 
@@ -89,6 +90,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/interactions', interactionRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/admin/health-content', healthContentRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // Global error handler - catches anything that escapes individual route
 // try/catch blocks (e.g. errors thrown in middleware itself). Always

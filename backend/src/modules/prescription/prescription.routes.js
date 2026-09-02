@@ -7,6 +7,7 @@
 
 const express = require('express');
 const router = express.Router();
+const { isAuthenticated, authorize } = require('../../middleware/auth');
 const { 
   createPrescriptionController,
   getPrescriptionController,
@@ -14,16 +15,16 @@ const {
   dispenseMedicineController
 } = require('./prescription.controller');
 
-// POST /api/prescriptions — Create a new prescription
-router.post('/', createPrescriptionController);
+// POST /api/prescriptions — Only doctors can issue prescriptions
+router.post('/', isAuthenticated, authorize('doctor'), createPrescriptionController);
 
-// GET /api/prescriptions/verify/:qrValue — Verify prescription by QR code
-router.get('/verify/:qrValue', verifyPrescriptionController);
+// GET /api/prescriptions/verify/:qrValue — Pharmacy verification
+router.get('/verify/:qrValue', isAuthenticated, authorize('pharmacist', 'doctor', 'admin'), verifyPrescriptionController);
 
-// GET /api/prescriptions/:id — Get a prescription by ID
-router.get('/:id', getPrescriptionController);
+// GET /api/prescriptions/:id — Get details
+router.get('/:id', isAuthenticated, getPrescriptionController);
 
-// POST /api/prescriptions/:id/dispense — Dispense medicines
-router.post('/:id/dispense', dispenseMedicineController);
+// POST /api/prescriptions/:id/dispense — Pharmacist role-gated fulfillment
+router.post('/:id/dispense', isAuthenticated, authorize('pharmacist', 'admin'), dispenseMedicineController);
 
 module.exports = router;

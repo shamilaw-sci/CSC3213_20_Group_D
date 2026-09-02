@@ -8,6 +8,7 @@
 
 const express = require('express');
 const router = express.Router();
+const { isAuthenticated, authorize } = require('../../middleware/auth');
 const {
   registerPharmacyController,
   getPharmacyController,
@@ -19,12 +20,12 @@ const {
 router.post('/register', registerPharmacyController);
 
 // GET /api/pharmacies/:id/dashboard — Get pharmacy dashboard stats
-router.get('/:id/dashboard', getPharmacyDashboardController);
+router.get('/:id/dashboard', isAuthenticated, authorize('pharmacist', 'admin'), getPharmacyDashboardController);
 
 // GET /api/pharmacies/:id — Get pharmacy profile
-router.get('/:id', getPharmacyController);
+router.get('/:id', isAuthenticated, getPharmacyController);
 
 // PUT /api/pharmacies/:id/approve — Approve a pharmacy (admin only)
-router.put('/:id/approve', approvePharmacyController);
+router.put('/:id/approve', isAuthenticated, authorize('admin'), approvePharmacyController);
 
 module.exports = router;

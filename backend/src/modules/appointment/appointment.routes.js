@@ -7,6 +7,7 @@
 
 const express = require('express');
 const router = express.Router();
+const { isAuthenticated, authorize } = require('../../middleware/auth');
 const {
   updateAppointmentStatusController,
   addConsultationNotesController,
@@ -16,19 +17,36 @@ const {
 } = require('./appointment.controller');
 const { auditMiddleware } = require('../../middleware/auditLog');
 
-// POST /api/appointments — Book a new appointment
-router.post('/', bookAppointmentController);
+// POST /api/appointments — Book a new appointment (Patient or Staff)
+router.post('/', isAuthenticated, bookAppointmentController);
 
 // GET /api/appointments/patients/:patientId/notes — doctor views a patient's past consultation notes
-router.get('/patients/:patientId/notes', auditMiddleware('VIEW_CONSULTATION_NOTES', 'appointment'), getPatientConsultationNotesController);
+router.get(
+  '/patients/:patientId/notes',
+  isAuthenticated,
+  authorize('doctor', 'admin'),
+  auditMiddleware('VIEW_CONSULTATION_NOTES', 'appointment'),
+  getPatientConsultationNotesController
+);
 
 // PUT /api/appointments/:id/status — update appointment status
-router.put('/:id/status', auditMiddleware('UPDATE_APPOINTMENT_STATUS', 'appointment'), updateAppointmentStatusController);
+router.put(
+  '/:id/status',
+  isAuthenticated,
+  auditMiddleware('UPDATE_APPOINTMENT_STATUS', 'appointment'),
+  updateAppointmentStatusController
+);
 
-// POST /api/appointments/:id/notes — add consultation notes
-router.post('/:id/notes', auditMiddleware('ADD_CONSULTATION_NOTES', 'appointment'), addConsultationNotesController);
+// POST /api/appointments/:id/notes — add consultation notes (Doctor only)
+router.post(
+  '/:id/notes',
+  isAuthenticated,
+  authorize('doctor'),
+  auditMiddleware('ADD_CONSULTATION_NOTES', 'appointment'),
+  addConsultationNotesController
+);
 
-// POST /api/appointments/:id/summarize-notes — AI-generate a structured draft from free-text observations
-router.post('/:id/summarize-notes', summarizeNotesController);
+// POST /api/appointments/:id/summarize-notes — AI-generate a structured draft
+router.post('/:id/summarize-notes', isAuthenticated, authorize('doctor'), summarizeNotesController);
 
 module.exports = router;
