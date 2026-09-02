@@ -45,8 +45,37 @@ import Alert from '../../components/common/Alert';
 import Modal from '../../components/common/Modal'; 
 import HealthAwarenessFeed from '../../components/common/HealthAwarenessFeed';
 
-// ─── TEMPORARY: hardcoded test patient UUID until auth is integrated ──────────
-const TEST_PATIENT_ID = '006761d1-8279-440e-a786-a492df7abd53';
+// Patient ID is now resolved from the real logged-in session via
+// GET /api/auth/me, not hardcoded. See usePatientId() below.
+/**
+ * Fetches the currently logged-in patient's real ID from the session,
+ * replacing what used to be a hardcoded TEST_PATIENT_ID.
+ */
+const usePatientId = () => {
+  const [patientId, setPatientId] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMe = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/auth/me', {
+          credentials: 'include',
+        });
+        const data = await res.json();
+        if (data.success && data.data?.profile_id) {
+          setPatientId(data.data.profile_id);
+        }
+      } catch (err) {
+        console.error('Failed to fetch current user:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMe();
+  }, []);
+
+  return { patientId, loading };
+};
 
 // ─── Photo upload constraints (mirrors backend middleware/upload.js) ──────────
 const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -135,6 +164,7 @@ const BannerAnimationStyles = () => (
 
 // ─── Main Page Component ──────────────────────────────────────────────────────
 const PatientProfilePage = () => {
+  const { patientId: TEST_PATIENT_ID, loading: patientIdLoading } = usePatientId();
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
 
@@ -226,6 +256,7 @@ const PatientProfilePage = () => {
   const { data: patient, isLoading, isError, error } = useQuery({
     queryKey: ['patient', TEST_PATIENT_ID],
     queryFn: () => getPatientProfile(TEST_PATIENT_ID),
+    enabled: !!TEST_PATIENT_ID,
   });
 
   const { data: allergies = [], isLoading: allergiesLoading } = useQuery({
