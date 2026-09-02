@@ -290,6 +290,13 @@ const loginController = async (req, res) => {
       });
     }
 
+    if (error.message.startsWith('Too many failed attempts')) {
+      return res.status(429).json({
+        success: false,
+        message: error.message
+      });
+    }
+    
     return res.status(500).json({
       success: false,
       message: 'Internal server error'

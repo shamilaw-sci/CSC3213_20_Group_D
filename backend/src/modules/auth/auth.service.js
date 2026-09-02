@@ -140,7 +140,8 @@ const login = async (email, password) => {
     }
 
     if (user.locked_until && new Date(user.locked_until) > new Date()) {
-        throw new Error('Invalid email or password');
+        const minutesRemaining = Math.ceil((new Date(user.locked_until) - new Date()) / 60000);
+        throw new Error(`Too many failed attempts. Try again in ${minutesRemaining} minute${minutesRemaining === 1 ? '' : 's'}.`);
     }
 
     if (user.verification_status === 'pending') {
