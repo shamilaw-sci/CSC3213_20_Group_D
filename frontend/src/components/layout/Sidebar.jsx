@@ -15,6 +15,8 @@ const NAV_ITEMS = [
   { to: '/patient/medical-records', label: 'Medical Records' },
   { to: '/patient/prescriptions',   label: 'Prescriptions' },
   { to: '/patient/lab-reports',     label: 'Lab Reports',  hasBadge: true },
+  { to: '/patient/orders',          label: 'Order Tracker' },
+  { to: '/patient/payments',        label: 'Payment History' },
 ];
 
 export default function Sidebar() {
