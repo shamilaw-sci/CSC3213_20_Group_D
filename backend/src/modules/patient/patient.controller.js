@@ -30,7 +30,11 @@ const updatePatientController = async (req, res) => {
 const getMedicalRecordsController = async (req, res) => {
   try {
     const { id } = req.params;
-    const records = await patientService.getMedicalRecords(id);
+    // Fallback: If auth middleware is missing, catch the role from the query string
+    const user = req.session?.user || req.user || { role: req.query.role }; 
+    
+    // Pass the user to the service so it knows WHO is asking
+    const records = await patientService.getMedicalRecords(id, user);
     res.status(200).json({ success: true, message: 'Medical records retrieved', data: records });
   } catch (error) {
     res.status(error.statusCode || 500).json({ success: false, message: error.message || 'Internal server error' });
@@ -120,14 +124,10 @@ const addVaccinationController = async (req, res) => {
   }
 };
 
-/**
- * Handles POST /api/patients/:id/vaccinations/bulk
- * Saves an array of parsed vaccinations.
- */
 const addBulkVaccinationsController = async (req, res) => {
   try {
     const { id } = req.params;
-    const { vaccinations } = req.body || {}; // expecting { vaccinations: [...] }
+    const { vaccinations } = req.body || {};
     const savedRecords = await patientService.addBulkVaccinations(id, vaccinations);
     res.status(201).json({ success: true, message: 'Batch vaccinations saved', data: savedRecords });
   } catch (error) {
@@ -178,7 +178,11 @@ const getPatientByQrCodeController = async (req, res) => {
 const getPatientHistorySummaryController = async (req, res) => {
   try {
     const { id } = req.params;
-    const data = await patientService.getPatientHistorySummary(id);
+    // Fallback: Catch the role from the query string
+    const user = req.session?.user || req.user || { role: req.query.role };
+
+    // Pass the user down so the AI respects privacy locks
+    const data = await patientService.getPatientHistorySummary(id, user);
     res.status(200).json({ success: true, message: 'AI summary generated', data });
   } catch (error) {
     res.status(error.statusCode || 500).json({ success: false, message: error.message || 'Failed to generate AI summary' });
@@ -224,7 +228,6 @@ const getPatientAppointmentsController = async (req, res) => {
     res.status(error.statusCode || 500).json({ success: false, message: error.message || 'Internal server error' });
   }
 };
-
 
 module.exports = {
   getPatientController,

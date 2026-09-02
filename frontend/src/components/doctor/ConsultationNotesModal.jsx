@@ -6,9 +6,11 @@
  */
 
 import { useState, useEffect } from 'react';
+import { Sparkles, FlaskConical, CheckCircle2 } from 'lucide-react';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
 import Input from '../common/Input';
+import { searchLabTests } from '../../utils/labTestSearch';
 
 const API_URL = 'http://localhost:5000';
 
@@ -34,6 +36,8 @@ const [aiFilled, setAiFilled] = useState(false);
   const [labs, setLabs] = useState([]);
   const [selectedLab, setSelectedLab] = useState('');
   const [testType, setTestType] = useState('');
+  const [testTypeSuggestions, setTestTypeSuggestions] = useState([]);
+  const [showTestSuggestions, setShowTestSuggestions] = useState(false);
   const [priority, setPriority] = useState('routine');
   const [labNotes, setLabNotes] = useState('');
   const [orderingLab, setOrderingLab] = useState(false);
@@ -184,6 +188,18 @@ const [aiFilled, setAiFilled] = useState(false);
   const selectedLabObj = labs.find((lab) => lab.id === selectedLab);
   const availableTests = selectedLabObj?.available_tests || [];
 
+  const handleTestTypeChange = (value) => {
+    setTestType(value);
+    setTestTypeSuggestions(value.trim() === '' ? availableTests : searchLabTests(availableTests, value));
+    setShowTestSuggestions(true);
+  };
+
+  const selectTestType = (test) => {
+    setTestType(test);
+    setTestTypeSuggestions([]);
+    setShowTestSuggestions(false);
+  };
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Add Consultation Notes" size="lg">
       <div className="flex flex-col gap-4">
@@ -195,8 +211,9 @@ const [aiFilled, setAiFilled] = useState(false);
           placeholder="e.g. Follow-up consultation"
           required
         />
-        <div className="flex flex-col gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
-  <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+        <div className="flex flex-col gap-2 p-3 bg-teal-50/50 border border-teal-100 border-l-4 border-l-teal-600 rounded-lg">
+  <label className="flex items-center gap-1.5 text-xs font-medium text-slate-500 uppercase tracking-wide">
+    <Sparkles size={13} className="text-teal-600" />
     Observations (optional — for AI summary)
   </label>
   <textarea
@@ -214,10 +231,11 @@ const [aiFilled, setAiFilled] = useState(false);
       loading={summarizing}
       disabled={summarizing}
     >
-      {summarizing ? 'Analyzing...' : '✨ Summarize with AI'}
+      {summarizing ? 'Analyzing...' : 'Summarize with AI'}
     </Button>
     {aiFilled && (
-      <span className="text-xs text-green-700 bg-green-100 px-2 py-1 rounded-full">
+      <span className="flex items-center gap-1 text-xs text-green-700 bg-green-100 px-2 py-1 rounded-full">
+        <CheckCircle2 size={12} />
         AI-filled — please review
       </span>
     )}
@@ -225,7 +243,7 @@ const [aiFilled, setAiFilled] = useState(false);
   {summarizeError && <p className="text-xs text-red-600">{summarizeError}</p>}
   {aiFilled && !summarizeError && (
     <p className="text-xs text-slate-500 italic">
-      ⚠️ AI-generated draft — not a medical diagnosis. Please review and edit before saving.
+      AI-generated draft — not a medical diagnosis. Please review and edit before saving.
     </p>
   )}
 </div>
@@ -272,14 +290,20 @@ const [aiFilled, setAiFilled] = useState(false);
           />
         </div>
 
-        <div className="flex flex-col gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
-          <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+        <div className="flex flex-col gap-2 p-3 bg-blue-50/50 border border-blue-100 border-l-4 border-l-blue-700 rounded-lg">
+          <label className="flex items-center gap-1.5 text-xs font-medium text-slate-500 uppercase tracking-wide">
+            <FlaskConical size={13} className="text-blue-700" />
             Order Lab Test (optional)
           </label>
           <div className="grid grid-cols-2 gap-3">
             <select
               value={selectedLab}
-              onChange={(e) => { setSelectedLab(e.target.value); setTestType(''); }}
+              onChange={(e) => {
+                setSelectedLab(e.target.value);
+                setTestType('');
+                setTestTypeSuggestions([]);
+                setShowTestSuggestions(false);
+              }}
               className="w-full px-3 py-2 text-sm text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] focus:border-transparent"
             >
               <option value="">Select laboratory</option>
@@ -287,17 +311,43 @@ const [aiFilled, setAiFilled] = useState(false);
                 <option key={lab.id} value={lab.id}>{lab.name}</option>
               ))}
             </select>
-            <select
-              value={testType}
-              onChange={(e) => setTestType(e.target.value)}
-              disabled={!selectedLab}
-              className="w-full px-3 py-2 text-sm text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] focus:border-transparent disabled:bg-slate-100"
-            >
-              <option value="">Select test type</option>
-              {availableTests.map((test) => (
-                <option key={test} value={test}>{test}</option>
-              ))}
-            </select>
+            <div className="relative">
+              <input
+                type="text"
+                value={testType}
+                onChange={(e) => handleTestTypeChange(e.target.value)}
+                onFocus={() => {
+                  setShowTestSuggestions(true);
+                  if (!testType.trim()) setTestTypeSuggestions(availableTests);
+                }}
+                onBlur={() => setTimeout(() => setShowTestSuggestions(false), 150)}
+                disabled={!selectedLab}
+                autoComplete="off"
+                placeholder={selectedLab ? 'Type to search test type' : 'Select a laboratory first'}
+                className="w-full px-3 py-2 text-sm text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] focus:border-transparent disabled:bg-slate-100"
+              />
+              {showTestSuggestions && testTypeSuggestions.length > 0 && (
+                <ul className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                  {testTypeSuggestions.map((test, i) => (
+                    <li
+                      key={i}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        selectTestType(test);
+                      }}
+                      className="px-3 py-2 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-800 cursor-pointer transition-colors duration-150"
+                    >
+                      {test}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {showTestSuggestions && testType.trim().length >= 2 && testTypeSuggestions.length === 0 && (
+                <p className="absolute z-10 w-full mt-1 px-3 py-2 text-xs text-slate-400 bg-white border border-slate-200 rounded-lg shadow-lg">
+                  No matches in this lab's test list
+                </p>
+              )}
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <select
@@ -325,10 +375,11 @@ const [aiFilled, setAiFilled] = useState(false);
               loading={orderingLab}
               disabled={orderingLab}
             >
-              {orderingLab ? 'Ordering...' : '🧪 Order Lab Test'}
+              {orderingLab ? 'Ordering...' : 'Order Lab Test'}
             </Button>
             {labOrderSuccess && (
-              <span className="text-xs text-green-700 bg-green-100 px-2 py-1 rounded-full">
+              <span className="flex items-center gap-1 text-xs text-green-700 bg-green-100 px-2 py-1 rounded-full">
+                <CheckCircle2 size={12} />
                 {labOrderSuccess}
               </span>
             )}

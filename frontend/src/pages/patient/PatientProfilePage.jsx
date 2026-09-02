@@ -10,6 +10,7 @@
  * Vaccination Records added in CARE4U-148.
  * AI Vaccination Bulk Card Scanning added in CARE4U-154.
  * Smart Health Awareness Feed added in CARE4U-280 (Epic 8.13).
+ * Privacy & Consent Controls added in CARE4U-284 (Epic 8.12).
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -17,7 +18,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { User, Droplets, Phone, Calendar, Edit2, X, Save, AlertTriangle, Trash2, Plus, Camera, Syringe, ScanLine, Info } from 'lucide-react';
+import { User, Droplets, Phone, Calendar, Edit2, X, Save, AlertTriangle, Trash2, Plus, Camera, Syringe, ScanLine, Shield, Lock, Unlock } from 'lucide-react';
 
 import { 
   getPatientProfile, 
@@ -32,7 +33,9 @@ import {
   getVaccinations,
   addBulkVaccinations,
   deleteVaccination,
-  scanVaccinationCard
+  scanVaccinationCard,
+  getConsentSettings,
+  updateConsentSettings
 } from '../../services/patient.service';
 import { searchAllergens } from '../../utils/allergenSearch';
 import { searchVaccines } from '../../utils/vaccineSearch';
@@ -77,6 +80,9 @@ const usePatientId = () => {
   return { patientId, loading };
 };
 
+// ─── Sensitive Categories for Consent ──────────
+const SENSITIVE_CATEGORIES = ['Mental Health', 'Reproductive Health', 'Substance Abuse', 'STD/STI Records'];
+
 // ─── Photo upload constraints (mirrors backend middleware/upload.js) ──────────
 const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_PHOTO_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
@@ -119,12 +125,18 @@ const SeverityBadge = ({ severity }) => {
 };
 
 // ─── Profile Field Component ──────────────────────────────────────────────────
-// eslint-disable-next-line no-unused-vars
-const ProfileField = ({ icon: Icon, label, value }) => (
+const ProfileField = ({ icon: Icon, label, value }) => Icon ? (
   <div className="flex items-start gap-3">
     <div className="mt-0.5 p-2 bg-slate-100 rounded-lg">
       <Icon size={16} className="text-[#1E3A5F]" />
     </div>
+    <div>
+      <p className="text-xs text-slate-500 uppercase tracking-wide">{label}</p>
+      <p className="text-sm font-medium text-slate-800 mt-0.5">{value || '—'}</p>
+    </div>
+  </div>
+) : (
+  <div className="flex items-start gap-3">
     <div>
       <p className="text-xs text-slate-500 uppercase tracking-wide">{label}</p>
       <p className="text-sm font-medium text-slate-800 mt-0.5">{value || '—'}</p>
@@ -214,7 +226,6 @@ const PatientProfilePage = () => {
       if (allergyDropdownRef.current && !allergyDropdownRef.current.contains(event.target)) {
         setShowAllergySuggestions(false);
       }
-      // Since bulk rows are dynamic, we just clear the active row if clicking anywhere outside
       if (!event.target.closest('.vaccine-autocomplete-container')) {
         setActiveVaccineRowId(null);
       }
@@ -235,7 +246,6 @@ const PatientProfilePage = () => {
     setShowAllergySuggestions(false);
   };
 
-  // ── Bulk Vaccination Handlers ──
   const addVaccineRow = () => {
     setBulkVaccines([...bulkVaccines, { id: Date.now(), vaccineName: '', dateAdministered: '', doseNumber: '', notes: '' }]);
   };
@@ -277,6 +287,13 @@ const PatientProfilePage = () => {
     enabled: !!patient,
   });
 
+  // NEW: Consent Query
+  const { data: lockedCategories = [], isLoading: consentLoading } = useQuery({ 
+    queryKey: ['consent', TEST_PATIENT_ID], 
+    queryFn: () => getConsentSettings(TEST_PATIENT_ID), 
+    enabled: !!patient 
+  });
+
   // ── Form Setup ──
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
 
@@ -297,10 +314,7 @@ const PatientProfilePage = () => {
       queryClient.setQueryData(['patient', TEST_PATIENT_ID], updatedPatient);
       toast.success('Profile photo updated');
     },
-    onError: (err) => {
-      const message = err?.response?.data?.message || 'Failed to upload photo.';
-      toast.error(message);
-    },
+    onError: (err) => toast.error(err?.response?.data?.message || 'Failed to upload photo.'),
   });
 
   const addAllergyMutation = useMutation({
@@ -358,7 +372,6 @@ const PatientProfilePage = () => {
       queryClient.invalidateQueries({ queryKey: ['vaccinations', TEST_PATIENT_ID] });
       toast.success('Vaccinations saved successfully');
       setIsAddVaccinationModalOpen(false);
-      // Reset bulk array back to a single empty row
       setBulkVaccines([{ id: 'initial-row', vaccineName: '', dateAdministered: '', doseNumber: '', notes: '' }]);
     },
     onError: () => toast.error('Failed to add vaccinations.'),
@@ -379,9 +392,7 @@ const PatientProfilePage = () => {
     mutationFn: (file) => scanVaccinationCard(TEST_PATIENT_ID, file),
     onSuccess: (data) => {
       toast.success('Card scanned successfully! Please verify details.');
-      // Data is an array of extracted vaccination objects
       const extractedArray = Array.isArray(data) ? data : [data];
-      
       const newBulkRows = extractedArray.map((item, index) => ({
         id: Date.now() + index,
         vaccineName: item.vaccineName || '',
@@ -389,19 +400,33 @@ const PatientProfilePage = () => {
         doseNumber: item.doseNumber || '',
         notes: ''
       }));
-
-      // Overwrite the single empty row with the newly extracted rows
-      if (newBulkRows.length > 0) {
-        setBulkVaccines(newBulkRows);
-      }
+      if (newBulkRows.length > 0) setBulkVaccines(newBulkRows);
     },
-    onError: (err) => {
-      const message = err?.response?.data?.message || 'Failed to scan card.';
-      toast.error(message);
-    }
+    onError: (err) => toast.error(err?.response?.data?.message || 'Failed to scan card.')
+  });
+
+  // NEW: Consent Mutation
+  const consentMutation = useMutation({
+    mutationFn: (newCategories) => updateConsentSettings(TEST_PATIENT_ID, newCategories),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['consent', TEST_PATIENT_ID] });
+      toast.success('Privacy settings updated');
+    },
+    onError: () => toast.error('Failed to update privacy settings.'),
   });
 
   // ── Handlers ──
+  const handleToggleConsent = (category) => {
+    const isLocked = lockedCategories.includes(category);
+    let newCategories;
+    if (isLocked) {
+      newCategories = lockedCategories.filter(c => c !== category);
+    } else {
+      newCategories = [...lockedCategories, category];
+    }
+    consentMutation.mutate(newCategories);
+  };
+
   const handleEditClick = () => {
     reset({
       full_name: patient?.full_name || '',
@@ -419,10 +444,8 @@ const PatientProfilePage = () => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
-
     if (!ALLOWED_PHOTO_TYPES.includes(file.type)) return toast.error('Please select a JPEG, PNG, or WEBP image.');
     if (file.size > MAX_PHOTO_SIZE_BYTES) return toast.error('Image must be 2MB or smaller.');
-
     uploadPhotoMutation.mutate(file);
   };
 
@@ -432,11 +455,7 @@ const PatientProfilePage = () => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
-    
-    if (!ALLOWED_PHOTO_TYPES.includes(file.type)) {
-      return toast.error('Please select a valid image file (JPEG, PNG, WEBP).');
-    }
-    
+    if (!ALLOWED_PHOTO_TYPES.includes(file.type)) return toast.error('Please select a valid image file (JPEG, PNG, WEBP).');
     scanVaccinationMutation.mutate(file);
   };
 
@@ -452,24 +471,12 @@ const PatientProfilePage = () => {
     addConditionMutation.mutate({ condition: conditionInput.trim(), diagnosedAt: diagnosedAtInput, notes: conditionNotes.trim(), isPriority: isPriorityInput });
   };
 
-  // Fixed the form submission logic for Bulk Vaccinations to trigger purely via onClick
   const submitBulkVaccination = (e) => {
     if (e && e.preventDefault) e.preventDefault();
-    
-    // Filter out completely empty rows
     const validVaccines = bulkVaccines.filter(v => v.vaccineName.trim() !== '' || v.dateAdministered.trim() !== '');
-    
-    if (validVaccines.length === 0) {
-      return toast.error('Please complete at least one vaccination record.');
-    }
-
-    // Check if any row has a name but no date, or date but no name
+    if (validVaccines.length === 0) return toast.error('Please complete at least one vaccination record.');
     const hasMissingFields = validVaccines.some(v => v.vaccineName.trim() === '' || v.dateAdministered.trim() === '');
-    
-    if (hasMissingFields) {
-      return toast.error('Please ensure both Vaccine Name and Date are filled for all active rows.');
-    }
-    
+    if (hasMissingFields) return toast.error('Please ensure both Vaccine Name and Date are filled for all active rows.');
     addBulkVaccinationMutation.mutate({ vaccinations: validVaccines });
   };
 
@@ -489,9 +496,7 @@ const PatientProfilePage = () => {
   };
 
   const confirmDeleteAllergy = () => {
-    if (allergyToDelete) {
-      deleteAllergyMutation.mutate(allergyToDelete.id);
-    }
+    if (allergyToDelete) deleteAllergyMutation.mutate(allergyToDelete.id);
   };
 
   // ── Filter allergies by severity ──
@@ -800,6 +805,50 @@ const PatientProfilePage = () => {
                     <Plus size={16} className="mr-2" /> Add Vaccination
                   </Button>
                 </div>
+              </Card>
+            </div>
+
+            {/* ── NEW: Privacy & Consent Controls (Epic 8.12) ── */}
+            <div className="mb-6">
+              <Card title={<span className="flex items-center gap-2"><Shield size={18} className="text-[#1E3A5F]" /> Privacy & Consent Controls</span>}>
+                <p className="text-sm text-slate-500 mb-4">
+                  Lock specific medical record categories. Doctors will require your explicit permission to view locked records.
+                </p>
+                
+                {consentLoading ? (
+                  <div className="py-6 flex justify-center"><Spinner size="sm" /></div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {SENSITIVE_CATEGORIES.map(category => {
+                      const isLocked = lockedCategories.includes(category);
+                      return (
+                        <div key={category} className="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white shadow-sm transition-all hover:border-slate-300">
+                          <div className="flex items-center gap-3">
+                            <div className={`p-2.5 rounded-full ${isLocked ? 'bg-red-50 text-red-600' : 'bg-teal-50 text-teal-600'}`}>
+                              {isLocked ? <Lock size={18} strokeWidth={2.5} /> : <Unlock size={18} strokeWidth={2.5} />}
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-slate-800">{category}</p>
+                              <p className={`text-xs mt-0.5 font-medium ${isLocked ? 'text-red-500' : 'text-teal-600'}`}>
+                                {isLocked ? 'Locked (Requires Approval)' : 'Unlocked (Default Access)'}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          {/* Animated Toggle Switch */}
+                          <button 
+                            type="button"
+                            onClick={() => handleToggleConsent(category)}
+                            disabled={consentMutation.isPending}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1E3A5F] disabled:opacity-50 ${isLocked ? 'bg-red-500' : 'bg-slate-200'}`}
+                          >
+                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-300 ease-in-out ${isLocked ? 'translate-x-6' : 'translate-x-1'}`} />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </Card>
             </div>
 

@@ -27,6 +27,7 @@
  * Thorough loading states and responsive scaling applied for mobile viewing (CARE4U-63/64).
  * Actions panel added and strictly gated behind doctor authentication (CARE4U-71).
  * "Start Visit" action button creates a walk-in consultation (CARE4U-72).
+ * Doctor Privacy Enforcements successfully integrated (CARE4U-284).
  * @author    Wasana Karunanayaka (S/21/081)
  */
 
@@ -297,7 +298,8 @@ const PatientLookupPage = () => {
 
   const { data: records = [], isLoading: recordsLoading } = useQuery({
     queryKey: ['medical-records', patient?.id],
-    queryFn: () => getMedicalRecords(patient.id),
+    // Pass the doctor's role from the auth store to enforce privacy locks
+    queryFn: () => getMedicalRecords(patient.id, user?.role),
     enabled: !!patient?.id,
   });
 
@@ -323,7 +325,8 @@ const PatientLookupPage = () => {
     setIsGeneratingSummary(true);
     setSummaryError(null);
     try {
-      const data = await getPatientHistorySummary(patient.id);
+      // Pass the doctor's role to the AI generator to ensure privacy!
+      const data = await getPatientHistorySummary(patient.id, user?.role);
       setAiSummary(data.summary);
     } catch (err) {
       console.error(err);

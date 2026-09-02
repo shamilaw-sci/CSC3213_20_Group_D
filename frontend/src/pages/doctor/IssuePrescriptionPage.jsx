@@ -3,12 +3,16 @@
  * @desc      Allows a doctor to issue a digital prescription.
  *            Doctor fills in patient ID, medicines, and submits.
  *            On success, displays the generated QR code.
+ *            When opened from the Appointment Queue ("Issue Prescription"
+ *            button), the patient is already picked — no manual ID entry.
  * @author    S/21/001
  */
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { useLocation } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
+import { AlertTriangle, User } from 'lucide-react';
 import { createPrescription } from '../../services/prescription.service';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
@@ -24,6 +28,13 @@ const SEVERITY_STYLES = {
 };
 
 const IssuePrescriptionPage = () => {
+  const location = useLocation();
+  // Passed in from AppointmentQueuePage's "Issue Prescription" button.
+  // If missing (page opened directly), the doctor falls back to typing the ID.
+  const preselectedPatientId = location.state?.patientId || '';
+  const preselectedPatientName = location.state?.patientName || '';
+  const preselectedAppointmentId = location.state?.appointmentId || '';
+
   const [medicines, setMedicines] = useState([
     { medicine_name: '', dosage: '', frequency: '', duration_days: '', quantity_prescribed: '', special_notes: '' }
   ]);
@@ -35,7 +46,12 @@ const IssuePrescriptionPage = () => {
   const [warnings, setWarnings] = useState({}); // { [medicineIndex]: [warningObj, ...] }
   const [dismissedWarnings, setDismissedWarnings] = useState(new Set());
 
-  const { register, handleSubmit, watch, formState: { errors } } = useForm();
+  const { register, handleSubmit, watch, formState: { errors } } = useForm({
+    defaultValues: {
+      patientId: preselectedPatientId,
+      appointmentId: preselectedAppointmentId,
+    },
+  });
 
   // Add a new empty medicine row
   const addMedicine = () => {
@@ -182,14 +198,29 @@ const selectSuggestion = (index, medicine) => {
               )}
 
               <div className="grid grid-cols-1 gap-4 mt-4">
-                <Input
-                  label="Patient ID"
-                  name="patientId"
-                  placeholder="Enter patient UUID"
-                  required
-                  {...register('patientId', { required: 'Patient ID is required' })}
-                  error={errors.patientId?.message}
-                />
+                {preselectedPatientId ? (
+                  // Came from the Appointment Queue — patient already picked.
+                  <div className="flex items-center gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
+                    <div className="w-9 h-9 rounded-full bg-blue-700 text-white flex items-center justify-center shrink-0">
+                      <User size={18} />
+                    </div>
+                    <div>
+                      <p className="text-xs text-blue-500 font-medium">Patient</p>
+                      <p className="text-sm font-semibold text-slate-800">{preselectedPatientName || 'Selected patient'}</p>
+                    </div>
+                    {/* Hidden field so react-hook-form still submits the patient's ID */}
+                    <input type="hidden" {...register('patientId', { required: true })} />
+                  </div>
+                ) : (
+                  <Input
+                    label="Patient ID"
+                    name="patientId"
+                    placeholder="Enter patient UUID"
+                    required
+                    {...register('patientId', { required: 'Patient ID is required' })}
+                    error={errors.patientId?.message}
+                  />
+                )}
                 <Input
                   label="Appointment ID (optional)"
                   name="appointmentId"
@@ -251,7 +282,7 @@ const selectSuggestion = (index, medicine) => {
     required
   />
   {activeSuggestionIndex === index && suggestions.length > 0 && (
-    <ul className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+    <ul className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
       {suggestions.map((med, i) => (
        <li
   key={i}
@@ -259,7 +290,7 @@ const selectSuggestion = (index, medicine) => {
     e.preventDefault();
     selectSuggestion(index, med);
   }}
-  className="px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 cursor-pointer"
+  className="px-3 py-2 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-800 cursor-pointer transition-colors duration-150"
 >
           <span className="font-medium">{med.name}</span>
           <span className="text-slate-400 text-xs ml-2">{med.category}</span>
@@ -268,7 +299,7 @@ const selectSuggestion = (index, medicine) => {
     </ul>
   )}
   {activeSuggestionIndex === index && suggestions.length === 0 && medicine.medicine_name.trim().length >= 2 && (
-    <p className="absolute z-10 w-full mt-1 px-3 py-2 text-xs text-slate-400 bg-white border border-slate-200 rounded-lg shadow-lg">
+    <p className="absolute z-10 w-full mt-1 px-3 py-2 text-xs text-slate-400 bg-white border border-slate-200 rounded-xl shadow-lg">
       No matches — you can still type it manually
     </p>
   )}
@@ -277,13 +308,16 @@ const selectSuggestion = (index, medicine) => {
     .map((w, wi) => (
       <div
         key={wi}
-        className={`mt-2 rounded-lg border px-3 py-2 text-xs flex justify-between items-start gap-2 ${SEVERITY_STYLES[w.severity] || SEVERITY_STYLES.moderate}`}
+        className={`mt-2 rounded-xl border px-3 py-2 text-xs flex justify-between items-start gap-2 ${SEVERITY_STYLES[w.severity] || SEVERITY_STYLES.moderate}`}
       >
-        <div>
-          <span className="font-semibold uppercase">
-            {w.severity} — {w.type === 'allergy' ? 'Allergy Conflict' : 'Drug Interaction'}
-          </span>
-          <p className="mt-0.5">{w.message}</p>
+        <div className="flex items-start gap-1.5">
+          <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+          <div>
+            <span className="font-semibold uppercase">
+              {w.severity} — {w.type === 'allergy' ? 'Allergy Conflict' : 'Drug Interaction'}
+            </span>
+            <p className="mt-0.5">{w.message}</p>
+          </div>
         </div>
         <button
           type="button"

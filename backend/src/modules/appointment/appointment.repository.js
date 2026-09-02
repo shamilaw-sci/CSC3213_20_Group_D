@@ -40,7 +40,7 @@ const createConsultationNote = async (
   followUpNeeded
 ) => {
   const result = await pool.query(
-    `INSERT INTO medical_records 
+    `INSERT INTO medical_records
      (patient_id, doctor_id, appointment_id, record_type, title, description, is_confidential,
       chief_complaint, diagnosis, treatment_plan, follow_up_needed)
      VALUES ($1, $2, $3, 'consultation', $4, $5, $6, $7, $8, $9, $10)
@@ -59,6 +59,22 @@ const createConsultationNote = async (
     ]
   );
   return result.rows[0];
+};
+
+/**
+ * Gets all past consultation notes for a patient, newest first.
+ * Used by the doctor to review a patient's consultation history.
+ * @param {string} patientId - UUID of the patient
+ * @returns {Promise<Object[]>} List of consultation note rows
+ */
+const getConsultationNotesByPatientId = async (patientId) => {
+  const result = await pool.query(
+    `SELECT * FROM medical_records
+     WHERE patient_id = $1 AND record_type = 'consultation'
+     ORDER BY created_at DESC`,
+    [patientId]
+  );
+  return result.rows;
 };
 
 /**
@@ -102,6 +118,7 @@ module.exports = {
   updateAppointmentStatus,
   getAppointmentById,
   createConsultationNote,
+  getConsultationNotesByPatientId,
   bookAppointment,
   checkAppointmentConflict
 };
