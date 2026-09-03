@@ -44,9 +44,8 @@ import {
 } from '../services/patient.service';
 import { searchAllergens } from '../utils/allergenSearch';
 import { searchVaccines } from '../utils/vaccineSearch';
+import useAuthStore from '../store/authStore';
 
-// Fallback used only if no patientId prop is passed (e.g. during standalone testing)
-const TEST_PATIENT_ID = '006761d1-8279-440e-a786-a492df7abd53';
 const BLOOD_GROUP_OPTIONS   = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
 const RELATIONSHIP_OPTIONS  = ['spouse', 'parent', 'sibling', 'child', 'friend', 'other'];
 const SEVERITY_OPTIONS      = ['mild', 'moderate', 'severe'];
@@ -122,7 +121,9 @@ const ProfileField = ({ label, value }) => (
 );
 
 export default function PatientProfileScreen({ patientId }) {
-  const activePatientId = patientId || TEST_PATIENT_ID;
+  const user = useAuthStore((state) => state.user);
+  const activePatientId = patientId || user?.profile_id || user?.id || '';
+
   const [patient, setPatient] = useState(null);
   const [allergies, setAllergies] = useState([]);
   const [conditions, setConditions] = useState([]);
@@ -163,8 +164,8 @@ export default function PatientProfileScreen({ patientId }) {
   const [scanningCard, setScanningCard] = useState(false);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (activePatientId) fetchData();
+  }, [activePatientId]);
 
   const fetchData = async () => {
     try {

@@ -20,9 +20,7 @@ import {
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { getPatientPrescriptions } from '../services/prescription.service';
-
-// TEMPORARY — replace with session user when auth is ready
-const TEST_PATIENT_ID = '006761d1-8279-440e-a786-a492df7abd53';
+import useAuthStore from '../store/authStore';
 
 /**
  * Checks if a prescription is expired based on expires_at date.
@@ -73,12 +71,17 @@ const formatDate = (dateStr) => {
 };
 
 const PrescriptionsScreen = () => {
+  const user = useAuthStore((state) => state.user);
+  const TEST_PATIENT_ID = user?.profile_id || user?.id || '';
+
   const [prescriptions, setPrescriptions] = useState([]);
   const [loading,       setLoading]       = useState(true);
   const [error,         setError]         = useState(null);
   const [selectedQR,    setSelectedQR]    = useState(null);
 
   useEffect(() => {
+    if (!TEST_PATIENT_ID) return;
+    
     const fetchPrescriptions = async () => {
       try {
         const data = await getPatientPrescriptions(TEST_PATIENT_ID);
@@ -90,7 +93,7 @@ const PrescriptionsScreen = () => {
       }
     };
     fetchPrescriptions();
-  }, []);
+  }, [TEST_PATIENT_ID]);
 
   if (loading) {
     return (

@@ -1,9 +1,9 @@
 /**
- * @file    MedicalRecordsScreen.js
- * @module  Patient
- * @desc    Mobile screen showing a patient's medical records list.
- *          Tap any record to see full details in a modal.
- * @author  Wasana Karunanayaka (S/21/081)
+ * @file      MedicalRecordsScreen.js
+ * @module    Patient
+ * @desc      Mobile screen showing a patient's medical records list.
+ *            Tap any record to see full details in a modal.
+ * @author    Wasana Karunanayaka (S/21/081)
  */
 import React, { useEffect, useState } from 'react';
 import {
@@ -17,9 +17,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { getMedicalRecords } from '../services/patient.service';
-
-// TEMPORARY — replace with session user when auth is ready
-const TEST_PATIENT_ID = '006761d1-8279-440e-a786-a492df7abd53';
+import useAuthStore from '../store/authStore';
 
 /**
  * Returns a label and colour for each record type.
@@ -50,12 +48,17 @@ const formatDate = (dateStr) => {
 };
 
 const MedicalRecordsScreen = () => {
+  const user = useAuthStore((state) => state.user);
+  const TEST_PATIENT_ID = user?.profile_id || user?.id || '';
+
   const [records,        setRecords]        = useState([]);
   const [loading,        setLoading]        = useState(true);
   const [error,          setError]          = useState(null);
   const [selectedRecord, setSelectedRecord] = useState(null);
 
   useEffect(() => {
+    if (!TEST_PATIENT_ID) return;
+    
     const fetchRecords = async () => {
       try {
         const data = await getMedicalRecords(TEST_PATIENT_ID);
@@ -67,7 +70,7 @@ const MedicalRecordsScreen = () => {
       }
     };
     fetchRecords();
-  }, []);
+  }, [TEST_PATIENT_ID]);
 
   if (loading) {
     return (

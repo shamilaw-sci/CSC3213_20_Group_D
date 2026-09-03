@@ -18,9 +18,7 @@ import {
   Alert
 } from 'react-native';
 import { getLabReports, markLabReportAsRead } from '../services/patient.service';
-
-// TEMPORARY — replace with session user when auth is ready
-const TEST_PATIENT_ID = '006761d1-8279-440e-a786-a492df7abd53';
+import useAuthStore from '../store/authStore';
 
 /**
  * Formats an ISO date string to a readable short date.
@@ -39,11 +37,16 @@ const formatDate = (dateStr) => {
 };
 
 const LabReportsScreen = () => {
+  const user = useAuthStore((state) => state.user);
+  const TEST_PATIENT_ID = user?.profile_id || user?.id || '';
+  
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    if (!TEST_PATIENT_ID) return;
+    
     const fetchReports = async () => {
       try {
         const data = await getLabReports(TEST_PATIENT_ID);
@@ -55,7 +58,7 @@ const LabReportsScreen = () => {
       }
     };
     fetchReports();
-  }, []);
+  }, [TEST_PATIENT_ID]);
 
   const handleOpenReport = async (report) => {
     if (!report.report_url) {
