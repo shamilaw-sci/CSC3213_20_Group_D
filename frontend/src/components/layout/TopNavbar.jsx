@@ -31,8 +31,8 @@ const TopNavbar = ({ portalLabel, navItems, onLogout }) => {
   const linkInactive = 'text-brand-deep/80 hover:text-brand-deep hover:bg-primary/10';
   const linkActive = 'bg-primary text-primary-foreground shadow-sm';
 
+  // UI Polish: bg-primary/[0.08] provides better contrast against the page background
   return (
-    {/* UI Polish: Changed bg-primary/[0.03] to bg-primary/[0.08] for better contrast against the page background */}
     <header className="sticky top-0 z-40 bg-primary/[0.08] backdrop-blur-md shadow-sm border-b border-primary/15">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         <div className="flex items-center justify-between h-20">
