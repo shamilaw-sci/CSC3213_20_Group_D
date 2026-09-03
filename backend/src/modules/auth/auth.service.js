@@ -13,7 +13,7 @@ const { generateOtp, getOtpExpiry } = require('../../utils/otp');
 const { sendOtpEmail, sendPasswordResetEmail } = require('../../utils/email');
 const { generatePatientQR } = require('../../utils/qr');
 const {
-    createUser, createPatient, createDoctor, findUserByEmail,
+    createUser, createPatient, createDoctor, createPharmacy, findUserByEmail,
     savePasswordResetToken, getValidPasswordResetToken,
     markTokenAsUsed, updateUserPassword,
     upsertOtpVerification, findOtpByEmail, deleteOtpByEmail,
@@ -112,6 +112,8 @@ const verifyOtp = async (email, otpCode) => {
         profile = await createPatient(user.id, pending.profile_data.fullName, pending.profile_data.nic, pending.profile_data.dateOfBirth, qrCodeId);
     } else if (pending.role === 'doctor') {
         profile = await createDoctor(user.id, pending.profile_data.fullName, pending.profile_data.slmcRegNumber, pending.profile_data.specialization);
+    } else if (pending.role === 'pharmacist') {
+        profile = await createPharmacy(user.id, pending.profile_data.name, pending.profile_data.licenseNumber, pending.profile_data.address, pending.profile_data.phone);
     }
 
     await deleteOtpByEmail(email);

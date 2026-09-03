@@ -10,7 +10,7 @@ const { register, verifyOtp, resendOtp, login, forgotPassword, resetPassword } =
 // Import repositories to fetch profile IDs and names
 const patientRepository = require('../patient/patient.repository');
 const doctorRepository = require('../doctor/doctor.repository');
-
+const pharmacyRepository = require('../pharmacy/pharmacy.repository');
 /**
  * Handles POST/ api/ auth/ register
  * @param {object} req - Express request
@@ -237,6 +237,14 @@ const loginController = async (req, res) => {
         fullName = doctorProfile.full_name;
       }
     }
+
+          else if (userRole === 'pharmacist') {
+        const pharmacyProfile = await pharmacyRepository.getPharmacyByUserId(user.id);
+        if (pharmacyProfile) {
+          profileId = pharmacyProfile.id;
+          fullName = pharmacyProfile.name;
+        }
+      }
 
     // Save user to session, now including full_name
     req.session.user = {

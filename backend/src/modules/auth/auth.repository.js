@@ -71,6 +71,30 @@ const createDoctor = async (userId, fullName, slmcRegNumber, specialization) => 
 };
 
 /**
+ * Creates a new pharmacy profile linked to a user (pharmacist role).
+ * Newly registered pharmacies default to unverified and inactive -
+ * separate from the account's own verification_status ('pending' until
+ * admin-approved) - matching the pattern used elsewhere (e.g. is_verified
+ * on doctors), and leaving room for a future admin verification step
+ * specific to pharmacy licenses if needed.
+ * @param {string} userId - UUID of the user
+ * @param {string} name - Pharmacy name
+ * @param {string} licenseNumber - Pharmacy license number
+ * @param {string} address - Pharmacy address
+ * @param {string} phone - Pharmacy contact phone
+ * @returns {Promise<object>} Created pharmacy row
+ */
+const createPharmacy = async (userId, name, licenseNumber, address, phone) => {
+    const result = await pool.query(
+        `INSERT INTO pharmacies (user_id, name, license_number, address, phone, is_verified, is_active)
+         VALUES ($1, $2, $3, $4, $5, false, true)
+         RETURNING id, user_id, name, license_number, address, phone, is_verified, is_active, created_at`,
+        [userId, name, licenseNumber, address, phone]
+    );
+    return result.rows[0];
+};
+
+/**
  * Finds a user by email address.
  * @param {string} email - Email to search for
  * @returns {Promise<object|null>} User row or null
@@ -236,6 +260,7 @@ module.exports = {
     createUser,
     createPatient,
     createDoctor,
+    createPharmacy,
     findUserByEmail,
     savePasswordResetToken,
     getValidPasswordResetToken,

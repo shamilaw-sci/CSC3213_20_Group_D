@@ -26,6 +26,11 @@ const RegisterPage = () => {
     // Doctor fields
     slmcRegNumber: '',
     specialization: '',
+    // Pharmacist fields
+    pharmacyName: '',
+    licenseNumber: '',
+    pharmacyAddress: '',
+    pharmacyPhone: '',
   });
 
   const [errors, setErrors]       = useState({});
@@ -72,6 +77,12 @@ const RegisterPage = () => {
       if (!formData.slmcRegNumber)  newErrors.slmcRegNumber  = 'SLMC number is required';
       if (!formData.specialization) newErrors.specialization = 'Specialization is required';
     }
+    if (formData.role === 'pharmacist') {
+      if (!formData.pharmacyName)    newErrors.pharmacyName    = 'Pharmacy name is required';
+      if (!formData.licenseNumber)   newErrors.licenseNumber   = 'License number is required';
+      if (!formData.pharmacyAddress) newErrors.pharmacyAddress = 'Address is required';
+      if (!formData.pharmacyPhone)   newErrors.pharmacyPhone   = 'Pharmacy phone is required';
+    }
     return newErrors;
   };
 
@@ -102,10 +113,20 @@ const RegisterPage = () => {
         profileData = { fullName: formData.fullName, nic: formData.nic, dateOfBirth: formData.dateOfBirth };
       } else if (formData.role === 'doctor') {
         profileData = { fullName: formData.fullName, slmcRegNumber: formData.slmcRegNumber, specialization: formData.specialization };
+      } else if (formData.role === 'pharmacist') {
+        // Pharmacy business profile - creates a matching row in the
+        // pharmacies table during OTP verification, so the pharmacy
+        // dashboard has real data immediately after registration.
+        profileData = {
+          name: formData.pharmacyName,
+          licenseNumber: formData.licenseNumber,
+          address: formData.pharmacyAddress,
+          phone: formData.pharmacyPhone,
+        };
       } else {
-        // pharmacist, lab_technician, hospital_staff — only fullName is
-        // collected here; license/credential details belong to their
-        // own modules (Sections 9-10), not Auth (see Epic 7.4 scope).
+        // lab_technician, hospital_staff — only fullName is collected
+        // here; these roles have no dedicated business profile table
+        // yet (no dashboard exists either - see mobile App.js placeholder).
         profileData = { fullName: formData.fullName };
       }
 
@@ -306,6 +327,51 @@ const RegisterPage = () => {
                     onChange={handleChange}
                     placeholder="e.g. Cardiologist"
                     error={errors.specialization}
+                    required
+                  />
+                </>
+              )}
+
+              {formData.role === 'pharmacist' && (
+                <>
+                  <Input
+                    label="Pharmacy Name"
+                    name="pharmacyName"
+                    type="text"
+                    value={formData.pharmacyName}
+                    onChange={handleChange}
+                    placeholder="e.g. Green Cross Pharmacy"
+                    error={errors.pharmacyName}
+                    required
+                  />
+                  <Input
+                    label="License Number"
+                    name="licenseNumber"
+                    type="text"
+                    value={formData.licenseNumber}
+                    onChange={handleChange}
+                    placeholder="e.g. PH/2024/1234"
+                    error={errors.licenseNumber}
+                    required
+                  />
+                  <Input
+                    label="Pharmacy Address"
+                    name="pharmacyAddress"
+                    type="text"
+                    value={formData.pharmacyAddress}
+                    onChange={handleChange}
+                    placeholder="Street, City"
+                    error={errors.pharmacyAddress}
+                    required
+                  />
+                  <Input
+                    label="Pharmacy Phone"
+                    name="pharmacyPhone"
+                    type="text"
+                    value={formData.pharmacyPhone}
+                    onChange={handleChange}
+                    placeholder="07XXXXXXXX"
+                    error={errors.pharmacyPhone}
                     required
                   />
                 </>
