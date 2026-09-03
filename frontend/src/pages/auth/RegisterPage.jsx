@@ -97,9 +97,17 @@ const RegisterPage = () => {
     setServerError('');
 
     try {
-      const profileData = formData.role === 'patient'
-        ? { fullName: formData.fullName, nic: formData.nic, dateOfBirth: formData.dateOfBirth }
-        : { fullName: formData.fullName, slmcRegNumber: formData.slmcRegNumber, specialization: formData.specialization };
+      let profileData;
+      if (formData.role === 'patient') {
+        profileData = { fullName: formData.fullName, nic: formData.nic, dateOfBirth: formData.dateOfBirth };
+      } else if (formData.role === 'doctor') {
+        profileData = { fullName: formData.fullName, slmcRegNumber: formData.slmcRegNumber, specialization: formData.specialization };
+      } else {
+        // pharmacist, lab_technician, hospital_staff — only fullName is
+        // collected here; license/credential details belong to their
+        // own modules (Sections 9-10), not Auth (see Epic 7.4 scope).
+        profileData = { fullName: formData.fullName };
+      }
 
       const response = await fetch('http://localhost:5000/api/auth/register', {
         method: 'POST',
@@ -163,25 +171,25 @@ const RegisterPage = () => {
               <p className="text-sm text-slate-500">Step 1 of 2 — Account Details</p>
 
               {/* Role selector */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setFormData({ ...formData, role: 'patient' })}
-                  className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors
-                    ${formData.role === 'patient'
-                      ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]'
-                      : 'bg-white text-slate-600 border-slate-300'}`}
-                >
-                  Patient
-                </button>
-                <button
-                  onClick={() => setFormData({ ...formData, role: 'doctor' })}
-                  className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors
-                    ${formData.role === 'doctor'
-                      ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]'
-                      : 'bg-white text-slate-600 border-slate-300'}`}
-                >
-                  Doctor
-                </button>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { value: 'patient', label: 'Patient' },
+                  { value: 'doctor', label: 'Doctor' },
+                  { value: 'pharmacist', label: 'Pharmacist' },
+                  { value: 'lab_technician', label: 'Lab Technician' },
+                  { value: 'hospital_staff', label: 'Hospital Staff' },
+                ].map((r) => (
+                  <button
+                    key={r.value}
+                    onClick={() => setFormData({ ...formData, role: r.value })}
+                    className={`py-2 px-2 rounded-lg text-xs font-medium border transition-colors
+                      ${formData.role === r.value
+                        ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]'
+                        : 'bg-white text-slate-600 border-slate-300'}`}
+                  >
+                    {r.label}
+                  </button>
+                ))}
               </div>
 
               <Input
@@ -240,7 +248,7 @@ const RegisterPage = () => {
           {step === 2 && (
             <div className="flex flex-col gap-4">
               <p className="text-sm text-slate-500">
-                Step 2 of 2 — {formData.role === 'patient' ? 'Patient' : 'Doctor'} Details
+                Step 2 of 2 — Account Details
               </p>
 
               <Input
