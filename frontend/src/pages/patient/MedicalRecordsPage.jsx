@@ -18,9 +18,7 @@ import Modal from '../../components/common/Modal';
 import Spinner from '../../components/common/Spinner';
 import Alert from '../../components/common/Alert';
 import Badge from '../../components/common/Badge';
-
-// ─── TEMPORARY: hardcoded test patient UUID until auth is integrated ──────────
-const TEST_PATIENT_ID = '006761d1-8279-440e-a786-a492df7abd53';
+import useAuthStore from '../../store/authStore';
 
 // ─── Format date helper ───────────────────────────────────────────────────────
 const formatDate = (dateStr) => {
@@ -54,6 +52,8 @@ const formatRecordType = (type) => {
 
 // ─── Main Page Component ──────────────────────────────────────────────────────
 const MedicalRecordsPage = () => {
+  const user = useAuthStore((state) => state.user);
+  const TEST_PATIENT_ID = user?.profile_id || user?.id || '';
   const [selectedRecord, setSelectedRecord] = useState(null);
 
   // ── Fetch medical records ──────────────────────────────────────────────────
@@ -65,6 +65,7 @@ const MedicalRecordsPage = () => {
   } = useQuery({
     queryKey: ['medicalRecords', TEST_PATIENT_ID],
     queryFn: () => getMedicalRecords(TEST_PATIENT_ID),
+    enabled: !!TEST_PATIENT_ID,
   });
 
   // ── Table column definitions ───────────────────────────────────────────────

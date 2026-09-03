@@ -20,9 +20,7 @@ import Card from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
 import Spinner from '../../components/common/Spinner';
 import Alert from '../../components/common/Alert';
-
-// ─── TEMPORARY: hardcoded test patient UUID until auth is integrated ──────────
-const TEST_PATIENT_ID = '006761d1-8279-440e-a786-a492df7abd53';
+import useAuthStore from '../../store/authStore';
 
 // ─── Format date helper ───────────────────────────────────────────────────────
 const formatDate = (dateStr) => {
@@ -219,6 +217,8 @@ const PrescriptionCard = ({ prescription }) => {
 
 // ─── Main Page Component ──────────────────────────────────────────────────────
 const PrescriptionsPage = () => {
+  const user = useAuthStore((state) => state.user);
+  const TEST_PATIENT_ID = user?.profile_id || user?.id || '';
 
   const {
     data: prescriptions = [],
@@ -228,6 +228,7 @@ const PrescriptionsPage = () => {
   } = useQuery({
     queryKey: ['prescriptions', TEST_PATIENT_ID],
     queryFn: () => getPatientPrescriptions(TEST_PATIENT_ID),
+    enabled: !!TEST_PATIENT_ID,
   });
 
   if (isLoading) {

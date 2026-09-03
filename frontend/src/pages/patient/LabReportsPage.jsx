@@ -14,9 +14,7 @@ import Card from '../../components/common/Card';
 import DataTable from '../../components/common/DataTable';
 import Spinner from '../../components/common/Spinner';
 import Alert from '../../components/common/Alert';
-
-// TEMPORARY: hardcoded test patient UUID until auth is integrated
-const TEST_PATIENT_ID = '006761d1-8279-440e-a786-a492df7abd53';
+import useAuthStore from '../../store/authStore';
 
 // ─── Format date helper ───────────────────────────────────────────────────────
 const formatDate = (dateStr) => {
@@ -31,6 +29,8 @@ const formatDate = (dateStr) => {
 };
 
 const LabReportsPage = () => {
+  const user = useAuthStore((state) => state.user);
+  const TEST_PATIENT_ID = user?.profile_id || user?.id || '';
   const queryClient = useQueryClient();
 
   // ── Fetch lab reports ──────────────────────────────────────────────────────
@@ -42,6 +42,7 @@ const LabReportsPage = () => {
   } = useQuery({
     queryKey: ['labReports', TEST_PATIENT_ID],
     queryFn: () => getLabReports(TEST_PATIENT_ID),
+    enabled: !!TEST_PATIENT_ID,
   });
 
   // ── Handlers ───────────────────────────────────────────────────────────────

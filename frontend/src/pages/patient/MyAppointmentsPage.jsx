@@ -11,16 +11,18 @@ import { useNavigate } from 'react-router-dom';
 import { Calendar, Clock, User, XCircle, AlertCircle, FileText, CalendarClock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getPatientAppointments, updateAppointmentStatus } from '../../services/appointment.service';
-
-const TEST_PATIENT_ID = '006761d1-8279-440e-a786-a492df7abd53';
+import useAuthStore from '../../store/authStore';
 
 export default function MyAppointmentsPage() {
+  const user = useAuthStore((state) => state.user);
+  const TEST_PATIENT_ID = user?.profile_id || user?.id || '';
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
   const { data: appointments = [], isLoading, isError, error } = useQuery({
     queryKey: ['patientAppointments', TEST_PATIENT_ID],
     queryFn: () => getPatientAppointments(TEST_PATIENT_ID),
+    enabled: !!TEST_PATIENT_ID,
   });
 
   const cancelMutation = useMutation({
