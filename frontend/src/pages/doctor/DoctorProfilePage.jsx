@@ -8,11 +8,11 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, UserRound, CalendarClock } from 'lucide-react';
-import Spinner from '../../components/ui/Spinner';
-import Alert from '../../components/ui/Alert';
-import Button from '../../components/ui/Button';
-import Input from '../../components/ui/Input';
-import Card from '../../components/ui/Card';
+import Spinner from '../../components/common/Spinner';
+import Alert from '../../components/common/Alert';
+import Button from '../../components/common/Button';
+import Input from '../../components/common/Input';
+import Card from '../../components/common/Card';
 import useAuthStore from '../../store/authStore';
 
 const API_URL = 'http://localhost:5000';

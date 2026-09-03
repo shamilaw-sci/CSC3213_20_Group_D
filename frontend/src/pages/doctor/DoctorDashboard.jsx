@@ -22,12 +22,12 @@ import {
   ChevronRight,
   Stethoscope,
 } from 'lucide-react';
-import Spinner from '../../components/ui/Spinner';
-import Alert from '../../components/ui/Alert';
-import Modal from '../../components/ui/Modal';
-import Input from '../../components/ui/Input';
-import Button from '../../components/ui/Button';
-import Badge from '../../components/ui/Badge';
+import Spinner from '../../components/common/Spinner';
+import Alert from '../../components/common/Alert';
+import Modal from '../../components/common/Modal';
+import Input from '../../components/common/Input';
+import Button from '../../components/common/Button';
+import Badge from '../../components/common/Badge';
 import useAuthStore from '../../store/authStore';
 
 const API_URL = 'http://localhost:5000';

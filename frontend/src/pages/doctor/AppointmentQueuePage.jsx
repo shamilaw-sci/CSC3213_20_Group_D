@@ -11,8 +11,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, ArrowLeft, Clock, Play, ClipboardCheck, Pill, History, XCircle, ClipboardList } from 'lucide-react';
-import Badge from '../../components/ui/Badge';
-import Spinner from '../../components/ui/Spinner';
+import Badge from '../../components/common/Badge';
+import Spinner from '../../components/common/Spinner';
 import ConsultationNotesModal from '../../components/doctor/ConsultationNotesModal';
 import PatientNotesModal from '../../components/doctor/PatientNotesModal';
 import useAuthStore from '../../store/authStore';

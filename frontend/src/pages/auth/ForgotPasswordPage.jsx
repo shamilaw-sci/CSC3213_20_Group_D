@@ -5,10 +5,10 @@
  */
 
 import { useState } from 'react';
-import Input  from '../../components/ui/Input';
-import Button from '../../components/ui/Button';
-import Alert  from '../../components/ui/Alert';
-import Card   from '../../components/ui/Card';
+import Input  from '../../components/common/Input';
+import Button from '../../components/common/Button';
+import Alert  from '../../components/common/Alert';
+import Card   from '../../components/common/Card';
 import { forgotPassword } from '../../services/auth.service';
 
 const ForgotPasswordPage = () => {

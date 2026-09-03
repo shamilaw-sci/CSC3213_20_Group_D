@@ -7,10 +7,10 @@
 
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import Input  from '../../components/ui/Input';
-import Button from '../../components/ui/Button';
-import Alert  from '../../components/ui/Alert';
-import Card   from '../../components/ui/Card';
+import Input  from '../../components/common/Input';
+import Button from '../../components/common/Button';
+import Alert  from '../../components/common/Alert';
+import Card   from '../../components/common/Card';
 import { resetPassword } from '../../services/auth.service';
 
 const ResetPasswordPage = () => {
