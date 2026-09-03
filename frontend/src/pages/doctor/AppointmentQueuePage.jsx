@@ -8,15 +8,15 @@
  * @author  Tharindu (S/21/166)
  */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, ArrowLeft, Clock, Play, ClipboardCheck, Pill, History, XCircle, ClipboardList } from 'lucide-react';
 import Badge from '../../components/common/Badge';
 import Spinner from '../../components/common/Spinner';
 import ConsultationNotesModal from '../../components/doctor/ConsultationNotesModal';
 import PatientNotesModal from '../../components/doctor/PatientNotesModal';
+import useAuthStore from '../../store/authStore';
 
-const DOCTOR_ID = 'd04b8bcf-fe8a-4d3b-affc-5ab87e78cfc3';
 const API_URL = 'http://localhost:5000';
 const AUTO_REFRESH_INTERVAL_MS = 20000; // 20s — background refresh, no manual reload needed
 
@@ -46,6 +46,8 @@ const getInitials = (name) => {
 };
 
 const AppointmentQueuePage = () => {
+  const user = useAuthStore((state) => state.user);
+  const DOCTOR_ID = user?.profile_id || user?.id || '';
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -54,7 +56,8 @@ const AppointmentQueuePage = () => {
   const [updatingId, setUpdatingId] = useState(null);
 
   // silent = true for background polling (no spinner, no layout flash)
-  const fetchAppointments = async ({ silent = false } = {}) => {
+  const fetchAppointments = useCallback(async ({ silent = false } = {}) => {
+    if (!DOCTOR_ID) return;
     try {
       if (!silent) setLoading(true);
       const res = await fetch(`${API_URL}/api/doctors/${DOCTOR_ID}/appointments/today`);
@@ -65,7 +68,7 @@ const AppointmentQueuePage = () => {
     } finally {
       if (!silent) setLoading(false);
     }
-  };
+  }, [DOCTOR_ID]);
 
   useEffect(() => {
     fetchAppointments();
@@ -75,7 +78,7 @@ const AppointmentQueuePage = () => {
     }, AUTO_REFRESH_INTERVAL_MS);
 
     return () => clearInterval(intervalId);
-  }, []);
+  }, [fetchAppointments]);
 
   const updateStatus = async (appointmentId, newStatus) => {
     setUpdatingId(appointmentId);
@@ -114,9 +117,9 @@ const AppointmentQueuePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-100 to-blue-50 p-6">
+    <div className="min-h-screen bg-linear-to-b from-slate-100 to-blue-50 p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8 bg-gradient-to-r from-slate-900 to-blue-950 rounded-xl shadow-md p-6">
+      <div className="flex items-center justify-between mb-8 bg-linear-to-r from-slate-900 to-blue-950 rounded-xl shadow-md p-6">
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center shrink-0">
             <ClipboardList className="text-blue-200" size={22} />
@@ -158,7 +161,7 @@ const AppointmentQueuePage = () => {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-full bg-gradient-to-br from-blue-600 to-blue-900 text-white flex items-center justify-center text-sm font-semibold shrink-0 ring-2 ring-white shadow-sm">
+                    <div className="w-11 h-11 rounded-full bg-linear-to-br from-blue-600 to-blue-900 text-white flex items-center justify-center text-sm font-semibold shrink-0 ring-2 ring-white shadow-sm">
                       {getInitials(appt.patient_name)}
                     </div>
                     <div>
