@@ -12,10 +12,7 @@ import { useQuery } from '@tanstack/react-query';
 import api from '../../services/api';
 import Spinner from '../../components/common/Spinner';
 import Badge from '../../components/common/Badge';
-
-// ── Temporary pharmacy ID for testing ─────────────────────────────────────
-// Replace with session user when auth is integrated
-const TEST_PHARMACY_ID = '357f43da-ac3d-4fe4-9bfb-7f7a8cf22844';
+import useAuthStore from '../../store/authStore';
 
 /**
  * Formats an ISO date string to readable format.
@@ -30,6 +27,8 @@ const formatDate = (iso) => {
 };
 
 const PharmacyDashboard = () => {
+  const user = useAuthStore((state) => state.user);
+  const TEST_PHARMACY_ID = user?.profile_id || user?.id || '';
   const navigate    = useNavigate();
   const [qrInput, setQrInput] = useState('');
 
@@ -43,6 +42,7 @@ const PharmacyDashboard = () => {
       const res = await api.get(`/api/pharmacies/${TEST_PHARMACY_ID}/dashboard`);
       return res.data.data;
     },
+    enabled: !!TEST_PHARMACY_ID,
   });
 
   // ── Handle QR input search ──

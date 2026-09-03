@@ -3,9 +3,7 @@ import { MessageCircle, X, Send, AlertTriangle, Globe, Maximize2, Minimize2 } fr
 import ReactMarkdown from 'react-markdown';
 import api from '../../services/api';
 import remarkGfm from 'remark-gfm';
-
-// TEMPORARY: hardcoded test patient UUID until auth is integrated
-const TEST_PATIENT_ID = '006761d1-8279-440e-a786-a492df7abd53';
+import useAuthStore from '../../store/authStore';
 
 /* eslint-disable no-unused-vars */
 // Extracted outside the component for better performance. 
@@ -32,6 +30,9 @@ const MarkdownComponents = {
 /* eslint-enable no-unused-vars */
 
 export default function AIChatWidget() {
+  const user = useAuthStore((state) => state.user);
+  const TEST_PATIENT_ID = user?.profile_id || user?.id || '';
+  
   const [isOpen, setIsOpen] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [messages, setMessages] = useState([

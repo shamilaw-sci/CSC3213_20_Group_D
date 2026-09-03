@@ -98,7 +98,7 @@ const AdminAccountManagementPage = () => {
 
       {/* Search & Filters */}
       <form onSubmit={handleSearch} className="bg-white rounded-lg shadow p-4 mb-6 flex flex-wrap gap-3 items-end">
-        <div className="flex-1 min-w-[200px]">
+        <div className="flex-1 min-w-50">
           <label className="block text-xs text-slate-500 mb-1">Search (email or phone)</label>
           <input
             type="text"

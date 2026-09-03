@@ -94,7 +94,7 @@ const IssuePrescriptionPage = () => {
     try {
       const result = await checkDrugInteractions(patientId, medicineName);
       setWarnings((prev) => ({ ...prev, [index]: result }));
-    } catch (err) {
+    } catch {
       setWarnings((prev) => ({ ...prev, [index]: [] }));
     }
   };

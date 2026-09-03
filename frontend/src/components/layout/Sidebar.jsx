@@ -6,8 +6,7 @@
 import { NavLink } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getLabReports } from '../../services/patient.service';
-
-const TEST_PATIENT_ID = '006761d1-8279-440e-a786-a492df7abd53';
+import useAuthStore from '../../store/authStore';
 
 const handleLogout = async () => {
   try {
@@ -18,7 +17,7 @@ const handleLogout = async () => {
 
 const NAV_ITEMS = [
   { to: '/patient/profile',         label: 'My Profile' },
-  { to: '/patient/appointments',    label: 'My Appointments' }, // NEW ITEM
+  { to: '/patient/appointments',    label: 'My Appointments' }, 
   { to: '/patient/doctors',         label: 'Find a Doctor' },
   { to: '/patient/medical-records', label: 'Medical Records' },
   { to: '/patient/prescriptions',   label: 'Prescriptions' },
@@ -26,9 +25,13 @@ const NAV_ITEMS = [
 ];
 
 export default function Sidebar() {
+  const user = useAuthStore((state) => state.user);
+  const TEST_PATIENT_ID = user?.profile_id || user?.id || '';
+
   const { data: reports = [] } = useQuery({
     queryKey: ['labReports', TEST_PATIENT_ID],
     queryFn: () => getLabReports(TEST_PATIENT_ID),
+    enabled: !!TEST_PATIENT_ID,
     retry: false, 
   });
 

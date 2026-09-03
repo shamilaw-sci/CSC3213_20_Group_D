@@ -101,7 +101,7 @@ const AdminAuditLogPage = () => {
 
       {/* Filters */}
       <form onSubmit={handleFilter} className="bg-white rounded-lg shadow p-4 mb-6 flex flex-wrap gap-3 items-end">
-        <div className="flex-1 min-w-[180px]">
+        <div className="flex-1 min-w-45">
           <label className="block text-xs text-slate-500 mb-1">User email</label>
           <input
             type="text"
