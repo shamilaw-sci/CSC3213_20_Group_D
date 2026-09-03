@@ -13,7 +13,7 @@ const paymentService = require('./payment.service');
  */
 const initiatePaymentController = async (req, res) => {
   try {
-    const currentUser = req.session?.user || { id: '006761d1-8279-440e-a786-a492df7abd53', role: 'patient' };
+    const currentUser = req.user;
     const { amount, payment_type, reference_id, payment_method, description } = req.body;
 
     if (!amount || !payment_type) {
@@ -23,7 +23,11 @@ const initiatePaymentController = async (req, res) => {
       });
     }
 
-    const patientId = req.body.patient_id || '006761d1-8279-440e-a786-a492df7abd53';
+    const patientId = req.body.patient_id;
+    if (!patientId) {
+      return res.status(400).json({ success: false, message: 'patient_id is required' });
+    }
+    
     const payment = await paymentService.initiatePayment(
       patientId,
       amount,
