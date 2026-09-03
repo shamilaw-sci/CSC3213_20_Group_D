@@ -1,3 +1,5 @@
+import { X } from 'lucide-react';
+
 /**
  * @component Modal
  * @desc      Reusable modal dialog with overlay and close button.
@@ -24,23 +26,21 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
       onClick={onClose}
     >
       {/* Overlay */}
-      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-brand-deep/60 backdrop-blur-sm" />
 
       {/* Modal Box */}
       <div
-        className={`relative z-10 w-full ${sizes[size]} bg-white rounded-xl shadow-xl`}
+        className={`relative z-10 w-full ${sizes[size]} bg-card rounded-xl shadow-xl border border-border`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-          <h2 className="text-lg font-semibold text-slate-700">{title}</h2>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <h2 className="text-lg font-bold text-foreground">{title}</h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="w-5 h-5" strokeWidth={2} />
           </button>
         </div>
 
