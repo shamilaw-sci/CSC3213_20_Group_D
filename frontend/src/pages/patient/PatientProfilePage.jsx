@@ -611,24 +611,24 @@ const PatientProfilePage = () => {
                       <p className="text-sm text-muted-foreground">No conditions recorded.</p>
                     </div>
                   ) : (
-                    <div className="flex flex-col pt-1 divide-y divide-border">
+                    <div className="flex flex-col gap-3 pt-1">
                       {conditions.map((condition) => (
                         <div
                           key={condition.id}
-                          className="py-3 flex items-center justify-between group transition-colors hover:bg-secondary/50 px-2 -mx-2 rounded-lg"
+                          className="group flex items-start justify-between p-4 rounded-xl border border-border bg-card shadow-sm transition-all hover:border-slate-300"
                         >
                           <div>
                             <p className="text-sm font-semibold text-foreground">
                               {condition.condition}
                             </p>
-                            <p className="text-xs text-muted-foreground mt-0.5">
+                            <p className="text-xs text-muted-foreground mt-1">
                               Diagnosed: {formatDate(condition.diagnosed_at)}
                             </p>
                             {condition.notes && (
                               <p className="text-xs text-muted-foreground mt-0.5">{condition.notes}</p>
                             )}
                           </div>
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-3 shrink-0">
                             {condition.is_priority && <SeverityBadge severity="priority" />}
                             <button 
                               onClick={() => promptDeleteCondition(condition)}
@@ -643,7 +643,7 @@ const PatientProfilePage = () => {
                     </div>
                   )}
                   
-                  <div className="mt-4 pt-4 border-t border-border flex justify-center">
+                  <div className="mt-5 flex justify-center">
                     <Button variant="outline" onClick={() => setIsAddConditionModalOpen(true)} className="w-full text-primary border-primary/20 hover:bg-primary/5">
                       <Plus size={16} className="mr-2" /> Add Condition
                     </Button>
@@ -664,14 +664,17 @@ const PatientProfilePage = () => {
                       <p className="text-sm text-muted-foreground">No allergies recorded.</p>
                     </div>
                   ) : (
-                    <div className="flex flex-col pt-1 divide-y divide-border">
+                    <div className="flex flex-col gap-3 pt-1">
                       {sortedAllergies.map((allergy) => (
-                        <div key={allergy.id} className="py-3 flex items-center justify-between group transition-colors hover:bg-secondary/50 px-2 -mx-2 rounded-lg">
+                        <div 
+                          key={allergy.id} 
+                          className="group flex items-start justify-between p-4 rounded-xl border border-border bg-card shadow-sm transition-all hover:border-slate-300"
+                        >
                           <div>
                             <p className="text-sm font-semibold text-foreground">{allergy.allergen}</p>
-                            {allergy.notes && <p className="text-xs text-muted-foreground mt-0.5">{allergy.notes}</p>}
+                            {allergy.notes && <p className="text-xs text-muted-foreground mt-1">{allergy.notes}</p>}
                           </div>
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-3 shrink-0">
                             <SeverityBadge severity={allergy.severity} />
                             <button 
                               onClick={() => promptDeleteAllergy(allergy)}
@@ -686,7 +689,7 @@ const PatientProfilePage = () => {
                     </div>
                   )}
                   
-                  <div className="mt-4 pt-4 border-t border-border flex justify-center">
+                  <div className="mt-5 flex justify-center">
                     <Button variant="outline" onClick={() => { setAllergySuggestions(searchAllergens('')); setIsAddAllergyModalOpen(true); }} className="w-full text-primary border-primary/20 hover:bg-primary/5">
                       <Plus size={16} className="mr-2" /> Add Allergy
                     </Button>
@@ -713,7 +716,7 @@ const PatientProfilePage = () => {
                       {vaccinations.map((vaccine) => (
                         <div
                           key={vaccine.id}
-                          className="group relative flex flex-col py-3 px-4 rounded-lg border border-border bg-card shadow-sm transition-colors hover:border-slate-300"
+                          className="group relative flex flex-col p-4 rounded-xl border border-border bg-card shadow-sm transition-all hover:border-slate-300"
                         >
                           <div className="flex justify-between items-start pr-8">
                             <div>
@@ -731,7 +734,7 @@ const PatientProfilePage = () => {
                           </div>
                           <button 
                             onClick={() => promptDeleteVaccination(vaccine)}
-                            className="absolute right-2 top-2 p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                            className="absolute right-3 top-3 p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
                             title="Remove record"
                           >
                             <Trash2 size={16} />
@@ -741,7 +744,7 @@ const PatientProfilePage = () => {
                     </div>
                   )}
                   
-                  <div className="mt-4 pt-4 border-t border-border flex justify-center">
+                  <div className="mt-5 flex justify-center">
                     <Button variant="outline" onClick={() => { 
                       setBulkVaccines([{ id: 'initial-row', vaccineName: '', dateAdministered: '', doseNumber: '', notes: '' }]); 
                       setIsAddVaccinationModalOpen(true); 

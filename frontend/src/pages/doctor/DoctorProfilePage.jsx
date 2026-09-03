@@ -8,8 +8,11 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, UserRound, CalendarClock } from 'lucide-react';
-import Spinner from '../../components/common/Spinner';
-import Alert from '../../components/common/Alert';
+import Spinner from '../../components/ui/Spinner';
+import Alert from '../../components/ui/Alert';
+import Button from '../../components/ui/Button';
+import Input from '../../components/ui/Input';
+import Card from '../../components/ui/Card';
 import useAuthStore from '../../store/authStore';
 
 const API_URL = 'http://localhost:5000';
@@ -21,8 +24,10 @@ const DoctorProfilePage = () => {
   const navigate = useNavigate();
   const [doctor, setDoctor] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savingAvailability, setSavingAvailability] = useState(false);
   const [alert, setAlert] = useState(null);
+  
   const [profileForm, setProfileForm] = useState({
     specialization: '',
     qualifications: '',
@@ -60,7 +65,8 @@ const DoctorProfilePage = () => {
   }, [fetchData]);
 
   const handleProfileSave = async () => {
-    setSaving(true);
+    setSavingProfile(true);
+    setAlert(null);
     try {
       const res = await fetch(`${API_URL}/api/doctors/${DOCTOR_ID}`, {
         method: 'PUT',
@@ -76,12 +82,13 @@ const DoctorProfilePage = () => {
     } catch {
       setAlert({ type: 'error', message: 'Something went wrong.' });
     } finally {
-      setSaving(false);
+      setSavingProfile(false);
     }
   };
 
   const handleAvailabilitySave = async () => {
-    setSaving(true);
+    setSavingAvailability(true);
+    setAlert(null);
     try {
       const res = await fetch(`${API_URL}/api/doctors/${DOCTOR_ID}/availability`, {
         method: 'PUT',
@@ -97,7 +104,7 @@ const DoctorProfilePage = () => {
     } catch {
       setAlert({ type: 'error', message: 'Something went wrong.' });
     } finally {
-      setSaving(false);
+      setSavingAvailability(false);
     }
   };
 
@@ -123,25 +130,25 @@ const DoctorProfilePage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-muted/30">
         <Spinner size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-slate-100 to-blue-50 p-6">
+    <div className="min-h-screen bg-muted/30 p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8 bg-linear-to-r from-slate-900 to-blue-950 rounded-xl shadow-md p-6">
+      <div className="flex items-center justify-between mb-8 bg-brand-deep rounded-xl shadow-md p-6">
         <div>
-          <h1 className="text-2xl font-bold text-white">Doctor Profile</h1>
-          <p className="text-sm text-blue-200 mt-1">
+          <h1 className="text-2xl font-bold text-brand-deep-foreground">Doctor Profile</h1>
+          <p className="text-sm font-medium text-brand-deep-foreground opacity-80 mt-1">
             SLMC: {doctor?.slmc_reg_number} — {doctor?.email}
           </p>
         </div>
         <button
           onClick={() => navigate('/doctor/dashboard')}
-          className="flex items-center gap-1.5 bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-sm text-blue-100 hover:bg-white/20 hover:text-white transition-all duration-150 cursor-pointer"
+          className="flex items-center gap-1.5 bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-sm font-semibold text-brand-deep-foreground hover:bg-white/20 transition-all duration-150 cursor-pointer"
         >
           <ArrowLeft size={16} />
           Back to Dashboard
@@ -156,123 +163,116 @@ const DoctorProfilePage = () => {
       )}
 
       {/* Profile Form */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 border-l-4 border-l-blue-800 p-6 mb-6">
-        <div className="flex items-center gap-2 mb-4">
-          <UserRound size={18} className="text-blue-800" />
-          <h2 className="text-xl font-semibold text-slate-700">
-            Profile Information
-          </h2>
-        </div>
+      <Card title="Profile Information" icon={<UserRound size={20} />} className="mb-6">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label className="text-xs text-slate-500">Specialization</label>
-            <input
-              type="text"
+            <Input
+              label="Specialization"
+              name="specialization"
               value={profileForm.specialization}
               onChange={(e) => setProfileForm({ ...profileForm, specialization: e.target.value })}
-              className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-700"
             />
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">Qualifications</label>
-            <input
-              type="text"
+            <Input
+              label="Qualifications"
+              name="qualifications"
               value={profileForm.qualifications}
               onChange={(e) => setProfileForm({ ...profileForm, qualifications: e.target.value })}
-              className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-700"
             />
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">Years of Experience</label>
-            <input
+            <Input
+              label="Years of Experience"
+              name="years_experience"
               type="number"
               value={profileForm.years_experience}
               onChange={(e) => setProfileForm({ ...profileForm, years_experience: e.target.value })}
-              className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-700"
             />
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">Hospital Name</label>
-            <input
-              type="text"
+            <Input
+              label="Hospital Name"
+              name="hospital_name"
               value={profileForm.hospital_name}
               onChange={(e) => setProfileForm({ ...profileForm, hospital_name: e.target.value })}
-              className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-700"
             />
-          </div>
         </div>
-        <button
-          onClick={handleProfileSave}
-          disabled={saving}
-          className="mt-4 px-6 py-2 bg-blue-700 text-white text-sm rounded-lg hover:bg-blue-800 disabled:opacity-50 transition-colors duration-150"
-        >
-          {saving ? 'Saving...' : 'Save Profile'}
-        </button>
-      </div>
+        <div className="mt-6 flex justify-end border-t border-border pt-4">
+            <Button
+              onClick={handleProfileSave}
+              loading={savingProfile}
+              variant="primary"
+            >
+              Save Profile
+            </Button>
+        </div>
+      </Card>
 
       {/* Availability */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 border-l-4 border-l-teal-600 p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <CalendarClock size={18} className="text-teal-600" />
-          <h2 className="text-xl font-semibold text-slate-700">
-            Availability Schedule
-          </h2>
-        </div>
-        <div className="space-y-2">
+      <Card title="Availability Schedule" icon={<CalendarClock size={20} />}>
+        <div className="space-y-3">
           {DAYS.map((day) => {
             const slot = availability.find((s) => s.day_of_week === day);
             return (
               <div
                 key={day}
-                className={`flex items-center gap-4 rounded-lg px-3 py-2 transition-colors duration-150 ${
-                  slot ? 'bg-blue-50/60' : ''
+                className={`flex items-center gap-4 rounded-lg px-4 py-3 border transition-colors duration-150 ${
+                  slot ? 'bg-primary/5 border-primary/20' : 'bg-transparent border-transparent hover:bg-secondary/50'
                 }`}
               >
-                <input
-                  type="checkbox"
-                  checked={!!slot}
-                  onChange={() => toggleDay(day)}
-                  className="w-4 h-4 accent-blue-700"
-                />
-                <span className="text-sm font-medium text-slate-700 w-24 capitalize">
-                  {day}
-                </span>
-                {slot && (
-                  <>
-                    <input
-                      type="time"
-                      value={slot.start_time?.slice(0, 5) || '09:00'}
-                      onChange={(e) => updateSlot(day, 'start_time', e.target.value)}
-                      className="px-2 py-1 border border-slate-300 rounded text-sm"
-                    />
-                    <span className="text-sm text-slate-500">to</span>
-                    <input
-                      type="time"
-                      value={slot.end_time?.slice(0, 5) || '17:00'}
-                      onChange={(e) => updateSlot(day, 'end_time', e.target.value)}
-                      className="px-2 py-1 border border-slate-300 rounded text-sm"
-                    />
-                    <input
-                      type="number"
-                      value={slot.slot_duration_minutes || 30}
-                      onChange={(e) => updateSlot(day, 'slot_duration_minutes', parseInt(e.target.value))}
-                      className="px-2 py-1 border border-slate-300 rounded text-sm w-16"
-                    />
-                    <span className="text-sm text-slate-500">min/slot</span>
-                  </>
+                <div className="flex items-center gap-3 w-32">
+                   <input
+                    type="checkbox"
+                    checked={!!slot}
+                    onChange={() => toggleDay(day)}
+                    className="w-4 h-4 rounded border-input text-primary focus:ring-primary accent-primary"
+                  />
+                  <span className="text-sm font-bold text-foreground capitalize">
+                    {day}
+                  </span>
+                </div>
+               
+                {slot ? (
+                  <div className="flex flex-wrap items-center gap-3 flex-1">
+                     <div className="flex items-center gap-2">
+                        <Input
+                          label=""
+                          type="time"
+                          value={slot.start_time?.slice(0, 5) || '09:00'}
+                          onChange={(e) => updateSlot(day, 'start_time', e.target.value)}
+                          className="w-32"
+                        />
+                        <span className="text-sm font-semibold text-muted-foreground px-1">to</span>
+                        <Input
+                          label=""
+                          type="time"
+                          value={slot.end_time?.slice(0, 5) || '17:00'}
+                          onChange={(e) => updateSlot(day, 'end_time', e.target.value)}
+                          className="w-32"
+                        />
+                     </div>
+                     <div className="flex items-center gap-2 ml-auto">
+                        <Input
+                          label=""
+                          type="number"
+                          value={slot.slot_duration_minutes || 30}
+                          onChange={(e) => updateSlot(day, 'slot_duration_minutes', parseInt(e.target.value))}
+                          className="w-24"
+                        />
+                        <span className="text-sm font-medium text-muted-foreground">min/slot</span>
+                     </div>
+                  </div>
+                ) : (
+                    <span className="text-sm font-medium text-muted-foreground">Unavailable</span>
                 )}
               </div>
             );
           })}
         </div>
-        <button
-          onClick={handleAvailabilitySave}
-          disabled={saving}
-          className="mt-6 px-6 py-2 bg-teal-600 text-white text-sm rounded-lg hover:bg-teal-700 disabled:opacity-50 transition-colors duration-150"
-        >
-          {saving ? 'Saving...' : 'Save Availability'}
-        </button>
-      </div>
+        <div className="mt-6 flex justify-end border-t border-border pt-4">
+             <Button
+              onClick={handleAvailabilitySave}
+              loading={savingAvailability}
+              variant="primary"
+            >
+              Save Availability
+            </Button>
+        </div>
+      </Card>
     </div>
   );
 };

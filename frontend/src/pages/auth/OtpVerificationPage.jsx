@@ -7,10 +7,10 @@
 
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import Input  from '../../components/ui/input';
-import Button from '../../components/ui/button';
-import Alert  from '../../components/ui/alert';
-import Card   from '../../components/ui/card';
+import Input  from '../../components/ui/Input';
+import Button from '../../components/ui/Button';
+import Alert  from '../../components/ui/Alert';
+import Card   from '../../components/ui/Card';
 
 const OtpVerificationPage = () => {
   const location = useLocation();

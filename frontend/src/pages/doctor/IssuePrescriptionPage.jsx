@@ -14,18 +14,13 @@ import { useLocation } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { AlertTriangle, User } from 'lucide-react';
 import { createPrescription } from '../../services/prescription.service';
-import Button from '../../components/common/Button';
-import Input from '../../components/common/Input';
-import Card from '../../components/common/Card';
-import Alert from '../../components/common/Alert';
+import Button from '../../components/ui/Button';
+import Input from '../../components/ui/Input';
+import Card from '../../components/ui/Card';
+import Alert from '../../components/ui/Alert';
+import Badge from '../../components/ui/Badge';
 import { searchMedicines } from '../../utils/medicineSearch';
 import { checkDrugInteractions } from '../../services/interaction.service';
-
-const SEVERITY_STYLES = {
-  severe: 'border-red-300 bg-red-50 text-red-700',
-  moderate: 'border-orange-300 bg-orange-50 text-orange-700',
-  mild: 'border-yellow-300 bg-yellow-50 text-yellow-700',
-};
 
 const IssuePrescriptionPage = () => {
   const location = useLocation();
@@ -77,11 +72,11 @@ const IssuePrescriptionPage = () => {
   };
 
   const handleMedicineNameChange = (index, value) => {
-  updateMedicine(index, 'medicine_name', value);
-  setActiveSuggestionIndex(index);
-  setSuggestions(searchMedicines(value));
-  setWarnings((prev) => ({ ...prev, [index]: [] }));
-};
+    updateMedicine(index, 'medicine_name', value);
+    setActiveSuggestionIndex(index);
+    setSuggestions(searchMedicines(value));
+    setWarnings((prev) => ({ ...prev, [index]: [] }));
+  };
 
   // Checks the given medicine name against the current patient's allergies
   // and active prescriptions. Never blocks the doctor — fails silently on error.
@@ -107,19 +102,19 @@ const IssuePrescriptionPage = () => {
     });
   };
 
-const selectSuggestion = (index, medicine) => {
-  const updated = [...medicines];
-  updated[index] = {
-    ...updated[index],
-    medicine_name: medicine.name,
-    dosage: medicine.defaultDosage,
-    frequency: medicine.defaultFrequency,
+  const selectSuggestion = (index, medicine) => {
+    const updated = [...medicines];
+    updated[index] = {
+      ...updated[index],
+      medicine_name: medicine.name,
+      dosage: medicine.defaultDosage,
+      frequency: medicine.defaultFrequency,
+    };
+    setMedicines(updated);
+    setActiveSuggestionIndex(null);
+    setSuggestions([]);
+    runConflictCheck(index, medicine.name);
   };
-  setMedicines(updated);
-  setActiveSuggestionIndex(null);
-  setSuggestions([]);
-  runConflictCheck(index, medicine.name);
-};
 
   const onSubmit = async (data) => {
     setLoading(true);
@@ -152,35 +147,37 @@ const selectSuggestion = (index, medicine) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
-      <div className="max-w-3xl mx-auto">
+    <div className="min-h-screen bg-muted/30 p-6">
+      <div className="max-w-4xl mx-auto">
 
         {/* Page Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-slate-800">Issue Prescription</h1>
-          <p className="text-sm text-slate-500">Fill in the details and submit to generate a QR code</p>
+          <h1 className="text-2xl font-bold text-foreground">Issue Prescription</h1>
+          <p className="text-sm font-medium text-muted-foreground mt-1">Fill in the details and submit to generate a QR code</p>
         </div>
 
         {/* Success — Show QR Code */}
         {qrValue && (
-          <Card className="mb-6 text-center">
-            <h2 className="text-xl font-semibold text-slate-700 mb-4">
-              ✅ Prescription Created Successfully
-            </h2>
-            <div className="flex justify-center mb-4">
-              <QRCodeSVG value={qrValue} size={200} />
-            </div>
-            <p className="text-sm text-slate-500">QR Code: {qrValue}</p>
-            <p className="text-xs text-slate-400 mt-2">
-              Patient can show this QR code at the pharmacy
-            </p>
-            <div className="mt-4">
-              <Button
-                variant="secondary"
-                onClick={() => setQrValue(null)}
-              >
-                Issue Another Prescription
-              </Button>
+          <Card className="mb-6 text-center border-success/30 shadow-sm">
+            <div className="py-8 flex flex-col items-center">
+              <h2 className="text-xl font-bold text-foreground mb-6 flex items-center justify-center gap-2">
+                <span className="text-success text-2xl">✅</span> Prescription Created Successfully
+              </h2>
+              <div className="flex justify-center mb-6 p-4 bg-white rounded-xl shadow-sm border border-border inline-block">
+                <QRCodeSVG value={qrValue} size={200} />
+              </div>
+              <p className="text-sm font-bold text-foreground">QR Code: <span className="text-muted-foreground font-medium">{qrValue}</span></p>
+              <p className="text-sm font-medium text-muted-foreground mt-2">
+                Patient can show this QR code at the pharmacy
+              </p>
+              <div className="mt-8">
+                <Button
+                  variant="secondary"
+                  onClick={() => setQrValue(null)}
+                >
+                  Issue Another Prescription
+                </Button>
+              </div>
             </div>
           </Card>
         )}
@@ -190,23 +187,23 @@ const selectSuggestion = (index, medicine) => {
           <form onSubmit={handleSubmit(onSubmit)}>
 
             {/* Patient & Appointment Details */}
-            <Card className="mb-6">
-              <h2 className="text-lg font-semibold text-slate-700 mb-4">Patient Details</h2>
-
+            <Card title="Patient Details" className="mb-6">
               {error && (
-                <Alert type="error" message={error} />
+                <div className="mb-4">
+                   <Alert type="error" message={error} />
+                </div>
               )}
 
-              <div className="grid grid-cols-1 gap-4 mt-4">
+              <div className="grid grid-cols-1 gap-4 mt-2">
                 {preselectedPatientId ? (
                   // Came from the Appointment Queue — patient already picked.
-                  <div className="flex items-center gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
-                    <div className="w-9 h-9 rounded-full bg-blue-700 text-white flex items-center justify-center shrink-0">
-                      <User size={18} />
+                  <div className="flex items-center gap-3 bg-primary/10 border border-primary/20 rounded-xl px-4 py-3">
+                    <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+                      <User size={20} />
                     </div>
                     <div>
-                      <p className="text-xs text-blue-500 font-medium">Patient</p>
-                      <p className="text-sm font-semibold text-slate-800">{preselectedPatientName || 'Selected patient'}</p>
+                      <p className="text-xs font-bold text-primary uppercase tracking-wide">Patient Selected</p>
+                      <p className="text-sm font-bold text-foreground mt-0.5">{preselectedPatientName || 'Unknown Patient'}</p>
                     </div>
                     {/* Hidden field so react-hook-form still submits the patient's ID */}
                     <input type="hidden" {...register('patientId', { required: true })} />
@@ -221,25 +218,28 @@ const selectSuggestion = (index, medicine) => {
                     error={errors.patientId?.message}
                   />
                 )}
-                <Input
-                  label="Appointment ID (optional)"
-                  name="appointmentId"
-                  placeholder="Enter appointment UUID (optional)"
-                  {...register('appointmentId')}
-                />
-                <Input
-                  label="Notes (optional)"
-                  name="notes"
-                  placeholder="Any additional notes for the patient"
-                  {...register('notes')}
-                />
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input
+                      label="Appointment ID (optional)"
+                      name="appointmentId"
+                      placeholder="Enter appointment UUID (optional)"
+                      {...register('appointmentId')}
+                    />
+                    <Input
+                      label="General Notes (optional)"
+                      name="notes"
+                      placeholder="Any additional notes for the patient"
+                      {...register('notes')}
+                    />
+                </div>
               </div>
             </Card>
 
             {/* Medicine Items */}
             <Card className="mb-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-semibold text-slate-700">Medicines</h2>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-lg font-bold text-foreground">Medicines</h2>
                 <Button
                   type="button"
                   variant="secondary"
@@ -251,85 +251,100 @@ const selectSuggestion = (index, medicine) => {
               </div>
 
               {medicines.map((medicine, index) => (
-                <div key={index} className="border border-slate-200 rounded-lg p-4 mb-4">
-                  <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-sm font-semibold text-slate-600">
+                <div key={index} className="border border-border bg-secondary/20 rounded-xl p-5 mb-4 relative">
+                  <div className="flex justify-between items-center mb-4 pb-3 border-b border-border/50">
+                    <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wide">
                       Medicine {index + 1}
                     </h3>
                     {medicines.length > 1 && (
                       <button
                         type="button"
                         onClick={() => removeMedicine(index)}
-                        className="text-red-500 text-xs hover:underline"
+                        className="text-destructive text-sm font-semibold hover:underline focus:outline-none"
                       >
                         Remove
                       </button>
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="relative">
-  <Input
-    label="Medicine Name"
-    value={medicine.medicine_name}
-    onChange={(e) => handleMedicineNameChange(index, e.target.value)}
-    onBlur={() => setTimeout(() => {
-      setActiveSuggestionIndex(null);
-      runConflictCheck(index, medicine.medicine_name);
-    }, 150)}
-    placeholder="e.g. Paracetamol"
-    autoComplete="off"
-    required
-  />
-  {activeSuggestionIndex === index && suggestions.length > 0 && (
-    <ul className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
-      {suggestions.map((med, i) => (
-       <li
-  key={i}
-  onMouseDown={(e) => {
-    e.preventDefault();
-    selectSuggestion(index, med);
-  }}
-  className="px-3 py-2 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-800 cursor-pointer transition-colors duration-150"
->
-          <span className="font-medium">{med.name}</span>
-          <span className="text-slate-400 text-xs ml-2">{med.category}</span>
-        </li>
-      ))}
-    </ul>
-  )}
-  {activeSuggestionIndex === index && suggestions.length === 0 && medicine.medicine_name.trim().length >= 2 && (
-    <p className="absolute z-10 w-full mt-1 px-3 py-2 text-xs text-slate-400 bg-white border border-slate-200 rounded-xl shadow-lg">
-      No matches — you can still type it manually
-    </p>
-  )}
-  {(warnings[index] || [])
-    .filter((w) => !dismissedWarnings.has(`${index}-${w.type}-${w.conflictWith}`))
-    .map((w, wi) => (
-      <div
-        key={wi}
-        className={`mt-2 rounded-xl border px-3 py-2 text-xs flex justify-between items-start gap-2 ${SEVERITY_STYLES[w.severity] || SEVERITY_STYLES.moderate}`}
-      >
-        <div className="flex items-start gap-1.5">
-          <AlertTriangle size={14} className="shrink-0 mt-0.5" />
-          <div>
-            <span className="font-semibold uppercase">
-              {w.severity} — {w.type === 'allergy' ? 'Allergy Conflict' : 'Drug Interaction'}
-            </span>
-            <p className="mt-0.5">{w.message}</p>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={() => dismissWarning(index, w)}
-          className="text-current opacity-60 hover:opacity-100 font-bold leading-none"
-          aria-label="Dismiss warning"
-        >
-          ×
-        </button>
-      </div>
-    ))}
-</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="relative md:col-span-2">
+                      <Input
+                        label="Medicine Name"
+                        value={medicine.medicine_name}
+                        onChange={(e) => handleMedicineNameChange(index, e.target.value)}
+                        onBlur={() => setTimeout(() => {
+                          setActiveSuggestionIndex(null);
+                          runConflictCheck(index, medicine.medicine_name);
+                        }, 150)}
+                        placeholder="e.g. Paracetamol"
+                        autoComplete="off"
+                        required
+                      />
+                      {activeSuggestionIndex === index && suggestions.length > 0 && (
+                        <ul className="absolute z-20 w-full mt-1 bg-card border border-border rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                          {suggestions.map((med, i) => (
+                          <li
+                            key={i}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              selectSuggestion(index, med);
+                            }}
+                            className="px-4 py-2.5 text-sm text-foreground hover:bg-secondary cursor-pointer transition-colors duration-150 border-b border-border last:border-0"
+                          >
+                              <span className="font-bold">{med.name}</span>
+                              <span className="text-muted-foreground font-medium text-xs ml-2">{med.category}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      {activeSuggestionIndex === index && suggestions.length === 0 && medicine.medicine_name.trim().length >= 2 && (
+                        <p className="absolute z-10 w-full mt-1 px-4 py-2.5 text-xs font-medium text-muted-foreground bg-card border border-border rounded-xl shadow-lg">
+                          No matches — you can still type it manually
+                        </p>
+                      )}
+                      
+                      {/* Drug Interaction / Allergy Warnings */}
+                      {(warnings[index] || [])
+                        .filter((w) => !dismissedWarnings.has(`${index}-${w.type}-${w.conflictWith}`))
+                        .map((w, wi) => (
+                          <div
+                            key={wi}
+                            className="mt-3 flex items-start gap-3 p-3 rounded-lg border bg-card shadow-sm"
+                            style={{ 
+                              // Inline styles here are just to override the complex dynamic logic briefly,
+                              // but we rely on standard tokens where possible. The prompt allowed reusing Badge logic.
+                              borderColor: w.severity === 'severe' ? 'var(--color-destructive)' : 'var(--color-urgent)',
+                            }}
+                          >
+                            <AlertTriangle 
+                                size={16} 
+                                className={`shrink-0 mt-0.5 ${w.severity === 'severe' ? 'text-destructive' : 'text-urgent-foreground'}`} 
+                            />
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Badge 
+                                    severity={w.severity === 'severe' ? 'severe' : 'moderate'} 
+                                    label={w.severity} 
+                                />
+                                <span className="text-xs font-bold text-foreground uppercase tracking-wide">
+                                    {w.type === 'allergy' ? 'Allergy Conflict' : 'Drug Interaction'}
+                                </span>
+                              </div>
+                              <p className="text-sm font-medium text-muted-foreground">{w.message}</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => dismissWarning(index, w)}
+                              className="text-muted-foreground hover:text-foreground font-bold p-1 rounded-md hover:bg-secondary focus:outline-none"
+                              aria-label="Dismiss warning"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                    </div>
+
                     <Input
                       label="Dosage"
                       value={medicine.dosage}
@@ -360,27 +375,31 @@ const selectSuggestion = (index, medicine) => {
                       placeholder="e.g. 14"
                       required
                     />
-                    <Input
-                      label="Special Notes (optional)"
-                      value={medicine.special_notes}
-                      onChange={(e) => updateMedicine(index, 'special_notes', e.target.value)}
-                      placeholder="e.g. Take after meals"
-                    />
+                    <div className="md:col-span-2">
+                        <Input
+                          label="Special Notes (optional)"
+                          value={medicine.special_notes}
+                          onChange={(e) => updateMedicine(index, 'special_notes', e.target.value)}
+                          placeholder="e.g. Take after meals"
+                        />
+                    </div>
                   </div>
                 </div>
               ))}
             </Card>
 
             {/* Submit Button */}
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              loading={loading}
-              disabled={loading}
-            >
-              {loading ? 'Creating Prescription...' : 'Issue Prescription'}
-            </Button>
+            <div className="flex justify-end">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="lg"
+                  loading={loading}
+                  className="w-full sm:w-auto"
+                >
+                  {loading ? 'Creating Prescription...' : 'Issue Prescription'}
+                </Button>
+            </div>
 
           </form>
         )}
