@@ -7,8 +7,10 @@
 
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import Input from '../../components/common/Input';
-import Button from '../../components/common/Button';
+import Input  from '../../components/ui/input';
+import Button from '../../components/ui/button';
+import Alert  from '../../components/ui/alert';
+import Card   from '../../components/ui/card';
 
 const OtpVerificationPage = () => {
   const location = useLocation();
@@ -83,11 +85,11 @@ const OtpVerificationPage = () => {
 
   if (!email) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
         <div className="w-full max-w-md text-center">
-          <p className="text-slate-600">
+          <p className="text-muted-foreground font-medium">
             No registration in progress. Please{' '}
-            <a href="/register" className="text-[#1E3A5F] font-medium hover:underline">
+            <a href="/register" className="text-primary font-bold hover:underline">
               register
             </a>{' '}
             first.
@@ -98,28 +100,28 @@ const OtpVerificationPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-[#1E3A5F]">Care4U</h1>
-          <p className="text-slate-500 mt-1">Centralized Healthcare Ecosystem</p>
+          <h1 className="text-3xl font-bold text-brand-deep">Care4U</h1>
+          <p className="text-muted-foreground mt-1 font-medium">Centralized Healthcare Ecosystem</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
-          <h2 className="text-xl font-semibold text-slate-800 mb-2">Verify your account</h2>
-          <p className="text-sm text-slate-500 mb-6">
-            We sent a verification code to <strong>{email}</strong>. Enter it below to complete registration.
+        <Card>
+          <h2 className="text-xl font-bold text-foreground mb-2">Verify your account</h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            We sent a verification code to <strong className="text-foreground">{email}</strong>. Enter it below to complete registration.
           </p>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-600">{error}</p>
+            <div className="mb-4">
+              <Alert type="error" message={error} />
             </div>
           )}
 
           {resendMessage && (
-            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-              <p className="text-sm text-green-700">{resendMessage}</p>
+            <div className="mb-4">
+              <Alert type="success" message={resendMessage} />
             </div>
           )}
 
@@ -145,17 +147,17 @@ const OtpVerificationPage = () => {
             </Button>
           </form>
 
-          <p className="text-center text-sm text-slate-500 mt-6">
+          <p className="text-center text-sm text-muted-foreground mt-6">
             Didn't receive a code?{' '}
             <button
               onClick={handleResend}
               disabled={resending}
-              className="text-[#1E3A5F] font-medium hover:underline disabled:opacity-50"
+              className="text-primary font-semibold hover:underline disabled:opacity-50 disabled:no-underline"
             >
               {resending ? 'Sending...' : 'Resend code'}
             </button>
           </p>
-        </div>
+        </Card>
       </div>
     </div>
   );

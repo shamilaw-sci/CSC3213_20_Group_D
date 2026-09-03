@@ -7,8 +7,10 @@
 
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import Input  from '../../components/common/Input';
-import Button from '../../components/common/Button';
+import Input  from '../../components/ui/input';
+import Button from '../../components/ui/button';
+import Alert  from '../../components/ui/alert';
+import Card   from '../../components/ui/card';
 import { resetPassword } from '../../services/auth.service';
 
 const ResetPasswordPage = () => {
@@ -81,40 +83,35 @@ const ResetPasswordPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
 
         {/* Logo & Title */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-[#1E3A5F]">Care4U</h1>
-          <p className="text-slate-500 mt-1">Centralized Healthcare Ecosystem</p>
+          <h1 className="text-3xl font-bold text-brand-deep">Care4U</h1>
+          <p className="text-muted-foreground mt-1 font-medium">Centralized Healthcare Ecosystem</p>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
-
-          <h2 className="text-xl font-semibold text-slate-800 mb-6">Set a new password</h2>
+        <Card>
+          <h2 className="text-xl font-bold text-foreground mb-6">Set a new password</h2>
 
           {!token && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-600">
-                This reset link is missing or invalid. Please request a new one.
-              </p>
+            <div className="mb-4">
+              <Alert type="error" message="This reset link is missing or invalid. Please request a new one." />
             </div>
           )}
 
           {serverError && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-600">{serverError}</p>
+            <div className="mb-4">
+              <Alert type="error" message={serverError} />
             </div>
           )}
 
           {success ? (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-              <p className="text-sm text-green-700">
-                Your password has been reset successfully.
-              </p>
-              <a href="/login" className="text-sm text-[#1E3A5F] font-medium hover:underline mt-2 inline-block">
+            <div className="flex flex-col gap-4 text-center">
+              <Alert type="success" message="Your password has been reset successfully." />
+              <a href="/login" className="text-sm text-primary font-semibold hover:underline mt-2 inline-block">
                 Go to Login
               </a>
             </div>
@@ -156,10 +153,10 @@ const ResetPasswordPage = () => {
             </div>
           )}
 
-        </div>
+        </Card>
 
         {/* Footer */}
-        <p className="text-center text-xs text-slate-400 mt-6">
+        <p className="text-center text-xs font-medium text-muted-foreground mt-6">
           © 2026 Care4U — Group D | CSC3213
         </p>
 

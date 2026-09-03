@@ -6,8 +6,10 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Input  from '../../components/common/Input';
-import Button from '../../components/common/Button';
+import Input  from '../../components/ui/input';
+import Button from '../../components/ui/button';
+import Alert  from '../../components/ui/alert';
+import Card   from '../../components/ui/card';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -130,55 +132,56 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
 
         {/* Logo & Title */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-[#1E3A5F]">Care4U</h1>
-          <p className="text-slate-500 mt-1">Centralized Healthcare Ecosystem</p>
+          <h1 className="text-3xl font-bold text-brand-deep">Care4U</h1>
+          <p className="text-muted-foreground mt-1 font-medium">Centralized Healthcare Ecosystem</p>
         </div>
 
         {/* Register Card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
-
-          <h2 className="text-xl font-semibold text-slate-800 mb-2">Create your account</h2>
+        <Card>
+          <h2 className="text-xl font-bold text-foreground mb-2">Create your account</h2>
 
           {/* Step indicator */}
           <div className="flex items-center gap-2 mb-6">
-            <div className={`h-2 flex-1 rounded-full ${step >= 1 ? 'bg-[#1E3A5F]' : 'bg-slate-200'}`} />
-            <div className={`h-2 flex-1 rounded-full ${step >= 2 ? 'bg-[#1E3A5F]' : 'bg-slate-200'}`} />
+            <div className={`h-2 flex-1 rounded-full ${step >= 1 ? 'bg-primary' : 'bg-secondary'}`} />
+            <div className={`h-2 flex-1 rounded-full ${step >= 2 ? 'bg-primary' : 'bg-secondary'}`} />
           </div>
 
           {/* Server Error */}
           {serverError && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-600">{serverError}</p>
+            <div className="mb-4">
+              <Alert type="error" message={serverError} />
             </div>
           )}
 
           {/* Step 1 — Basic Info */}
           {step === 1 && (
             <div className="flex flex-col gap-4">
-              <p className="text-sm text-slate-500">Step 1 of 2 — Account Details</p>
+              <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                Step 1 of 2 — Account Details
+              </p>
 
               {/* Role selector */}
-              <div className="flex gap-2">
+              <div className="flex gap-2 mb-1">
                 <button
                   onClick={() => setFormData({ ...formData, role: 'patient' })}
-                  className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors
+                  className={`flex-1 py-2.5 rounded-lg text-sm font-semibold border transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1
                     ${formData.role === 'patient'
-                      ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]'
-                      : 'bg-white text-slate-600 border-slate-300'}`}
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-white text-muted-foreground border-input hover:bg-secondary'}`}
                 >
                   Patient
                 </button>
                 <button
                   onClick={() => setFormData({ ...formData, role: 'doctor' })}
-                  className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors
+                  className={`flex-1 py-2.5 rounded-lg text-sm font-semibold border transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1
                     ${formData.role === 'doctor'
-                      ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]'
-                      : 'bg-white text-slate-600 border-slate-300'}`}
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-white text-muted-foreground border-input hover:bg-secondary'}`}
                 >
                   Doctor
                 </button>
@@ -239,7 +242,7 @@ const RegisterPage = () => {
           {/* Step 2 — Role Info */}
           {step === 2 && (
             <div className="flex flex-col gap-4">
-              <p className="text-sm text-slate-500">
+              <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                 Step 2 of 2 — {formData.role === 'patient' ? 'Patient' : 'Doctor'} Details
               </p>
 
@@ -326,17 +329,17 @@ const RegisterPage = () => {
           )}
 
           {/* Login Link */}
-          <p className="text-center text-sm text-slate-500 mt-6">
+          <p className="text-center text-sm text-muted-foreground mt-6">
             Already have an account?{' '}
-            <a href="/login" className="text-[#1E3A5F] font-medium hover:underline">
+            <a href="/login" className="text-primary font-semibold hover:underline">
               Sign in here
             </a>
           </p>
 
-        </div>
+        </Card>
 
         {/* Footer */}
-        <p className="text-center text-xs text-slate-400 mt-6">
+        <p className="text-center text-xs font-medium text-muted-foreground mt-6">
           © 2026 Care4U — Group D | CSC3213
         </p>
 
