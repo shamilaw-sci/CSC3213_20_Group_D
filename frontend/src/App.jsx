@@ -49,16 +49,19 @@ import AdminSystemSettingsPage from './pages/admin/AdminSystemSettingsPage';
 // Simple Route Guard using Zustand
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const user = useAuthStore(state => state.user);
-  
+  const clearUser = useAuthStore(state => state.clearUser);
+
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    if (user.role === 'admin') return <Navigate to="/admin" replace />;
-    if (user.role === 'doctor') return <Navigate to="/doctor/dashboard" replace />;
-    if (user.role === 'patient') return <Navigate to="/patient/profile" replace />;
-    if (user.role === 'pharmacist') return <Navigate to="/pharmacy/dashboard" replace />;
+    // Don't guess another destination - that role may not have a
+    // dedicated route (e.g. lab_technician, hospital_staff have none
+    // yet), and guessing wrong here creates a redirect loop with
+    // /login's own role-based redirect. Clear the mismatched session
+    // and go to login cleanly instead.
+    clearUser();
     return <Navigate to="/login" replace />;
   }
 
@@ -110,7 +113,15 @@ function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
 
         {/* Public Routes */}
-        <Route path="/login"    element={user ? <Navigate to={`/${user.role === 'patient' ? 'patient/profile' : user.role === 'doctor' ? 'doctor/dashboard' : user.role === 'admin' ? 'admin' : 'pharmacy/dashboard'}`} replace /> : <LoginPage />} />
+        <Route path="/login" element={
+  user ? (
+    user.role === 'patient' ? <Navigate to="/patient/profile" replace /> :
+    user.role === 'doctor' ? <Navigate to="/doctor/dashboard" replace /> :
+    user.role === 'admin' ? <Navigate to="/admin" replace /> :
+    user.role === 'pharmacist' ? <Navigate to="/pharmacy/dashboard" replace /> :
+    <LoginPage /> // unrecognized role (e.g. lab_technician, hospital_staff) - no dedicated destination yet, just show login rather than guessing
+  ) : <LoginPage />
+} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password"  element={<ResetPasswordPage />} />
