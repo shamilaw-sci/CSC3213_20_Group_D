@@ -1,9 +1,9 @@
 /**
  * @component Input
- * @desc      Reusable text input with label and error display.
+ * @desc      Reusable text input with visible label and error display.
  *            Used in all Care4U forms.
  * @author    Wasana Karunanayaka (S/21/081)
- * @param {string}   label       - Field label text
+ * @param {string}   label       - Field label text (always visible, never placeholder-only)
  * @param {string}   name        - Input name attribute
  * @param {string}   type        - Input type (text, email, password, date)
  * @param {string}   value       - Controlled value
@@ -27,14 +27,14 @@ const Input = ({
   ...rest
 }) => {
   return (
-    <div className={`flex flex-col gap-1 ${className}`}>
+    <div className={`flex flex-col gap-1.5 ${className}`}>
       {label && (
         <label
           htmlFor={name}
-          className="text-xs font-medium text-slate-500 uppercase tracking-wide"
+          className="text-xs font-semibold text-muted-foreground uppercase tracking-wide"
         >
           {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
+          {required && <span className="text-destructive ml-1">*</span>}
         </label>
       )}
       <input
@@ -46,17 +46,17 @@ const Input = ({
         placeholder={placeholder}
         disabled={disabled}
         className={`
-          w-full px-3 py-2 text-sm text-slate-800 bg-white
+          w-full px-3.5 py-2.5 text-sm text-foreground bg-white
           border rounded-lg transition-colors
-          placeholder:text-slate-400
-          focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] focus:border-transparent
-          disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed
-          ${error ? 'border-red-400' : 'border-slate-300 hover:border-slate-400'}
+          placeholder:text-muted-foreground
+          focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent
+          disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed
+          ${error ? 'border-destructive' : 'border-input hover:border-muted-foreground'}
         `}
         {...rest}
       />
       {error && (
-        <p className="text-xs text-red-600">{error}</p>
+        <p className="text-xs text-destructive">{error}</p>
       )}
     </div>
   );
