@@ -47,8 +47,6 @@ import Alert from '../../components/common/Alert';
 import Modal from '../../components/common/Modal'; 
 import HealthAwarenessFeed from '../../components/common/HealthAwarenessFeed';
 
-// Patient ID is now resolved from the real logged-in session via
-// GET /api/auth/me, not hardcoded. See usePatientId() below.
 /**
  * Fetches the currently logged-in patient's real ID from the session,
  * replacing what used to be a hardcoded TEST_PATIENT_ID.
@@ -99,7 +97,6 @@ const capitalise = (str) => {
 
 const getAvatarSrc = (patient) => {
   if (patient?.photo_url) return patient.photo_url;
-  // Updated avatar fallback color to match the new Teal primary theme
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(patient?.full_name || 'Patient')}&background=0D9488&color=fff&size=120&bold=true&rounded=true`;
 };
 
@@ -110,15 +107,16 @@ const getFirstName = (fullName) => {
 
 // ─── Severity Badge ───────────────────────────────────────────────────────────
 const SEVERITY_STYLES = {
-  severe:   { bg: 'bg-destructive/10',    text: 'text-destructive',   label: 'Severe'   },
-  moderate: { bg: 'bg-orange-100', text: 'text-orange-700', label: 'Moderate' },
-  mild:     { bg: 'bg-green-100',  text: 'text-green-700',  label: 'Mild'     },
+  priority: { bg: 'bg-destructive/10', text: 'text-destructive', label: 'Priority' },
+  severe:   { bg: 'bg-destructive/10', text: 'text-destructive', label: 'Severe' },
+  moderate: { bg: 'bg-orange-100',     text: 'text-orange-700',  label: 'Moderate' },
+  mild:     { bg: 'bg-green-100',      text: 'text-green-700',   label: 'Mild' },
 };
 
 const SeverityBadge = ({ severity }) => {
   const style = SEVERITY_STYLES[severity?.toLowerCase()] || SEVERITY_STYLES.mild;
   return (
-    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${style.bg} ${style.text}`}>
+    <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold ${style.bg} ${style.text}`}>
       {style.label}
     </span>
   );
@@ -144,7 +142,7 @@ const ProfileField = ({ icon: Icon, label, value }) => Icon ? (
   </div>
 );
 
-// ─── Banner Load Animations (scoped to this page) ─────────────────────────────
+// ─── Banner Load Animations ─────────────────────────────
 const BannerAnimationStyles = () => (
   <style>{`
     @keyframes cuAvatarPop {
@@ -287,7 +285,6 @@ const PatientProfilePage = () => {
     enabled: !!patient,
   });
 
-  // NEW: Consent Query
   const { data: lockedCategories = [], isLoading: consentLoading } = useQuery({ 
     queryKey: ['consent', TEST_PATIENT_ID], 
     queryFn: () => getConsentSettings(TEST_PATIENT_ID), 
@@ -405,7 +402,6 @@ const PatientProfilePage = () => {
     onError: (err) => toast.error(err?.response?.data?.message || 'Failed to scan card.')
   });
 
-  // NEW: Consent Mutation
   const consentMutation = useMutation({
     mutationFn: (newCategories) => updateConsentSettings(TEST_PATIENT_ID, newCategories),
     onSuccess: () => {
@@ -499,9 +495,12 @@ const PatientProfilePage = () => {
     if (allergyToDelete) deleteAllergyMutation.mutate(allergyToDelete.id);
   };
 
-  // ── Filter allergies by severity ──
-  const severeAllergies = allergies.filter((a) => a.severity?.toLowerCase() === 'severe');
-  const otherAllergies = allergies.filter((a) => a.severity?.toLowerCase() !== 'severe');
+  // Sort allergies so severe ones appear at the top
+  const sortedAllergies = [...allergies].sort((a, b) => {
+    if (a.severity?.toLowerCase() === 'severe' && b.severity?.toLowerCase() !== 'severe') return -1;
+    if (a.severity?.toLowerCase() !== 'severe' && b.severity?.toLowerCase() === 'severe') return 1;
+    return 0;
+  });
 
   // ── Render States ──
   if (patientIdLoading || isLoading) {
@@ -580,7 +579,7 @@ const PatientProfilePage = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card title="Personal Information">
-                <div className="space-y-4">
+                <div className="pt-3 space-y-4">
                   <ProfileField icon={User} label="Full Name" value={patient?.full_name} />
                   <ProfileField icon={Droplets} label="Blood Group" value={patient?.blood_group} />
                   <ProfileField icon={Calendar} label="Date of Birth" value={formatDate(patient?.date_of_birth)} />
@@ -590,7 +589,7 @@ const PatientProfilePage = () => {
               </Card>
 
               <Card title="Emergency Contact">
-                <div className="space-y-4">
+                <div className="pt-3 space-y-4">
                   <ProfileField icon={User} label="Contact Name" value={patient?.emergency_contact_name} />
                   <ProfileField icon={Phone} label="Contact Phone" value={patient?.emergency_contact_phone} />
                   <ProfileField icon={User} label="Relationship" value={capitalise(patient?.emergency_contact_relationship)} />
@@ -600,41 +599,28 @@ const PatientProfilePage = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* ── Chronic Conditions ── */}
-              <Card 
-                title={
-                  <span className="flex items-center gap-2">
-                    {`Chronic Conditions (${conditions.length})`}
-                  </span>
-                }
-              >
-                {conditionsLoading ? (
-                   <div className="py-4 flex justify-center"><Spinner size="sm" /></div>
-                ) : conditions.length === 0 ? (
-                  <div className="text-center py-6">
-                    <div className="inline-flex p-3 rounded-full bg-secondary mb-2">
-                      <AlertTriangle className="text-muted-foreground" size={24} />
+              <Card title="Chronic Conditions">
+                <div className="pt-3">
+                  {conditionsLoading ? (
+                     <div className="py-4 flex justify-center"><Spinner size="sm" /></div>
+                  ) : conditions.length === 0 ? (
+                    <div className="text-center py-6">
+                      <div className="inline-flex p-3 rounded-full bg-secondary mb-2">
+                        <AlertTriangle className="text-muted-foreground" size={24} />
+                      </div>
+                      <p className="text-sm text-muted-foreground">No conditions recorded.</p>
                     </div>
-                    <p className="text-sm text-muted-foreground">No conditions recorded.</p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-3 pt-1">
-                    {conditions.map((condition) => (
-                      <div
-                        key={condition.id}
-                        className={`group relative flex flex-col py-3 px-4 rounded-md border-b border-border last:border-0 gap-2 transition-colors hover:bg-secondary/50 ${
-                          condition.is_priority ? 'bg-destructive/5 border border-destructive/20' : ''
-                        }`}
-                      >
-                        <div className="flex justify-between items-start pr-8">
+                  ) : (
+                    <div className="flex flex-col pt-1 divide-y divide-border">
+                      {conditions.map((condition) => (
+                        <div
+                          key={condition.id}
+                          className="py-3 flex items-center justify-between group transition-colors hover:bg-secondary/50 px-2 -mx-2 rounded-lg"
+                        >
                           <div>
-                            <div className="flex items-center gap-2">
-                              {condition.is_priority && (
-                                <AlertTriangle size={14} className="text-destructive shrink-0" strokeWidth={2.5} />
-                              )}
-                              <p className={`text-sm font-semibold ${condition.is_priority ? 'text-destructive' : 'text-foreground'}`}>
-                                {condition.condition}
-                              </p>
-                            </div>
+                            <p className="text-sm font-semibold text-foreground">
+                              {condition.condition}
+                            </p>
                             <p className="text-xs text-muted-foreground mt-0.5">
                               Diagnosed: {formatDate(condition.diagnosed_at)}
                             </p>
@@ -642,80 +628,44 @@ const PatientProfilePage = () => {
                               <p className="text-xs text-muted-foreground mt-0.5">{condition.notes}</p>
                             )}
                           </div>
-                          {condition.is_priority && (
-                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full text-destructive-foreground bg-destructive shrink-0">
-                              Priority
-                            </span>
-                          )}
-                        </div>
-                        <button 
-                          onClick={() => promptDeleteCondition(condition)}
-                          className="absolute right-2 top-2 p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
-                          title="Remove condition"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                
-                <div className="mt-4 pt-4 border-t border-border flex justify-center">
-                  <Button variant="outline" onClick={() => setIsAddConditionModalOpen(true)} className="w-full text-primary border-primary/20 hover:bg-primary/5">
-                    <Plus size={16} className="mr-2" /> Add Condition
-                  </Button>
-                </div>
-              </Card>
-
-              {/* ── Known Allergies ── */}
-              <Card 
-                title={
-                  <span className="flex items-center gap-2">
-                    {`Known Allergies (${allergies.length})`}
-                    {!allergiesLoading && severeAllergies.length > 0 && (
-                      <span className="flex items-center gap-1 text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full text-destructive-foreground bg-destructive">
-                        <AlertTriangle size={11} strokeWidth={2.5} /> {severeAllergies.length} Severe
-                      </span>
-                    )}
-                  </span>
-                }
-              >
-                {allergiesLoading ? (
-                   <div className="py-4 flex justify-center"><Spinner size="sm" /></div>
-                ) : allergies.length === 0 ? (
-                  <div className="text-center py-6">
-                    <div className="inline-flex p-3 rounded-full bg-secondary mb-2">
-                      <AlertTriangle className="text-muted-foreground" size={24} />
-                    </div>
-                    <p className="text-sm text-muted-foreground">No allergies recorded.</p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-3 pt-1">
-                    {severeAllergies.length > 0 && (
-                      <div className="flex flex-col gap-2 mb-1">
-                        {severeAllergies.map((allergy) => (
-                          <div key={allergy.id} className="group relative flex flex-col justify-between py-3 px-4 rounded-md bg-destructive/10 border border-destructive/20">
-                            <div className="flex items-start gap-2.5 pr-8">
-                              <AlertTriangle size={18} className="text-destructive shrink-0 mt-0.5" strokeWidth={2.5} />
-                              <div>
-                                <p className="text-sm font-bold text-destructive">{allergy.allergen}</p>
-                                {allergy.notes && <p className="text-xs text-destructive/80 mt-0.5">{allergy.notes}</p>}
-                              </div>
-                            </div>
+                          <div className="flex items-center gap-3">
+                            {condition.is_priority && <SeverityBadge severity="priority" />}
                             <button 
-                              onClick={() => promptDeleteAllergy(allergy)}
-                              className="absolute right-2 top-2 p-1.5 text-destructive/50 hover:text-destructive hover:bg-destructive/20 rounded-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
-                              title="Remove allergy"
+                              onClick={() => promptDeleteCondition(condition)}
+                              className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                              title="Remove condition"
                             >
                               <Trash2 size={16} />
                             </button>
                           </div>
-                        ))}
-                      </div>
-                    )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  <div className="mt-4 pt-4 border-t border-border flex justify-center">
+                    <Button variant="outline" onClick={() => setIsAddConditionModalOpen(true)} className="w-full text-primary border-primary/20 hover:bg-primary/5">
+                      <Plus size={16} className="mr-2" /> Add Condition
+                    </Button>
+                  </div>
+                </div>
+              </Card>
 
-                    <div className="divide-y divide-border">
-                      {otherAllergies.map((allergy) => (
+              {/* ── Known Allergies ── */}
+              <Card title="Known Allergies">
+                <div className="pt-3">
+                  {allergiesLoading ? (
+                     <div className="py-4 flex justify-center"><Spinner size="sm" /></div>
+                  ) : allergies.length === 0 ? (
+                    <div className="text-center py-6">
+                      <div className="inline-flex p-3 rounded-full bg-secondary mb-2">
+                        <AlertTriangle className="text-muted-foreground" size={24} />
+                      </div>
+                      <p className="text-sm text-muted-foreground">No allergies recorded.</p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col pt-1 divide-y divide-border">
+                      {sortedAllergies.map((allergy) => (
                         <div key={allergy.id} className="py-3 flex items-center justify-between group transition-colors hover:bg-secondary/50 px-2 -mx-2 rounded-lg">
                           <div>
                             <p className="text-sm font-semibold text-foreground">{allergy.allergen}</p>
@@ -734,76 +684,71 @@ const PatientProfilePage = () => {
                         </div>
                       ))}
                     </div>
+                  )}
+                  
+                  <div className="mt-4 pt-4 border-t border-border flex justify-center">
+                    <Button variant="outline" onClick={() => { setAllergySuggestions(searchAllergens('')); setIsAddAllergyModalOpen(true); }} className="w-full text-primary border-primary/20 hover:bg-primary/5">
+                      <Plus size={16} className="mr-2" /> Add Allergy
+                    </Button>
                   </div>
-                )}
-                
-                <div className="mt-4 pt-4 border-t border-border flex justify-center">
-                  <Button variant="outline" onClick={() => { setAllergySuggestions(searchAllergens('')); setIsAddAllergyModalOpen(true); }} className="w-full text-primary border-primary/20 hover:bg-primary/5">
-                    <Plus size={16} className="mr-2" /> Add Allergy
-                  </Button>
                 </div>
               </Card>
             </div>
 
             {/* ── Vaccination Records (CARE4U-148) ── */}
             <div className="mb-6">
-              <Card 
-                title={
-                  <span className="flex items-center gap-2">
-                    <Syringe size={18} className="text-primary" />
-                    {`Vaccination Records (${vaccinations.length})`}
-                  </span>
-                }
-              >
-                {vaccinationsLoading ? (
-                   <div className="py-4 flex justify-center"><Spinner size="sm" /></div>
-                ) : vaccinations.length === 0 ? (
-                  <div className="text-center py-6">
-                    <div className="inline-flex p-3 rounded-full bg-secondary mb-2">
-                      <Syringe className="text-muted-foreground" size={24} />
-                    </div>
-                    <p className="text-sm text-muted-foreground">No vaccination records found.</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                    {vaccinations.map((vaccine) => (
-                      <div
-                        key={vaccine.id}
-                        className="group relative flex flex-col py-3 px-4 rounded-lg border border-border bg-card shadow-sm transition-colors hover:border-slate-300"
-                      >
-                        <div className="flex justify-between items-start pr-8">
-                          <div>
-                            <p className="text-sm font-bold text-primary">{vaccine.vaccine_name}</p>
-                            <p className="text-xs text-muted-foreground mt-1 font-medium">
-                              Given: <span className="text-foreground">{formatDate(vaccine.date_administered)}</span>
-                            </p>
-                            {vaccine.dose_number && (
-                              <p className="text-xs text-muted-foreground mt-0.5">Dose: {vaccine.dose_number}</p>
-                            )}
-                            {vaccine.notes && (
-                              <p className="text-xs text-muted-foreground mt-0.5 italic">"{vaccine.notes}"</p>
-                            )}
-                          </div>
-                        </div>
-                        <button 
-                          onClick={() => promptDeleteVaccination(vaccine)}
-                          className="absolute right-2 top-2 p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
-                          title="Remove record"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+              <Card title={<span className="flex items-center gap-2"><Syringe size={18} className="text-primary" /> Vaccination Records</span>}>
+                <div className="pt-3">
+                  {vaccinationsLoading ? (
+                     <div className="py-4 flex justify-center"><Spinner size="sm" /></div>
+                  ) : vaccinations.length === 0 ? (
+                    <div className="text-center py-6">
+                      <div className="inline-flex p-3 rounded-full bg-secondary mb-2">
+                        <Syringe className="text-muted-foreground" size={24} />
                       </div>
-                    ))}
+                      <p className="text-sm text-muted-foreground">No vaccination records found.</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                      {vaccinations.map((vaccine) => (
+                        <div
+                          key={vaccine.id}
+                          className="group relative flex flex-col py-3 px-4 rounded-lg border border-border bg-card shadow-sm transition-colors hover:border-slate-300"
+                        >
+                          <div className="flex justify-between items-start pr-8">
+                            <div>
+                              <p className="text-sm font-bold text-primary">{vaccine.vaccine_name}</p>
+                              <p className="text-xs text-muted-foreground mt-1 font-medium">
+                                Given: <span className="text-foreground">{formatDate(vaccine.date_administered)}</span>
+                              </p>
+                              {vaccine.dose_number && (
+                                <p className="text-xs text-muted-foreground mt-0.5">Dose: {vaccine.dose_number}</p>
+                              )}
+                              {vaccine.notes && (
+                                <p className="text-xs text-muted-foreground mt-0.5 italic">"{vaccine.notes}"</p>
+                              )}
+                            </div>
+                          </div>
+                          <button 
+                            onClick={() => promptDeleteVaccination(vaccine)}
+                            className="absolute right-2 top-2 p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                            title="Remove record"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  <div className="mt-4 pt-4 border-t border-border flex justify-center">
+                    <Button variant="outline" onClick={() => { 
+                      setBulkVaccines([{ id: 'initial-row', vaccineName: '', dateAdministered: '', doseNumber: '', notes: '' }]); 
+                      setIsAddVaccinationModalOpen(true); 
+                    }} className="w-full sm:w-auto text-primary border-primary/20 hover:bg-primary/5">
+                      <Plus size={16} className="mr-2" /> Add Vaccination
+                    </Button>
                   </div>
-                )}
-                
-                <div className="mt-4 pt-4 border-t border-border flex justify-center">
-                  <Button variant="outline" onClick={() => { 
-                    setBulkVaccines([{ id: 'initial-row', vaccineName: '', dateAdministered: '', doseNumber: '', notes: '' }]); 
-                    setIsAddVaccinationModalOpen(true); 
-                  }} className="w-full sm:w-auto text-primary border-primary/20 hover:bg-primary/5">
-                    <Plus size={16} className="mr-2" /> Add Vaccination
-                  </Button>
                 </div>
               </Card>
             </div>
@@ -811,44 +756,46 @@ const PatientProfilePage = () => {
             {/* ── NEW: Privacy & Consent Controls (Epic 8.12) ── */}
             <div className="mb-6">
               <Card title={<span className="flex items-center gap-2"><Shield size={18} className="text-primary" /> Privacy & Consent Controls</span>}>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Lock specific medical record categories. Doctors will require your explicit permission to view locked records.
-                </p>
-                
-                {consentLoading ? (
-                  <div className="py-6 flex justify-center"><Spinner size="sm" /></div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {SENSITIVE_CATEGORIES.map(category => {
-                      const isLocked = lockedCategories.includes(category);
-                      return (
-                        <div key={category} className="flex items-center justify-between p-4 rounded-xl border border-border bg-card shadow-sm transition-all hover:border-slate-300">
-                          <div className="flex items-center gap-3">
-                            <div className={`p-2.5 rounded-full ${isLocked ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary'}`}>
-                              {isLocked ? <Lock size={18} strokeWidth={2.5} /> : <Unlock size={18} strokeWidth={2.5} />}
+                <div className="pt-3">
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Lock specific medical record categories. Doctors will require your explicit permission to view locked records.
+                  </p>
+                  
+                  {consentLoading ? (
+                    <div className="py-6 flex justify-center"><Spinner size="sm" /></div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {SENSITIVE_CATEGORIES.map(category => {
+                        const isLocked = lockedCategories.includes(category);
+                        return (
+                          <div key={category} className="flex items-center justify-between p-4 rounded-xl border border-border bg-card shadow-sm transition-all hover:border-slate-300">
+                            <div className="flex items-center gap-3">
+                              <div className={`p-2.5 rounded-full ${isLocked ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary'}`}>
+                                {isLocked ? <Lock size={18} strokeWidth={2.5} /> : <Unlock size={18} strokeWidth={2.5} />}
+                              </div>
+                              <div>
+                                <p className="text-sm font-bold text-foreground">{category}</p>
+                                <p className={`text-xs mt-0.5 font-medium ${isLocked ? 'text-destructive' : 'text-primary'}`}>
+                                  {isLocked ? 'Locked (Requires Approval)' : 'Unlocked (Default Access)'}
+                                </p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-sm font-bold text-foreground">{category}</p>
-                              <p className={`text-xs mt-0.5 font-medium ${isLocked ? 'text-destructive' : 'text-primary'}`}>
-                                {isLocked ? 'Locked (Requires Approval)' : 'Unlocked (Default Access)'}
-                              </p>
-                            </div>
+                            
+                            {/* Animated Toggle Switch */}
+                            <button 
+                              type="button"
+                              onClick={() => handleToggleConsent(category)}
+                              disabled={consentMutation.isPending}
+                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 ${isLocked ? 'bg-destructive' : 'bg-secondary'}`}
+                            >
+                              <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-300 ease-in-out ${isLocked ? 'translate-x-6' : 'translate-x-1'}`} />
+                            </button>
                           </div>
-                          
-                          {/* Animated Toggle Switch */}
-                          <button 
-                            type="button"
-                            onClick={() => handleToggleConsent(category)}
-                            disabled={consentMutation.isPending}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 ${isLocked ? 'bg-destructive' : 'bg-secondary'}`}
-                          >
-                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-300 ease-in-out ${isLocked ? 'translate-x-6' : 'translate-x-1'}`} />
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </Card>
             </div>
 
@@ -865,7 +812,7 @@ const PatientProfilePage = () => {
           <form onSubmit={handleSubmit((data) => updateMutation.mutate(data))}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card title="Personal Information">
-                <div className="space-y-4">
+                <div className="pt-3 space-y-4">
                   <Input label="Full Name" placeholder="Enter full name" error={errors.full_name?.message} {...register('full_name', { required: 'Full name is required' })} />
                   <div className="flex flex-col gap-1">
                     <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Blood Group <span className="text-destructive">*</span></label>
@@ -878,7 +825,7 @@ const PatientProfilePage = () => {
               </Card>
 
               <Card title="Emergency Contact">
-                <div className="space-y-4">
+                <div className="pt-3 space-y-4">
                   <Input label="Contact Name" placeholder="Enter contact name" {...register('emergency_contact_name')} />
                   <Input label="Contact Phone" placeholder="Enter contact phone" error={errors.emergency_contact_phone?.message} {...register('emergency_contact_phone', { pattern: { value: /^[0-9+\s\-()]{7,15}$/, message: 'Invalid phone number' } })} />
                   <div className="flex flex-col gap-1">
@@ -969,12 +916,11 @@ const PatientProfilePage = () => {
         </Modal>
       )}
 
-      {/* ── Add Bulk Vaccination Modal (Upgraded) ── */}
+      {/* ── Add Bulk Vaccination Modal ── */}
       {isAddVaccinationModalOpen && (
         <Modal isOpen={isAddVaccinationModalOpen} onClose={() => setIsAddVaccinationModalOpen(false)} title="Add Vaccination Record(s)">
           <div className="flex flex-col h-full max-h-[80vh]">
             
-            {/* AI Scan Assistant Banner (Fixed at top) */}
             <div className="mb-4 p-4 bg-primary/10 border border-primary/20 rounded-lg flex flex-col gap-2 shrink-0">
               <div className="flex items-center gap-2 text-primary font-semibold">
                 <ScanLine size={18} />
@@ -991,9 +937,7 @@ const PatientProfilePage = () => {
               <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" ref={scanVaccineInputRef} onChange={handleScanVaccineChange} />
             </div>
 
-            {/* Scrollable Form Area for Bulk Rows */}
             <div className="overflow-y-auto pr-2 space-y-4 pb-4">
-              
               {bulkVaccines.map((row) => (
                 <div key={row.id} className="p-4 bg-secondary border border-border rounded-lg relative">
                   
@@ -1004,7 +948,6 @@ const PatientProfilePage = () => {
                   )}
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* Smart Autocomplete Field (Row specific) */}
                     <div className="flex flex-col gap-1 relative vaccine-autocomplete-container">
                       <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Vaccine Name <span className="text-destructive">*</span></label>
                       <input 
@@ -1056,7 +999,6 @@ const PatientProfilePage = () => {
               </Button>
             </div>
 
-            {/* Fixed Footer Buttons */}
             <div className="flex justify-end gap-3 pt-4 border-t border-border shrink-0 mt-auto">
               <Button type="button" variant="secondary" onClick={() => setIsAddVaccinationModalOpen(false)}>Cancel</Button>
               <Button type="button" onClick={submitBulkVaccination} variant="primary" loading={addBulkVaccinationMutation.isPending}>Save All Records</Button>
