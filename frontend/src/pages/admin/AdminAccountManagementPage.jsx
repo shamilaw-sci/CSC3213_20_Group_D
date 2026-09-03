@@ -7,6 +7,12 @@
 
 import { useEffect, useState } from 'react';
 import Spinner from '../../components/common/Spinner';
+import DataTable from '../../components/common/DataTable';
+import Button from '../../components/common/Button';
+import Badge from '../../components/common/Badge';
+import Alert from '../../components/common/Alert';
+import Input from '../../components/common/Input';
+import Card from '../../components/common/Card';
 
 const API_URL = 'http://localhost:5000';
 
@@ -81,125 +87,142 @@ const AdminAccountManagementPage = () => {
     }
   };
 
+  const columns = [
+    { key: 'email', label: 'Email' },
+    { 
+      key: 'role', 
+      label: 'Role', 
+      render: (val) => <span className="capitalize">{val?.replace('_', ' ')}</span> 
+    },
+    { 
+      key: 'verification_status', 
+      label: 'Verification', 
+      render: (val) => (
+        <Badge 
+          status={val === 'verified' ? 'active' : 'pending'} 
+          label={val} 
+        />
+      ) 
+    },
+    { 
+      key: 'is_active', 
+      label: 'Status', 
+      render: (val) => (
+        <Badge 
+          status={val ? 'active' : 'cancelled'} 
+          label={val ? 'Active' : 'Inactive'} 
+        />
+      ) 
+    },
+    { 
+      key: 'created_at', 
+      label: 'Registered', 
+      render: (val) => new Date(val).toLocaleDateString() 
+    },
+    { 
+      key: 'actions', 
+      label: 'Action', 
+      render: (_, user) => {
+        const isActioning = actioningId === user.id;
+        return (
+          <Button
+            size="sm"
+            variant={user.is_active ? 'danger' : 'primary'}
+            disabled={isActioning}
+            loading={isActioning}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleToggleActive(user.id);
+            }}
+          >
+            {user.is_active ? 'Deactivate' : 'Activate'}
+          </Button>
+        );
+      }
+    }
+  ];
+
   if (loading && users.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Spinner size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-800">Account Management</h1>
-        <p className="text-sm text-slate-500">{users.length} account(s)</p>
+    <div className="min-h-screen bg-background p-6">
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Account Management</h1>
+          <p className="text-sm font-medium text-muted-foreground mt-1">
+            {users.length} account(s) found
+          </p>
+        </div>
       </div>
 
       {/* Search & Filters */}
-      <form onSubmit={handleSearch} className="bg-white rounded-lg shadow p-4 mb-6 flex flex-wrap gap-3 items-end">
-        <div className="flex-1 min-w-50">
-          <label className="block text-xs text-slate-500 mb-1">Search (email or phone)</label>
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search..."
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-          />
-        </div>
-        <div>
-          <label className="block text-xs text-slate-500 mb-1">Role</label>
-          <select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm"
-          >
-            <option value="">All roles</option>
-            <option value="patient">Patient</option>
-            <option value="doctor">Doctor</option>
-            <option value="pharmacist">Pharmacist</option>
-            <option value="lab_technician">Lab Technician</option>
-            <option value="hospital_staff">Hospital Staff</option>
-            <option value="admin">Admin</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs text-slate-500 mb-1">Status</label>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm"
-          >
-            <option value="">All statuses</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
-        </div>
-        <button
-          type="submit"
-          className="px-4 py-2 bg-[#1E3A5F] text-white text-sm rounded-lg hover:bg-[#16293f]"
-        >
-          Apply Filters
-        </button>
-      </form>
+      <Card className="mb-6">
+        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4 items-end">
+          <div className="flex-1 w-full">
+            <Input
+              label="Search (email or phone)"
+              name="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search..."
+            />
+          </div>
+          <div className="w-full sm:w-48 flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              Role
+            </label>
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className="w-full px-3.5 py-2.5 text-sm text-foreground bg-white border border-border rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent hover:border-muted-foreground"
+            >
+              <option value="">All roles</option>
+              <option value="patient">Patient</option>
+              <option value="doctor">Doctor</option>
+              <option value="pharmacist">Pharmacist</option>
+              <option value="lab_technician">Lab Technician</option>
+              <option value="hospital_staff">Hospital Staff</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div className="w-full sm:w-48 flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              Status
+            </label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full px-3.5 py-2.5 text-sm text-foreground bg-white border border-border rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent hover:border-muted-foreground"
+            >
+              <option value="">All statuses</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+          <Button type="submit" variant="brand" className="w-full sm:w-auto">
+            Apply Filters
+          </Button>
+        </form>
+      </Card>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6">
-          {error}
+        <div className="mb-6">
+          <Alert type="error" message={error} />
         </div>
       )}
 
       {/* User Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 border-b border-slate-200">
-            <tr>
-              <th className="text-left px-4 py-3 text-slate-600 font-medium">Email</th>
-              <th className="text-left px-4 py-3 text-slate-600 font-medium">Role</th>
-              <th className="text-left px-4 py-3 text-slate-600 font-medium">Verification</th>
-              <th className="text-left px-4 py-3 text-slate-600 font-medium">Status</th>
-              <th className="text-left px-4 py-3 text-slate-600 font-medium">Registered</th>
-              <th className="text-right px-4 py-3 text-slate-600 font-medium">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => {
-              const isActioning = actioningId === user.id;
-              return (
-                <tr key={user.id} className="border-b border-slate-100 last:border-0">
-                  <td className="px-4 py-3 text-slate-800">{user.email}</td>
-                  <td className="px-4 py-3 text-slate-600">{user.role}</td>
-                  <td className="px-4 py-3 text-slate-600">{user.verification_status}</td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      user.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                    }`}>
-                      {user.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-slate-500">
-                    {new Date(user.created_at).toLocaleDateString()}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => handleToggleActive(user.id)}
-                      disabled={isActioning}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed ${
-                        user.is_active
-                          ? 'bg-red-600 text-white hover:bg-red-700'
-                          : 'bg-green-600 text-white hover:bg-green-700'
-                      }`}
-                    >
-                      {isActioning ? 'Working...' : user.is_active ? 'Deactivate' : 'Activate'}
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      <DataTable 
+        columns={columns} 
+        data={users} 
+        emptyMessage="No users found matching your filters." 
+      />
     </div>
   );
 };

@@ -7,6 +7,9 @@
 
 import { useEffect, useState } from 'react';
 import Spinner from '../../components/common/Spinner';
+import Alert from '../../components/common/Alert';
+import Card from '../../components/common/Card';
+import { Users, CalendarCheck, FileText, AlertTriangle } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
 
@@ -44,42 +47,77 @@ const AdminAnalyticsPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Spinner size="lg" />
       </div>
     );
   }
 
+  // Mapped specifically to standard design tokens and semantic icons
   const cards = summary ? [
-    { label: 'Total Patients', value: summary.totalPatients, color: 'bg-blue-50 text-blue-700' },
-    { label: 'Appointments This Month', value: summary.appointmentsThisMonth, color: 'bg-green-50 text-green-700' },
-    { label: 'Prescriptions Issued', value: summary.prescriptionsIssued, color: 'bg-purple-50 text-purple-700' },
-    { label: 'Emergency Overrides', value: summary.emergencyOverrides, color: 'bg-red-50 text-red-700' },
+    { 
+      label: 'Total Patients', 
+      value: summary.totalPatients, 
+      icon: Users,
+      colorClass: 'text-primary bg-primary/10 border-primary/20' 
+    },
+    { 
+      label: 'Appointments This Month', 
+      value: summary.appointmentsThisMonth, 
+      icon: CalendarCheck,
+      colorClass: 'text-brand-deep bg-brand-deep/10 border-brand-deep/20' 
+    },
+    { 
+      label: 'Prescriptions Issued', 
+      value: summary.prescriptionsIssued, 
+      icon: FileText,
+      colorClass: 'text-success bg-success/10 border-success/20' 
+    },
+    { 
+      label: 'Emergency Overrides', 
+      value: summary.emergencyOverrides, 
+      icon: AlertTriangle,
+      colorClass: 'text-urgent-foreground bg-urgent/10 border-urgent/20' 
+    },
   ] : [];
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
+    <div className="min-h-screen bg-background p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-800">Analytics Dashboard</h1>
-        <p className="text-sm text-slate-500">
+        <h1 className="text-2xl font-bold text-foreground">Analytics Dashboard</h1>
+        <p className="text-sm font-medium text-muted-foreground mt-1">
           Aggregate counts only — no personally identifiable data is shown, per policy.
         </p>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6">
-          {error}
+        <div className="mb-6">
+          <Alert type="error" message={error} />
         </div>
       )}
 
       {summary && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {cards.map((card) => (
-            <div key={card.label} className={`rounded-lg shadow p-6 ${card.color}`}>
-              <p className="text-sm font-medium opacity-80">{card.label}</p>
-              <p className="text-4xl font-bold mt-2">{card.value}</p>
-            </div>
-          ))}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {cards.map((card) => {
+            const Icon = card.icon;
+            return (
+              <Card key={card.label} className="flex flex-col justify-between">
+                <div className="flex flex-col gap-4">
+                  <div className={`w-12 h-12 flex items-center justify-center rounded-xl border ${card.colorClass}`}>
+                    <Icon size={24} strokeWidth={2} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                      {card.label}
+                    </p>
+                    <p className="text-4xl font-bold text-foreground mt-1">
+                      {card.value.toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>

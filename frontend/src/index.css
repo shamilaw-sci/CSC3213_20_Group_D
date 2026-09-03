@@ -3,10 +3,11 @@
 
 @layer base {
   :root {
-    /* Ultra-Clean Light Mode */
-    --background: 0 0% 100%;
+    /* Ultra-Clean Light Mode - Updated to a subtle clinical teal wash */
+    --background: 173 40% 97.5%;
     --foreground: 222.2 84% 4.9%;
 
+    /* Keep cards pure white so they pop against the teal background */
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
 

@@ -7,6 +7,11 @@
 
 import { useEffect, useState } from 'react';
 import Spinner from '../../components/common/Spinner';
+import Alert from '../../components/common/Alert';
+import Card from '../../components/common/Card';
+import Button from '../../components/common/Button';
+import Badge from '../../components/common/Badge';
+import { Clock } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
 
@@ -96,68 +101,80 @@ const AdminApprovalsPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Spinner size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
+    <div className="min-h-screen bg-background p-6">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-800">
+        <h1 className="text-2xl font-bold text-foreground">
           Pending Registration Approvals
         </h1>
-        <p className="text-sm text-slate-500">
-          {pendingUsers.length} account(s) awaiting approval
+        <p className="text-sm font-medium text-muted-foreground mt-1">
+          {pendingUsers.length} account(s) awaiting admin review
         </p>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6">
-          {error}
+        <div className="mb-6">
+          <Alert type="error" message={error} />
         </div>
       )}
 
       {pendingUsers.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-12 text-center">
-          <p className="text-slate-600 font-medium">No pending approvals.</p>
+        <div className="flex flex-col items-center justify-center text-center py-16 px-4 rounded-xl border border-dashed border-border bg-secondary/40">
+          <Clock className="w-10 h-10 text-muted-foreground mb-4 opacity-50" strokeWidth={1.5} />
+          <h3 className="text-lg font-semibold text-foreground">No pending approvals</h3>
+          <p className="text-sm font-medium text-muted-foreground mt-1 max-w-sm mx-auto">
+            All user registration requests have been processed. New requests will appear here.
+          </p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-4">
           {pendingUsers.map((user) => {
             const isActioning = actioningId === user.id;
             return (
-              <div key={user.id} className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-slate-800">
+              <Card key={user.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-5 transition-shadow hover:shadow-md">
+                <div>
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-base font-bold text-foreground">
                       {user.email}
                     </h3>
-                    <p className="text-sm text-slate-500 mt-1">
-                      {user.role} &middot; {user.phone} &middot; Registered{' '}
-                      {new Date(user.created_at).toLocaleDateString()}
-                    </p>
+                    <Badge status="pending" label="Pending Review" />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium text-muted-foreground mt-2">
+                    <span className="capitalize">{user.role?.replace('_', ' ')}</span>
+                    <span className="text-border">•</span>
+                    <span>{user.phone}</span>
+                    <span className="text-border">•</span>
+                    <span>Applied {new Date(user.created_at).toLocaleDateString()}</span>
                   </div>
                 </div>
 
-                <div className="flex gap-3 mt-4">
-                  <button
-                    onClick={() => handleApprove(user.id)}
-                    disabled={isActioning}
-                    className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isActioning ? 'Working...' : 'Approve'}
-                  </button>
-                  <button
+                <div className="flex items-center gap-3 w-full sm:w-auto border-t sm:border-t-0 border-border pt-4 sm:pt-0 mt-2 sm:mt-0">
+                  <Button
+                    variant="danger"
+                    size="sm"
                     onClick={() => handleReject(user.id)}
                     disabled={isActioning}
-                    className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 sm:flex-none"
                   >
                     {isActioning ? 'Working...' : 'Reject'}
-                  </button>
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => handleApprove(user.id)}
+                    disabled={isActioning}
+                    className="flex-1 sm:flex-none"
+                  >
+                    {isActioning ? 'Working...' : 'Approve'}
+                  </Button>
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>

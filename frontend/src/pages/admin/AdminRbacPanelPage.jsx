@@ -7,6 +7,9 @@
 
 import { useEffect, useState } from 'react';
 import Spinner from '../../components/common/Spinner';
+import DataTable from '../../components/common/DataTable';
+import Badge from '../../components/common/Badge';
+import Alert from '../../components/common/Alert';
 
 const API_URL = 'http://localhost:5000';
 
@@ -42,61 +45,59 @@ const AdminRbacPanelPage = () => {
     fetchMatrix();
   }, []);
 
+  const columns = [
+    { 
+      key: 'resourceGroup', 
+      label: 'Resource Group', 
+      render: (val) => <span className="font-bold text-foreground">{val}</span> 
+    },
+    { 
+      key: 'allowedRoles', 
+      label: 'Allowed Roles', 
+      render: (roles) => (
+        <div className="flex flex-wrap gap-2">
+          {roles.map((role) => (
+            <Badge key={role} status="normal" label={role} />
+          ))}
+        </div>
+      ) 
+    },
+    { 
+      key: 'notes', 
+      label: 'Notes', 
+      render: (val) => <span className="text-xs text-muted-foreground">{val || '—'}</span> 
+    }
+  ];
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Spinner size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
+    <div className="min-h-screen bg-background p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-800">RBAC Visibility Panel</h1>
-        <p className="text-sm text-slate-500">
+        <h1 className="text-2xl font-bold text-foreground">RBAC Visibility Panel</h1>
+        <p className="text-sm font-medium text-muted-foreground mt-1 max-w-2xl">
           Read-only view of which roles can access which resource groups,
           based on the codebase's actual access control rules.
         </p>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6">
-          {error}
+        <div className="mb-6">
+          <Alert type="error" message={error} />
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 border-b border-slate-200">
-            <tr>
-              <th className="text-left px-4 py-3 text-slate-600 font-medium w-1/3">Resource Group</th>
-              <th className="text-left px-4 py-3 text-slate-600 font-medium">Allowed Roles</th>
-              <th className="text-left px-4 py-3 text-slate-600 font-medium">Notes</th>
-            </tr>
-          </thead>
-          <tbody>
-            {matrix.map((row, idx) => (
-              <tr key={idx} className="border-b border-slate-100 last:border-0">
-                <td className="px-4 py-3 text-slate-800 font-medium">{row.resourceGroup}</td>
-                <td className="px-4 py-3">
-                  <div className="flex flex-wrap gap-1.5">
-                    {row.allowedRoles.map((role) => (
-                      <span
-                        key={role}
-                        className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium"
-                      >
-                        {role}
-                      </span>
-                    ))}
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-slate-500 text-xs">{row.notes || '—'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable 
+        columns={columns} 
+        data={matrix} 
+        emptyMessage="No RBAC rules found." 
+      />
     </div>
   );
 };
