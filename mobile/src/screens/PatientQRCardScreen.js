@@ -1,11 +1,11 @@
 /**
- * @file    PatientQRCardScreen.js
- * @module  Patient
- * @desc    Displays the patient's QR identity card with name, blood group,
- *          and emergency contact. QR code encodes the patient's qr_code_id
- *          so doctors and pharmacists can scan to identify the patient.
- *          Allergies have been moved to PatientProfileScreen.
- * @author  Wasana Karunanayaka (S/21/081)
+ * @file      PatientQRCardScreen.js
+ * @module    Patient
+ * @desc      Displays the patient's QR identity card with name, blood group,
+ *            and emergency contact. QR code encodes the patient's qr_code_id
+ *            so doctors and pharmacists can scan to identify the patient.
+ *            Allergies have been moved to PatientProfileScreen.
+ * @author    Wasana Karunanayaka (S/21/081)
  */
 import React, { useEffect, useState } from 'react';
 import {
@@ -18,16 +18,19 @@ import {
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { getPatientProfile } from '../services/patient.service';
-
-// TEMPORARY — replace with session user when auth is ready
-const TEST_PATIENT_ID = '006761d1-8279-440e-a786-a492df7abd53';
+import useAuthStore from '../store/authStore';
 
 const PatientQRCardScreen = () => {
+  const user = useAuthStore((state) => state.user);
+  const TEST_PATIENT_ID = user?.profile_id || user?.id || '';
+  
   const [patient, setPatient] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState(null);
 
   useEffect(() => {
+    if (!TEST_PATIENT_ID) return;
+    
     const fetchData = async () => {
       try {
         const patientData = await getPatientProfile(TEST_PATIENT_ID);
@@ -39,7 +42,7 @@ const PatientQRCardScreen = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [TEST_PATIENT_ID]);
 
   if (loading) {
     return (

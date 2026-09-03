@@ -20,13 +20,16 @@ import {
 } from 'react-native';
 import Markdown from 'react-native-markdown-display';
 import api from '../services/api';
+import useAuthStore from '../store/authStore'; // Wire in mobile Zustand
 
 /**
  * @component AIChatScreen
  * @desc      Renders the AI chat interface for the patient mobile app.
- * @param {string} patientId - UUID of the logged-in patient
  */
-const AIChatScreen = ({ patientId }) => {
+const AIChatScreen = () => {
+  const user = useAuthStore((state) => state.user);
+  const patientId = user?.profile_id || user?.id || '';
+
   const [messages, setMessages] = useState([
     { role: 'ai', content: 'Hello! I am the Care4U AI Assistant. How can I help you navigate the app or provide basic first-aid information today?' }
   ]);
@@ -69,7 +72,7 @@ const AIChatScreen = ({ patientId }) => {
       setLoading(false);
     }
   };
-  
+
   /**
    * Toggles the preferred language for the AI prompt.
    */

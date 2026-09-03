@@ -8,10 +8,12 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet, ScrollView, Alert } from 'react-native';
 import { getDoctorProfile, getAvailableSlots } from '../services/doctor.service';
 import { bookAppointment, updateAppointmentStatus } from '../services/appointment.service';
-
-const TEST_PATIENT_ID = '006761d1-8279-440e-a786-a492df7abd53';
+import useAuthStore from '../store/authStore';
 
 export default function BookAppointmentScreen({ doctorId, rescheduleId, navigate }) {
+  const user = useAuthStore((state) => state.user);
+  const TEST_PATIENT_ID = user?.profile_id || user?.id || '';
+  
   const [doctor, setDoctor] = useState(null);
   const [slots, setSlots] = useState([]);
   const [selectedSlot, setSelectedSlot] = useState(null);

@@ -504,7 +504,7 @@ const PatientProfilePage = () => {
   const otherAllergies = allergies.filter((a) => a.severity?.toLowerCase() !== 'severe');
 
   // ── Render States ──
-  if (isLoading) {
+  if (patientIdLoading || isLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <Spinner size="lg" />

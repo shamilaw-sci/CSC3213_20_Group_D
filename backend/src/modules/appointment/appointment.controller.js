@@ -171,7 +171,7 @@ const summarizeNotesController = async (req, res) => {
       });
     }
 
-    const sessionKey = req.session?.user?.id || req.ip;
+    const sessionKey = req.user?.id || req.ip;
     const callCount = summarizeSessionCounts.get(sessionKey) || 0;
     if (callCount >= MAX_SUMMARIZE_CALLS_PER_SESSION) {
       return res.status(429).json({
@@ -205,7 +205,7 @@ Respond with JSON only.`;
     summarizeSessionCounts.set(sessionKey, callCount + 1);
 
     await logAudit(
-      req.session?.user?.id || null,
+      req.user?.id || null,
       'AI_SUMMARIZE_NOTES',
       'appointment',
       id,
@@ -238,7 +238,7 @@ Respond with JSON only.`;
  */
 const bookAppointmentController = async (req, res) => {
   try {
-    const currentUser = req.session?.user || { id: '006761d1-8279-440e-a786-a492df7abd53', role: 'patient' };
+    const currentUser = req.user;
     let { patientId, doctorId, scheduledAt, type, notes } = req.body;
 
     // Route logic based on role

@@ -6,8 +6,9 @@
  * @author  Tharindu (S/21/166)
  */
 
-import { useEffect, useState } from 'react';
+import { createElement, useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+
 import {
   Users,
   Clock,
@@ -22,8 +23,8 @@ import {
   Stethoscope,
 } from 'lucide-react';
 import Spinner from '../../components/common/Spinner';
+import useAuthStore from '../../store/authStore';
 
-const DOCTOR_ID = 'd04b8bcf-fe8a-4d3b-affc-5ab87e78cfc3';
 const API_URL = 'http://localhost:5000';
 
 const PRIORITY_STYLES = {
@@ -34,6 +35,8 @@ const PRIORITY_STYLES = {
 };
 
 const DoctorDashboard = () => {
+  const user = useAuthStore((state) => state.user);
+  const DOCTOR_ID = user?.profile_id || user?.id || '';
   const navigate = useNavigate();
   const [doctor, setDoctor] = useState(null);
   const [stats, setStats] = useState(null);
@@ -41,14 +44,15 @@ const DoctorDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  // Lab report review — busy-doctor UX: badge + inline modal, no page navigation
+  // Lab report review
   const [unreviewedReports, setUnreviewedReports] = useState([]);
   const [showLabModal, setShowLabModal] = useState(false);
   const [remarks, setRemarks] = useState({});
   const [reviewingId, setReviewingId] = useState(null);
   const [reviewError, setReviewError] = useState('');
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
+    if (!DOCTOR_ID) return;
     try {
       const [docRes, statsRes, insightsRes, labRes] = await Promise.all([
         fetch(`${API_URL}/api/doctors/${DOCTOR_ID}`),
@@ -79,11 +83,11 @@ const DoctorDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [DOCTOR_ID]);
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [fetchDashboardData]);
 
   const handleMarkReviewed = async (reportId) => {
     const remark = (remarks[reportId] || '').trim();
@@ -152,9 +156,9 @@ const DoctorDashboard = () => {
     .toUpperCase();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-100 to-blue-50 p-6">
+    <div className="min-h-screen bg-linear-to-b from-slate-100 to-blue-50 p-6">
       {/* Header */}
-      <div className="mb-8 flex items-start justify-between bg-gradient-to-r from-slate-900 to-blue-950 rounded-xl shadow-md p-6">
+      <div className="mb-8 flex items-start justify-between bg-linear-to-r from-slate-900 to-blue-950 rounded-xl shadow-md p-6">
         <div className="flex items-center gap-4">
           <div className="hidden sm:flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white/10 border border-white/20 text-white font-semibold text-lg">
             {initials}
@@ -181,7 +185,7 @@ const DoctorDashboard = () => {
           <FileText size={16} className="text-blue-100 group-hover:text-white transition-colors" />
           <span className="text-sm font-medium text-blue-100 group-hover:text-white transition-colors">Lab Reports</span>
           {unreviewedCount > 0 && (
-            <span className="flex items-center justify-center min-w-[22px] h-[22px] px-1 rounded-full bg-red-600 text-white text-xs font-bold">
+            <span className="flex items-center justify-center min-w-5.5 h-5.5 px-1 rounded-full bg-red-600 text-white text-xs font-bold">
               {unreviewedCount}
             </span>
           )}
@@ -191,7 +195,7 @@ const DoctorDashboard = () => {
       {/* Stats Cards */}
       <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Today's Overview</p>
       <div className="grid grid-cols-2 gap-6 mb-8 sm:grid-cols-4">
-        {STAT_CARDS.map(({ key, label, value, icon: Icon, color, iconBg, iconColor, ringColor, topBorder }) => (
+        {STAT_CARDS.map(({ key, label, value, icon, color, iconBg, iconColor, ringColor, topBorder }) => (
           <div
             key={key}
             className={`group bg-white rounded-xl shadow-sm border border-slate-100 border-t-4 ${topBorder} p-6 flex items-start justify-between hover:shadow-lg hover:-translate-y-0.5 ${ringColor} transition-all duration-150`}
@@ -201,7 +205,7 @@ const DoctorDashboard = () => {
               <p className={`text-3xl font-bold mt-1 ${color}`}>{value}</p>
             </div>
             <div className={`${iconBg} ${iconColor} rounded-lg p-2.5 transition-transform duration-150 group-hover:scale-110`}>
-              <Icon size={20} />
+              {createElement(icon, { size: 20 })}
             </div>
           </div>
         ))}
@@ -250,14 +254,14 @@ const DoctorDashboard = () => {
       {/* Quick Links */}
       <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Quick Actions</p>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {QUICK_LINKS.map(({ label, desc, icon: Icon, path }) => (
+        {QUICK_LINKS.map(({ label, desc, icon, path }) => (
           <button
             key={label}
             onClick={() => navigate(path)}
             className="group bg-white rounded-xl shadow-sm border border-slate-100 p-6 text-left hover:shadow-lg hover:-translate-y-0.5 hover:border-blue-200 transition-all duration-150 flex items-center gap-4"
           >
             <div className="bg-blue-50 text-blue-800 rounded-lg p-3 shrink-0 transition-colors duration-150 group-hover:bg-blue-800 group-hover:text-white">
-              <Icon size={22} />
+              {createElement(icon, { size: 22 })}
             </div>
             <div className="flex-1">
               <p className="text-base font-semibold text-slate-800">{label}</p>
@@ -272,7 +276,7 @@ const DoctorDashboard = () => {
       {showLabModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-slate-900 to-blue-950">
+            <div className="flex items-center justify-between px-6 py-4 bg-linear-to-r from-slate-900 to-blue-950">
               <h2 className="text-lg font-semibold text-white">
                 Unreviewed Lab Reports {unreviewedCount > 0 && `(${unreviewedCount})`}
               </h2>

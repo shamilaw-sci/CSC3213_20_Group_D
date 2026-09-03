@@ -7,8 +7,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import api from '../../services/api';
-
-const TEST_PATIENT_ID = '006761d1-8279-440e-a786-a492df7abd53';
+import useAuthStore from '../../store/authStore';
 
 const STATUS_STEPS = ['placed', 'accepted', 'packed', 'out_for_delivery', 'delivered'];
 
@@ -60,10 +59,14 @@ const StatusTimeline = ({ currentStatus }) => {
     </div>
   );
 };
-
+// --- NEW CODE ---
 const OrderTrackerPage = () => {
+  const user = useAuthStore((state) => state.user);
+  const TEST_PATIENT_ID = user?.profile_id || user?.id || '';
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ['patient-orders', TEST_PATIENT_ID],
+
     queryFn: async () => {
       const res = await api.get(`/api/orders/patient/${TEST_PATIENT_ID}`);
       return res.data.data;

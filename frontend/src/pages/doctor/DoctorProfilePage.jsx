@@ -5,17 +5,19 @@
  * @author  Tharindu (S/21/166)
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, UserRound, CalendarClock } from 'lucide-react';
 import Spinner from '../../components/common/Spinner';
 import Alert from '../../components/common/Alert';
+import useAuthStore from '../../store/authStore';
 
-const DOCTOR_ID = 'd04b8bcf-fe8a-4d3b-affc-5ab87e78cfc3';
 const API_URL = 'http://localhost:5000';
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
 const DoctorProfilePage = () => {
+  const user = useAuthStore((state) => state.user);
+  const DOCTOR_ID = user?.profile_id || user?.id || '';
   const navigate = useNavigate();
   const [doctor, setDoctor] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -29,31 +31,33 @@ const DoctorProfilePage = () => {
   });
   const [availability, setAvailability] = useState([]);
 
+  const fetchData = useCallback(async () => {
+    if (!DOCTOR_ID) return;
+    try {
+      const [docRes, availRes] = await Promise.all([
+        fetch(`${API_URL}/api/doctors/${DOCTOR_ID}`),
+        fetch(`${API_URL}/api/doctors/${DOCTOR_ID}/availability`),
+      ]);
+      const docData = await docRes.json();
+      const availData = await availRes.json();
+      setDoctor(docData.data);
+      setProfileForm({
+        specialization: docData.data?.specialization || '',
+        qualifications: docData.data?.qualifications || '',
+        years_experience: docData.data?.years_experience || '',
+        hospital_name: docData.data?.hospital_name || '',
+      });
+      setAvailability(availData.data || []);
+    } catch (error) {
+      console.error('Profile fetch error:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [DOCTOR_ID]);
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [docRes, availRes] = await Promise.all([
-          fetch(`${API_URL}/api/doctors/${DOCTOR_ID}`),
-          fetch(`${API_URL}/api/doctors/${DOCTOR_ID}/availability`),
-        ]);
-        const docData = await docRes.json();
-        const availData = await availRes.json();
-        setDoctor(docData.data);
-        setProfileForm({
-          specialization: docData.data.specialization || '',
-          qualifications: docData.data.qualifications || '',
-          years_experience: docData.data.years_experience || '',
-          hospital_name: docData.data.hospital_name || '',
-        });
-        setAvailability(availData.data);
-      } catch (error) {
-        console.error('Profile fetch error:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const handleProfileSave = async () => {
     setSaving(true);
@@ -69,7 +73,7 @@ const DoctorProfilePage = () => {
       } else {
         setAlert({ type: 'error', message: 'Failed to update profile.' });
       }
-    } catch (_error) {
+    } catch {
       setAlert({ type: 'error', message: 'Something went wrong.' });
     } finally {
       setSaving(false);
@@ -90,7 +94,7 @@ const DoctorProfilePage = () => {
       } else {
         setAlert({ type: 'error', message: 'Failed to update availability.' });
       }
-    } catch (_error) {
+    } catch {
       setAlert({ type: 'error', message: 'Something went wrong.' });
     } finally {
       setSaving(false);
@@ -126,9 +130,9 @@ const DoctorProfilePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-100 to-blue-50 p-6">
+    <div className="min-h-screen bg-linear-to-b from-slate-100 to-blue-50 p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8 bg-gradient-to-r from-slate-900 to-blue-950 rounded-xl shadow-md p-6">
+      <div className="flex items-center justify-between mb-8 bg-linear-to-r from-slate-900 to-blue-950 rounded-xl shadow-md p-6">
         <div>
           <h1 className="text-2xl font-bold text-white">Doctor Profile</h1>
           <p className="text-sm text-blue-200 mt-1">

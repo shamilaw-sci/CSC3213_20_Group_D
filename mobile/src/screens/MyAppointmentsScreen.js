@@ -7,14 +7,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import { getPatientAppointments, updateAppointmentStatus } from '../services/appointment.service';
-
-const TEST_PATIENT_ID = '006761d1-8279-440e-a786-a492df7abd53';
+import useAuthStore from '../store/authStore';
 
 export default function MyAppointmentsScreen({ navigate }) {
+  const user = useAuthStore((state) => state.user);
+  const TEST_PATIENT_ID = user?.profile_id || user?.id || '';
+
   const [appointments, setAppointments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchAppointments = useCallback(async () => {
+    if (!TEST_PATIENT_ID) return;
     setIsLoading(true);
     try {
       const data = await getPatientAppointments(TEST_PATIENT_ID);
@@ -24,7 +27,7 @@ export default function MyAppointmentsScreen({ navigate }) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [TEST_PATIENT_ID]);
 
   useEffect(() => {
     fetchAppointments();
