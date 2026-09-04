@@ -7,6 +7,11 @@
 
 import { useState } from 'react';
 import Spinner from '../../components/common/Spinner';
+import Card from '../../components/common/Card';
+import Input from '../../components/common/Input';
+import Button from '../../components/common/Button';
+import Alert from '../../components/common/Alert';
+import { SearchX } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
 
@@ -75,45 +80,54 @@ const AdminQrReissuePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
+    <div className="min-h-screen bg-background p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-800">QR Code Deactivation & Reissue</h1>
-        <p className="text-sm text-slate-500">
+        <h1 className="text-2xl font-bold text-foreground">QR Code Deactivation & Reissue</h1>
+        <p className="text-sm font-medium text-muted-foreground mt-1">
           Search for a patient to reissue a lost or compromised QR code. The old code fails instantly.
         </p>
       </div>
 
-      <form onSubmit={handleSearch} className="bg-white rounded-lg shadow p-4 mb-6 flex gap-3">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by patient name or NIC..."
-          className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm"
-        />
-        <button
-          type="submit"
-          className="px-4 py-2 bg-[#1E3A5F] text-white text-sm rounded-lg hover:bg-[#16293f]"
-        >
-          Search
-        </button>
-      </form>
+      <Card className="mb-6">
+        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 items-start sm:items-end w-full">
+          <Input
+            label="Patient Search"
+            name="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by patient name or NIC..."
+            className="flex-1 w-full"
+          />
+          <Button 
+            type="submit" 
+            variant="brand" 
+            className="w-full sm:w-auto"
+            disabled={loading}
+          >
+            Search
+          </Button>
+        </form>
+      </Card>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6">
-          {error}
+        <div className="mb-6">
+          <Alert type="error" message={error} />
         </div>
       )}
 
       {loading && (
-        <div className="flex justify-center p-8">
+        <div className="flex justify-center p-12">
           <Spinner size="lg" />
         </div>
       )}
 
       {!loading && hasSearched && patients.length === 0 && (
-        <div className="bg-white rounded-lg shadow p-12 text-center">
-          <p className="text-slate-600 font-medium">No patients found.</p>
+        <div className="flex flex-col items-center justify-center text-center py-16 px-4 rounded-xl border border-dashed border-border bg-secondary/40">
+          <SearchX className="w-10 h-10 text-muted-foreground mb-4 opacity-50" strokeWidth={1.5} />
+          <h3 className="text-lg font-semibold text-foreground">No patients found.</h3>
+          <p className="text-sm font-medium text-muted-foreground mt-1">
+            Please check the spelling or NIC number and try again.
+          </p>
         </div>
       )}
 
@@ -122,20 +136,28 @@ const AdminQrReissuePage = () => {
           {patients.map((patient) => {
             const isReissuing = reissuingId === patient.id;
             return (
-              <div key={patient.id} className="bg-white rounded-lg shadow p-6 flex items-center justify-between">
+              <Card key={patient.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-slate-800">{patient.full_name}</h3>
-                  <p className="text-sm text-slate-500">NIC: {patient.nic}</p>
-                  <p className="text-xs text-slate-400 mt-1 font-mono">{patient.qr_code_id}</p>
+                  <h3 className="text-lg font-bold text-foreground">{patient.full_name}</h3>
+                  <div className="flex flex-col gap-1 mt-2">
+                    <p className="text-sm font-medium text-muted-foreground">
+                      <span className="text-foreground">NIC:</span> {patient.nic}
+                    </p>
+                    <p className="text-xs font-medium text-muted-foreground font-mono bg-secondary self-start px-2 py-1 rounded">
+                      ID: {patient.qr_code_id}
+                    </p>
+                  </div>
                 </div>
-                <button
+                <Button
+                  variant="danger"
                   onClick={() => handleReissue(patient.id)}
                   disabled={isReissuing}
-                  className="px-4 py-2 bg-orange-600 text-white text-sm rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  loading={isReissuing}
+                  className="w-full sm:w-auto"
                 >
                   {isReissuing ? 'Reissuing...' : 'Reissue QR Code'}
-                </button>
-              </div>
+                </Button>
+              </Card>
             );
           })}
         </div>

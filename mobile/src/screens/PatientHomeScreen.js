@@ -38,6 +38,7 @@ export default function PatientHomeScreen({ navigate }) {
     { id: 'prescriptions', title: 'Prescriptions',   icon: '💊', color: '#D1FAE5', textColor: '#065F46' },
     { id: 'labreports',    title: 'Lab Reports',     icon: '🔬', color: '#FEF3C7', textColor: '#92400E' },
     { id: 'qrcard',        title: 'My QR Card',      icon: '📱', color: '#F3E8FF', textColor: '#6B21A8' },
+    { id: 'aichat',        title: 'AI Assistant',    icon: '🤖', color: '#E0F2FE', textColor: '#0369A1' },
   ];
 
   return (

@@ -1,17 +1,17 @@
 /**
  * @component AdminLayout
  * @desc      Layout wrapper for all admin panel pages.
- *            Renders the AdminSidebar on the left and the page content
- *            on the right, matching PatientLayout's structure.
+ *            Renders AdminNavbar at the top and page content below,
+ *            matching PatientLayout's structure.
  */
 import { Outlet } from 'react-router-dom';
-import AdminSidebar from './AdminSidebar';
+import AdminNavbar from './AdminNavbar';
 
 const AdminLayout = () => {
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#F8FAFC' }}>
-      <AdminSidebar />
-      <main style={{ flex: 1, overflowY: 'auto' }}>
+    <div className="min-h-screen bg-secondary/30">
+      <AdminNavbar />
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-6">
         <Outlet />
       </main>
     </div>

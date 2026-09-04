@@ -1,1 +1,137 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
+
+@layer base {
+  :root {
+    /* Ultra-Clean Light Mode - Updated to a subtle clinical teal wash */
+    --background: 173 40% 97.5%;
+    --foreground: 222.2 84% 4.9%;
+
+    /* Keep cards pure white so they pop against the teal background */
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    /* Clinical Teal - primary CTAs, links, active states */
+    --primary: 173 80% 39%;
+    --primary-foreground: 210 40% 98%;
+
+    /* Deep Brand Teal - nav bars, hero bands, footer (Nawaloka-style dark band) */
+    --brand-deep: 176 70% 15%;
+    --brand-deep-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    /* Urgent Amber - emergency button, hotlines, critical alerts ONLY */
+    --urgent: 38 92% 50%;
+    --urgent-foreground: 26 40% 15%;
+
+    /* Success Green - confirmations, completed states */
+    --success: 142 71% 35%;
+    --success-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 173 80% 39%;
+
+    /* Slightly more modern radius than 0.3rem - matches rounded cards/buttons */
+    --radius: 0.65rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 173 80% 39%;
+    --primary-foreground: 210 40% 98%;
+    --brand-deep: 176 60% 10%;
+    --brand-deep-foreground: 210 40% 98%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --urgent: 38 92% 50%;
+    --urgent-foreground: 26 40% 15%;
+    --success: 142 71% 35%;
+    --success-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 173 80% 39%;
+  }
+}
+
+/* Exposes the vars above as real Tailwind utilities: bg-primary, text-urgent,
+   bg-brand-deep, font-sans, rounded-lg, etc. Required since this project has
+   no tailwind.config.js (Tailwind v4 arbitrary-value setup). */
+/* Tailwind CSS v4 directive; supported by Tailwind's processor. */
+/* stylelint-disable-next-line at-rule-no-unknown */
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-brand-deep: hsl(var(--brand-deep));
+  --color-brand-deep-foreground: hsl(var(--brand-deep-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-urgent: hsl(var(--urgent));
+  --color-urgent-foreground: hsl(var(--urgent-foreground));
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 6px);
+
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+}

@@ -7,6 +7,8 @@
 import { useState } from 'react';
 import Input  from '../../components/common/Input';
 import Button from '../../components/common/Button';
+import Alert  from '../../components/common/Alert';
+import Card   from '../../components/common/Card';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -82,24 +84,23 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
 
         {/* Logo & Title */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-[#1E3A5F]">Care4U</h1>
-          <p className="text-slate-500 mt-1">Centralized Healthcare Ecosystem</p>
+          <h1 className="text-3xl font-bold text-brand-deep">Care4U</h1>
+          <p className="text-muted-foreground mt-1 font-medium">Centralized Healthcare Ecosystem</p>
         </div>
 
         {/* Login Card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
-
-          <h2 className="text-xl font-semibold text-slate-800 mb-6">Sign in to your account</h2>
+        <Card>
+          <h2 className="text-xl font-bold text-foreground mb-6">Sign in to your account</h2>
 
           {/* Server Error */}
           {serverError && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-600">{serverError}</p>
+            <div className="mb-6">
+              <Alert type="error" message={serverError} />
             </div>
           )}
 
@@ -137,23 +138,23 @@ const LoginPage = () => {
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
-            <a href="/forgot-password" className="text-sm text-[#1E3A5F] font-medium hover:underline text-center">
-            Forgot your password?
+            
+            <a href="/forgot-password" className="text-sm text-primary font-semibold hover:underline text-center">
+              Forgot your password?
             </a>
           </div>
 
           {/* Register Link */}
-          <p className="text-center text-sm text-slate-500 mt-6">
+          <p className="text-center text-sm text-muted-foreground mt-6">
             Don't have an account?{' '}
-            <a href="/register" className="text-[#1E3A5F] font-medium hover:underline">
+            <a href="/register" className="text-primary font-semibold hover:underline">
               Register here
             </a>
           </p>
-
-        </div>
+        </Card>
 
         {/* Footer */}
-        <p className="text-center text-xs text-slate-400 mt-6">
+        <p className="text-center text-xs font-medium text-muted-foreground mt-6">
           © 2026 Care4U — Group D | CSC3213
         </p>
 

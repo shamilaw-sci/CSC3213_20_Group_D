@@ -10,6 +10,8 @@ import { Sparkles, FlaskConical, CheckCircle2 } from 'lucide-react';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
 import Input from '../common/Input';
+import Badge from '../common/Badge';
+import Alert from '../common/Alert';
 import { searchLabTests } from '../../utils/labTestSearch';
 
 const API_URL = 'http://localhost:5000';
@@ -29,9 +31,9 @@ const ConsultationNotesModal = ({ isOpen, onClose, appointmentId, patientId, doc
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [observations, setObservations] = useState('');
-const [summarizing, setSummarizing] = useState(false);
-const [summarizeError, setSummarizeError] = useState('');
-const [aiFilled, setAiFilled] = useState(false);
+  const [summarizing, setSummarizing] = useState(false);
+  const [summarizeError, setSummarizeError] = useState('');
+  const [aiFilled, setAiFilled] = useState(false);
 
   const [labs, setLabs] = useState([]);
   const [selectedLab, setSelectedLab] = useState('');
@@ -64,42 +66,42 @@ const [aiFilled, setAiFilled] = useState(false);
   };
 
   const handleSummarize = async () => {
-  setSummarizeError('');
+    setSummarizeError('');
 
-  if (!observations || observations.trim().length < 10) {
-    setSummarizeError('Please type a few observations first.');
-    return;
-  }
-
-  setSummarizing(true);
-  try {
-    const res = await fetch(`${API_URL}/api/appointments/${appointmentId}/summarize-notes`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ observations }),
-    });
-    const data = await res.json();
-
-    if (!data.success) {
-      setSummarizeError(data.message || "Couldn't generate a summary. Please fill the fields manually.");
+    if (!observations || observations.trim().length < 10) {
+      setSummarizeError('Please type a few observations first.');
       return;
     }
 
-    setForm((prev) => ({
-      ...prev,
-      chief_complaint: data.data.chief_complaint,
-      diagnosis: data.data.diagnosis,
-      treatment_plan: data.data.treatment_plan,
-      follow_up_needed: data.data.follow_up_needed,
-    }));
-    setAiFilled(true);
-  } catch (err) {
-    console.error('handleSummarize error:', err);
-    setSummarizeError("Couldn't generate a summary. Please fill the fields manually.");
-  } finally {
-    setSummarizing(false);
-  }
-};
+    setSummarizing(true);
+    try {
+      const res = await fetch(`${API_URL}/api/appointments/${appointmentId}/summarize-notes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ observations }),
+      });
+      const data = await res.json();
+
+      if (!data.success) {
+        setSummarizeError(data.message || "Couldn't generate a summary. Please fill the fields manually.");
+        return;
+      }
+
+      setForm((prev) => ({
+        ...prev,
+        chief_complaint: data.data.chief_complaint,
+        diagnosis: data.data.diagnosis,
+        treatment_plan: data.data.treatment_plan,
+        follow_up_needed: data.data.follow_up_needed,
+      }));
+      setAiFilled(true);
+    } catch (err) {
+      console.error('handleSummarize error:', err);
+      setSummarizeError("Couldn't generate a summary. Please fill the fields manually.");
+    } finally {
+      setSummarizing(false);
+    }
+  };
 
   const handleOrderLabTest = async () => {
     setLabOrderError('');
@@ -202,7 +204,10 @@ const [aiFilled, setAiFilled] = useState(false);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Add Consultation Notes" size="lg">
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-5">
+        
+        {error && <Alert type="error" message={error} />}
+
         <Input
           label="Title"
           name="title"
@@ -211,46 +216,45 @@ const [aiFilled, setAiFilled] = useState(false);
           placeholder="e.g. Follow-up consultation"
           required
         />
-        <div className="flex flex-col gap-2 p-3 bg-teal-50/50 border border-teal-100 border-l-4 border-l-teal-600 rounded-lg">
-  <label className="flex items-center gap-1.5 text-xs font-medium text-slate-500 uppercase tracking-wide">
-    <Sparkles size={13} className="text-teal-600" />
-    Observations (optional — for AI summary)
-  </label>
-  <textarea
-    value={observations}
-    onChange={(e) => setObservations(e.target.value)}
-    rows={3}
-    placeholder="Type your raw observations here, then let AI draft the fields below"
-    className="w-full px-3 py-2 text-sm text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] focus:border-transparent"
-  />
-  <div className="flex items-center justify-between">
-    <Button
-      type="button"
-      variant="secondary"
-      onClick={handleSummarize}
-      loading={summarizing}
-      disabled={summarizing}
-    >
-      {summarizing ? 'Analyzing...' : 'Summarize with AI'}
-    </Button>
-    {aiFilled && (
-      <span className="flex items-center gap-1 text-xs text-green-700 bg-green-100 px-2 py-1 rounded-full">
-        <CheckCircle2 size={12} />
-        AI-filled — please review
-      </span>
-    )}
-  </div>
-  {summarizeError && <p className="text-xs text-red-600">{summarizeError}</p>}
-  {aiFilled && !summarizeError && (
-    <p className="text-xs text-slate-500 italic">
-      AI-generated draft — not a medical diagnosis. Please review and edit before saving.
-    </p>
-  )}
-</div>
+        
+        <div className="flex flex-col gap-3 p-4 bg-primary/5 border border-primary/20 border-l-4 border-l-primary rounded-xl">
+          <label className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            <Sparkles size={14} className="text-primary" />
+            Observations (optional — for AI summary)
+          </label>
+          <textarea
+            value={observations}
+            onChange={(e) => setObservations(e.target.value)}
+            rows={3}
+            placeholder="Type your raw observations here, then let AI draft the fields below"
+            className="w-full px-3.5 py-2.5 text-sm text-foreground bg-background border border-border rounded-lg transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent hover:border-muted-foreground"
+          />
+          <div className="flex items-center justify-between mt-1">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleSummarize}
+              loading={summarizing}
+              disabled={summarizing}
+              size="sm"
+            >
+              {summarizing ? 'Analyzing...' : 'Summarize with AI'}
+            </Button>
+            {aiFilled && (
+              <Badge status="pending" label="AI-filled — please review" />
+            )}
+          </div>
+          {summarizeError && <p className="text-xs font-medium text-destructive mt-1">{summarizeError}</p>}
+          {aiFilled && !summarizeError && (
+            <p className="text-[11px] text-muted-foreground italic mt-1">
+              AI-generated draft — not a medical diagnosis. Please review and edit before saving.
+            </p>
+          )}
+        </div>
 
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">
-            Chief Complaint <span className="text-red-500 ml-1">*</span>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            Chief Complaint <span className="text-destructive ml-1">*</span>
           </label>
           <textarea
             name="chief_complaint"
@@ -258,13 +262,13 @@ const [aiFilled, setAiFilled] = useState(false);
             onChange={handleChange}
             rows={2}
             placeholder="Patient's main symptom or reason for visit"
-            className="w-full px-3 py-2 text-sm text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] focus:border-transparent"
+            className="w-full px-3.5 py-2.5 text-sm text-foreground bg-background border border-border rounded-lg transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent hover:border-muted-foreground"
           />
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">
-            Diagnosis <span className="text-red-500 ml-1">*</span>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            Diagnosis <span className="text-destructive ml-1">*</span>
           </label>
           <textarea
             name="diagnosis"
@@ -272,12 +276,12 @@ const [aiFilled, setAiFilled] = useState(false);
             onChange={handleChange}
             rows={2}
             placeholder="Doctor's diagnosis"
-            className="w-full px-3 py-2 text-sm text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] focus:border-transparent"
+            className="w-full px-3.5 py-2.5 text-sm text-foreground bg-background border border-border rounded-lg transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent hover:border-muted-foreground"
           />
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
             Treatment Plan
           </label>
           <textarea
@@ -286,13 +290,13 @@ const [aiFilled, setAiFilled] = useState(false);
             onChange={handleChange}
             rows={2}
             placeholder="Prescribed treatment, medication, advice"
-            className="w-full px-3 py-2 text-sm text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] focus:border-transparent"
+            className="w-full px-3.5 py-2.5 text-sm text-foreground bg-background border border-border rounded-lg transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent hover:border-muted-foreground"
           />
         </div>
 
-        <div className="flex flex-col gap-2 p-3 bg-blue-50/50 border border-blue-100 border-l-4 border-l-blue-700 rounded-lg">
-          <label className="flex items-center gap-1.5 text-xs font-medium text-slate-500 uppercase tracking-wide">
-            <FlaskConical size={13} className="text-blue-700" />
+        <div className="flex flex-col gap-3 p-4 bg-brand-deep/5 border border-brand-deep/20 border-l-4 border-l-brand-deep rounded-xl">
+          <label className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            <FlaskConical size={14} className="text-brand-deep" />
             Order Lab Test (optional)
           </label>
           <div className="grid grid-cols-2 gap-3">
@@ -304,7 +308,7 @@ const [aiFilled, setAiFilled] = useState(false);
                 setTestTypeSuggestions([]);
                 setShowTestSuggestions(false);
               }}
-              className="w-full px-3 py-2 text-sm text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] focus:border-transparent"
+              className="w-full px-3.5 py-2.5 text-sm text-foreground bg-background border border-border rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent hover:border-muted-foreground"
             >
               <option value="">Select laboratory</option>
               {labs.map((lab) => (
@@ -324,10 +328,10 @@ const [aiFilled, setAiFilled] = useState(false);
                 disabled={!selectedLab}
                 autoComplete="off"
                 placeholder={selectedLab ? 'Type to search test type' : 'Select a laboratory first'}
-                className="w-full px-3 py-2 text-sm text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] focus:border-transparent disabled:bg-slate-100"
+                className="w-full px-3.5 py-2.5 text-sm text-foreground bg-background border border-border rounded-lg transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent disabled:bg-muted disabled:text-muted-foreground hover:border-muted-foreground disabled:cursor-not-allowed"
               />
               {showTestSuggestions && testTypeSuggestions.length > 0 && (
-                <ul className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                <ul className="absolute z-10 w-full mt-1 bg-card border border-border rounded-lg shadow-lg max-h-48 overflow-y-auto">
                   {testTypeSuggestions.map((test, i) => (
                     <li
                       key={i}
@@ -335,7 +339,7 @@ const [aiFilled, setAiFilled] = useState(false);
                         e.preventDefault();
                         selectTestType(test);
                       }}
-                      className="px-3 py-2 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-800 cursor-pointer transition-colors duration-150"
+                      className="px-3.5 py-2.5 text-sm text-foreground hover:bg-secondary hover:text-primary cursor-pointer transition-colors duration-150"
                     >
                       {test}
                     </li>
@@ -343,7 +347,7 @@ const [aiFilled, setAiFilled] = useState(false);
                 </ul>
               )}
               {showTestSuggestions && testType.trim().length >= 2 && testTypeSuggestions.length === 0 && (
-                <p className="absolute z-10 w-full mt-1 px-3 py-2 text-xs text-slate-400 bg-white border border-slate-200 rounded-lg shadow-lg">
+                <p className="absolute z-10 w-full mt-1 px-3.5 py-2.5 text-xs text-muted-foreground bg-card border border-border rounded-lg shadow-lg">
                   No matches in this lab's test list
                 </p>
               )}
@@ -353,7 +357,7 @@ const [aiFilled, setAiFilled] = useState(false);
             <select
               value={priority}
               onChange={(e) => setPriority(e.target.value)}
-              className="w-full px-3 py-2 text-sm text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] focus:border-transparent"
+              className="w-full px-3.5 py-2.5 text-sm text-foreground bg-background border border-border rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent hover:border-muted-foreground"
             >
               <option value="routine">Routine</option>
               <option value="urgent">Urgent</option>
@@ -364,32 +368,30 @@ const [aiFilled, setAiFilled] = useState(false);
               value={labNotes}
               onChange={(e) => setLabNotes(e.target.value)}
               placeholder="Notes for the lab (optional)"
-              className="w-full px-3 py-2 text-sm text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] focus:border-transparent"
+              className="w-full px-3.5 py-2.5 text-sm text-foreground bg-background border border-border rounded-lg transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent hover:border-muted-foreground"
             />
           </div>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mt-1">
             <Button
               type="button"
               variant="secondary"
               onClick={handleOrderLabTest}
               loading={orderingLab}
               disabled={orderingLab}
+              size="sm"
             >
               {orderingLab ? 'Ordering...' : 'Order Lab Test'}
             </Button>
             {labOrderSuccess && (
-              <span className="flex items-center gap-1 text-xs text-green-700 bg-green-100 px-2 py-1 rounded-full">
-                <CheckCircle2 size={12} />
-                {labOrderSuccess}
-              </span>
+              <Badge status="active" label={labOrderSuccess} />
             )}
           </div>
-          {labOrderError && <p className="text-xs text-red-600">{labOrderError}</p>}
+          {labOrderError && <p className="text-xs font-medium text-destructive mt-1">{labOrderError}</p>}
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">
-            Additional Notes <span className="text-red-500 ml-1">*</span>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            Additional Notes <span className="text-destructive ml-1">*</span>
           </label>
           <textarea
             name="description"
@@ -397,35 +399,35 @@ const [aiFilled, setAiFilled] = useState(false);
             onChange={handleChange}
             rows={3}
             placeholder="Any other observations"
-            className="w-full px-3 py-2 text-sm text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] focus:border-transparent"
+            className="w-full px-3.5 py-2.5 text-sm text-foreground bg-background border border-border rounded-lg transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent hover:border-muted-foreground"
           />
         </div>
 
-        <div className="flex items-center gap-4">
-          <label className="flex items-center gap-2 text-sm text-slate-600">
+        <div className="flex items-center gap-6 mt-1">
+          <label className="flex items-center gap-2.5 text-sm font-medium text-foreground cursor-pointer">
             <input
               type="checkbox"
               name="follow_up_needed"
               checked={form.follow_up_needed}
               onChange={handleChange}
+              className="w-4 h-4 rounded border-border text-primary focus:ring-primary accent-primary cursor-pointer"
             />
             Follow-up needed
           </label>
-          <label className="flex items-center gap-2 text-sm text-slate-600">
+          <label className="flex items-center gap-2.5 text-sm font-medium text-foreground cursor-pointer">
             <input
               type="checkbox"
               name="is_confidential"
               checked={form.is_confidential}
               onChange={handleChange}
+              className="w-4 h-4 rounded border-border text-primary focus:ring-primary accent-primary cursor-pointer"
             />
             Confidential
           </label>
         </div>
 
-        {error && <p className="text-xs text-red-600">{error}</p>}
-
-        <div className="flex justify-end gap-3 pt-2">
-          <Button variant="secondary" onClick={onClose} disabled={saving}>
+        <div className="flex justify-end gap-3 pt-4 border-t border-border mt-2">
+          <Button variant="ghost" onClick={onClose} disabled={saving}>
             Cancel
           </Button>
           <Button variant="primary" onClick={handleSubmit} loading={saving}>

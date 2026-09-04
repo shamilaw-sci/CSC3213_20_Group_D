@@ -1,37 +1,54 @@
 /**
  * @component Badge
- * @desc      Colour-coded status pill used across all Care4U pages.
+ * @desc      Colour-coded status/severity pill used across all Care4U pages.
+ *            Never relies on colour alone — every variant always renders a
+ *            text label alongside colour, per accessibility standard (Section 5.5).
  * @author    Wasana Karunanayaka (S/21/081)
- * @param {string} status - active | expired | pending | completed |
- *                          cancelled | confidential | normal
+ * @param {string} status   - active | expired | pending | completed | cancelled | confidential | normal
+ * @param {string} severity - mild | moderate | severe (alternative to status, for allergy/condition badges)
+ * @param {string} label    - optional override for the displayed text
  */
-const Badge = ({ status }) => {
-  const styles = {
-    active:       'bg-green-100 text-green-700',
-    completed:    'bg-slate-100 text-slate-600',
-    expired:      'bg-red-100 text-red-700',
-    cancelled:    'bg-red-100 text-red-700',
-    pending:      'bg-orange-100 text-orange-700',
-    confidential: 'bg-orange-100 text-orange-700',
-    normal:       'bg-slate-100 text-slate-500',
+const Badge = ({ status, severity, label: labelOverride }) => {
+  const statusStyles = {
+    active: 'bg-success/10 text-success',
+    completed: 'bg-muted text-muted-foreground',
+    expired: 'bg-destructive/10 text-destructive',
+    cancelled: 'bg-destructive/10 text-destructive',
+    pending: 'bg-urgent/10 text-urgent-foreground',
+    confidential: 'bg-urgent/10 text-urgent-foreground',
+    normal: 'bg-muted text-muted-foreground',
   };
 
-  const labels = {
-    active:       'Active',
-    completed:    'Completed',
-    expired:      'Expired',
-    cancelled:    'Cancelled',
-    pending:      'Pending',
+  const severityStyles = {
+    mild: 'bg-success/10 text-success',
+    moderate: 'bg-urgent/10 text-urgent-foreground',
+    severe: 'bg-destructive text-destructive-foreground',
+  };
+
+  const statusLabels = {
+    active: 'Active',
+    completed: 'Completed',
+    expired: 'Expired',
+    cancelled: 'Cancelled',
+    pending: 'Pending',
     confidential: 'Confidential',
-    normal:       'Standard',
+    normal: 'Standard',
   };
 
-  const style = styles[status] || styles.normal;
-  const label = labels[status] || status;
+  const severityLabels = {
+    mild: 'Mild',
+    moderate: 'Moderate',
+    severe: 'Severe',
+  };
+
+  const style = severity ? (severityStyles[severity] || severityStyles.mild)
+    : (statusStyles[status] || statusStyles.normal);
+
+  const text = labelOverride || (severity ? (severityLabels[severity] || severity) : (statusLabels[status] || status));
 
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${style}`}>
-      {label}
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${style}`}>
+      {text}
     </span>
   );
 };

@@ -7,6 +7,8 @@
 import { useState } from 'react';
 import Input  from '../../components/common/Input';
 import Button from '../../components/common/Button';
+import Alert  from '../../components/common/Alert';
+import Card   from '../../components/common/Card';
 import { forgotPassword } from '../../services/auth.service';
 
 const ForgotPasswordPage = () => {
@@ -46,28 +48,25 @@ const ForgotPasswordPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
 
         {/* Logo & Title */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-[#1E3A5F]">Care4U</h1>
-          <p className="text-slate-500 mt-1">Centralized Healthcare Ecosystem</p>
+          <h1 className="text-3xl font-bold text-brand-deep">Care4U</h1>
+          <p className="text-muted-foreground mt-1 font-medium">Centralized Healthcare Ecosystem</p>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
-
-          <h2 className="text-xl font-semibold text-slate-800 mb-2">Forgot your password?</h2>
-          <p className="text-sm text-slate-500 mb-6">
+        <Card>
+          <h2 className="text-xl font-bold text-foreground mb-2">Forgot your password?</h2>
+          <p className="text-sm text-muted-foreground mb-6">
             Enter your email address and we'll send you a link to reset your password.
           </p>
 
           {submitted ? (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-              <p className="text-sm text-green-700">
-                If an account exists for this email, a password reset link has been sent.
-              </p>
+            <div className="mb-4">
+              <Alert type="success" message="If an account exists for this email, a password reset link has been sent." />
             </div>
           ) : (
             <div className="flex flex-col gap-4">
@@ -96,17 +95,16 @@ const ForgotPasswordPage = () => {
           )}
 
           {/* Back to Login Link */}
-          <p className="text-center text-sm text-slate-500 mt-6">
+          <p className="text-center text-sm text-muted-foreground mt-6">
             Remember your password?{' '}
-            <a href="/login" className="text-[#1E3A5F] font-medium hover:underline">
+            <a href="/login" className="text-primary font-semibold hover:underline">
               Back to Login
             </a>
           </p>
-
-        </div>
+        </Card>
 
         {/* Footer */}
-        <p className="text-center text-xs text-slate-400 mt-6">
+        <p className="text-center text-xs font-medium text-muted-foreground mt-6">
           © 2026 Care4U — Group D | CSC3213
         </p>
 

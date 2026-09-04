@@ -13,6 +13,10 @@ import toast from 'react-hot-toast';
 import { getDoctorProfile, getAvailableSlots } from '../../services/doctor.service';
 import { bookAppointment, updateAppointmentStatus } from '../../services/appointment.service';
 import useAuthStore from '../../store/authStore';
+import Button from '../../components/common/Button';
+import Input from '../../components/common/Input';
+import Alert from '../../components/common/Alert';
+import Spinner from '../../components/common/Spinner';
 
 export default function BookAppointmentPage() {
   const user = useAuthStore((state) => state.user);
@@ -89,22 +93,22 @@ export default function BookAppointmentPage() {
   // IF INVALID URL: Show graceful fallback instead of crashing
   if (isInvalidId) {
     return (
-      <div className="max-w-3xl mx-auto p-10 text-center space-y-4 mt-10 bg-white rounded-xl shadow-sm border border-gray-100">
-        <AlertCircle className="h-16 w-16 text-red-500 mx-auto" />
-        <h1 className="text-2xl font-bold text-[#1E3A5F]">Invalid Doctor Link</h1>
-        <p className="text-gray-500">We couldn't identify the doctor for this booking.</p>
-        <button onClick={() => navigate('/patient/doctors')} className="mt-4 px-6 py-2 bg-[#2E75B6] text-white rounded-lg hover:bg-[#1E3A5F]">
+      <div className="max-w-3xl mx-auto p-10 text-center space-y-4 mt-10 bg-card rounded-xl shadow-sm border border-border">
+        <AlertCircle className="h-16 w-16 text-destructive mx-auto" strokeWidth={1.5} />
+        <h1 className="text-2xl font-bold text-foreground">Invalid Doctor Link</h1>
+        <p className="text-muted-foreground">We couldn't identify the doctor for this booking.</p>
+        <Button variant="secondary" onClick={() => navigate('/patient/doctors')} className="mt-4">
           Return to Doctor Search
-        </button>
+        </Button>
       </div>
     );
   }
 
   if (isLoadingDoctor || isLoadingSlots) {
     return (
-      <div className="flex flex-col items-center justify-center h-full py-20 text-gray-400">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#2E75B6] mb-4"></div>
-        <p>Loading booking details...</p>
+      <div className="flex flex-col items-center justify-center h-full py-20">
+        <Spinner size="lg" />
+        <p className="mt-4 text-sm text-muted-foreground">Loading booking details...</p>
       </div>
     );
   }
@@ -112,10 +116,7 @@ export default function BookAppointmentPage() {
   if (!doctor) {
     return (
       <div className="p-6">
-        <div className="bg-red-50 text-red-600 p-4 rounded-lg flex items-center gap-3">
-          <AlertCircle className="h-5 w-5" />
-          <p>Doctor not found.</p>
-        </div>
+        <Alert type="error" message="Doctor not found." />
       </div>
     );
   }
@@ -123,36 +124,33 @@ export default function BookAppointmentPage() {
   return (
     <div className="max-w-3xl mx-auto p-6 space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-[#1E3A5F]">
+        <h1 className="text-2xl font-bold text-foreground">
           {rescheduleId ? 'Reschedule Appointment' : 'Book Appointment'}
         </h1>
-        <p className="text-gray-500 mt-1">Select an available slot below to confirm your booking.</p>
+        <p className="text-muted-foreground mt-1">Select an available slot below to confirm your booking.</p>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-6 bg-gray-50 border-b border-gray-100 flex items-center gap-4">
-          <div className="bg-[#EBF5FF] p-4 rounded-full text-[#2E75B6]">
+      <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
+        <div className="p-6 bg-secondary border-b border-border flex items-center gap-4">
+          <div className="bg-primary/10 p-4 rounded-full text-primary">
             <User className="h-8 w-8" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-[#1E3A5F]">Dr. {doctor.full_name}</h2>
-            <p className="text-[#2E75B6] font-medium text-sm">{doctor.specialization}</p>
-            <p className="text-gray-500 text-sm mt-1">{doctor.hospital_name}</p>
+            <h2 className="text-xl font-bold text-foreground">Dr. {doctor.full_name}</h2>
+            <p className="text-primary font-medium text-sm">{doctor.specialization}</p>
+            <p className="text-muted-foreground text-sm mt-1">{doctor.hospital_name}</p>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-[#2E75B6]" />
+            <label className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-primary" />
               Suggested Available Slots
             </label>
             
             {slots.length === 0 ? (
-              <div className="p-4 bg-orange-50 text-orange-700 rounded-lg border border-orange-100 flex items-center gap-3">
-                <AlertCircle className="h-5 w-5" />
-                <p>No available slots found for this doctor right now.</p>
-              </div>
+              <Alert type="info" message="No available slots found for this doctor right now." />
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {slots.map((slot) => (
@@ -162,43 +160,43 @@ export default function BookAppointmentPage() {
                     onClick={() => setSelectedSlot(slot)}
                     className={`flex items-center p-4 border rounded-lg text-left transition-all ${
                       selectedSlot === slot 
-                        ? 'border-[#2E75B6] bg-[#F0F7FF] ring-1 ring-[#2E75B6]' 
-                        : 'border-gray-200 hover:border-[#2E75B6] hover:bg-gray-50'
+                        ? 'border-primary bg-primary/10 ring-1 ring-primary' 
+                        : 'border-border hover:border-primary hover:bg-secondary'
                     }`}
                   >
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 font-medium text-gray-900">
-                        <Clock className={`h-4 w-4 ${selectedSlot === slot ? 'text-[#2E75B6]' : 'text-gray-400'}`} />
+                      <div className="flex items-center gap-2 font-medium text-foreground">
+                        <Clock className={`h-4 w-4 ${selectedSlot === slot ? 'text-primary' : 'text-muted-foreground'}`} />
                         {formatSlotTime(slot)}
                       </div>
                     </div>
-                    {selectedSlot === slot && <CheckCircle2 className="h-5 w-5 text-[#2E75B6]" />}
+                    {selectedSlot === slot && <CheckCircle2 className="h-5 w-5 text-primary" />}
                   </button>
                 ))}
               </div>
             )}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Reason for Visit (Optional)</label>
-            <input
-              type="text"
-              placeholder="e.g. Regular Checkup, Fever, Consultation"
-              className="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-[#2E75B6] focus:border-[#2E75B6] outline-none transition-colors"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              disabled={slots.length === 0}
-            />
-          </div>
+          <Input
+            label="Reason for Visit (Optional)"
+            name="reason"
+            type="text"
+            placeholder="e.g. Regular Checkup, Fever, Consultation"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            disabled={slots.length === 0}
+          />
 
-          <div className="pt-4 border-t border-gray-100">
-            <button
+          <div className="pt-4 border-t border-border">
+            <Button
               type="submit"
-              disabled={!selectedSlot || bookMutation.isPending || slots.length === 0}
-              className="w-full py-3 bg-[#2E75B6] hover:bg-[#1E3A5F] text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              size="lg"
+              disabled={!selectedSlot || slots.length === 0}
+              loading={bookMutation.isPending}
+              className="w-full"
             >
-              {bookMutation.isPending ? 'Booking...' : (rescheduleId ? 'Confirm Reschedule' : 'Confirm Appointment')}
-            </button>
+              {rescheduleId ? 'Confirm Reschedule' : 'Confirm Appointment'}
+            </Button>
           </div>
         </form>
       </div>

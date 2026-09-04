@@ -1,17 +1,17 @@
 /**
  * @component PatientLayout
  * @desc      Layout wrapper for all patient portal pages.
- *            Renders the Sidebar on the left and the page content on the right.
+ *            Renders PatientNavbar at the top and page content below.
  * @author    Wasana Karunanayaka (S/21/081)
  */
 import { Outlet } from 'react-router-dom';
-import Sidebar from './Sidebar';
+import PatientNavbar from './PatientNavbar';
 
 const PatientLayout = () => {
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#F8FAFC' }}>
-      <Sidebar />
-      <main style={{ flex: 1, overflowY: 'auto' }}>
+    <div className="min-h-screen bg-secondary/30">
+      <PatientNavbar />
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-6">
         <Outlet />
       </main>
     </div>

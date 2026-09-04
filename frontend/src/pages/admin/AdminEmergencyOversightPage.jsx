@@ -7,6 +7,9 @@
 
 import { useEffect, useState } from 'react';
 import Spinner from '../../components/common/Spinner';
+import DataTable from '../../components/common/DataTable';
+import Badge from '../../components/common/Badge';
+import Alert from '../../components/common/Alert';
 
 const API_URL = 'http://localhost:5000';
 
@@ -42,65 +45,63 @@ const AdminEmergencyOversightPage = () => {
     fetchLogs();
   }, []);
 
+  const columns = [
+    { 
+      key: 'created_at', 
+      label: 'Timestamp', 
+      render: (val) => <span className="whitespace-nowrap font-medium text-foreground">{new Date(val).toLocaleString()}</span> 
+    },
+    { 
+      key: 'staff_email', 
+      label: 'Staff', 
+      render: (val) => val || <span className="italic text-muted-foreground">(unknown)</span> 
+    },
+    { 
+      key: 'user_role', 
+      label: 'Role', 
+      // Utilizing the 'confidential' status to correctly map to the amber/urgent token natively
+      render: (val) => <Badge status="confidential" label={val} /> 
+    },
+    { 
+      key: 'patient_name', 
+      label: 'Patient', 
+      render: (val) => val || <span className="italic text-muted-foreground">(unknown)</span> 
+    },
+    { 
+      key: 'reason', 
+      label: 'Reason',
+      render: (val) => <span className="text-muted-foreground">{val}</span>
+    }
+  ];
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Spinner size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-800">Emergency Access Oversight</h1>
-        <p className="text-sm text-slate-500">
+    <div className="min-h-screen bg-background p-6">
+      <div className="mb-6 flex flex-col gap-1">
+        <h1 className="text-2xl font-bold text-foreground">Emergency Access Oversight</h1>
+        <p className="text-sm font-medium text-muted-foreground">
           {logs.length} Break-the-Glass event(s) — a required safeguard against emergency-access misuse.
         </p>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6">
-          {error}
+        <div className="mb-6">
+          <Alert type="error" message={error} />
         </div>
       )}
 
-      {logs.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-12 text-center">
-          <p className="text-slate-600 font-medium">No emergency access events recorded.</p>
-        </div>
-      ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-slate-200">
-              <tr>
-                <th className="text-left px-4 py-3 text-slate-600 font-medium">Timestamp</th>
-                <th className="text-left px-4 py-3 text-slate-600 font-medium">Staff</th>
-                <th className="text-left px-4 py-3 text-slate-600 font-medium">Role</th>
-                <th className="text-left px-4 py-3 text-slate-600 font-medium">Patient</th>
-                <th className="text-left px-4 py-3 text-slate-600 font-medium">Reason</th>
-              </tr>
-            </thead>
-            <tbody>
-              {logs.map((log) => (
-                <tr key={log.id} className="border-b border-slate-100 last:border-0 align-top">
-                  <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
-                    {new Date(log.created_at).toLocaleString()}
-                  </td>
-                  <td className="px-4 py-3 text-slate-700">{log.staff_email || '(unknown)'}</td>
-                  <td className="px-4 py-3">
-                    <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-medium">
-                      {log.user_role}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-slate-700">{log.patient_name || '(unknown)'}</td>
-                  <td className="px-4 py-3 text-slate-600">{log.reason}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <DataTable 
+        columns={columns} 
+        data={logs} 
+        emptyMessage="No emergency access events recorded." 
+      />
     </div>
   );
 };

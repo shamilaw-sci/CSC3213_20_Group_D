@@ -7,6 +7,10 @@
 
 import { useEffect, useState } from 'react';
 import Spinner from '../../components/common/Spinner';
+import Card from '../../components/common/Card';
+import Input from '../../components/common/Input';
+import Button from '../../components/common/Button';
+import Alert from '../../components/common/Alert';
 
 const API_URL = 'http://localhost:5000';
 
@@ -74,51 +78,59 @@ const AdminSystemSettingsPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Spinner size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
+    <div className="min-h-screen bg-background p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-800">System Settings</h1>
-        <p className="text-sm text-slate-500">
+        <h1 className="text-2xl font-bold text-foreground">System Settings</h1>
+        <p className="text-sm font-medium text-muted-foreground mt-1">
           Configurable values that were previously hardcoded in the application.
         </p>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6">
-          {error}
+        <div className="mb-6">
+          <Alert type="error" message={error} />
         </div>
       )}
 
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {settings.map((setting) => {
           const isSaving = savingKey === setting.key;
           const hasChanged = editValues[setting.key] !== setting.value;
           return (
-            <div key={setting.key} className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-sm font-semibold text-slate-800 font-mono">{setting.key}</h3>
-              <p className="text-sm text-slate-500 mt-1 mb-3">{setting.description}</p>
-              <div className="flex gap-3">
-                <input
-                  type="text"
+            <Card key={setting.key} className="p-5 flex flex-col justify-between h-full">
+              <div>
+                <h3 className="text-sm font-bold text-foreground font-mono bg-secondary px-2.5 py-1 rounded inline-block">
+                  {setting.key}
+                </h3>
+                <p className="text-sm font-medium text-muted-foreground mt-3 mb-5">
+                  {setting.description}
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3 items-end">
+                <Input
+                  name={setting.key}
                   value={editValues[setting.key] ?? ''}
                   onChange={(e) => setEditValues({ ...editValues, [setting.key]: e.target.value })}
-                  className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                  className="w-full flex-1"
                 />
-                <button
+                <Button
+                  variant="primary"
                   onClick={() => handleSave(setting.key)}
                   disabled={isSaving || !hasChanged}
-                  className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  loading={isSaving}
+                  className="w-full sm:w-auto"
                 >
                   {isSaving ? 'Saving...' : 'Save'}
-                </button>
+                </Button>
               </div>
-            </div>
+            </Card>
           );
         })}
       </div>

@@ -14,6 +14,8 @@ import Card from '../../components/common/Card';
 import DataTable from '../../components/common/DataTable';
 import Spinner from '../../components/common/Spinner';
 import Alert from '../../components/common/Alert';
+import Badge from '../../components/common/Badge';
+import Button from '../../components/common/Button';
 import useAuthStore from '../../store/authStore';
 
 // ─── Format date helper ───────────────────────────────────────────────────────
@@ -70,7 +72,7 @@ const LabReportsPage = () => {
       key: 'created_at',
       label: 'Completed On',
       render: (value) => (
-        <span className="text-slate-600 font-medium">
+        <span className="text-foreground font-medium">
           {formatDate(value)}
         </span>
       ),
@@ -79,8 +81,8 @@ const LabReportsPage = () => {
       key: 'test_type',
       label: 'Test Type',
       render: (value) => (
-        <span className="flex items-center gap-2 text-slate-800 font-semibold">
-          <FlaskConical size={16} className="text-indigo-500" />
+        <span className="flex items-center gap-2 text-foreground font-semibold">
+          <FlaskConical size={16} className="text-primary" />
           {value || 'Unknown Test'}
         </span>
       ),
@@ -88,38 +90,39 @@ const LabReportsPage = () => {
     {
       key: 'lab_name',
       label: 'Laboratory',
-      render: (value) => <span className="text-slate-600">{value}</span>,
+      render: (value) => <span className="text-foreground">{value}</span>,
     },
     {
       key: 'doctor_name',
       label: 'Requested By',
-      render: (value) => <span className="text-slate-500">{value ? `Dr. ${value}` : '—'}</span>,
+      render: (value) => <span className="text-muted-foreground">{value ? `Dr. ${value}` : '—'}</span>,
     },
     {
       key: 'status',
       label: 'Status',
       render: (value, record) => (
-        <span className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full w-fit ${!record.is_read ? 'text-emerald-700 bg-emerald-100' : 'text-slate-600 bg-slate-100'}`}>
-          <CheckCircle2 size={12} />
-          {!record.is_read ? 'New Results' : 'Viewed'}
-        </span>
+        <Badge
+          status={record.is_read ? 'completed' : 'pending'}
+          label={record.is_read ? 'Viewed' : 'New Results'}
+        />
       ),
     },
     {
       key: 'report_url',
       label: 'Action',
       render: (url, record) => (
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
+          icon={<FileText size={16} />}
+          disabled={!url}
           onClick={(e) => {
             e.stopPropagation();
             handleViewReport(record);
           }}
-          disabled={!url}
-          className="flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 px-3 py-1.5 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <FileText size={16} />
           View PDF
-        </button>
+        </Button>
       ),
     },
   ];
@@ -127,10 +130,10 @@ const LabReportsPage = () => {
   // ── Loading state ──────────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-secondary/40 flex items-center justify-center">
         <div className="text-center">
           <Spinner size="lg" />
-          <p className="mt-4 text-sm text-slate-500">Loading lab reports...</p>
+          <p className="mt-4 text-sm text-muted-foreground">Loading lab reports...</p>
         </div>
       </div>
     );
@@ -139,7 +142,7 @@ const LabReportsPage = () => {
   // ── Error state ────────────────────────────────────────────────────────────
   if (isError) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-secondary/40 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <Alert
             type="error"
@@ -154,15 +157,15 @@ const LabReportsPage = () => {
 
   // ── Main render ────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-secondary/40">
       {/* ── Page Header ── */}
-      <div className="bg-[#1E3A5F] text-white px-6 py-8">
+      <div className="bg-brand-deep text-brand-deep-foreground px-6 py-8">
         <div className="max-w-5xl mx-auto">
           <h1 className="text-2xl font-bold flex items-center gap-3">
-            <FlaskConical className="text-blue-300" />
+            <FlaskConical className="text-brand-deep-foreground/70" />
             Laboratory Reports
           </h1>
-          <p className="text-blue-200 text-sm mt-1">
+          <p className="text-brand-deep-foreground/70 text-sm mt-1">
             View and download your completed diagnostic test results
           </p>
         </div>
@@ -173,8 +176,8 @@ const LabReportsPage = () => {
         {/* Summary strip */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
-            <FileText size={16} className="text-slate-400" />
-            <p className="text-sm text-slate-500">
+            <FileText size={16} className="text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">
               {reports.length === 0
                 ? 'No completed lab reports found'
                 : `${reports.length} report${reports.length !== 1 ? 's' : ''} available`}
@@ -182,10 +185,10 @@ const LabReportsPage = () => {
           </div>
           
           {unreadCount > 0 && (
-             <span className="flex items-center gap-1.5 px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-full">
+             <span className="flex items-center gap-1.5 px-3 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-full">
                 <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
                 </span>
                 {unreadCount} New Result{unreadCount !== 1 ? 's' : ''} Ready
              </span>

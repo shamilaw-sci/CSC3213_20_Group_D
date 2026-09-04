@@ -79,7 +79,7 @@ const MedicalRecordsPage = () => {
       key: 'record_type',
       label: 'Type',
       render: (value) => (
-        <span className="flex items-center gap-1.5 text-slate-600">
+        <span className="flex items-center gap-1.5 text-foreground">
           <RecordTypeIcon type={value} />
           {formatRecordType(value)}
         </span>
@@ -106,10 +106,10 @@ const MedicalRecordsPage = () => {
   // ── Loading state ──────────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-secondary/40 flex items-center justify-center">
         <div className="text-center">
           <Spinner size="lg" />
-          <p className="mt-4 text-sm text-slate-500">Loading medical records...</p>
+          <p className="mt-4 text-sm text-muted-foreground">Loading medical records...</p>
         </div>
       </div>
     );
@@ -118,7 +118,7 @@ const MedicalRecordsPage = () => {
   // ── Error state ────────────────────────────────────────────────────────────
   if (isError) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-secondary/40 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <Alert
             type="error"
@@ -131,13 +131,13 @@ const MedicalRecordsPage = () => {
 
   // ── Main render ────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-secondary/40">
 
       {/* ── Page Header ── */}
-      <div className="bg-[#1E3A5F] text-white px-6 py-8">
+      <div className="bg-brand-deep text-brand-deep-foreground px-6 py-8">
         <div className="max-w-5xl mx-auto">
           <h1 className="text-2xl font-bold">Medical Records</h1>
-          <p className="text-blue-200 text-sm mt-1">
+          <p className="text-brand-deep-foreground/70 text-sm mt-1">
             Your complete health history — click any record to view details
           </p>
         </div>
@@ -148,8 +148,8 @@ const MedicalRecordsPage = () => {
 
         {/* Summary strip */}
         <div className="flex items-center gap-2 mb-6">
-          <FileText size={16} className="text-slate-400" />
-          <p className="text-sm text-slate-500">
+          <FileText size={16} className="text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">
             {records.length === 0
               ? 'No medical records found'
               : `${records.length} record${records.length !== 1 ? 's' : ''} found`}
@@ -178,7 +178,7 @@ const MedicalRecordsPage = () => {
           <div className="space-y-4">
 
             {/* Meta row */}
-            <div className="flex flex-wrap gap-3 text-xs text-slate-500">
+            <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <RecordTypeIcon type={selectedRecord.record_type} />
                 {formatRecordType(selectedRecord.record_type)}
@@ -192,7 +192,7 @@ const MedicalRecordsPage = () => {
                 </>
               )}
               {selectedRecord.doctor_specialization && (
-                <span className="text-[#2E75B6]">
+                <span className="text-primary">
                   ({selectedRecord.doctor_specialization})
                 </span>
               )}
@@ -211,20 +211,20 @@ const MedicalRecordsPage = () => {
               <>
                 {selectedRecord.chief_complaint && (
                   <div>
-                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Chief Complaint</p>
-                    <p className="text-sm text-slate-700 leading-relaxed bg-slate-50 rounded-lg p-4">{selectedRecord.chief_complaint}</p>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Chief Complaint</p>
+                    <p className="text-sm text-foreground leading-relaxed bg-secondary rounded-lg p-4">{selectedRecord.chief_complaint}</p>
                   </div>
                 )}
                 {selectedRecord.diagnosis && (
                   <div>
-                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Diagnosis</p>
-                    <p className="text-sm text-slate-700 leading-relaxed bg-slate-50 rounded-lg p-4">{selectedRecord.diagnosis}</p>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Diagnosis</p>
+                    <p className="text-sm text-foreground leading-relaxed bg-secondary rounded-lg p-4">{selectedRecord.diagnosis}</p>
                   </div>
                 )}
                 {selectedRecord.treatment_plan && (
                   <div>
-                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Treatment Plan</p>
-                    <p className="text-sm text-slate-700 leading-relaxed bg-slate-50 rounded-lg p-4">{selectedRecord.treatment_plan}</p>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Treatment Plan</p>
+                    <p className="text-sm text-foreground leading-relaxed bg-secondary rounded-lg p-4">{selectedRecord.treatment_plan}</p>
                   </div>
                 )}
                 {selectedRecord.follow_up_needed && (
@@ -235,10 +235,10 @@ const MedicalRecordsPage = () => {
 
             {/* Description */}
             <div>
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
                 Notes
               </p>
-              <p className="text-sm text-slate-700 leading-relaxed bg-slate-50 rounded-lg p-4">
+              <p className="text-sm text-foreground leading-relaxed bg-secondary rounded-lg p-4">
                 {selectedRecord.description || 'No additional notes.'}
               </p>
             </div>

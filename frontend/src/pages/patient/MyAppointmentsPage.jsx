@@ -8,10 +8,14 @@
 import React, { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock, User, XCircle, AlertCircle, FileText, CalendarClock } from 'lucide-react';
+import { Calendar, Clock, User, XCircle, FileText, CalendarClock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getPatientAppointments, updateAppointmentStatus } from '../../services/appointment.service';
 import useAuthStore from '../../store/authStore';
+import Button from '../../components/common/Button';
+import Badge from '../../components/common/Badge';
+import Alert from '../../components/common/Alert';
+import Spinner from '../../components/common/Spinner';
 
 export default function MyAppointmentsPage() {
   const user = useAuthStore((state) => state.user);
@@ -53,15 +57,15 @@ export default function MyAppointmentsPage() {
   const getStatusBadge = (status) => {
     switch (status) {
       case 'scheduled':
-        return <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-bold rounded-full">Scheduled</span>;
+        return <Badge status="active" label="Scheduled" />;
       case 'completed':
-        return <span className="px-3 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full">Completed</span>;
+        return <Badge status="completed" label="Completed" />;
       case 'cancelled':
-        return <span className="px-3 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-full">Cancelled</span>;
+        return <Badge status="cancelled" label="Cancelled" />;
       case 'in_progress':
-        return <span className="px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-bold rounded-full">In Progress</span>;
+        return <Badge status="pending" label="In Progress" />;
       default:
-        return <span className="px-3 py-1 bg-gray-100 text-gray-800 text-xs font-bold rounded-full">{status}</span>;
+        return <Badge status="normal" label={status} />;
     }
   };
 
@@ -81,74 +85,71 @@ export default function MyAppointmentsPage() {
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#1E3A5F]">My Appointments</h1>
-        <p className="text-gray-500 mt-1">View and manage your upcoming and past medical visits.</p>
+        <h1 className="text-2xl font-bold text-foreground">My Appointments</h1>
+        <p className="text-muted-foreground mt-1">View and manage your upcoming and past medical visits.</p>
       </div>
 
       {isLoading && (
-        <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#2E75B6] mb-4"></div>
-          <p>Loading your appointments...</p>
+        <div className="flex flex-col items-center justify-center py-20">
+          <Spinner size="lg" />
+          <p className="mt-4 text-sm text-muted-foreground">Loading your appointments...</p>
         </div>
       )}
 
       {isError && (
-        <div className="bg-red-50 text-red-600 p-4 rounded-lg flex items-center gap-3">
-          <AlertCircle className="h-5 w-5" />
-          <p>Failed to load appointments: {error?.message}. Please try again later.</p>
-        </div>
+        <Alert type="error" message={`Failed to load appointments: ${error?.message}. Please try again later.`} />
       )}
 
       {!isLoading && !isError && sortedAppointments.length === 0 && (
-        <div className="bg-white border border-gray-100 rounded-xl p-12 text-center shadow-sm">
-          <div className="bg-blue-50 h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Calendar className="h-8 w-8 text-[#2E75B6]" />
+        <div className="bg-card border border-border rounded-xl p-12 text-center shadow-sm">
+          <div className="bg-primary/10 h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Calendar className="h-8 w-8 text-primary" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900">No appointments found</h3>
-          <p className="text-gray-500 mt-1 mb-6">You don't have any appointments booked yet.</p>
-          <button 
-            onClick={() => navigate('/patient/doctors')} 
-            className="inline-block px-6 py-2 bg-[#2E75B6] text-white font-medium rounded-lg hover:bg-[#1E3A5F] transition-colors"
-          >
+          <h3 className="text-lg font-bold text-foreground">No appointments found</h3>
+          <p className="text-muted-foreground mt-1 mb-6">You don't have any appointments booked yet.</p>
+          <Button variant="primary" onClick={() => navigate('/patient/doctors')}>
             Find a Doctor
-          </button>
+          </Button>
         </div>
       )}
 
       {!isLoading && !isError && sortedAppointments.length > 0 && (
         <div className="space-y-4">
           {sortedAppointments.map((apt) => (
-            <div key={apt.id} className={`bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:shadow-md ${apt.status === 'cancelled' ? 'opacity-60' : ''}`}>
+            <div key={apt.id} className={`bg-card p-5 rounded-xl border border-border shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:shadow-md ${apt.status === 'cancelled' ? 'opacity-60' : ''}`}>
               <div className="space-y-3 flex-1">
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${apt.status === 'cancelled' ? 'bg-gray-100 text-gray-500' : 'bg-[#EBF5FF] text-[#2E75B6]'}`}>
+                  <div className={`p-2 rounded-lg ${apt.status === 'cancelled' ? 'bg-secondary text-muted-foreground' : 'bg-primary/10 text-primary'}`}>
                     <User className="h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className={`text-lg font-bold ${apt.status === 'cancelled' ? 'text-gray-600' : 'text-[#1E3A5F]'}`}>Dr. {apt.doctor_name}</h3>
-                    <p className="text-sm text-gray-500">{apt.doctor_specialization}</p>
+                    <h3 className={`text-lg font-bold ${apt.status === 'cancelled' ? 'text-muted-foreground' : 'text-foreground'}`}>Dr. {apt.doctor_name}</h3>
+                    <p className="text-sm text-muted-foreground">{apt.doctor_specialization}</p>
                   </div>
                   <div className="ml-auto md:ml-4">
                     {getStatusBadge(apt.status)}
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">
                   <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-gray-400" />
+                    <Clock className="h-4 w-4 text-muted-foreground" />
                     <span>{formatDateTime(apt.scheduled_at)}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-gray-400" />
+                    <FileText className="h-4 w-4 text-muted-foreground" />
                     <span className="capitalize">{apt.type} {apt.notes && `- ${apt.notes}`}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="flex flex-col md:flex-row items-center gap-3 md:border-l md:border-gray-100 md:pl-6 w-full md:w-auto mt-4 md:mt-0">
+              <div className="flex flex-col md:flex-row items-center gap-3 md:border-l md:border-border md:pl-6 w-full md:w-auto mt-4 md:mt-0">
                 {apt.status === 'scheduled' && (
                   <>
-                    <button
+                    <Button
+                      variant="secondary"
+                      icon={<CalendarClock className="h-4 w-4" />}
+                      className="w-full md:w-auto"
                       onClick={() => {
                         // SAFE FALLBACK: Grab the ID whether it's snake_case or camelCase
                         const targetId = apt.doctor_id || apt.doctorId;
@@ -160,19 +161,18 @@ export default function MyAppointmentsPage() {
 
                         navigate(`/patient/book-appointment/${targetId}?reschedule=${apt.id}`);
                       }}
-                      className="flex items-center justify-center gap-2 px-4 py-2 text-[#2E75B6] bg-[#EBF5FF] hover:bg-[#D6EAF8] rounded-lg font-medium transition-colors w-full md:w-auto"
                     >
-                      <CalendarClock className="h-4 w-4" />
                       Reschedule
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="danger"
+                      icon={<XCircle className="h-4 w-4" />}
                       onClick={() => handleCancel(apt.id)}
                       disabled={cancelMutation.isPending}
-                      className="flex items-center justify-center gap-2 px-4 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg font-medium transition-colors w-full md:w-auto disabled:opacity-50"
+                      className="w-full md:w-auto"
                     >
-                      <XCircle className="h-4 w-4" />
                       Cancel
-                    </button>
+                    </Button>
                   </>
                 )}
               </div>
