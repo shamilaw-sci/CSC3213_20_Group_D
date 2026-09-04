@@ -7,8 +7,14 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Receipt, AlertTriangle, CreditCard, ArrowRight } from 'lucide-react';
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
+import Spinner from '../../components/common/Spinner';
+import Alert from '../../components/common/Alert';
+import Badge from '../../components/common/Badge';
+import Modal from '../../components/common/Modal';
+import Button from '../../components/common/Button';
 
 const formatDate = (iso) => {
   if (!iso) return '—';
@@ -18,75 +24,77 @@ const formatDate = (iso) => {
   });
 };
 
-const StatusBadge = ({ status }) => {
-  const colors = {
-    success: 'bg-green-100 text-green-700',
-    pending: 'bg-orange-100 text-orange-700',
-    failed:  'bg-red-100 text-red-700',
-  };
-  return (
-    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${colors[status] || colors.pending}`}>
-      {status}
-    </span>
-  );
+const getPaymentBadgeProps = (status) => {
+  switch (status?.toLowerCase()) {
+    case 'success':
+      return { status: 'active', label: 'Success' };
+    case 'pending':
+      return { status: 'pending', label: 'Pending' };
+    case 'failed':
+      return { status: 'cancelled', label: 'Failed' };
+    default:
+      return { status: 'normal', label: status };
+  }
 };
 
-const ReceiptModal = ({ payment, onClose }) => (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+const ReceiptModal = ({ payment, onClose }) => {
+  if (!payment) return null;
+
+  return (
+    <Modal isOpen={!!payment} onClose={onClose} title="Payment Receipt" size="sm">
       <div className="text-center mb-6">
-        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-          <span className="text-2xl">🧾</span>
+        <div className="w-12 h-12 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-3">
+          <Receipt className="w-6 h-6 text-success" />
         </div>
-        <h2 className="text-xl font-bold text-slate-800">Payment Receipt</h2>
-        <p className="text-xs text-orange-500 font-semibold mt-1">
-          ⚠️ SANDBOX MODE — No real money charged
-        </p>
+        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-urgent/10 rounded-full">
+          <AlertTriangle size={14} className="text-urgent-foreground" />
+          <span className="text-xs text-urgent-foreground font-semibold">
+            SANDBOX MODE — No real money charged
+          </span>
+        </div>
       </div>
 
       <div className="flex flex-col gap-3 text-sm">
-        <div className="flex justify-between">
-          <span className="text-slate-500">Transaction ID</span>
-          <span className="font-mono text-xs text-slate-700">{payment.id.slice(0, 8)}...</span>
+        <div className="flex justify-between items-center py-1">
+          <span className="text-muted-foreground">Transaction ID</span>
+          <span className="font-mono text-xs text-foreground font-medium">{payment.id.slice(0, 12)}...</span>
         </div>
-        <div className="flex justify-between">
-          <span className="text-slate-500">Type</span>
-          <span className="font-semibold text-slate-800 capitalize">{payment.payment_type.replace('_', ' ')}</span>
+        <div className="flex justify-between items-center py-1">
+          <span className="text-muted-foreground">Type</span>
+          <span className="font-semibold text-foreground capitalize">{payment.payment_type.replace('_', ' ')}</span>
         </div>
-        <div className="flex justify-between">
-          <span className="text-slate-500">Amount</span>
-          <span className="font-bold text-slate-800">LKR {parseFloat(payment.amount).toFixed(2)}</span>
+        <div className="flex justify-between items-center py-1">
+          <span className="text-muted-foreground">Amount</span>
+          <span className="font-bold text-foreground text-base">LKR {parseFloat(payment.amount).toFixed(2)}</span>
         </div>
-        <div className="flex justify-between">
-          <span className="text-slate-500">Method</span>
-          <span className="font-semibold text-slate-800 capitalize">{payment.payment_method}</span>
+        <div className="flex justify-between items-center py-1">
+          <span className="text-muted-foreground">Method</span>
+          <span className="font-semibold text-foreground capitalize">{payment.payment_method}</span>
         </div>
-        <div className="flex justify-between">
-          <span className="text-slate-500">Status</span>
-          <StatusBadge status={payment.status} />
+        <div className="flex justify-between items-center py-1">
+          <span className="text-muted-foreground">Status</span>
+          <Badge {...getPaymentBadgeProps(payment.status)} />
         </div>
-        <div className="flex justify-between">
-          <span className="text-slate-500">Date</span>
-          <span className="text-slate-700">{formatDate(payment.created_at)}</span>
+        <div className="flex justify-between items-center py-1">
+          <span className="text-muted-foreground">Date</span>
+          <span className="text-foreground font-medium">{formatDate(payment.created_at)}</span>
         </div>
         {payment.description && (
-          <div className="pt-3 border-t border-slate-100">
-            <p className="text-slate-500 text-xs mb-1">Description</p>
-            <p className="text-slate-700">{payment.description}</p>
+          <div className="pt-3 mt-1 border-t border-border">
+            <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Description</p>
+            <p className="text-foreground text-sm">{payment.description}</p>
           </div>
         )}
       </div>
 
-      <button
-        onClick={onClose}
-        className="w-full mt-6 py-2.5 rounded-lg text-sm font-semibold text-white"
-        style={{ backgroundColor: '#1E3A5F' }}
-      >
-        Close
-      </button>
-    </div>
-  </div>
-);
+      <div className="mt-8">
+        <Button variant="primary" className="w-full" onClick={onClose}>
+          Close Receipt
+        </Button>
+      </div>
+    </Modal>
+  );
+};
 
 const PaymentHistoryPage = () => {
   const user = useAuthStore((state) => state.user);
@@ -102,75 +110,75 @@ const PaymentHistoryPage = () => {
   });
 
   if (isLoading) return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-      <p className="text-sm text-slate-500">Loading payment history...</p>
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-3">
+      <Spinner size="lg" />
+      <p className="text-sm text-muted-foreground">Loading payment history...</p>
     </div>
   );
 
   if (isError) return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-      <p className="text-sm text-red-500">Failed to load payment history.</p>
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <Alert type="error" message="Failed to load payment history. Please try again." />
+      </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {selectedPayment && (
-        <ReceiptModal payment={selectedPayment} onClose={() => setSelectedPayment(null)} />
-      )}
+    <div className="min-h-screen bg-background">
+      <ReceiptModal payment={selectedPayment} onClose={() => setSelectedPayment(null)} />
 
       {/* Header */}
-      <div className="px-8 py-6" style={{ backgroundColor: '#1E3A5F' }}>
+      <div className="px-6 py-8 sm:px-8 bg-brand-deep">
         <div className="max-w-3xl mx-auto">
-          <p className="text-xs font-semibold uppercase tracking-widest mb-1 text-blue-300">
+          <p className="text-xs font-semibold uppercase tracking-widest mb-1 text-brand-deep-foreground/70">
             Patient Portal
           </p>
-          <h1 className="text-2xl font-bold text-white">Payment History</h1>
-          <p className="text-sm mt-1 text-slate-300">
+          <h1 className="text-2xl font-bold text-brand-deep-foreground">Payment History</h1>
+          <p className="text-sm mt-1 text-brand-deep-foreground/80">
             View all your transactions and download receipts
           </p>
-          <div className="mt-2 inline-block px-3 py-1 bg-orange-500 rounded-full">
-            <p className="text-xs font-semibold text-white">⚠️ Sandbox Mode — No real payments</p>
+          <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-urgent rounded-full">
+            <AlertTriangle size={14} className="text-urgent-foreground" />
+            <p className="text-xs font-bold text-urgent-foreground">Sandbox Mode — No real payments</p>
           </div>
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto px-6 py-8">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
         {!data || data.length === 0 ? (
-          <div className="bg-white rounded-xl border border-slate-100 p-12 text-center">
-            <p className="text-4xl mb-3">💳</p>
-            <p className="text-slate-500 text-sm">No payment history yet.</p>
+          <div className="flex flex-col items-center justify-center text-center py-14 px-4 rounded-xl border border-dashed border-border bg-secondary/40">
+            <CreditCard className="w-9 h-9 text-muted-foreground mb-3" strokeWidth={1.5} />
+            <p className="text-sm font-medium text-muted-foreground">No payment history yet.</p>
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-4">
             {data.map((payment) => (
               <div
                 key={payment.id}
                 onClick={() => setSelectedPayment(payment)}
-                className="bg-white rounded-xl border border-slate-100 shadow-sm p-5 cursor-pointer hover:shadow-md transition-shadow"
+                className="group bg-card rounded-xl border border-border shadow-sm p-5 cursor-pointer hover:border-primary/40 hover:shadow-md transition-all"
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="text-sm font-semibold text-slate-800 capitalize">
+                    <p className="text-base font-bold text-foreground capitalize">
                       {payment.payment_type.replace('_', ' ')}
                     </p>
                     {payment.description && (
-                      <p className="text-xs text-slate-500 mt-0.5">{payment.description}</p>
+                      <p className="text-sm text-muted-foreground mt-0.5">{payment.description}</p>
                     )}
-                    <p className="text-xs text-slate-400 mt-1">{formatDate(payment.created_at)}</p>
+                    <p className="text-xs text-muted-foreground/70 mt-1.5">{formatDate(payment.created_at)}</p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-lg font-bold text-slate-800">
+                  <div className="text-right flex flex-col items-end">
+                    <p className="text-lg font-bold text-foreground mb-2">
                       LKR {parseFloat(payment.amount).toFixed(2)}
                     </p>
-                    <div className="mt-1">
-                      <StatusBadge status={payment.status} />
-                    </div>
+                    <Badge {...getPaymentBadgeProps(payment.status)} />
                   </div>
                 </div>
-                <p className="text-xs text-blue-500 mt-3 hover:underline">
-                  View Receipt →
-                </p>
+                <div className="flex items-center gap-1.5 mt-4 text-xs font-semibold text-primary group-hover:text-primary/80 transition-colors">
+                  View Receipt <ArrowRight size={14} />
+                </div>
               </div>
             ))}
           </div>

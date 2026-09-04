@@ -20,6 +20,7 @@ import Card from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
 import Spinner from '../../components/common/Spinner';
 import Alert from '../../components/common/Alert';
+import Button from '../../components/common/Button';
 import useAuthStore from '../../store/authStore';
 
 // ─── Format date helper ───────────────────────────────────────────────────────
@@ -59,24 +60,24 @@ const canShowQR = (status, expiresAt) => {
 
 // ─── Single Medicine Item Row ─────────────────────────────────────────────────
 const MedicineRow = ({ item }) => (
-  <div className="flex items-start gap-3 py-3 border-b border-slate-50 last:border-0">
-    <div className="mt-0.5 p-1.5 bg-[#EBF3FB] rounded-lg">
-      <Pill size={14} className="text-[#2E75B6]" />
+  <div className="flex items-start gap-3 py-3 border-b border-border last:border-0">
+    <div className="mt-0.5 p-1.5 bg-primary/10 rounded-lg shrink-0">
+      <Pill size={14} className="text-primary" />
     </div>
     <div className="flex-1 min-w-0">
-      <p className="text-sm font-semibold text-slate-800">{item.medicine_name}</p>
-      <p className="text-xs text-slate-500 mt-0.5">
+      <p className="text-sm font-semibold text-foreground">{item.medicine_name}</p>
+      <p className="text-xs text-muted-foreground mt-0.5">
         {item.dosage} &nbsp;·&nbsp; {item.frequency} &nbsp;·&nbsp; {item.duration_days} days
       </p>
       {item.special_notes && (
-        <p className="text-xs text-[#2E75B6] mt-0.5 italic">{item.special_notes}</p>
+        <p className="text-xs text-primary mt-0.5 italic">{item.special_notes}</p>
       )}
     </div>
     <div className="text-right shrink-0">
-      <p className="text-xs text-slate-500">Qty prescribed</p>
-      <p className="text-sm font-semibold text-slate-700">{item.quantity_prescribed}</p>
+      <p className="text-xs text-muted-foreground">Qty prescribed</p>
+      <p className="text-sm font-semibold text-foreground">{item.quantity_prescribed}</p>
       {item.quantity_dispensed > 0 && (
-        <p className="text-xs text-green-600">{item.quantity_dispensed} dispensed</p>
+        <p className="text-xs text-success font-medium">{item.quantity_dispensed} dispensed</p>
       )}
     </div>
   </div>
@@ -95,80 +96,86 @@ const PrescriptionCard = ({ prescription }) => {
   const validItems = items.filter(i => i && i.medicine_name);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+    <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
 
       {/* ── Card Header ── */}
       <div
-        className="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-slate-50 transition-colors"
+        className="flex items-center justify-between px-5 sm:px-6 py-4 cursor-pointer hover:bg-secondary/50 transition-colors"
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex items-start gap-3">
-          <div className="mt-0.5 p-2 bg-[#EBF3FB] rounded-lg">
-            <ClipboardList size={16} className="text-[#1E3A5F]" />
+          <div className="mt-0.5 p-2 bg-primary/10 rounded-lg shrink-0">
+            <ClipboardList size={16} className="text-primary" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-slate-800">
+            <p className="text-sm font-semibold text-foreground">
               {prescription.doctor_name
                 ? `Dr. ${prescription.doctor_name}`
                 : 'Prescription'}
               {prescription.doctor_specialization && (
-                <span className="ml-2 text-xs font-normal text-[#2E75B6]">
+                <span className="ml-2 text-xs font-normal text-muted-foreground">
                   ({prescription.doctor_specialization})
                 </span>
               )}
             </p>
-            <div className="flex flex-wrap items-center gap-3 mt-1">
-              <span className="flex items-center gap-1 text-xs text-slate-500">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Calendar size={11} />
                 Issued: {formatDate(prescription.created_at)}
               </span>
               <span className={`flex items-center gap-1 text-xs ${
-                expired ? 'text-red-500' : days <= 7 ? 'text-orange-500' : 'text-slate-500'
+                expired ? 'text-destructive font-medium' : days !== null && days <= 7 ? 'text-urgent-foreground font-medium' : 'text-muted-foreground'
               }`}>
                 <Calendar size={11} />
                 Expires: {formatDate(prescription.expires_at)}
                 {!expired && days !== null && days <= 7 && (
-                  <span className="font-medium">({days}d left)</span>
+                  <span className="font-bold">({days}d left)</span>
                 )}
               </span>
             </div>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {validItems.length} medicine{validItems.length !== 1 ? 's' : ''}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-3 shrink-0">
-          <Badge status={badgeSt} />
-          {expanded
-            ? <ChevronUp size={16} className="text-slate-400" />
-            : <ChevronDown size={16} className="text-slate-400" />
-          }
+          <div className="hidden sm:block">
+            <Badge status={badgeSt} />
+          </div>
+          <div className="p-1 rounded-full bg-secondary text-muted-foreground">
+            {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </div>
         </div>
       </div>
 
       {/* ── Expanded Body ── */}
       {expanded && (
-        <div className="border-t border-slate-100">
+        <div className="border-t border-border">
+          
+          {/* Mobile Badge Fallback */}
+          <div className="sm:hidden px-5 pt-4 pb-1">
+            <Badge status={badgeSt} />
+          </div>
 
           {/* Notes */}
           {prescription.notes && (
-            <div className="px-6 pt-4">
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">
+            <div className="px-5 sm:px-6 pt-4">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
                 Doctor's Notes
               </p>
-              <p className="text-sm text-slate-600 bg-slate-50 rounded-lg px-4 py-3">
+              <p className="text-sm text-foreground bg-secondary/50 rounded-lg px-4 py-3 border border-border">
                 {prescription.notes}
               </p>
             </div>
           )}
 
           {/* Medicine list */}
-          <div className="px-6 pt-4">
-            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">
+          <div className="px-5 sm:px-6 pt-4">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
               Medicines
             </p>
             {validItems.length === 0 ? (
-              <p className="text-sm text-slate-400 py-2">No medicines listed.</p>
+              <p className="text-sm text-muted-foreground py-2">No medicines listed.</p>
             ) : (
               <div>
                 {validItems.map((item, idx) => (
@@ -180,28 +187,31 @@ const PrescriptionCard = ({ prescription }) => {
 
           {/* QR Code section — only for active and partially filled */}
           {showQRButton && (
-            <div className="px-6 py-4">
-              <button
+            <div className="px-5 sm:px-6 py-5">
+              <Button
+                variant={showQR ? "secondary" : "ghost"}
+                size="sm"
+                icon={<QrCode size={16} />}
                 onClick={() => setShowQR(!showQR)}
-                className="flex items-center gap-2 text-xs font-medium text-[#2E75B6] hover:text-[#1E3A5F] transition-colors"
               >
-                <QrCode size={14} />
                 {showQR ? 'Hide QR Code' : 'Show QR Code for Pharmacy'}
-              </button>
+              </Button>
 
               {showQR && prescription.qr_code_value && (
-                <div className="mt-4 flex flex-col items-center gap-3 p-4 bg-slate-50 rounded-xl">
-                  <QRCodeSVG
-                    value={`http://localhost:5173/pharmacy/${prescription.qr_code_value}`}
-                    size={180}
-                    bgColor="#FFFFFF"
-                    fgColor="#1E3A5F"
-                    level="M"
-                  />
-                  <p className="text-xs font-mono text-slate-500">
+                <div className="mt-4 flex flex-col items-center gap-3 p-5 bg-secondary/50 rounded-xl border border-border">
+                  <div className="bg-white p-2 rounded-lg shadow-sm">
+                    <QRCodeSVG
+                      value={`http://localhost:5173/pharmacy/${prescription.qr_code_value}`}
+                      size={180}
+                      bgColor="#FFFFFF"
+                      fgColor="#000000"
+                      level="M"
+                    />
+                  </div>
+                  <p className="text-xs font-mono font-bold text-foreground bg-white px-3 py-1 rounded-md border border-border shadow-sm">
                     {prescription.qr_code_value}
                   </p>
-                  <p className="text-xs text-slate-400 text-center">
+                  <p className="text-xs text-muted-foreground text-center max-w-xs">
                     Show this QR code to the pharmacist for dispensing
                   </p>
                 </div>
@@ -233,10 +243,10 @@ const PrescriptionsPage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center flex flex-col items-center gap-3">
           <Spinner size="lg" />
-          <p className="mt-4 text-sm text-slate-500">Loading prescriptions...</p>
+          <p className="text-sm text-muted-foreground">Loading prescriptions...</p>
         </div>
       </div>
     );
@@ -244,7 +254,7 @@ const PrescriptionsPage = () => {
 
   if (isError) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <Alert type="error" message={error?.message || 'Failed to load prescriptions.'} />
         </div>
@@ -256,49 +266,48 @@ const PrescriptionsPage = () => {
   const others = prescriptions.filter(p =>  isExpired(p.expires_at) || p.status === 'completed');
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-background">
 
       {/* ── Page Header ── */}
-      <div className="bg-[#1E3A5F] text-white px-6 py-8">
-        <div className="max-w-3xl mx-auto">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold">My Prescriptions</h1>
-              <p className="text-blue-200 text-sm mt-1">
-                Click any prescription to view medicines and QR code
-              </p>
+      <div className="bg-brand-deep px-6 py-8 sm:px-8">
+        <div className="max-w-3xl mx-auto flex items-center justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest mb-1 text-brand-deep-foreground/70">
+              Patient Portal
+            </p>
+            <h1 className="text-2xl font-bold text-brand-deep-foreground">My Prescriptions</h1>
+            <p className="text-brand-deep-foreground/80 text-sm mt-1">
+              Click any prescription to view medicines and QR code
+            </p>
+          </div>
+          <div className="hidden sm:flex gap-3">
+            <div className="text-center bg-white/10 backdrop-blur-sm rounded-xl px-5 py-2.5 border border-white/5">
+              <p className="text-xl font-bold text-brand-deep-foreground">{active.length}</p>
+              <p className="text-xs font-medium text-brand-deep-foreground/70 uppercase tracking-wide">Active</p>
             </div>
-            <div className="hidden sm:flex gap-4">
-              <div className="text-center bg-white/10 rounded-xl px-4 py-2">
-                <p className="text-xl font-bold">{active.length}</p>
-                <p className="text-xs text-blue-200">Active</p>
-              </div>
-              <div className="text-center bg-white/10 rounded-xl px-4 py-2">
-                <p className="text-xl font-bold">{others.length}</p>
-                <p className="text-xs text-blue-200">Past</p>
-              </div>
+            <div className="text-center bg-white/10 backdrop-blur-sm rounded-xl px-5 py-2.5 border border-white/5">
+              <p className="text-xl font-bold text-brand-deep-foreground">{others.length}</p>
+              <p className="text-xs font-medium text-brand-deep-foreground/70 uppercase tracking-wide">Past</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* ── Page Body ── */}
-      <div className="max-w-3xl mx-auto px-6 py-8 space-y-8">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-8">
 
         {prescriptions.length === 0 && (
-          <Card>
-            <div className="text-center py-8">
-              <Stethoscope size={32} className="mx-auto text-slate-300 mb-3" />
-              <p className="text-sm text-slate-400">
-                No prescriptions found. Prescriptions issued by your doctor will appear here.
-              </p>
-            </div>
-          </Card>
+          <div className="flex flex-col items-center justify-center text-center py-14 px-4 rounded-xl border border-dashed border-border bg-secondary/40">
+            <Stethoscope size={36} className="text-muted-foreground/50 mb-3" />
+            <p className="text-sm font-medium text-muted-foreground">
+              No prescriptions found. Prescriptions issued by your doctor will appear here.
+            </p>
+          </div>
         )}
 
         {active.length > 0 && (
           <div>
-            <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">
+            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3 px-1">
               Active Prescriptions
             </h2>
             <div className="space-y-4">
@@ -309,7 +318,7 @@ const PrescriptionsPage = () => {
 
         {others.length > 0 && (
           <div>
-            <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">
+            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3 px-1">
               Past Prescriptions
             </h2>
             <div className="space-y-4">

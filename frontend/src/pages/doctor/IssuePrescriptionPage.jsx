@@ -14,11 +14,11 @@ import { useLocation } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { AlertTriangle, User } from 'lucide-react';
 import { createPrescription } from '../../services/prescription.service';
-import Button from '../../components/ui/Button';
-import Input from '../../components/ui/Input';
-import Card from '../../components/ui/Card';
-import Alert from '../../components/ui/Alert';
-import Badge from '../../components/ui/Badge';
+import Button from "../../components/common/Button";
+import Input from "../../components/common/Input";
+import Card from "../../components/common/Card";
+import Alert from "../../components/common/Alert";
+import Badge from "../../components/common/Badge";
 import { searchMedicines } from '../../utils/medicineSearch';
 import { checkDrugInteractions } from '../../services/interaction.service';
 
