@@ -6,8 +6,11 @@
  */
 
 const doctorRepository = require('./doctor.repository');
+const { supabase } = require('../../config/supabase');
 
 const PRIORITY_LEVELS = ['routine', 'urgent', 'stat'];
+
+const PHOTO_BUCKET = 'doctor-photos';
 
 const getDoctorProfile = async (id) => {
   const doctor = await doctorRepository.getDoctorById(id);
@@ -24,23 +27,88 @@ const updateDoctorProfile = async (id, data) => {
   return updated;
 };
 
+/**
+ * Uploads a new profile photo for a doctor to Supabase Storage.
+ */
+const uploadDoctorPhoto = async (doctorId, file) => {
+  if (!file) {
+    const error = new Error('No photo file was provided');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const existing = await doctorRepository.getDoctorById(doctorId);
+
+  if (!existing) {
+    const error = new Error('Doctor not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const storagePath = `${doctorId}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(PHOTO_BUCKET)
+    .upload(storagePath, file.buffer, {
+      contentType: file.mimetype,
+      upsert: true,
+    });
+
+  if (uploadError) {
+    console.error(
+      'Supabase Storage doctor photo upload error:',
+      uploadError
+    );
+
+    const error = new Error(
+      'Failed to upload photo to storage'
+    );
+
+    error.statusCode = 500;
+    throw error;
+  }
+
+  const { data: publicUrlData } = supabase.storage
+    .from(PHOTO_BUCKET)
+    .getPublicUrl(storagePath);
+
+  const photoUrl =
+    `${publicUrlData.publicUrl}?updated=${Date.now()}`;
+
+  return await doctorRepository.updateDoctorPhoto(
+    doctorId,
+    photoUrl
+  );
+};
+
 const getDoctorAvailability = async (doctorId) => {
-  const availability = await doctorRepository.getDoctorAvailability(doctorId);
+  const availability =
+    await doctorRepository.getDoctorAvailability(doctorId);
+
   return availability;
 };
 
 const updateDoctorAvailability = async (doctorId, slots) => {
-  const updated = await doctorRepository.updateDoctorAvailability(doctorId, slots);
+  const updated =
+    await doctorRepository.updateDoctorAvailability(
+      doctorId,
+      slots
+    );
+
   return updated;
 };
 
 const getTodayAppointments = async (doctorId) => {
-  const appointments = await doctorRepository.getTodayAppointments(doctorId);
+  const appointments =
+    await doctorRepository.getTodayAppointments(doctorId);
+
   return appointments;
 };
 
 const getDoctorDashboardStats = async (doctorId) => {
-  const stats = await doctorRepository.getDoctorDashboardStats(doctorId);
+  const stats =
+    await doctorRepository.getDoctorDashboardStats(doctorId);
+
   return stats;
 };
 
@@ -51,7 +119,10 @@ const getDoctorDashboardStats = async (doctorId) => {
  * @returns {Promise<Array>} List of matching doctors
  */
 const searchDoctors = async (specialty, hospitalName) => {
-  return await doctorRepository.searchDoctors(specialty, hospitalName);
+  return await doctorRepository.searchDoctors(
+    specialty,
+    hospitalName
+  );
 };
 
 /**
@@ -60,13 +131,19 @@ const searchDoctors = async (specialty, hospitalName) => {
  * @returns {Promise<Array>} List of next 3 available slot times
  */
 const getAvailableSlots = async (doctorId) => {
-  const doctor = await doctorRepository.getDoctorById(doctorId);
+  const doctor =
+    await doctorRepository.getDoctorById(doctorId);
+
   if (!doctor) {
     const error = new Error('Doctor not found');
     error.statusCode = 404;
     throw error;
   }
-  return await doctorRepository.getAvailableSlots(doctorId, 3);
+
+  return await doctorRepository.getAvailableSlots(
+    doctorId,
+    3
+  );
 };
 
 /**
@@ -77,25 +154,53 @@ const getAvailableSlots = async (doctorId) => {
  * @returns {Promise<Object>} The created lab test request
  */
 const orderLabTest = async (data) => {
-  const { patientId, doctorId, laboratoryId, testType } = data;
+  const {
+    patientId,
+    doctorId,
+    laboratoryId,
+    testType
+  } = data;
 
-  if (!patientId || !doctorId || !laboratoryId || !testType || !testType.trim()) {
-    const error = new Error('Validation failed: patientId, doctorId, laboratoryId and testType are required');
+  if (
+    !patientId ||
+    !doctorId ||
+    !laboratoryId ||
+    !testType ||
+    !testType.trim()
+  ) {
+    const error = new Error(
+      'Validation failed: patientId, doctorId, laboratoryId and testType are required'
+    );
+
     error.statusCode = 400;
     throw error;
   }
 
-  const priority = (data.priority || 'routine').toLowerCase();
+  const priority =
+    (data.priority || 'routine').toLowerCase();
+
   if (!PRIORITY_LEVELS.includes(priority)) {
-    const error = new Error(`Validation failed: priority must be one of ${PRIORITY_LEVELS.join(', ')}`);
+    const error = new Error(
+      `Validation failed: priority must be one of ${PRIORITY_LEVELS.join(', ')}`
+    );
+
     error.statusCode = 400;
     throw error;
   }
 
-  const laboratories = await doctorRepository.getActiveLaboratories();
-  const laboratoryExists = laboratories.some((lab) => lab.id === laboratoryId);
+  const laboratories =
+    await doctorRepository.getActiveLaboratories();
+
+  const laboratoryExists =
+    laboratories.some(
+      lab => lab.id === laboratoryId
+    );
+
   if (!laboratoryExists) {
-    const error = new Error('Selected laboratory was not found or is not currently active');
+    const error = new Error(
+      'Selected laboratory was not found or is not currently active'
+    );
+
     error.statusCode = 404;
     throw error;
   }
@@ -125,7 +230,9 @@ const getActiveLaboratories = async () => {
  * @returns {Promise<Array>} List of unreviewed reports
  */
 const getUnreviewedLabReports = async (doctorId) => {
-  return await doctorRepository.getUnreviewedLabReports(doctorId);
+  return await doctorRepository.getUnreviewedLabReports(
+    doctorId
+  );
 };
 
 /**
@@ -137,22 +244,35 @@ const getUnreviewedLabReports = async (doctorId) => {
  */
 const reviewLabReport = async (reportId, remark) => {
   if (!reportId) {
-    const error = new Error('Validation failed: reportId is required');
-    error.statusCode = 400;
-    throw error;
-  }
-  if (!remark || !remark.trim()) {
-    const error = new Error('Validation failed: a remark is required to mark a report as reviewed');
+    const error = new Error(
+      'Validation failed: reportId is required'
+    );
+
     error.statusCode = 400;
     throw error;
   }
 
-  const updated = await doctorRepository.reviewLabReport(reportId, remark.trim());
+  if (!remark || !remark.trim()) {
+    const error = new Error(
+      'Validation failed: a remark is required to mark a report as reviewed'
+    );
+
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const updated =
+    await doctorRepository.reviewLabReport(
+      reportId,
+      remark.trim()
+    );
+
   if (!updated) {
     const error = new Error('Lab report not found');
     error.statusCode = 404;
     throw error;
   }
+
   return updated;
 };
 
@@ -162,6 +282,7 @@ module.exports = {
   searchDoctors,
   getAvailableSlots,
   updateDoctorProfile,
+  uploadDoctorPhoto,
   getDoctorAvailability,
   updateDoctorAvailability,
   getTodayAppointments,

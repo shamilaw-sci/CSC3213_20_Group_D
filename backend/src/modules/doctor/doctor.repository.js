@@ -45,6 +45,25 @@ const updateDoctor = async (id, data) => {
   return result.rows[0] || null;
 };
 
+/**
+ * Updates the profile photo URL for a doctor.
+ * @param {string} id - Doctor UUID
+ * @param {string} photoUrl - Public Supabase Storage photo URL
+ * @returns {Promise<Object|null>} Updated doctor profile
+ */
+const updateDoctorPhoto = async (id, photoUrl) => {
+  const result = await pool.query(
+    `UPDATE doctors
+     SET photo_url = $1,
+         updated_at = NOW()
+     WHERE id = $2
+     RETURNING *`,
+    [photoUrl, id]
+  );
+
+  return result.rows[0] || null;
+};
+
 const getAllDoctors = async () => {
   const result = await pool.query(
     `SELECT d.*, u.email, u.phone
@@ -71,14 +90,23 @@ const updateDoctorAvailability = async (doctorId, slots) => {
     `DELETE FROM doctor_availability WHERE doctor_id = $1`,
     [doctorId]
   );
+
   for (const slot of slots) {
     await pool.query(
       `INSERT INTO doctor_availability 
        (doctor_id, day_of_week, start_time, end_time, slot_duration_minutes, is_active)
        VALUES ($1, $2, $3, $4, $5, $6)`,
-      [doctorId, slot.day_of_week, slot.start_time, slot.end_time, slot.slot_duration_minutes, slot.is_active ?? true]
+      [
+        doctorId,
+        slot.day_of_week,
+        slot.start_time,
+        slot.end_time,
+        slot.slot_duration_minutes,
+        slot.is_active ?? true
+      ]
     );
   }
+
   return getDoctorAvailability(doctorId);
 };
 
@@ -100,6 +128,7 @@ const getTodayAppointments = async (doctorId) => {
      ORDER BY a.scheduled_at ASC`,
     [doctorId]
   );
+
   return result.rows;
 };
 
@@ -192,6 +221,7 @@ const getAvailableSlots = async (doctorId, limit = 3) => {
      ORDER BY day_of_week ASC`,
     [doctorId]
   );
+
   const availability = availabilityResult.rows;
   if (availability.length === 0) return [];
 
@@ -203,7 +233,10 @@ const getAvailableSlots = async (doctorId, limit = 3) => {
      ORDER BY scheduled_at ASC`,
     [doctorId]
   );
-  const bookedTimes = bookedResult.rows.map(r => new Date(r.scheduled_at).toISOString());
+
+  const bookedTimes = bookedResult.rows.map(r =>
+    new Date(r.scheduled_at).toISOString()
+  );
 
   const slots = [];
   const now = new Date();
@@ -211,30 +244,54 @@ const getAvailableSlots = async (doctorId, limit = 3) => {
   for (let dayOffset = 0; dayOffset < 14 && slots.length < limit; dayOffset++) {
     const date = new Date(now);
     date.setDate(date.getDate() + dayOffset);
-    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+
+    const dayNames = [
+      'sunday',
+      'monday',
+      'tuesday',
+      'wednesday',
+      'thursday',
+      'friday',
+      'saturday'
+    ];
+
     const dayOfWeek = dayNames[date.getDay()];
-    const dayAvailability = availability.find(a => a.day_of_week === dayOfWeek);
+    const dayAvailability = availability.find(
+      a => a.day_of_week === dayOfWeek
+    );
+
     if (!dayAvailability) continue;
 
-    const [startHour, startMin] = dayAvailability.start_time.split(':').map(Number);
-    const [endHour, endMin]     = dayAvailability.end_time.split(':').map(Number);
-    const slotDuration          = dayAvailability.slot_duration_minutes || 30;
+    const [startHour, startMin] =
+      dayAvailability.start_time.split(':').map(Number);
+
+    const [endHour, endMin] =
+      dayAvailability.end_time.split(':').map(Number);
+
+    const slotDuration =
+      dayAvailability.slot_duration_minutes || 30;
 
     let slotTime = new Date(date);
     slotTime.setHours(startHour, startMin, 0, 0);
+
     const endTime = new Date(date);
     endTime.setHours(endHour, endMin, 0, 0);
 
     while (slotTime < endTime && slots.length < limit) {
       if (slotTime > now) {
         const slotISO = slotTime.toISOString();
+
         if (!bookedTimes.includes(slotISO)) {
           slots.push(slotISO);
         }
       }
-      slotTime = new Date(slotTime.getTime() + slotDuration * 60000);
+
+      slotTime = new Date(
+        slotTime.getTime() + slotDuration * 60000
+      );
     }
   }
+
   return slots;
 };
 
@@ -244,14 +301,32 @@ const getAvailableSlots = async (doctorId, limit = 3) => {
  * @returns {Promise<Object>} The created lab test request row
  */
 const createLabTestRequest = async (data) => {
-  const { patientId, doctorId, appointmentId, laboratoryId, testType, priority, notes } = data;
+  const {
+    patientId,
+    doctorId,
+    appointmentId,
+    laboratoryId,
+    testType,
+    priority,
+    notes
+  } = data;
+
   const result = await pool.query(
     `INSERT INTO lab_test_requests
        (patient_id, doctor_id, appointment_id, laboratory_id, test_type, priority, status, notes)
      VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7)
      RETURNING *`,
-    [patientId, doctorId, appointmentId || null, laboratoryId, testType, priority, notes || null]
+    [
+      patientId,
+      doctorId,
+      appointmentId || null,
+      laboratoryId,
+      testType,
+      priority,
+      notes || null
+    ]
   );
+
   return result.rows[0];
 };
 
@@ -266,6 +341,7 @@ const getActiveLaboratories = async () => {
      WHERE is_active = true AND is_verified = true
      ORDER BY name ASC`
   );
+
   return result.rows;
 };
 
@@ -289,6 +365,7 @@ const getUnreviewedLabReports = async (doctorId) => {
      ORDER BY lr.created_at ASC`,
     [doctorId]
   );
+
   return result.rows;
 };
 
@@ -308,6 +385,7 @@ const reviewLabReport = async (reportId, remark) => {
      RETURNING *`,
     [remark, reportId]
   );
+
   return result.rows[0] || null;
 };
 
@@ -315,6 +393,7 @@ module.exports = {
   getDoctorById,
   getDoctorByUserId,
   updateDoctor,
+  updateDoctorPhoto,
   getAllDoctors,
   searchDoctors,
   getAvailableSlots,

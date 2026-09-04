@@ -164,10 +164,18 @@ const DoctorDashboard = () => {
     <div className="min-h-screen bg-muted/30 p-6">
       {/* Header */}
       <div className="mb-8 flex items-start justify-between bg-brand-deep rounded-xl shadow-md p-6">
-        <div className="flex items-center gap-4">
-          <div className="hidden sm:flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white/10 border border-white/20 text-brand-deep-foreground font-bold text-lg">
-            {initials}
-          </div>
+          <div className="flex items-center gap-4">
+            {doctor?.photo_url ? (
+    <img
+      src={doctor.photo_url}
+      alt="Doctor profile"
+      className="hidden sm:block h-14 w-14 shrink-0 rounded-full object-cover border border-white/20 shadow-sm"
+    />
+  ) : (
+    <div className="hidden sm:flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white/10 border border-white/20 text-brand-deep-foreground font-bold text-lg">
+      {initials}
+    </div>
+  )}
           <div>
             <h1 className="text-2xl font-bold text-brand-deep-foreground">
               Welcome, {doctor?.full_name || 'Doctor'}
