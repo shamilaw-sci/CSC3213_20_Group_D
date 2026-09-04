@@ -19,7 +19,9 @@ import {
   AlertTriangle, 
   BarChart2, 
   QrCode, 
-  Settings 
+  Settings,
+  Calendar,
+  Activity
 } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
@@ -87,85 +89,115 @@ const AdminOverviewPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-[80vh] flex flex-col items-center justify-center gap-4 bg-background">
         <Spinner size="lg" />
+        <p className="text-sm font-semibold text-muted-foreground animate-pulse">Loading dashboard...</p>
       </div>
     );
   }
 
   const maxCount = roleCounts.length > 0 ? Math.max(...roleCounts.map((r) => r.count)) : 1;
 
+  // Added context-aware icons to the summary data for better visual scanning
   const cards = summary ? [
-    { label: 'Total Patients', value: summary.totalPatients },
-    { label: 'Appointments This Month', value: summary.appointmentsThisMonth },
-    { label: 'Prescriptions Issued', value: summary.prescriptionsIssued },
-    { label: 'Emergency Overrides', value: summary.emergencyOverrides },
+    { label: 'Total Patients', value: summary.totalPatients, icon: Users },
+    { label: 'Appointments This Month', value: summary.appointmentsThisMonth, icon: Calendar },
+    { label: 'Prescriptions Issued', value: summary.prescriptionsIssued, icon: FileText },
+    { label: 'Emergency Overrides', value: summary.emergencyOverrides, icon: Activity },
   ] : [];
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Admin overview</h1>
-        <p className="text-sm font-medium text-muted-foreground mt-1">A snapshot of the system and quick access to every admin tool.</p>
+    <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8 space-y-8">
+      
+      {/* Page Header */}
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Admin Overview</h1>
+        <p className="text-sm sm:text-base font-medium text-muted-foreground mt-1.5">
+          A snapshot of the system and quick access to every admin tool.
+        </p>
       </div>
 
       {error && (
-        <div className="mb-6">
-          <Alert type="error" message={error} />
-        </div>
+        <Alert type="error" message={error} />
       )}
 
       {/* Stat cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {cards.map((card) => (
-          <Card key={card.label} className="p-5 flex flex-col justify-between">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{card.label}</p>
-            <p className="text-3xl font-bold text-foreground mt-2">{card.value.toLocaleString()}</p>
-          </Card>
-        ))}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        {cards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <Card key={card.label} className="h-full">
+              <div className="flex flex-col h-full justify-between">
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    {card.label}
+                  </p>
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <Icon className="w-5 h-5 text-primary" strokeWidth={2} />
+                  </div>
+                </div>
+                <p className="text-3xl sm:text-4xl font-bold text-foreground">
+                  {card.value.toLocaleString()}
+                </p>
+              </div>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Bar chart */}
-      <Card className="mb-6">
-        <h2 className="text-sm font-bold text-foreground mb-5 uppercase tracking-wide">Users by role</h2>
-        <div className="flex flex-col gap-4">
-          {roleCounts.map((r) => (
-            <div key={r.role} className="flex items-center gap-4">
-              <span className="w-32 text-sm font-medium text-foreground shrink-0">{ROLE_LABELS[r.role] || r.role}</span>
-              <div className="flex-1 bg-secondary rounded-full h-7 overflow-hidden border border-border">
-                <div
-                  className="h-full bg-primary rounded-full flex items-center justify-end pr-3 transition-all duration-500 ease-out"
-                  style={{ width: `${Math.max((r.count / maxCount) * 100, 8)}%` }}
-                >
-                  <span className="text-primary-foreground text-xs font-bold">{r.count}</span>
+      <Card title="Users by Role">
+        {roleCounts.length === 0 ? (
+          <div className="py-8 text-center text-sm font-medium text-muted-foreground">
+            No user role data available.
+          </div>
+        ) : (
+          <div className="flex flex-col gap-5 mt-2">
+            {roleCounts.map((r) => (
+              <div key={r.role} className="flex items-center gap-3 sm:gap-4">
+                <span className="w-28 sm:w-36 text-sm font-semibold text-foreground shrink-0 truncate" title={ROLE_LABELS[r.role] || r.role}>
+                  {ROLE_LABELS[r.role] || r.role}
+                </span>
+                <div className="flex-1 bg-secondary rounded-full h-8 sm:h-9 overflow-hidden border border-border">
+                  <div
+                    className="h-full bg-primary rounded-full flex items-center justify-end pr-4 transition-all duration-700 ease-out min-w-[2.5rem]"
+                    style={{ width: `${Math.max((r.count / maxCount) * 100, 8)}%` }}
+                  >
+                    <span className="text-primary-foreground text-xs sm:text-sm font-bold">
+                      {r.count}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </Card>
 
       {/* Quick links */}
       <div>
-        <h2 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wide">Quick access</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <h2 className="text-lg font-bold text-foreground mb-5">Quick Access</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {QUICK_LINKS.map((link) => {
             const Icon = link.icon;
             return (
               <button
                 key={link.to}
                 onClick={() => navigate(link.to)}
-                className="bg-card border border-border rounded-xl shadow-sm p-4 flex items-center gap-4 text-left hover:shadow-md hover:border-primary/40 transition-all focus:outline-none focus:ring-2 focus:ring-primary"
+                className="bg-card border border-border rounded-xl shadow-sm p-4 flex items-center gap-4 text-left group hover:shadow-md hover:border-primary/40 hover:bg-secondary/40 transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
               >
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <Icon className="w-5 h-5 text-primary" strokeWidth={2} />
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                  <Icon className="w-6 h-6 text-primary" strokeWidth={2} />
                 </div>
-                <span className="text-sm font-bold text-foreground">{link.label}</span>
+                <span className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
+                  {link.label}
+                </span>
               </button>
             );
           })}
         </div>
       </div>
+
     </div>
   );
 };

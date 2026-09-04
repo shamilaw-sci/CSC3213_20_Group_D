@@ -45,10 +45,15 @@ const register = async (email, phone, password, role, profileData) => {
 
     const emailResult = await sendOtpEmail(email, otpCode);
     if (!emailResult.success) {
-      console.error(`[OTP] Failed to email ${email}, falling back to console log:`, emailResult.error);
+      console.error(`[OTP] Failed to email ${email}:`, emailResult.error);
     }
-    // Dev-convenience fallback: always log too, in case RESEND_API_KEY isn't configured locally
-    console.log(`\n=== OTP CODE FOR ${email} ===\n${otpCode}\n(Expires at ${otpExpiresAt.toISOString()})\n=========================================\n`);
+
+    // Dev-convenience fallback ONLY - never log OTP codes outside of
+    // development, since production logs may be visible to hosting
+    // providers, log aggregators, or teammates who shouldn't see them.
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`\n=== OTP CODE FOR ${email} ===\n${otpCode}\n(Expires at ${otpExpiresAt.toISOString()})\n=========================================\n`);
+    }
 
     return { email, otpExpiresAt };
 };
@@ -74,9 +79,13 @@ const resendOtp = async (email) => {
 
     const emailResult = await sendOtpEmail(email, otpCode);
     if (!emailResult.success) {
-      console.error(`[OTP] Failed to email ${email}, falling back to console log:`, emailResult.error);
+      console.error(`[OTP] Failed to email ${email}:`, emailResult.error);
     }
-    console.log(`\n=== RESENT OTP CODE FOR ${email} ===\n${otpCode}\n(Expires at ${otpExpiresAt.toISOString()})\n=========================================\n`);
+
+    // Dev-convenience fallback ONLY - see note in register() above.
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`\n=== RESENT OTP CODE FOR ${email} ===\n${otpCode}\n(Expires at ${otpExpiresAt.toISOString()})\n=========================================\n`);
+    }
 
     return { email, otpExpiresAt };
 };
