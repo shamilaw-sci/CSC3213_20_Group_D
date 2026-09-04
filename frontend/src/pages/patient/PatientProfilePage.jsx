@@ -10,6 +10,7 @@
  * AI Vaccination Bulk Card Scanning added in CARE4U-154.
  * Smart Health Awareness Feed added in CARE4U-280 (Epic 8.13).
  * Privacy & Consent Controls added in CARE4U-284 (Epic 8.12).
+ * UI Refactor: Edit actions isolated to Edit Mode.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -540,15 +541,17 @@ const PatientProfilePage = () => {
                   <Spinner size="sm" color="text-white" />
                 </div>
               )}
-              <button
-                type="button"
-                onClick={handlePhotoButtonClick}
-                disabled={uploadPhotoMutation.isPending}
-                title="Change profile photo"
-                className="absolute -bottom-0.5 -right-0.5 p-2 bg-card rounded-full shadow-sm border border-border hover:bg-secondary transition-colors disabled:opacity-50"
-              >
-                <Camera size={14} className="text-primary" />
-              </button>
+              {isEditing && (
+                <button
+                  type="button"
+                  onClick={handlePhotoButtonClick}
+                  disabled={uploadPhotoMutation.isPending}
+                  title="Change profile photo"
+                  className="absolute -bottom-0.5 -right-0.5 p-2 bg-card rounded-full shadow-sm border border-border hover:bg-secondary transition-colors disabled:opacity-50"
+                >
+                  <Camera size={14} className="text-primary" />
+                </button>
+              )}
               <input ref={photoInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handlePhotoFileChange} />
             </div>
             <div>
@@ -571,247 +574,31 @@ const PatientProfilePage = () => {
       </div>
 
       <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
-        {/* ── VIEW MODE ── */}
-        {!isEditing && (
-          <>
-            {/* ── Smart Health Feed Widget (CARE4U-280) ── */}
-            <HealthAwarenessFeed patientAllergies={allergies} />
+        
+        {!isEditing && <HealthAwarenessFeed patientAllergies={allergies} />}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card title="Personal Information">
-                <div className="pt-3 space-y-4">
-                  <ProfileField icon={User} label="Full Name" value={patient?.full_name} />
-                  <ProfileField icon={Droplets} label="Blood Group" value={patient?.blood_group} />
-                  <ProfileField icon={Calendar} label="Date of Birth" value={formatDate(patient?.date_of_birth)} />
-                  <ProfileField icon={User} label="Gender" value={capitalise(patient?.gender)} />
-                  <ProfileField icon={User} label="NIC" value={patient?.nic} />
-                </div>
-              </Card>
+        {/* ── View vs Edit Mode for Personal Info ── */}
+        {!isEditing ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card title="Personal Information">
+              <div className="pt-3 space-y-4">
+                <ProfileField icon={User} label="Full Name" value={patient?.full_name} />
+                <ProfileField icon={Droplets} label="Blood Group" value={patient?.blood_group} />
+                <ProfileField icon={Calendar} label="Date of Birth" value={formatDate(patient?.date_of_birth)} />
+                <ProfileField icon={User} label="Gender" value={capitalise(patient?.gender)} />
+                <ProfileField icon={User} label="NIC" value={patient?.nic} />
+              </div>
+            </Card>
 
-              <Card title="Emergency Contact">
-                <div className="pt-3 space-y-4">
-                  <ProfileField icon={User} label="Contact Name" value={patient?.emergency_contact_name} />
-                  <ProfileField icon={Phone} label="Contact Phone" value={patient?.emergency_contact_phone} />
-                  <ProfileField icon={User} label="Relationship" value={capitalise(patient?.emergency_contact_relationship)} />
-                </div>
-              </Card>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* ── Chronic Conditions ── */}
-              <Card title="Chronic Conditions">
-                <div className="pt-3">
-                  {conditionsLoading ? (
-                     <div className="py-4 flex justify-center"><Spinner size="sm" /></div>
-                  ) : conditions.length === 0 ? (
-                    <div className="text-center py-6">
-                      <div className="inline-flex p-3 rounded-full bg-secondary mb-2">
-                        <AlertTriangle className="text-muted-foreground" size={24} />
-                      </div>
-                      <p className="text-sm text-muted-foreground">No conditions recorded.</p>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col gap-3 pt-1">
-                      {conditions.map((condition) => (
-                        <div
-                          key={condition.id}
-                          className="group flex items-start justify-between p-4 rounded-xl border border-border bg-card shadow-sm transition-all hover:border-slate-300"
-                        >
-                          <div>
-                            <p className="text-sm font-semibold text-foreground">
-                              {condition.condition}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Diagnosed: {formatDate(condition.diagnosed_at)}
-                            </p>
-                            {condition.notes && (
-                              <p className="text-xs text-muted-foreground mt-0.5">{condition.notes}</p>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-3 shrink-0">
-                            {condition.is_priority && <SeverityBadge severity="priority" />}
-                            <button 
-                              onClick={() => promptDeleteCondition(condition)}
-                              className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
-                              title="Remove condition"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  
-                  <div className="mt-5 flex justify-center">
-                    <Button variant="outline" onClick={() => setIsAddConditionModalOpen(true)} className="w-full text-primary border-primary/20 hover:bg-primary/5">
-                      <Plus size={16} className="mr-2" /> Add Condition
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-
-              {/* ── Known Allergies ── */}
-              <Card title="Known Allergies">
-                <div className="pt-3">
-                  {allergiesLoading ? (
-                     <div className="py-4 flex justify-center"><Spinner size="sm" /></div>
-                  ) : allergies.length === 0 ? (
-                    <div className="text-center py-6">
-                      <div className="inline-flex p-3 rounded-full bg-secondary mb-2">
-                        <AlertTriangle className="text-muted-foreground" size={24} />
-                      </div>
-                      <p className="text-sm text-muted-foreground">No allergies recorded.</p>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col gap-3 pt-1">
-                      {sortedAllergies.map((allergy) => (
-                        <div 
-                          key={allergy.id} 
-                          className="group flex items-start justify-between p-4 rounded-xl border border-border bg-card shadow-sm transition-all hover:border-slate-300"
-                        >
-                          <div>
-                            <p className="text-sm font-semibold text-foreground">{allergy.allergen}</p>
-                            {allergy.notes && <p className="text-xs text-muted-foreground mt-1">{allergy.notes}</p>}
-                          </div>
-                          <div className="flex items-center gap-3 shrink-0">
-                            <SeverityBadge severity={allergy.severity} />
-                            <button 
-                              onClick={() => promptDeleteAllergy(allergy)}
-                              className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
-                              title="Remove allergy"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  
-                  <div className="mt-5 flex justify-center">
-                    <Button variant="outline" onClick={() => { setAllergySuggestions(searchAllergens('')); setIsAddAllergyModalOpen(true); }} className="w-full text-primary border-primary/20 hover:bg-primary/5">
-                      <Plus size={16} className="mr-2" /> Add Allergy
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            </div>
-
-            {/* ── Vaccination Records (CARE4U-148) ── */}
-            <div className="mb-6">
-              <Card title={<span className="flex items-center gap-2"><Syringe size={18} className="text-primary" /> Vaccination Records</span>}>
-                <div className="pt-3">
-                  {vaccinationsLoading ? (
-                     <div className="py-4 flex justify-center"><Spinner size="sm" /></div>
-                  ) : vaccinations.length === 0 ? (
-                    <div className="text-center py-6">
-                      <div className="inline-flex p-3 rounded-full bg-secondary mb-2">
-                        <Syringe className="text-muted-foreground" size={24} />
-                      </div>
-                      <p className="text-sm text-muted-foreground">No vaccination records found.</p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                      {vaccinations.map((vaccine) => (
-                        <div
-                          key={vaccine.id}
-                          className="group relative flex flex-col p-4 rounded-xl border border-border bg-card shadow-sm transition-all hover:border-slate-300"
-                        >
-                          <div className="flex justify-between items-start pr-8">
-                            <div>
-                              <p className="text-sm font-bold text-primary">{vaccine.vaccine_name}</p>
-                              <p className="text-xs text-muted-foreground mt-1 font-medium">
-                                Given: <span className="text-foreground">{formatDate(vaccine.date_administered)}</span>
-                              </p>
-                              {vaccine.dose_number && (
-                                <p className="text-xs text-muted-foreground mt-0.5">Dose: {vaccine.dose_number}</p>
-                              )}
-                              {vaccine.notes && (
-                                <p className="text-xs text-muted-foreground mt-0.5 italic">"{vaccine.notes}"</p>
-                              )}
-                            </div>
-                          </div>
-                          <button 
-                            onClick={() => promptDeleteVaccination(vaccine)}
-                            className="absolute right-3 top-3 p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
-                            title="Remove record"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  
-                  <div className="mt-5 flex justify-center">
-                    <Button variant="outline" onClick={() => { 
-                      setBulkVaccines([{ id: 'initial-row', vaccineName: '', dateAdministered: '', doseNumber: '', notes: '' }]); 
-                      setIsAddVaccinationModalOpen(true); 
-                    }} className="w-full sm:w-auto text-primary border-primary/20 hover:bg-primary/5">
-                      <Plus size={16} className="mr-2" /> Add Vaccination
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            </div>
-
-            {/* ── NEW: Privacy & Consent Controls (Epic 8.12) ── */}
-            <div className="mb-6">
-              <Card title={<span className="flex items-center gap-2"><Shield size={18} className="text-primary" /> Privacy & Consent Controls</span>}>
-                <div className="pt-3">
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Lock specific medical record categories. Doctors will require your explicit permission to view locked records.
-                  </p>
-                  
-                  {consentLoading ? (
-                    <div className="py-6 flex justify-center"><Spinner size="sm" /></div>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {SENSITIVE_CATEGORIES.map(category => {
-                        const isLocked = lockedCategories.includes(category);
-                        return (
-                          <div key={category} className="flex items-center justify-between p-4 rounded-xl border border-border bg-card shadow-sm transition-all hover:border-slate-300">
-                            <div className="flex items-center gap-3">
-                              <div className={`p-2.5 rounded-full ${isLocked ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary'}`}>
-                                {isLocked ? <Lock size={18} strokeWidth={2.5} /> : <Unlock size={18} strokeWidth={2.5} />}
-                              </div>
-                              <div>
-                                <p className="text-sm font-bold text-foreground">{category}</p>
-                                <p className={`text-xs mt-0.5 font-medium ${isLocked ? 'text-destructive' : 'text-primary'}`}>
-                                  {isLocked ? 'Locked (Requires Approval)' : 'Unlocked (Default Access)'}
-                                </p>
-                              </div>
-                            </div>
-                            
-                            {/* Animated Toggle Switch */}
-                            <button 
-                              type="button"
-                              onClick={() => handleToggleConsent(category)}
-                              disabled={consentMutation.isPending}
-                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 ${isLocked ? 'bg-destructive' : 'bg-secondary'}`}
-                            >
-                              <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-300 ease-in-out ${isLocked ? 'translate-x-6' : 'translate-x-1'}`} />
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              </Card>
-            </div>
-
-            <div className="flex justify-end">
-              <Button variant="primary" onClick={handleEditClick}>
-                <Edit2 size={16} /> Edit Profile
-              </Button>
-            </div>
-          </>
-        )}
-
-        {/* ── EDIT MODE ── */}
-        {isEditing && (
+            <Card title="Emergency Contact">
+              <div className="pt-3 space-y-4">
+                <ProfileField icon={User} label="Contact Name" value={patient?.emergency_contact_name} />
+                <ProfileField icon={Phone} label="Contact Phone" value={patient?.emergency_contact_phone} />
+                <ProfileField icon={User} label="Relationship" value={capitalise(patient?.emergency_contact_relationship)} />
+              </div>
+            </Card>
+          </div>
+        ) : (
           <form onSubmit={handleSubmit((data) => updateMutation.mutate(data))}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card title="Personal Information">
@@ -848,6 +635,232 @@ const PatientProfilePage = () => {
             </div>
           </form>
         )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* ── Chronic Conditions ── */}
+          <Card title="Chronic Conditions">
+            <div className="pt-3">
+              {conditionsLoading ? (
+                  <div className="py-4 flex justify-center"><Spinner size="sm" /></div>
+              ) : conditions.length === 0 ? (
+                <div className="text-center py-6">
+                  <div className="inline-flex p-3 rounded-full bg-secondary mb-2">
+                    <AlertTriangle className="text-muted-foreground" size={24} />
+                  </div>
+                  <p className="text-sm text-muted-foreground">No conditions recorded.</p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3 pt-1">
+                  {conditions.map((condition) => (
+                    <div
+                      key={condition.id}
+                      className="group flex items-start justify-between p-4 rounded-xl border border-border bg-card shadow-sm transition-all hover:border-slate-300"
+                    >
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">
+                          {condition.condition}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Diagnosed: {formatDate(condition.diagnosed_at)}
+                        </p>
+                        {condition.notes && (
+                          <p className="text-xs text-muted-foreground mt-0.5">{condition.notes}</p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        {condition.is_priority && <SeverityBadge severity="priority" />}
+                        {isEditing && (
+                          <button 
+                            onClick={() => promptDeleteCondition(condition)}
+                            className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+                            title="Remove condition"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {isEditing && (
+                <div className="mt-5 flex justify-center">
+                  <Button variant="outline" onClick={() => setIsAddConditionModalOpen(true)} className="w-full text-primary border-primary/20 hover:bg-primary/5">
+                    <Plus size={16} className="mr-2" /> Add Condition
+                  </Button>
+                </div>
+              )}
+            </div>
+          </Card>
+
+          {/* ── Known Allergies ── */}
+          <Card title="Known Allergies">
+            <div className="pt-3">
+              {allergiesLoading ? (
+                  <div className="py-4 flex justify-center"><Spinner size="sm" /></div>
+              ) : allergies.length === 0 ? (
+                <div className="text-center py-6">
+                  <div className="inline-flex p-3 rounded-full bg-secondary mb-2">
+                    <AlertTriangle className="text-muted-foreground" size={24} />
+                  </div>
+                  <p className="text-sm text-muted-foreground">No allergies recorded.</p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3 pt-1">
+                  {sortedAllergies.map((allergy) => (
+                    <div 
+                      key={allergy.id} 
+                      className="group flex items-start justify-between p-4 rounded-xl border border-border bg-card shadow-sm transition-all hover:border-slate-300"
+                    >
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">{allergy.allergen}</p>
+                        {allergy.notes && <p className="text-xs text-muted-foreground mt-1">{allergy.notes}</p>}
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <SeverityBadge severity={allergy.severity} />
+                        {isEditing && (
+                          <button 
+                            onClick={() => promptDeleteAllergy(allergy)}
+                            className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+                            title="Remove allergy"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {isEditing && (
+                <div className="mt-5 flex justify-center">
+                  <Button variant="outline" onClick={() => { setAllergySuggestions(searchAllergens('')); setIsAddAllergyModalOpen(true); }} className="w-full text-primary border-primary/20 hover:bg-primary/5">
+                    <Plus size={16} className="mr-2" /> Add Allergy
+                  </Button>
+                </div>
+              )}
+            </div>
+          </Card>
+        </div>
+
+        {/* ── Vaccination Records (CARE4U-148) ── */}
+        <div className="mb-6">
+          <Card title={<span className="flex items-center gap-2"><Syringe size={18} className="text-primary" /> Vaccination Records</span>}>
+            <div className="pt-3">
+              {vaccinationsLoading ? (
+                  <div className="py-4 flex justify-center"><Spinner size="sm" /></div>
+              ) : vaccinations.length === 0 ? (
+                <div className="text-center py-6">
+                  <div className="inline-flex p-3 rounded-full bg-secondary mb-2">
+                    <Syringe className="text-muted-foreground" size={24} />
+                  </div>
+                  <p className="text-sm text-muted-foreground">No vaccination records found.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                  {vaccinations.map((vaccine) => (
+                    <div
+                      key={vaccine.id}
+                      className="group relative flex flex-col p-4 rounded-xl border border-border bg-card shadow-sm transition-all hover:border-slate-300"
+                    >
+                      <div className="flex justify-between items-start pr-8">
+                        <div>
+                          <p className="text-sm font-bold text-primary">{vaccine.vaccine_name}</p>
+                          <p className="text-xs text-muted-foreground mt-1 font-medium">
+                            Given: <span className="text-foreground">{formatDate(vaccine.date_administered)}</span>
+                          </p>
+                          {vaccine.dose_number && (
+                            <p className="text-xs text-muted-foreground mt-0.5">Dose: {vaccine.dose_number}</p>
+                          )}
+                          {vaccine.notes && (
+                            <p className="text-xs text-muted-foreground mt-0.5 italic">"{vaccine.notes}"</p>
+                          )}
+                        </div>
+                      </div>
+                      {isEditing && (
+                        <button 
+                          onClick={() => promptDeleteVaccination(vaccine)}
+                          className="absolute right-3 top-3 p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+                          title="Remove record"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {isEditing && (
+                <div className="mt-5 flex justify-center">
+                  <Button variant="outline" onClick={() => { 
+                    setBulkVaccines([{ id: 'initial-row', vaccineName: '', dateAdministered: '', doseNumber: '', notes: '' }]); 
+                    setIsAddVaccinationModalOpen(true); 
+                  }} className="w-full sm:w-auto text-primary border-primary/20 hover:bg-primary/5">
+                    <Plus size={16} className="mr-2" /> Add Vaccination
+                  </Button>
+                </div>
+              )}
+            </div>
+          </Card>
+        </div>
+
+        {/* ── NEW: Privacy & Consent Controls (Epic 8.12) ── */}
+        <div className="mb-6">
+          <Card title={<span className="flex items-center gap-2"><Shield size={18} className="text-primary" /> Privacy & Consent Controls</span>}>
+            <div className="pt-3">
+              <p className="text-sm text-muted-foreground mb-4">
+                Lock specific medical record categories. Doctors will require your explicit permission to view locked records.
+              </p>
+              
+              {consentLoading ? (
+                <div className="py-6 flex justify-center"><Spinner size="sm" /></div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {SENSITIVE_CATEGORIES.map(category => {
+                    const isLocked = lockedCategories.includes(category);
+                    return (
+                      <div key={category} className="flex items-center justify-between p-4 rounded-xl border border-border bg-card shadow-sm transition-all hover:border-slate-300">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2.5 rounded-full ${isLocked ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary'}`}>
+                            {isLocked ? <Lock size={18} strokeWidth={2.5} /> : <Unlock size={18} strokeWidth={2.5} />}
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-foreground">{category}</p>
+                            <p className={`text-xs mt-0.5 font-medium ${isLocked ? 'text-destructive' : 'text-primary'}`}>
+                              {isLocked ? 'Locked (Requires Approval)' : 'Unlocked (Default Access)'}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {/* Animated Toggle Switch */}
+                        <button 
+                          type="button"
+                          onClick={() => handleToggleConsent(category)}
+                          disabled={consentMutation.isPending || !isEditing}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${!isEditing ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'} ${isLocked ? 'bg-destructive' : 'bg-secondary'}`}
+                        >
+                          <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-300 ease-in-out ${isLocked ? 'translate-x-6' : 'translate-x-1'}`} />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </Card>
+        </div>
+
+        {!isEditing && (
+          <div className="flex justify-end">
+            <Button variant="primary" onClick={handleEditClick}>
+              <Edit2 size={16} /> Edit Profile
+            </Button>
+          </div>
+        )}
+
       </div>
 
       {/* ── Add Allergy Modal ── */}
