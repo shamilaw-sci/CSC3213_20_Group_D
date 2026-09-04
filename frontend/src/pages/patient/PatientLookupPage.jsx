@@ -1,4 +1,5 @@
 /**
+ * @file    PatientLookupPage.jsx
  * @component PatientLookupPage
  * @desc      Read-only patient lookup page for doctors.
  * Fetches and displays full patient details using a QR code ID.
@@ -86,6 +87,23 @@ const getAvatarSrc = (patient) => {
   if (patient?.photo_url) return patient.photo_url;
   // Match the dark brand theme for fallback avatars
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(patient?.full_name || 'Patient')}&background=F1F5F9&color=0f172a&size=120&bold=true&rounded=true`;
+};
+
+// ─── Severity Badge ───────────────────────────────────────────────────────────
+const SEVERITY_STYLES = {
+  priority: { bg: 'bg-destructive/10', text: 'text-destructive', label: 'Priority' },
+  severe:   { bg: 'bg-destructive/10', text: 'text-destructive', label: 'Severe' },
+  moderate: { bg: 'bg-orange-100',     text: 'text-orange-700',  label: 'Moderate' },
+  mild:     { bg: 'bg-green-100',      text: 'text-green-700',   label: 'Mild' },
+};
+
+const SeverityBadge = ({ severity }) => {
+  const style = SEVERITY_STYLES[severity?.toLowerCase()] || SEVERITY_STYLES.mild;
+  return (
+    <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold ${style.bg} ${style.text}`}>
+      {style.label}
+    </span>
+  );
 };
 
 // ─── AI Text Formatter ──────────────────────────────────────────────────────
@@ -307,7 +325,12 @@ const PatientLookupPage = () => {
   const conditions = patient?.conditions || [];
   const priorityCondition = conditions.find((c) => c.is_priority);
   const severeAllergies = allergies.filter((a) => a.severity?.toLowerCase() === 'severe');
-  const otherAllergies = allergies.filter((a) => a.severity?.toLowerCase() !== 'severe');
+  
+  const sortedAllergies = [...allergies].sort((a, b) => {
+    if (a.severity?.toLowerCase() === 'severe' && b.severity?.toLowerCase() !== 'severe') return -1;
+    if (a.severity?.toLowerCase() !== 'severe' && b.severity?.toLowerCase() === 'severe') return 1;
+    return 0;
+  });
 
   const activePrescriptions = prescriptions.filter(
     (p) => !isExpired(p.expires_at) && p.status !== 'completed'
@@ -512,42 +535,40 @@ const PatientLookupPage = () => {
         </Card>
 
         <Card title={`Chronic Conditions (${conditions.length})`}>
-          {conditions.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-2">No chronic conditions recorded.</p>
-          ) : (
-            <div className="flex flex-col gap-3 pt-1">
-              {conditions.map((condition) => (
-                <div
-                  key={condition.id}
-                  className={`flex flex-col sm:flex-row sm:items-start sm:justify-between py-2.5 px-3 rounded-md border-b border-border last:border-0 gap-2 ${
-                    condition.is_priority ? 'bg-destructive/5 border border-destructive/20' : ''
-                  }`}
-                >
-                  <div>
-                    <div className="flex items-center gap-2">
-                      {condition.is_priority && (
-                        <AlertTriangle size={14} className="text-destructive shrink-0" strokeWidth={2.5} />
-                      )}
-                      <p className={`text-sm font-semibold ${condition.is_priority ? 'text-destructive' : 'text-foreground'}`}>
+          <div className="pt-3">
+            {conditions.length === 0 ? (
+              <div className="text-center py-6">
+                <div className="inline-flex p-3 rounded-full bg-secondary mb-2">
+                  <AlertTriangle className="text-muted-foreground" size={24} />
+                </div>
+                <p className="text-sm text-muted-foreground">No conditions recorded.</p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3 pt-1">
+                {conditions.map((condition) => (
+                  <div
+                    key={condition.id}
+                    className="flex items-start justify-between p-4 rounded-xl border border-border bg-card shadow-sm transition-all hover:border-slate-300"
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">
                         {condition.condition}
                       </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Diagnosed: {formatDate(condition.diagnosed_at)}
+                      </p>
+                      {condition.notes && (
+                        <p className="text-xs text-muted-foreground mt-0.5">{condition.notes}</p>
+                      )}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Diagnosed: {formatDate(condition.diagnosed_at)}
-                    </p>
-                    {condition.notes && (
-                      <p className="text-xs text-muted-foreground mt-0.5">{condition.notes}</p>
-                    )}
+                    <div className="flex items-center gap-3 shrink-0">
+                      {condition.is_priority && <SeverityBadge severity="priority" />}
+                    </div>
                   </div>
-                  {condition.is_priority && (
-                    <span className="self-start sm:self-auto text-xs font-semibold px-2 py-0.5 rounded-full text-destructive-foreground bg-destructive">
-                      Priority
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </Card>
 
         <Card
@@ -563,47 +584,35 @@ const PatientLookupPage = () => {
             </span>
           }
         >
-          {allergiesLoading ? (
-             <div className="py-4 flex justify-center"><Spinner size="sm" /></div>
-          ) : allergies.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-2">No allergies recorded.</p>
-          ) : (
-            <div className="flex flex-col gap-3 pt-1">
-              {severeAllergies.length > 0 && (
-                <div className="flex flex-col gap-2 mb-1">
-                  {severeAllergies.map((allergy) => (
-                    <div
-                      key={allergy.id}
-                      className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4 py-3 px-4 rounded-md bg-destructive text-destructive-foreground"
-                    >
-                      <div className="flex items-start gap-2.5">
-                        <AlertTriangle size={18} className="shrink-0 mt-0.5" strokeWidth={2.5} />
-                        <div>
-                          <p className="text-sm font-bold">{allergy.allergen}</p>
-                          {allergy.notes && (
-                            <p className="text-xs text-destructive-foreground/80 mt-0.5">{allergy.notes}</p>
-                          )}
-                        </div>
-                      </div>
-                      <span className="self-start sm:self-auto text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full text-destructive bg-white shrink-0">
-                        Severe
-                      </span>
+          <div className="pt-3">
+            {allergiesLoading ? (
+               <div className="py-4 flex justify-center"><Spinner size="sm" /></div>
+            ) : allergies.length === 0 ? (
+              <div className="text-center py-6">
+                <div className="inline-flex p-3 rounded-full bg-secondary mb-2">
+                  <AlertTriangle className="text-muted-foreground" size={24} />
+                </div>
+                <p className="text-sm text-muted-foreground">No allergies recorded.</p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3 pt-1">
+                {sortedAllergies.map((allergy) => (
+                  <div
+                    key={allergy.id}
+                    className="flex items-start justify-between p-4 rounded-xl border border-border bg-card shadow-sm transition-all hover:border-slate-300"
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{allergy.allergen}</p>
+                      {allergy.notes && <p className="text-xs text-muted-foreground mt-1">{allergy.notes}</p>}
                     </div>
-                  ))}
-                </div>
-              )}
-
-              {otherAllergies.map((allergy) => (
-                <div key={allergy.id} className="flex flex-wrap sm:flex-nowrap items-start justify-between gap-2 py-2 border-b border-border last:border-0">
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">{allergy.allergen}</p>
-                    {allergy.notes && <p className="text-xs text-muted-foreground mt-0.5">{allergy.notes}</p>}
+                    <div className="flex items-center gap-3 shrink-0">
+                      <SeverityBadge severity={allergy.severity} />
+                    </div>
                   </div>
-                  <Badge severity={allergy.severity} className="shrink-0" />
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </Card>
 
         <Card title={`Active Prescriptions (${activePrescriptions.length})`}>
