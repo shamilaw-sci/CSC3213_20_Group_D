@@ -3,7 +3,7 @@
  * @desc      Generic top navigation bar used by every role (Patient, Admin,
  *            Doctor, etc). Renders flat links and/or dropdown groups,
  *            handles active-route highlighting, mobile hamburger collapse,
- *            and a logout action — matching the Nawaloka-style top nav.
+ *            and a logout action — matching the Nawaloka-style dark top nav.
  * @author    Wasana Karunanayaka (S/21/081)
  */
 import { useState, useRef, useEffect } from 'react';
@@ -28,12 +28,13 @@ const TopNavbar = ({ portalLabel, navItems, onLogout }) => {
   const linkBase =
     'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors';
   
-  const linkInactive = 'text-brand-deep/80 hover:text-brand-deep hover:bg-primary/10';
+  // FIXED: Updated for dark background (text-brand-deep-foreground)
+  const linkInactive = 'text-brand-deep-foreground/80 hover:text-brand-deep-foreground hover:bg-white/10';
   const linkActive = 'bg-primary text-primary-foreground shadow-sm';
 
-  // UI Polish: bg-primary/[0.08] provides better contrast against the page background
+  // FIXED: Applied bg-brand-deep for the Nawaloka-style dark band
   return (
-    <header className="sticky top-0 z-40 bg-primary/[0.08] backdrop-blur-md shadow-sm border-b border-primary/15">
+    <header className="sticky top-0 z-40 bg-brand-deep text-brand-deep-foreground shadow-md">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         <div className="flex items-center justify-between h-20">
           
@@ -45,8 +46,9 @@ const TopNavbar = ({ portalLabel, navItems, onLogout }) => {
               className="w-10 h-10 rounded-lg object-contain bg-white shadow-sm p-1 border border-primary/15"
             />
             <div className="leading-tight">
-              <div className="text-brand-deep font-extrabold text-lg tracking-tight">Care4U</div>
-              <div className="text-brand-deep/60 text-[10px] uppercase tracking-wide font-bold">
+              {/* FIXED: Text colors inverted for dark background */}
+              <div className="text-brand-deep-foreground font-extrabold text-lg tracking-tight">Care4U</div>
+              <div className="text-brand-deep-foreground/70 text-[10px] uppercase tracking-wide font-bold">
                 {portalLabel}
               </div>
             </div>
@@ -71,6 +73,7 @@ const TopNavbar = ({ portalLabel, navItems, onLogout }) => {
                       />
                     </button>
 
+                    {/* Dropdown menu remains white (bg-card) for contrast */}
                     {isOpen && (
                       <div className="absolute top-full right-0 mt-3 w-72 bg-card rounded-xl shadow-xl border border-border p-2 z-50">
                         {item.items.map((sub) => (
@@ -123,14 +126,16 @@ const TopNavbar = ({ portalLabel, navItems, onLogout }) => {
           <div className="flex items-center gap-2">
             <button
               onClick={onLogout}
-              className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-primary/20 text-primary hover:bg-primary/10 transition-colors"
+              // FIXED: Button styling adjusted for dark background
+              className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-brand-deep-foreground/20 text-brand-deep-foreground hover:bg-white/10 transition-colors"
             >
               <LogOut className="w-4 h-4" strokeWidth={2} />
               Logout
             </button>
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="md:hidden p-2 rounded-lg text-brand-deep hover:bg-primary/10"
+              // FIXED: Hamburger icon adjusted for dark background
+              className="md:hidden p-2 rounded-lg text-brand-deep-foreground hover:bg-white/10"
             >
               {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -138,9 +143,9 @@ const TopNavbar = ({ portalLabel, navItems, onLogout }) => {
         </div>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile menu (kept white for standard mobile dropdown UX) */}
       {mobileOpen && (
-        <div className="md:hidden bg-white border-t border-primary/15 px-4 py-3 space-y-1 shadow-lg">
+        <div className="md:hidden bg-card border-t border-border px-4 py-3 space-y-1 shadow-lg">
           {navItems.flatMap((item) => (item.type === 'group' ? item.items : [item])).map((item) => (
             <NavLink
               key={item.to}
@@ -148,7 +153,7 @@ const TopNavbar = ({ portalLabel, navItems, onLogout }) => {
               onClick={() => setMobileOpen(false)}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${
-                  isActive ? 'bg-primary text-primary-foreground' : 'text-brand-deep/80 hover:bg-primary/10'
+                  isActive ? 'bg-primary text-primary-foreground' : 'text-foreground/80 hover:bg-secondary'
                 }`
               }
             >
@@ -163,7 +168,7 @@ const TopNavbar = ({ portalLabel, navItems, onLogout }) => {
           ))}
           <button
             onClick={onLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 mt-2 border-t border-primary/10 pt-3"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 mt-2 border-t border-border pt-3"
           >
             <LogOut className="w-4 h-4" strokeWidth={2} />
             Logout
