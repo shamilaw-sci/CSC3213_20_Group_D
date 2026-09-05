@@ -27,6 +27,7 @@ import IssuePrescriptionPage  from './pages/doctor/IssuePrescriptionPage';
 import DoctorDashboard        from './pages/doctor/DoctorDashboard';
 import AppointmentQueuePage   from './pages/doctor/AppointmentQueuePage';
 import DoctorProfilePage      from './pages/doctor/DoctorProfilePage';
+import ConsultationPage from './pages/doctor/ConsultationPage';
 
 import PharmacyLookupPage     from './pages/pharmacy/PharmacyLookupPage';
 import PharmacyRegisterPage   from './pages/pharmacy/PharmacyRegisterPage';
@@ -396,6 +397,19 @@ function App() {
               ]}
             >
               <AppointmentQueuePage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/doctor/consultation/:appointmentId"
+          element={
+            <ProtectedRoute
+              allowedRoles={[
+                'doctor'
+              ]}
+            >
+              <ConsultationPage />
             </ProtectedRoute>
           }
         />

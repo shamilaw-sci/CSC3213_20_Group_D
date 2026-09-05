@@ -56,15 +56,19 @@ router.get(
 
 /**
  * GET /api/patients/nic/:nic
- * Pharmacy fallback lookup using patient NIC.
+ * Staff fallback lookup using patient NIC.
  *
  * Must appear before the generic /:id route.
- * Only authenticated pharmacists can perform NIC lookup.
+ * Only authenticated pharmacists and doctors
+ * can perform NIC lookup.
  */
 router.get(
   '/nic/:nic',
   isAuthenticated,
-  authorize('pharmacist'),
+  authorize(
+    'pharmacist',
+    'doctor'
+  ),
   getPatientByNicController
 );
 
