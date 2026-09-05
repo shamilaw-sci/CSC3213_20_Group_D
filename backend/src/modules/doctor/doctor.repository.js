@@ -70,8 +70,11 @@ const getAllDoctors = async () => {
      FROM doctors d
      JOIN users u ON d.user_id = u.id
      WHERE d.is_verified = true
+       AND u.verification_status = 'approved'
+       AND u.is_active = true
      ORDER BY d.created_at DESC`
   );
+
   return result.rows;
 };
 
@@ -184,6 +187,8 @@ const searchDoctors = async (specialty, hospitalName) => {
     FROM doctors d
     JOIN users u ON d.user_id = u.id
     WHERE d.is_verified = true
+      AND u.verification_status = 'approved'
+      AND u.is_active = true
   `;
 
   const params = [];
@@ -191,7 +196,11 @@ const searchDoctors = async (specialty, hospitalName) => {
 
   if (specialty) {
     // UPDATED: Now checks if the search term matches the specialty OR the doctor's name
-    query += ` AND (LOWER(d.specialization) LIKE LOWER($${paramIndex}) OR LOWER(d.full_name) LIKE LOWER($${paramIndex}))`;
+    query += ` AND (
+      LOWER(d.specialization) LIKE LOWER($${paramIndex})
+      OR LOWER(d.full_name) LIKE LOWER($${paramIndex})
+    )`;
+
     params.push(`%${specialty}%`);
     paramIndex++;
   }
@@ -204,7 +213,11 @@ const searchDoctors = async (specialty, hospitalName) => {
 
   query += ` ORDER BY d.full_name ASC`;
 
-  const result = await pool.query(query, params);
+  const result = await pool.query(
+    query,
+    params
+  );
+
   return result.rows;
 };
 

@@ -17,6 +17,7 @@ const findPendingUsers = async () => {
          WHERE verification_status = 'pending'
          ORDER BY created_at ASC`
     );
+
     return result.rows;
 };
 
@@ -27,9 +28,12 @@ const findPendingUsers = async () => {
  */
 const findUserById = async (userId) => {
     const result = await pool.query(
-        `SELECT id, email, phone, role, verification_status FROM users WHERE id = $1`,
+        `SELECT id, email, phone, role, verification_status
+         FROM users
+         WHERE id = $1`,
         [userId]
     );
+
     return result.rows[0] || null;
 };
 
@@ -44,12 +48,16 @@ const findUserById = async (userId) => {
  */
 const findAllUsers = async (filters = {}) => {
     const { search, role, status } = filters;
+
     const conditions = [];
     const values = [];
     let paramIndex = 1;
 
     if (search) {
-        conditions.push(`(email ILIKE $${paramIndex} OR phone ILIKE $${paramIndex})`);
+        conditions.push(
+            `(email ILIKE $${paramIndex} OR phone ILIKE $${paramIndex})`
+        );
+
         values.push(`%${search}%`);
         paramIndex++;
     }
@@ -66,15 +74,26 @@ const findAllUsers = async (filters = {}) => {
         conditions.push(`is_active = false`);
     }
 
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const whereClause =
+        conditions.length > 0
+            ? `WHERE ${conditions.join(' AND ')}`
+            : '';
 
     const result = await pool.query(
-        `SELECT id, email, phone, role, is_active, verification_status, created_at
+        `SELECT
+            id,
+            email,
+            phone,
+            role,
+            is_active,
+            verification_status,
+            created_at
          FROM users
          ${whereClause}
          ORDER BY created_at DESC`,
         values
     );
+
     return result.rows;
 };
 
@@ -85,10 +104,13 @@ const findAllUsers = async (filters = {}) => {
  */
 const toggleUserActive = async (userId) => {
     const result = await pool.query(
-        `UPDATE users SET is_active = NOT is_active WHERE id = $1
+        `UPDATE users
+         SET is_active = NOT is_active
+         WHERE id = $1
          RETURNING id, email, role, is_active`,
         [userId]
     );
+
     return result.rows[0];
 };
 
@@ -107,7 +129,15 @@ const toggleUserActive = async (userId) => {
  * @returns {Promise<object>} { rows, totalCount }
  */
 const findAuditLogs = async (filters = {}) => {
-    const { email, action, startDate, endDate, page = 1, pageSize = 25 } = filters;
+    const {
+        email,
+        action,
+        startDate,
+        endDate,
+        page = 1,
+        pageSize = 25
+    } = filters;
+
     const conditions = [];
     const values = [];
     let paramIndex = 1;
@@ -136,30 +166,47 @@ const findAuditLogs = async (filters = {}) => {
         paramIndex++;
     }
 
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const whereClause =
+        conditions.length > 0
+            ? `WHERE ${conditions.join(' AND ')}`
+            : '';
+
     const offset = (page - 1) * pageSize;
 
     const countResult = await pool.query(
-        `SELECT COUNT(*) FROM audit_logs al
+        `SELECT COUNT(*)
+         FROM audit_logs al
          LEFT JOIN users u ON al.user_id = u.id
          ${whereClause}`,
         values
     );
 
     const dataResult = await pool.query(
-        `SELECT al.id, al.user_id, u.email, al.action, al.entity_type,
-                al.entity_id, al.details, al.ip_address, al.created_at
+        `SELECT
+            al.id,
+            al.user_id,
+            u.email,
+            al.action,
+            al.entity_type,
+            al.entity_id,
+            al.details,
+            al.ip_address,
+            al.created_at
          FROM audit_logs al
          LEFT JOIN users u ON al.user_id = u.id
          ${whereClause}
          ORDER BY al.created_at DESC
-         LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
+         LIMIT $${paramIndex}
+         OFFSET $${paramIndex + 1}`,
         [...values, pageSize, offset]
     );
 
     return {
         rows: dataResult.rows,
-        totalCount: parseInt(countResult.rows[0].count, 10)
+        totalCount: parseInt(
+            countResult.rows[0].count,
+            10
+        )
     };
 };
 
@@ -170,9 +217,14 @@ const findAuditLogs = async (filters = {}) => {
  */
 const findDistinctAuditActions = async () => {
     const result = await pool.query(
-        `SELECT DISTINCT action FROM audit_logs ORDER BY action`
+        `SELECT DISTINCT action
+         FROM audit_logs
+         ORDER BY action`
     );
-    return result.rows.map(row => row.action);
+
+    return result.rows.map(
+        row => row.action
+    );
 };
 
 /**
@@ -183,14 +235,23 @@ const findDistinctAuditActions = async () => {
  */
 const findEmergencyAccessLogs = async () => {
     const result = await pool.query(
-        `SELECT eal.id, eal.reason, eal.created_at,
-                eal.accessed_by, staff.email AS staff_email, eal.user_role,
-                eal.patient_id, p.full_name AS patient_name
+        `SELECT
+            eal.id,
+            eal.reason,
+            eal.created_at,
+            eal.accessed_by,
+            staff.email AS staff_email,
+            eal.user_role,
+            eal.patient_id,
+            p.full_name AS patient_name
          FROM emergency_access_logs eal
-         LEFT JOIN users staff ON eal.accessed_by = staff.id
-         LEFT JOIN patients p ON eal.patient_id = p.id
+         LEFT JOIN users staff
+            ON eal.accessed_by = staff.id
+         LEFT JOIN patients p
+            ON eal.patient_id = p.id
          ORDER BY eal.created_at DESC`
     );
+
     return result.rows;
 };
 
@@ -201,22 +262,50 @@ const findEmergencyAccessLogs = async () => {
  * @returns {Promise<object>} { totalPatients, appointmentsThisMonth, prescriptionsIssued, emergencyOverrides }
  */
 const findAnalyticsSummary = async () => {
-    const totalPatientsResult = await pool.query(`SELECT COUNT(*) FROM patients`);
+    const totalPatientsResult =
+        await pool.query(
+            `SELECT COUNT(*) FROM patients`
+        );
 
-    const appointmentsThisMonthResult = await pool.query(
-        `SELECT COUNT(*) FROM appointments
-         WHERE date_trunc('month', scheduled_at) = date_trunc('month', CURRENT_DATE)`
-    );
+    const appointmentsThisMonthResult =
+        await pool.query(
+            `SELECT COUNT(*)
+             FROM appointments
+             WHERE date_trunc('month', scheduled_at) =
+                   date_trunc('month', CURRENT_DATE)`
+        );
 
-    const prescriptionsIssuedResult = await pool.query(`SELECT COUNT(*) FROM prescriptions`);
+    const prescriptionsIssuedResult =
+        await pool.query(
+            `SELECT COUNT(*) FROM prescriptions`
+        );
 
-    const emergencyOverridesResult = await pool.query(`SELECT COUNT(*) FROM emergency_access_logs`);
+    const emergencyOverridesResult =
+        await pool.query(
+            `SELECT COUNT(*)
+             FROM emergency_access_logs`
+        );
 
     return {
-        totalPatients: parseInt(totalPatientsResult.rows[0].count, 10),
-        appointmentsThisMonth: parseInt(appointmentsThisMonthResult.rows[0].count, 10),
-        prescriptionsIssued: parseInt(prescriptionsIssuedResult.rows[0].count, 10),
-        emergencyOverrides: parseInt(emergencyOverridesResult.rows[0].count, 10)
+        totalPatients: parseInt(
+            totalPatientsResult.rows[0].count,
+            10
+        ),
+
+        appointmentsThisMonth: parseInt(
+            appointmentsThisMonthResult.rows[0].count,
+            10
+        ),
+
+        prescriptionsIssued: parseInt(
+            prescriptionsIssuedResult.rows[0].count,
+            10
+        ),
+
+        emergencyOverrides: parseInt(
+            emergencyOverridesResult.rows[0].count,
+            10
+        )
     };
 };
 
@@ -227,9 +316,21 @@ const findAnalyticsSummary = async () => {
  */
 const findUserCountsByRole = async () => {
     const result = await pool.query(
-        `SELECT role, COUNT(*) as count FROM users GROUP BY role ORDER BY role ASC`
+        `SELECT role, COUNT(*) as count
+         FROM users
+         GROUP BY role
+         ORDER BY role ASC`
     );
-    return result.rows.map(row => ({ role: row.role, count: parseInt(row.count, 10) }));
+
+    return result.rows.map(
+        row => ({
+            role: row.role,
+            count: parseInt(
+                row.count,
+                10
+            )
+        })
+    );
 };
 
 /**
@@ -241,11 +342,13 @@ const searchPatients = async (search) => {
     const result = await pool.query(
         `SELECT id, full_name, nic, qr_code_id
          FROM patients
-         WHERE full_name ILIKE $1 OR nic ILIKE $1
+         WHERE full_name ILIKE $1
+            OR nic ILIKE $1
          ORDER BY full_name ASC
          LIMIT 20`,
         [`%${search}%`]
     );
+
     return result.rows;
 };
 
@@ -257,13 +360,22 @@ const searchPatients = async (search) => {
  * @param {string} newQrCodeId - The newly generated QR code value
  * @returns {Promise<object>} Updated patient row
  */
-const reissuePatientQr = async (patientId, newQrCodeId) => {
+const reissuePatientQr = async (
+    patientId,
+    newQrCodeId
+) => {
     const result = await pool.query(
-        `UPDATE patients SET qr_code_id = $2, updated_at = NOW()
+        `UPDATE patients
+         SET qr_code_id = $2,
+             updated_at = NOW()
          WHERE id = $1
          RETURNING id, full_name, qr_code_id`,
-        [patientId, newQrCodeId]
+        [
+            patientId,
+            newQrCodeId
+        ]
     );
+
     return result.rows[0];
 };
 
@@ -273,8 +385,15 @@ const reissuePatientQr = async (patientId, newQrCodeId) => {
  */
 const findAllSettings = async () => {
     const result = await pool.query(
-        `SELECT key, value, description, updated_at FROM system_settings ORDER BY key ASC`
+        `SELECT
+            key,
+            value,
+            description,
+            updated_at
+         FROM system_settings
+         ORDER BY key ASC`
     );
+
     return result.rows;
 };
 
@@ -284,42 +403,234 @@ const findAllSettings = async () => {
  * @param {string} value - The new value
  * @returns {Promise<object|null>} Updated setting row, or null if key doesn't exist
  */
-const updateSetting = async (key, value) => {
+const updateSetting = async (
+    key,
+    value
+) => {
     const result = await pool.query(
-        `UPDATE system_settings SET value = $2, updated_at = NOW()
+        `UPDATE system_settings
+         SET value = $2,
+             updated_at = NOW()
          WHERE key = $1
-         RETURNING key, value, description, updated_at`,
-        [key, value]
+         RETURNING
+            key,
+            value,
+            description,
+            updated_at`,
+        [
+            key,
+            value
+        ]
     );
+
     return result.rows[0] || null;
 };
 
 /**
  * Approves a pending user, setting verification_status to 'approved'.
+ *
+ * Doctor:
+ * - users.verification_status = approved
+ * - doctors.is_verified = true
+ *
+ * Pharmacist:
+ * - users.verification_status = approved
+ * - pharmacies.is_verified = true
+ *
+ * Laboratory:
+ * - users.verification_status = approved
+ * - laboratories.is_verified = true
+ *
  * @param {string} userId - UUID of the user
  * @returns {Promise<object>} Updated user row
  */
 const approveUser = async (userId) => {
-    const result = await pool.query(
-        `UPDATE users SET verification_status = 'approved' WHERE id = $1
-         RETURNING id, email, role, verification_status`,
-        [userId]
-    );
-    return result.rows[0];
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN');
+
+        const userResult = await client.query(
+            `UPDATE users
+             SET verification_status = 'approved'
+             WHERE id = $1
+             RETURNING
+                id,
+                email,
+                role,
+                verification_status`,
+            [userId]
+        );
+
+        const updatedUser =
+            userResult.rows[0];
+
+        if (!updatedUser) {
+            await client.query('ROLLBACK');
+            return null;
+        }
+
+        const role =
+            updatedUser.role?.toLowerCase();
+
+        // Doctors have a separate profile-level verification flag.
+        // Keep it in sync with the admin approval status.
+        if (role === 'doctor') {
+            await client.query(
+                `UPDATE doctors
+                 SET is_verified = true,
+                     updated_at = NOW()
+                 WHERE user_id = $1`,
+                [userId]
+            );
+        }
+
+        // Pharmacists also have a separate pharmacy-level verification flag.
+        if (role === 'pharmacist') {
+            await client.query(
+                `UPDATE pharmacies
+                 SET is_verified = true,
+                     updated_at = NOW()
+                 WHERE user_id = $1`,
+                [userId]
+            );
+        }
+
+        // Laboratory accounts use the lab_staff role and have
+        // a separate laboratories.is_verified flag.
+        if (role === 'lab_staff') {
+            await client.query(
+                `UPDATE laboratories
+                 SET is_verified = true,
+                     updated_at = NOW()
+                 WHERE user_id = $1`,
+                [userId]
+            );
+        }
+
+        await client.query('COMMIT');
+
+        return updatedUser;
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+
+    } finally {
+        client.release();
+    }
 };
 
 /**
  * Rejects a pending user, setting verification_status to 'rejected'.
+ *
+ * Doctor:
+ * - users.verification_status = rejected
+ * - doctors.is_verified = false
+ *
+ * Pharmacist:
+ * - users.verification_status = rejected
+ * - pharmacies.is_verified = false
+ *
+ * Laboratory:
+ * - users.verification_status = rejected
+ * - laboratories.is_verified = false
+ *
  * @param {string} userId - UUID of the user
  * @returns {Promise<object>} Updated user row
  */
 const rejectUser = async (userId) => {
-    const result = await pool.query(
-        `UPDATE users SET verification_status = 'rejected' WHERE id = $1
-         RETURNING id, email, role, verification_status`,
-        [userId]
-    );
-    return result.rows[0];
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN');
+
+        const userResult = await client.query(
+            `UPDATE users
+             SET verification_status = 'rejected'
+             WHERE id = $1
+             RETURNING
+                id,
+                email,
+                role,
+                verification_status`,
+            [userId]
+        );
+
+        const updatedUser =
+            userResult.rows[0];
+
+        if (!updatedUser) {
+            await client.query('ROLLBACK');
+            return null;
+        }
+
+        const role =
+            updatedUser.role?.toLowerCase();
+
+        // Keep the doctor profile's verification state
+        // synchronized with the user approval state.
+        if (role === 'doctor') {
+            await client.query(
+                `UPDATE doctors
+                 SET is_verified = false,
+                     updated_at = NOW()
+                 WHERE user_id = $1`,
+                [userId]
+            );
+        }
+
+        // Keep the pharmacy profile's verification state
+        // synchronized with the user approval state.
+        if (role === 'pharmacist') {
+            await client.query(
+                `UPDATE pharmacies
+                 SET is_verified = false,
+                     updated_at = NOW()
+                 WHERE user_id = $1`,
+                [userId]
+            );
+        }
+
+        // Keep the laboratory profile's verification state
+        // synchronized with the user approval state.
+        if (role === 'lab_staff') {
+            await client.query(
+                `UPDATE laboratories
+                 SET is_verified = false,
+                     updated_at = NOW()
+                 WHERE user_id = $1`,
+                [userId]
+            );
+        }
+
+        await client.query('COMMIT');
+
+        return updatedUser;
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+
+    } finally {
+        client.release();
+    }
 };
 
-module.exports = { findPendingUsers, findUserById, approveUser, rejectUser, findAllUsers, toggleUserActive, findAuditLogs, findDistinctAuditActions, findEmergencyAccessLogs, findAnalyticsSummary, searchPatients, reissuePatientQr, findAllSettings, updateSetting, findUserCountsByRole };
+module.exports = {
+    findPendingUsers,
+    findUserById,
+    approveUser,
+    rejectUser,
+    findAllUsers,
+    toggleUserActive,
+    findAuditLogs,
+    findDistinctAuditActions,
+    findEmergencyAccessLogs,
+    findAnalyticsSummary,
+    searchPatients,
+    reissuePatientQr,
+    findAllSettings,
+    updateSetting,
+    findUserCountsByRole
+};

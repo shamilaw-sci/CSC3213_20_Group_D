@@ -22,47 +22,100 @@ const bcrypt = require('bcrypt');
  * @param {Array}  availableTests - List of test types the lab offers
  * @returns {Promise<Object>} The created laboratory object
  */
-const registerLaboratory = async (email, password, phone, name, licenseNumber, address, availableTests) => {
+const registerLaboratory = async (
+  email,
+  password,
+  phone,
+  name,
+  licenseNumber,
+  address,
+  availableTests
+) => {
   // Step 1: Check if license number already exists
-  const existingLicense = await laboratoryRepository.getLaboratoryByLicense(licenseNumber);
+  const existingLicense =
+    await laboratoryRepository.getLaboratoryByLicense(
+      licenseNumber
+    );
+
   if (existingLicense) {
-    const error = new Error('A laboratory with this license number already exists');
+    const error = new Error(
+      'A laboratory with this license number already exists'
+    );
     error.statusCode = 400;
     throw error;
   }
 
   // Step 2: Check if email already exists
   const existingUser = await pool.query(
-    `SELECT id FROM users WHERE email = $1`,
+    `SELECT id
+     FROM users
+     WHERE email = $1`,
     [email]
   );
+
   if (existingUser.rows.length > 0) {
-    const error = new Error('An account with this email already exists');
+    const error = new Error(
+      'An account with this email already exists'
+    );
     error.statusCode = 400;
     throw error;
   }
 
   // Step 3: Hash the password
-  const passwordHash = await bcrypt.hash(password, 12);
+  const passwordHash =
+    await bcrypt.hash(password, 12);
 
   // Step 4: Create user account with role 'lab_staff'
+  // The account is created as pending so it appears in the
+  // admin approval queue, matching the doctor/pharmacist flow.
   const userResult = await pool.query(
-    `INSERT INTO users (email, phone, password_hash, role, is_verified, is_active)
-     VALUES ($1, $2, $3, 'lab_staff', false, true)
-     RETURNING id, email, role`,
-    [email, phone, passwordHash]
+    `INSERT INTO users
+       (
+         email,
+         phone,
+         password_hash,
+         role,
+         is_verified,
+         is_active,
+         verification_status
+       )
+     VALUES
+       (
+         $1,
+         $2,
+         $3,
+         'lab_staff',
+         true,
+         true,
+         'pending'
+       )
+     RETURNING
+       id,
+       email,
+       role,
+       is_verified,
+       is_active,
+       verification_status`,
+    [
+      email,
+      phone,
+      passwordHash
+    ]
   );
-  const newUser = userResult.rows[0];
+
+  const newUser =
+    userResult.rows[0];
 
   // Step 5: Create the laboratory record
-  const laboratory = await laboratoryRepository.createLaboratory(
-    newUser.id,
-    name,
-    licenseNumber,
-    address,
-    phone,
-    availableTests || []
-  );
+  const laboratory =
+    await laboratoryRepository.createLaboratory(
+      newUser.id,
+      name,
+      licenseNumber,
+      address,
+      phone,
+      availableTests || []
+    );
 
   return {
     user: newUser,
@@ -76,12 +129,17 @@ const registerLaboratory = async (email, password, phone, name, licenseNumber, a
  * @returns {Promise<Object>} Laboratory object
  */
 const getLaboratoryById = async (id) => {
-  const laboratory = await laboratoryRepository.getLaboratoryById(id);
+  const laboratory =
+    await laboratoryRepository.getLaboratoryById(id);
+
   if (!laboratory) {
-    const error = new Error('Laboratory not found');
+    const error =
+      new Error('Laboratory not found');
+
     error.statusCode = 404;
     throw error;
   }
+
   return laboratory;
 };
 
@@ -91,12 +149,17 @@ const getLaboratoryById = async (id) => {
  * @returns {Promise<Object>} Updated laboratory object
  */
 const approveLaboratory = async (id) => {
-  const laboratory = await laboratoryRepository.getLaboratoryById(id);
+  const laboratory =
+    await laboratoryRepository.getLaboratoryById(id);
+
   if (!laboratory) {
-    const error = new Error('Laboratory not found');
+    const error =
+      new Error('Laboratory not found');
+
     error.statusCode = 404;
     throw error;
   }
+
   return await laboratoryRepository.approveLaboratory(id);
 };
 
@@ -114,13 +177,22 @@ const getAllVerifiedLaboratories = async () => {
  * @returns {Promise<Array>} List of test requests
  */
 const getLabRequestsByLaboratory = async (laboratoryId) => {
-  const laboratory = await laboratoryRepository.getLaboratoryById(laboratoryId);
+  const laboratory =
+    await laboratoryRepository.getLaboratoryById(
+      laboratoryId
+    );
+
   if (!laboratory) {
-    const error = new Error('Laboratory not found');
+    const error =
+      new Error('Laboratory not found');
+
     error.statusCode = 404;
     throw error;
   }
-  return await laboratoryRepository.getLabRequestsByLaboratory(laboratoryId);
+
+  return await laboratoryRepository.getLabRequestsByLaboratory(
+    laboratoryId
+  );
 };
 
 /**
@@ -129,20 +201,42 @@ const getLabRequestsByLaboratory = async (laboratoryId) => {
  * @param {string} status - New status
  * @returns {Promise<Object>} Updated request
  */
-const updateLabRequestStatus = async (id, status) => {
-  const VALID_STATUSES = ['pending', 'sample_collected', 'in_progress', 'completed', 'cancelled'];
+const updateLabRequestStatus = async (
+  id,
+  status
+) => {
+  const VALID_STATUSES = [
+    'pending',
+    'sample_collected',
+    'in_progress',
+    'completed',
+    'cancelled'
+  ];
+
   if (!VALID_STATUSES.includes(status)) {
-    const error = new Error(`Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}`);
+    const error = new Error(
+      `Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}`
+    );
+
     error.statusCode = 400;
     throw error;
   }
-  const request = await laboratoryRepository.getLabRequestById(id);
+
+  const request =
+    await laboratoryRepository.getLabRequestById(id);
+
   if (!request) {
-    const error = new Error('Lab test request not found');
+    const error =
+      new Error('Lab test request not found');
+
     error.statusCode = 404;
     throw error;
   }
-  return await laboratoryRepository.updateLabRequestStatus(id, status);
+
+  return await laboratoryRepository.updateLabRequestStatus(
+    id,
+    status
+  );
 };
 
 /**
@@ -153,54 +247,90 @@ const updateLabRequestStatus = async (id, status) => {
  * @param {string} reportUrl    - URL of the uploaded report
  * @returns {Promise<Object>} The created lab report
  */
-const uploadLabReport = async (labRequestId, findings, reportUrl) => {
+const uploadLabReport = async (
+  labRequestId,
+  findings,
+  reportUrl
+) => {
   // Step 1: Get the lab request with patient and doctor info
-  const request = await laboratoryRepository.getLabRequestById(labRequestId);
+  const request =
+    await laboratoryRepository.getLabRequestById(
+      labRequestId
+    );
+
   if (!request) {
-    const error = new Error('Lab test request not found');
+    const error =
+      new Error('Lab test request not found');
+
     error.statusCode = 404;
     throw error;
   }
 
   // Step 2: Check if report already exists
-  const existingReport = await laboratoryRepository.getLabReportByRequestId(labRequestId);
+  const existingReport =
+    await laboratoryRepository.getLabReportByRequestId(
+      labRequestId
+    );
+
   if (existingReport) {
-    const error = new Error('A report has already been uploaded for this request');
+    const error = new Error(
+      'A report has already been uploaded for this request'
+    );
+
     error.statusCode = 400;
     throw error;
   }
 
   // Step 3: Get laboratory details
-  const laboratory = await laboratoryRepository.getLaboratoryById(request.laboratory_id);
+  const laboratory =
+    await laboratoryRepository.getLaboratoryById(
+      request.laboratory_id
+    );
 
   // Step 4: Create the report
-  const report = await laboratoryRepository.createLabReport(
-    labRequestId,
-    request.laboratory_id,
-    request.patient_id,
-    reportUrl,
-    findings
-  );
+  const report =
+    await laboratoryRepository.createLabReport(
+      labRequestId,
+      request.laboratory_id,
+      request.patient_id,
+      reportUrl,
+      findings
+    );
 
   // Step 5: Update request status to completed
-  await laboratoryRepository.updateLabRequestStatus(labRequestId, 'completed');
+  await laboratoryRepository.updateLabRequestStatus(
+    labRequestId,
+    'completed'
+  );
 
   // Step 6: Send email notifications (non-blocking — don't fail if email fails)
   try {
-    const { sendLabReportNotification } = require('../../utils/email');
+    const {
+      sendLabReportNotification
+    } = require('../../utils/email');
 
     // Get patient email
-    const { pool } = require('../../config/db');
-    const patientResult = await pool.query(
-      `SELECT u.email, p.full_name 
-       FROM patients p 
-       JOIN users u ON p.user_id = u.id 
-       WHERE p.id = $1`,
-      [request.patient_id]
-    );
+    const { pool } =
+      require('../../config/db');
 
-    if (patientResult.rows.length > 0) {
-      const patient = patientResult.rows[0];
+    const patientResult =
+      await pool.query(
+        `SELECT
+           u.email,
+           p.full_name
+         FROM patients p
+         JOIN users u
+           ON p.user_id = u.id
+         WHERE p.id = $1`,
+        [request.patient_id]
+      );
+
+    if (
+      patientResult.rows.length > 0
+    ) {
+      const patient =
+        patientResult.rows[0];
+
       await sendLabReportNotification(
         patient.email,
         patient.full_name,
@@ -209,9 +339,13 @@ const uploadLabReport = async (labRequestId, findings, reportUrl) => {
         findings
       );
     }
+
   } catch (emailErr) {
     // Log but don't fail the request if email fails
-    console.error('Lab report notification email failed:', emailErr.message);
+    console.error(
+      'Lab report notification email failed:',
+      emailErr.message
+    );
   }
 
   return report;
@@ -222,8 +356,12 @@ const uploadLabReport = async (labRequestId, findings, reportUrl) => {
  * @param {string} patientId - UUID of the patient
  * @returns {Promise<Array>} List of lab reports
  */
-const getLabReportsByPatient = async (patientId) => {
-  return await laboratoryRepository.getLabReportsByPatient(patientId);
+const getLabReportsByPatient = async (
+  patientId
+) => {
+  return await laboratoryRepository.getLabReportsByPatient(
+    patientId
+  );
 };
 
 module.exports = {

@@ -10,25 +10,60 @@ const { pool } = require('../../config/db');
 /**
  * Creates a new user in the users table with is_verified = true.
  * Only called from verifyOtp, after OTP verification has already
- * succeeded - so the account is verified by definition at creation.
+ * succeeded - so the email/OTP is verified at account creation.
+ *
+ * Patients are approved immediately after OTP verification.
+ * Doctors, pharmacists, lab technicians, and hospital staff require
+ * admin approval before they can fully use their account.
+ *
  * @param {string} email - User email
  * @param {string} phone - User phone number
  * @param {string} passwordHash - Bcrypt hashed password
- * @param {string} role - User role: 'patient' or 'doctor'
+ * @param {string} role - User role
  * @returns {Promise<object>} Created user row
  */
+const createUser = async (email, phone, passwordHash, role) => {
+    const requiresApproval = [
+        'doctor',
+        'pharmacist',
+        'lab_technician',
+        'hospital_staff'
+    ].includes(role);
 
-const createUser = async (email, phone, passwordHash, role) =>{
-    const requiresApproval = ['pharmacist', 'lab_technician', 'hospital_staff'].includes(role);
-    const verificationStatus = requiresApproval ? 'pending' : 'approved';
+    const verificationStatus =
+        requiresApproval ? 'pending' : 'approved';
 
-    const result = await pool.query (
-        `INSERT INTO users (email, phone, password_hash, role, is_verified, verification_status)
-         VALUES ($1, $2, $3, $4, true, $5)
-         RETURNING id, email, phone, role, is_verified, is_active, verification_status, created_at`,
-        [email, phone, passwordHash, role, verificationStatus]
+    const result = await pool.query(
+        `INSERT INTO users
+            (
+                email,
+                phone,
+                password_hash,
+                role,
+                is_verified,
+                verification_status
+            )
+         VALUES
+            ($1, $2, $3, $4, true, $5)
+         RETURNING
+            id,
+            email,
+            phone,
+            role,
+            is_verified,
+            is_active,
+            verification_status,
+            created_at`,
+        [
+            email,
+            phone,
+            passwordHash,
+            role,
+            verificationStatus
+        ]
     );
-    return result.rows[0]
+
+    return result.rows[0];
 };
 
 /**
@@ -40,33 +75,88 @@ const createUser = async (email, phone, passwordHash, role) =>{
  * @param {string} qrCodeId - Unique QR code identifier
  * @returns {Promise<object>} Created patient row
  */
+const createPatient = async (
+    userId,
+    fullName,
+    nic,
+    dateOfBirth,
+    qrCodeId
+) => {
+    const result = await pool.query(
+        `INSERT INTO patients
+            (
+                user_id,
+                full_name,
+                nic,
+                date_of_birth,
+                qr_code_id
+            )
+         VALUES
+            ($1, $2, $3, $4, $5)
+         RETURNING
+            id,
+            user_id,
+            full_name,
+            nic,
+            date_of_birth,
+            qr_code_id,
+            created_at`,
+        [
+            userId,
+            fullName,
+            nic,
+            dateOfBirth,
+            qrCodeId
+        ]
+    );
 
-const createPatient = async (userId, fullName, nic, dateOfBirth, qrCodeId) => {
-  const result = await pool.query(
-    `INSERT INTO patients (user_id, full_name, nic, date_of_birth, qr_code_id)
-     VALUES ($1, $2, $3, $4, $5)
-     RETURNING id, user_id, full_name, nic, date_of_birth, qr_code_id, created_at`,
-    [userId, fullName, nic, dateOfBirth, qrCodeId]
-  );
-  return result.rows[0];
+    return result.rows[0];
 };
 
 /**
  * Creates a new doctor profile linked to a user.
+ * Newly registered doctors are not profile-verified until an admin
+ * approves their registration.
+ *
  * @param {string} userId - UUID of the user
  * @param {string} fullName - Doctor full name
  * @param {string} slmcRegNumber - SLMC register number
  * @param {string} specialization - Doctor specialization
  * @returns {Promise<object>} Created doctor row
  */
-
-const createDoctor = async (userId, fullName, slmcRegNumber, specialization) => {
+const createDoctor = async (
+    userId,
+    fullName,
+    slmcRegNumber,
+    specialization
+) => {
     const result = await pool.query(
-        `INSERT INTO doctors (user_id, full_name, slmc_reg_number, specialization)
-        VALUES ($1, $2, $3, $4)
-        RETURNING id, user_id, full_name, slmc_reg_number, specialization, created_at`,
-        [userId, fullName, slmcRegNumber, specialization]
+        `INSERT INTO doctors
+            (
+                user_id,
+                full_name,
+                slmc_reg_number,
+                specialization,
+                is_verified
+            )
+         VALUES
+            ($1, $2, $3, $4, false)
+         RETURNING
+            id,
+            user_id,
+            full_name,
+            slmc_reg_number,
+            specialization,
+            is_verified,
+            created_at`,
+        [
+            userId,
+            fullName,
+            slmcRegNumber,
+            specialization
+        ]
     );
+
     return result.rows[0];
 };
 
@@ -84,13 +174,45 @@ const createDoctor = async (userId, fullName, slmcRegNumber, specialization) => 
  * @param {string} phone - Pharmacy contact phone
  * @returns {Promise<object>} Created pharmacy row
  */
-const createPharmacy = async (userId, name, licenseNumber, address, phone) => {
+const createPharmacy = async (
+    userId,
+    name,
+    licenseNumber,
+    address,
+    phone
+) => {
     const result = await pool.query(
-        `INSERT INTO pharmacies (user_id, name, license_number, address, phone, is_verified, is_active)
-         VALUES ($1, $2, $3, $4, $5, false, true)
-         RETURNING id, user_id, name, license_number, address, phone, is_verified, is_active, created_at`,
-        [userId, name, licenseNumber, address, phone]
+        `INSERT INTO pharmacies
+            (
+                user_id,
+                name,
+                license_number,
+                address,
+                phone,
+                is_verified,
+                is_active
+            )
+         VALUES
+            ($1, $2, $3, $4, $5, false, true)
+         RETURNING
+            id,
+            user_id,
+            name,
+            license_number,
+            address,
+            phone,
+            is_verified,
+            is_active,
+            created_at`,
+        [
+            userId,
+            name,
+            licenseNumber,
+            address,
+            phone
+        ]
     );
+
     return result.rows[0];
 };
 
@@ -99,12 +221,14 @@ const createPharmacy = async (userId, name, licenseNumber, address, phone) => {
  * @param {string} email - Email to search for
  * @returns {Promise<object|null>} User row or null
  */
-
 const findUserByEmail = async (email) => {
     const result = await pool.query(
-        `SELECT * FROM users WHERE email = $1`,
+        `SELECT *
+         FROM users
+         WHERE email = $1`,
         [email]
     );
+
     return result.rows[0] || null;
 };
 
@@ -115,49 +239,79 @@ const findUserByEmail = async (email) => {
  * @param {Date} expiresAt - Expiration timestamp
  * @returns {Promise<Object>} The inserted row
  */
-const savePasswordResetToken = async (token, userId, expiresAt) => {
+const savePasswordResetToken = async (
+    token,
+    userId,
+    expiresAt
+) => {
     const query = `
-        INSERT INTO password_reset_tokens (token, user_id, expires_at)
-        VALUES ($1, $2, $3)
+        INSERT INTO password_reset_tokens
+            (token, user_id, expires_at)
+        VALUES
+            ($1, $2, $3)
         RETURNING *;
     `;
-    const result = await pool.query(query, [token, userId, expiresAt]);
+
+    const result = await pool.query(
+        query,
+        [
+            token,
+            userId,
+            expiresAt
+        ]
+    );
+
     return result.rows[0];
 };
 
 /**
  * Retrieves a valid, unused, unexpired password reset token.
- * @param {string} token 
- * @returns {Promise<object|null>} 
+ * @param {string} token
+ * @returns {Promise<object|null>}
  */
 const getValidPasswordResetToken = async (token) => {
     const result = await pool.query(
-        `SELECT * FROM password_reset_tokens WHERE token = $1 AND used = false AND expires_at > CURRENT_TIMESTAMP`,
+        `SELECT *
+         FROM password_reset_tokens
+         WHERE token = $1
+           AND used = false
+           AND expires_at > CURRENT_TIMESTAMP`,
         [token]
     );
+
     return result.rows[0] || null;
 };
 
 /**
  * Marks a password reset token as used.
- * @param {string} token 
+ * @param {string} token
  */
 const markTokenAsUsed = async (token) => {
     await pool.query(
-        `UPDATE password_reset_tokens SET used = true WHERE token = $1`,
+        `UPDATE password_reset_tokens
+         SET used = true
+         WHERE token = $1`,
         [token]
     );
 };
 
 /**
  * Updates a user's password.
- * @param {string} userId 
- * @param {string} newPasswordHash 
+ * @param {string} userId
+ * @param {string} newPasswordHash
  */
-const updateUserPassword = async (userId, newPasswordHash) => {
+const updateUserPassword = async (
+    userId,
+    newPasswordHash
+) => {
     await pool.query(
-        `UPDATE users SET password_hash = $2 WHERE id = $1`,
-        [userId, newPasswordHash]
+        `UPDATE users
+         SET password_hash = $2
+         WHERE id = $1`,
+        [
+            userId,
+            newPasswordHash
+        ]
     );
 };
 
@@ -169,16 +323,34 @@ const updateUserPassword = async (userId, newPasswordHash) => {
  * @param {string} email - Email being registered
  * @param {string} phone - Phone number
  * @param {string} passwordHash - Bcrypt hashed password
- * @param {string} role - 'patient' or 'doctor'
+ * @param {string} role - User role
  * @param {string} otpCode - 6-digit OTP code
  * @param {Date} otpExpiresAt - OTP expiry timestamp
- * @param {object} profileData - Role-specific profile fields (fullName, nic, etc.)
+ * @param {object} profileData - Role-specific profile fields
  * @returns {Promise<object>} The upserted otp_verifications row
  */
-const upsertOtpVerification = async (email, phone, passwordHash, role, otpCode, otpExpiresAt, profileData) => {
+const upsertOtpVerification = async (
+    email,
+    phone,
+    passwordHash,
+    role,
+    otpCode,
+    otpExpiresAt,
+    profileData
+) => {
     const result = await pool.query(
-        `INSERT INTO otp_verifications (email, phone, password_hash, role, otp_code, otp_expires_at, profile_data)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `INSERT INTO otp_verifications
+            (
+                email,
+                phone,
+                password_hash,
+                role,
+                otp_code,
+                otp_expires_at,
+                profile_data
+            )
+         VALUES
+            ($1, $2, $3, $4, $5, $6, $7)
          ON CONFLICT (email)
          DO UPDATE SET
             phone = EXCLUDED.phone,
@@ -188,9 +360,26 @@ const upsertOtpVerification = async (email, phone, passwordHash, role, otpCode, 
             otp_expires_at = EXCLUDED.otp_expires_at,
             profile_data = EXCLUDED.profile_data,
             updated_at = now()
-         RETURNING id, email, phone, role, otp_expires_at, profile_data, created_at, updated_at`,
-        [email, phone, passwordHash, role, otpCode, otpExpiresAt, profileData]
+         RETURNING
+            id,
+            email,
+            phone,
+            role,
+            otp_expires_at,
+            profile_data,
+            created_at,
+            updated_at`,
+        [
+            email,
+            phone,
+            passwordHash,
+            role,
+            otpCode,
+            otpExpiresAt,
+            profileData
+        ]
     );
+
     return result.rows[0];
 };
 
@@ -201,9 +390,12 @@ const upsertOtpVerification = async (email, phone, passwordHash, role, otpCode, 
  */
 const findOtpByEmail = async (email) => {
     const result = await pool.query(
-        `SELECT * FROM otp_verifications WHERE email = $1`,
+        `SELECT *
+         FROM otp_verifications
+         WHERE email = $1`,
         [email]
     );
+
     return result.rows[0] || null;
 };
 
@@ -214,7 +406,8 @@ const findOtpByEmail = async (email) => {
  */
 const deleteOtpByEmail = async (email) => {
     await pool.query(
-        `DELETE FROM otp_verifications WHERE email = $1`,
+        `DELETE FROM otp_verifications
+         WHERE email = $1`,
         [email]
     );
 };
@@ -228,19 +421,36 @@ const deleteOtpByEmail = async (email) => {
  * @param {number} cooldownMinutes - Lockout duration in minutes
  * @returns {Promise<object>} Updated row (failed_login_attempts, locked_until)
  */
-const incrementFailedLoginAttempts = async (userId, maxAttempts, cooldownMinutes) => {
+const incrementFailedLoginAttempts = async (
+    userId,
+    maxAttempts,
+    cooldownMinutes
+) => {
     const result = await pool.query(
         `UPDATE users
-         SET failed_login_attempts = failed_login_attempts + 1,
-             locked_until = CASE
-                WHEN failed_login_attempts + 1 >= $2
-                THEN CURRENT_TIMESTAMP + ($3 || ' minutes')::interval
-                ELSE locked_until
-             END
+         SET failed_login_attempts =
+                failed_login_attempts + 1,
+
+             locked_until =
+                CASE
+                    WHEN failed_login_attempts + 1 >= $2
+                    THEN CURRENT_TIMESTAMP +
+                         ($3 || ' minutes')::interval
+                    ELSE locked_until
+                END
+
          WHERE id = $1
-         RETURNING failed_login_attempts, locked_until`,
-        [userId, maxAttempts, cooldownMinutes]
+
+         RETURNING
+            failed_login_attempts,
+            locked_until`,
+        [
+            userId,
+            maxAttempts,
+            cooldownMinutes
+        ]
     );
+
     return result.rows[0];
 };
 
@@ -251,7 +461,10 @@ const incrementFailedLoginAttempts = async (userId, maxAttempts, cooldownMinutes
  */
 const resetFailedLoginAttempts = async (userId) => {
     await pool.query(
-        `UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE id = $1`,
+        `UPDATE users
+         SET failed_login_attempts = 0,
+             locked_until = NULL
+         WHERE id = $1`,
         [userId]
     );
 };
