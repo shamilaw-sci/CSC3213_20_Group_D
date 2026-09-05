@@ -2,7 +2,7 @@
  * @file    prescription.service.js
  * @module  Prescription
  * @desc    Business logic for prescription creation, expiry checking,
- *          and QR code generation.
+ *          QR code generation, and medicine dispensing.
  * @author  S/21/001
  */
 
@@ -21,7 +21,11 @@ const isPrescriptionExpired = async (prescription) => {
   const expiresAt = new Date(prescription.expires_at);
 
   if (expiresAt < now) {
-    await prescriptionRepository.updatePrescriptionStatus(prescription.id, 'expired');
+    await prescriptionRepository.updatePrescriptionStatus(
+      prescription.id,
+      'expired'
+    );
+
     prescription.status = 'expired';
   }
 
@@ -37,28 +41,38 @@ const isPrescriptionExpired = async (prescription) => {
  * @param {string} notes          - Optional notes from doctor
  * @returns {Promise<Object>} The created prescription with all items
  */
-const createPrescription = async (doctorId, patientId, appointmentId, items, notes) => {
+const createPrescription = async (
+  doctorId,
+  patientId,
+  appointmentId,
+  items,
+  notes
+) => {
   // Step 1: Generate unique QR code value
   const qrCodeValue = generatePrescriptionQR();
 
   // Step 2: Set expiry to 30 days from now
-  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  const expiresAt = new Date(
+    Date.now() + 30 * 24 * 60 * 60 * 1000
+  );
 
   // Step 3: Insert prescription into database
-  const prescription = await prescriptionRepository.createPrescription(
-    patientId,
-    doctorId,
-    appointmentId,
-    qrCodeValue,
-    expiresAt,
-    notes || null
-  );
+  const prescription =
+    await prescriptionRepository.createPrescription(
+      patientId,
+      doctorId,
+      appointmentId,
+      qrCodeValue,
+      expiresAt,
+      notes || null
+    );
 
   // Step 4: Insert all medicine items
-  const prescriptionItems = await prescriptionRepository.createPrescriptionItems(
-    prescription.id,
-    items
-  );
+  const prescriptionItems =
+    await prescriptionRepository.createPrescriptionItems(
+      prescription.id,
+      items
+    );
 
   // Step 5: Return full prescription object with items
   return {
@@ -74,11 +88,15 @@ const createPrescription = async (doctorId, patientId, appointmentId, items, not
  * @returns {Promise<Object|null>} Prescription object with items, or null if not found
  */
 const getPrescriptionById = async (id) => {
-  const prescription = await prescriptionRepository.getPrescriptionById(id);
+  const prescription =
+    await prescriptionRepository.getPrescriptionById(id);
+
   if (!prescription) return null;
 
   // Automatically check and update expiry
-  const checkedPrescription = await isPrescriptionExpired(prescription);
+  const checkedPrescription =
+    await isPrescriptionExpired(prescription);
+
   return checkedPrescription;
 };
 
@@ -89,84 +107,201 @@ const getPrescriptionById = async (id) => {
  * @returns {Promise<Object|null>} Prescription object with items, or null if not found
  */
 const verifyPrescriptionByQR = async (qrValue) => {
-  const prescription = await prescriptionRepository.getPrescriptionByQrCode(qrValue);
+  const prescription =
+    await prescriptionRepository.getPrescriptionByQrCode(
+      qrValue
+    );
+
   if (!prescription) return null;
 
   // Automatically check and update expiry
-  const checkedPrescription = await isPrescriptionExpired(prescription);
+  const checkedPrescription =
+    await isPrescriptionExpired(prescription);
+
   return checkedPrescription;
 };
 
 /**
  * Dispenses medicines from a prescription.
  * Updates quantity dispensed and prescription status.
+ * Also records which pharmacy performed the dispensing action.
+ *
  * @param {string} prescriptionId - UUID of the prescription
- * @param {Array}  dispenseItems  - Array of { prescriptionItemId, quantityDispensed }
+ * @param {Array}  dispenseItems   - Array of { prescriptionItemId, quantityDispensed }
+ * @param {string} pharmacyId      - UUID of the pharmacy performing the dispensing
  * @returns {Promise<Object>} Updated prescription with new status
  */
-const dispenseMedicine = async (prescriptionId, dispenseItems) => {
-  // Step 1: Get the current prescription
-  const prescription = await prescriptionRepository.getPrescriptionById(prescriptionId);
-  if (!prescription) return null;
-
-  // Step 2: Check if prescription is expired
-  if (prescription.status === 'expired') {
-    throw new Error('Cannot dispense — prescription is expired');
+const dispenseMedicine = async (
+  prescriptionId,
+  dispenseItems,
+  pharmacyId
+) => {
+  // Step 1: Validate pharmacy ID
+  if (!pharmacyId) {
+    const error = new Error(
+      'Pharmacy information is required to dispense medicines'
+    );
+    error.statusCode = 400;
+    throw error;
   }
 
-  // Step 3: Dispense each item
-  for (const dispenseItem of dispenseItems) {
-    // Find the matching item in the prescription
-    const existingItem = prescription.items.find(
-      item => item.id === dispenseItem.prescriptionItemId
+  // Step 2: Get the current prescription
+  const prescription =
+    await prescriptionRepository.getPrescriptionById(
+      prescriptionId
     );
 
+  if (!prescription) {
+    return null;
+  }
+
+  // Step 3: Check and update expiry status before dispensing
+  const checkedPrescription =
+    await isPrescriptionExpired(prescription);
+
+  if (checkedPrescription.status === 'expired') {
+    const error = new Error(
+      'Cannot dispense — prescription is expired'
+    );
+
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // Prevent an already completed prescription from being dispensed again
+  if (checkedPrescription.status === 'completed') {
+    const error = new Error(
+      'Cannot dispense — prescription has already been fully dispensed'
+    );
+
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // Step 4: Validate dispense items
+  if (
+    !Array.isArray(dispenseItems) ||
+    dispenseItems.length === 0
+  ) {
+    const error = new Error(
+      'At least one medicine must be selected for dispensing'
+    );
+
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // Step 5: Validate all requested quantities before changing the database
+  for (const dispenseItem of dispenseItems) {
+    // Find the matching item in the prescription
+    const existingItem =
+      checkedPrescription.items.find(
+        item =>
+          item.id ===
+          dispenseItem.prescriptionItemId
+      );
+
     if (!existingItem) {
-      throw new Error(`Item ${dispenseItem.prescriptionItemId} not found in prescription`);
+      const error = new Error(
+        `Item ${dispenseItem.prescriptionItemId} not found in prescription`
+      );
+
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const quantityDispensed =
+      Number(dispenseItem.quantityDispensed);
+
+    // Quantity must be a valid positive number
+    if (
+      !Number.isInteger(quantityDispensed) ||
+      quantityDispensed <= 0
+    ) {
+      const error = new Error(
+        `Invalid dispensing quantity for ${existingItem.medicine_name}`
+      );
+
+      error.statusCode = 400;
+      throw error;
     }
 
     // Check cannot over-dispense
-    const totalAfterDispense = existingItem.quantity_dispensed + dispenseItem.quantityDispensed;
-    if (totalAfterDispense > existingItem.quantity_prescribed) {
-      throw new Error(`Cannot dispense more than prescribed for ${existingItem.medicine_name}`);
-    }
+    const totalAfterDispense =
+      existingItem.quantity_dispensed +
+      quantityDispensed;
 
-    // Update quantity dispensed
+    if (
+      totalAfterDispense >
+      existingItem.quantity_prescribed
+    ) {
+      const error = new Error(
+        `Cannot dispense more than prescribed for ${existingItem.medicine_name}`
+      );
+
+      error.statusCode = 400;
+      throw error;
+    }
+  }
+
+  // Step 6: Dispense each item
+  for (const dispenseItem of dispenseItems) {
     await prescriptionRepository.updateQuantityDispensed(
       dispenseItem.prescriptionItemId,
-      dispenseItem.quantityDispensed
+      Number(dispenseItem.quantityDispensed)
     );
   }
 
-  // Step 4: Get updated prescription
-  const updatedPrescription = await prescriptionRepository.getPrescriptionById(prescriptionId);
+  // Step 7: Get updated prescription
+  const updatedPrescription =
+    await prescriptionRepository.getPrescriptionById(
+      prescriptionId
+    );
 
-  // Step 5: Check if all items are fully dispensed
-  const allDispensed = updatedPrescription.items.every(
-    item => item.quantity_dispensed >= item.quantity_prescribed
-  );
+  // Step 8: Check if all items are fully dispensed
+  const allDispensed =
+    updatedPrescription.items.every(
+      item =>
+        item.quantity_dispensed >=
+        item.quantity_prescribed
+    );
 
-  const someDispensed = updatedPrescription.items.some(
-    item => item.quantity_dispensed > 0
-  );
+  const someDispensed =
+    updatedPrescription.items.some(
+      item => item.quantity_dispensed > 0
+    );
 
-  // Step 6: Update prescription status
-  let newStatus = prescription.status;
+  // Step 9: Update prescription status
+  let newStatus =
+    checkedPrescription.status;
+
   if (allDispensed) {
     newStatus = 'completed';
   } else if (someDispensed) {
     newStatus = 'partially_filled';
   }
 
-  await prescriptionRepository.updatePrescriptionStatus(prescriptionId, newStatus);
-  updatedPrescription.status = newStatus;
+  await prescriptionRepository.updatePrescriptionStatus(
+    prescriptionId,
+    newStatus
+  );
 
+  updatedPrescription.status =
+    newStatus;
+
+  // Step 10: Record which pharmacy performed this dispensing action
+  await prescriptionRepository.recordDispensing(
+    prescriptionId,
+    pharmacyId
+  );
+
+  // Step 11: Return updated prescription
   return updatedPrescription;
 };
 
-module.exports = { 
-  createPrescription, 
-  getPrescriptionById, 
+module.exports = {
+  createPrescription,
+  getPrescriptionById,
   verifyPrescriptionByQR,
   dispenseMedicine
 };
