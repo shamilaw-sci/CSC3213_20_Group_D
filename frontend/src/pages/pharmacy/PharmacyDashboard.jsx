@@ -1,9 +1,9 @@
 /**
  * @component PharmacyDashboard
  * @desc      Landing page for pharmacists after login.
- *            Shows today's stats, recent prescriptions,
- *            pharmacy verification status, quick actions,
- *            and a quick QR scan entry point.
+ *            Shows pharmacy statistics, quick actions,
+ *            prescription QR scanning, recent activity,
+ *            profile access, and logout.
  * @author    Pamudika Abayarathna (S/21/001)
  */
 
@@ -27,6 +27,9 @@ import {
   LogOut,
   Pill,
   UserRoundPen,
+  Camera,
+  Keyboard,
+  ScanLine,
 } from 'lucide-react';
 
 import api from '../../services/api';
@@ -36,6 +39,7 @@ import Badge from '../../components/common/Badge';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
+import QRScanner from '../../components/common/QRScanner';
 
 import useAuthStore from '../../store/authStore';
 
@@ -58,6 +62,42 @@ const formatDate = (iso) => {
 };
 
 /**
+ * Normalizes prescription QR values.
+ *
+ * Supports a plain QR value:
+ * RX-xxxx
+ *
+ * and also URLs containing the QR value,
+ * such as:
+ * http://localhost:5173/pharmacy/RX-xxxx
+ */
+const normalizePrescriptionQrValue = (value) => {
+  if (!value) return '';
+
+  const trimmedValue =
+    value.trim();
+
+  try {
+    const url =
+      new URL(trimmedValue);
+
+    const pathParts =
+      url.pathname
+        .split('/')
+        .filter(Boolean);
+
+    return decodeURIComponent(
+      pathParts[
+        pathParts.length - 1
+      ] || ''
+    );
+
+  } catch {
+    return trimmedValue;
+  }
+};
+
+/**
  * Small reusable dashboard statistic card.
  */
 const StatCard = ({
@@ -69,7 +109,9 @@ const StatCard = ({
   return (
     <Card>
       <div className="flex items-start justify-between gap-4">
+
         <div>
+
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {title}
           </p>
@@ -81,11 +123,13 @@ const StatCard = ({
           <p className="text-xs text-muted-foreground mt-1">
             {description}
           </p>
+
         </div>
 
         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 text-primary">
           {icon}
         </div>
+
       </div>
     </Card>
   );
@@ -93,7 +137,9 @@ const StatCard = ({
 
 const PharmacyDashboard = () => {
   const user =
-    useAuthStore((state) => state.user);
+    useAuthStore(
+      (state) => state.user
+    );
 
   const clearUser =
     useAuthStore(
@@ -109,12 +155,23 @@ const PharmacyDashboard = () => {
     user?.id ||
     '';
 
-  const navigate = useNavigate();
+  const navigate =
+    useNavigate();
 
   const [
     qrInput,
     setQrInput
   ] = useState('');
+
+  const [
+    scannerOpen,
+    setScannerOpen
+  ] = useState(false);
+
+  const [
+    manualQrEntry,
+    setManualQrEntry
+  ] = useState(false);
 
   const [
     logoutLoading,
@@ -152,15 +209,52 @@ const PharmacyDashboard = () => {
     enabled: !!PHARMACY_ID,
   });
 
-  // ── Handle QR input search ──
+  /**
+   * Handles manually entered prescription QR.
+   */
   const handleQrSearch = (e) => {
     e.preventDefault();
 
-    if (qrInput.trim()) {
-      navigate(
-        `/pharmacy/${qrInput.trim()}`
+    const value =
+      normalizePrescriptionQrValue(
+        qrInput
       );
+
+    if (!value) {
+      return;
     }
+
+    navigate(
+      `/pharmacy/${encodeURIComponent(
+        value
+      )}`
+    );
+  };
+
+  /**
+   * Handles prescription QR returned by
+   * the camera scanner.
+   */
+  const handlePrescriptionQrScan = (
+    scannedValue
+  ) => {
+    const value =
+      normalizePrescriptionQrValue(
+        scannedValue
+      );
+
+    if (!value) {
+      return;
+    }
+
+    setQrInput(value);
+    setScannerOpen(false);
+
+    navigate(
+      `/pharmacy/${encodeURIComponent(
+        value
+      )}`
+    );
   };
 
   /**
@@ -199,13 +293,17 @@ const PharmacyDashboard = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
+
         <div className="flex flex-col items-center gap-3">
+
           <Spinner size="lg" />
 
           <p className="text-sm text-muted-foreground">
             Loading dashboard...
           </p>
+
         </div>
+
       </div>
     );
   }
@@ -214,7 +312,9 @@ const PharmacyDashboard = () => {
   if (isError) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
+
         <div className="text-center">
+
           <p className="text-sm text-destructive font-medium mb-4">
             Failed to load dashboard.
             Please try again.
@@ -226,7 +326,9 @@ const PharmacyDashboard = () => {
           >
             Try Again
           </Button>
+
         </div>
+
       </div>
     );
   }
@@ -238,7 +340,8 @@ const PharmacyDashboard = () => {
     data?.stats;
 
   const recentPrescriptions =
-    stats?.recentPrescriptions || [];
+    stats?.recentPrescriptions ||
+    [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -247,13 +350,16 @@ const PharmacyDashboard = () => {
           Header
       ───────────────────────────────────────────── */}
       <div className="px-6 py-7 sm:px-8 bg-brand-deep">
+
         <div className="max-w-6xl mx-auto">
 
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
 
             {/* Pharmacy identity */}
             <div>
+
               <div className="flex items-center gap-2 mb-2">
+
                 <Building2
                   size={18}
                   className="text-brand-deep-foreground/70"
@@ -262,6 +368,7 @@ const PharmacyDashboard = () => {
                 <p className="text-xs font-semibold uppercase tracking-widest text-brand-deep-foreground/70">
                   Pharmacy Portal
                 </p>
+
               </div>
 
               <h1 className="text-2xl sm:text-3xl font-bold text-brand-deep-foreground">
@@ -274,20 +381,36 @@ const PharmacyDashboard = () => {
                   'Manage prescriptions and dispensing activity'}
               </p>
 
-              {/* Verification indicator */}
               <div className="mt-3">
+
                 {pharmacy?.is_verified ? (
+
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-brand-deep-foreground text-xs font-semibold">
-                    <ShieldCheck size={14} />
+
+                    <ShieldCheck
+                      size={14}
+                    />
+
                     Verified Pharmacy
+
                   </div>
+
                 ) : (
+
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-brand-deep-foreground text-xs font-semibold">
-                    <ShieldAlert size={14} />
+
+                    <ShieldAlert
+                      size={14}
+                    />
+
                     Pending Verification
+
                   </div>
+
                 )}
+
               </div>
+
             </div>
 
             {/* Header actions */}
@@ -312,7 +435,9 @@ const PharmacyDashboard = () => {
               <Button
                 variant="secondary"
                 icon={
-                  <History size={16} />
+                  <History
+                    size={16}
+                  />
                 }
                 onClick={() =>
                   navigate(
@@ -325,14 +450,21 @@ const PharmacyDashboard = () => {
 
               <Button
                 variant="secondary"
-                loading={logoutLoading}
-                icon={
-                  <LogOut size={16} />
+                loading={
+                  logoutLoading
                 }
-                onClick={handleLogout}
+                icon={
+                  <LogOut
+                    size={16}
+                  />
+                }
+                onClick={
+                  handleLogout
+                }
               >
                 Logout
               </Button>
+
             </div>
 
           </div>
@@ -342,7 +474,9 @@ const PharmacyDashboard = () => {
               {logoutError}
             </p>
           )}
+
         </div>
+
       </div>
 
       {/* ─────────────────────────────────────────────
@@ -358,11 +492,14 @@ const PharmacyDashboard = () => {
           <StatCard
             title="Dispensed Today"
             value={
-              stats?.todayDispensed ?? 0
+              stats?.todayDispensed ??
+              0
             }
             description="dispensing activities today"
             icon={
-              <Pill size={20} />
+              <Pill
+                size={20}
+              />
             }
           />
 
@@ -383,11 +520,14 @@ const PharmacyDashboard = () => {
           <StatCard
             title="Partially Filled"
             value={
-              stats?.partiallyFilled ?? 0
+              stats?.partiallyFilled ??
+              0
             }
             description="prescriptions still remaining"
             icon={
-              <Clock3 size={20} />
+              <Clock3
+                size={20}
+              />
             }
           />
 
@@ -408,41 +548,48 @@ const PharmacyDashboard = () => {
         </div>
 
         {/* ─────────────────────────────────────────
-            Quick Actions
+            Main Pharmacy Actions
         ───────────────────────────────────────── */}
         <Card
-          title="Quick Actions"
-          icon={<QrCode size={18} />}
+          title="Find Prescription or Patient"
+          icon={
+            <ScanLine
+              size={18}
+            />
+          }
         >
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
 
-            {/* Verify Prescription */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+            {/* Prescription QR */}
             <button
               type="button"
               onClick={() => {
-                document
-                  .getElementById(
-                    'prescription-qr-input'
-                  )
-                  ?.focus();
+                setScannerOpen(true);
+                setManualQrEntry(false);
               }}
-              className="text-left border border-border rounded-xl p-5 hover:border-primary/40 hover:bg-secondary/30 transition-all"
+              className="text-left border border-primary/30 bg-primary/5 rounded-xl p-5 hover:border-primary hover:shadow-sm transition-all"
             >
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-3">
-                <QrCode size={20} />
+
+              <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-3">
+
+                <Camera
+                  size={22}
+                />
+
               </div>
 
               <p className="text-sm font-bold text-foreground">
-                Verify Prescription
+                Scan Prescription QR
               </p>
 
               <p className="text-xs text-muted-foreground mt-1">
-                Enter a prescription QR
-                code and dispense medicines.
+                Scan the digital prescription QR shown on the patient's smartphone.
               </p>
+
             </button>
 
-            {/* Patient Lookup */}
+            {/* Patient QR / NIC */}
             <button
               type="button"
               onClick={() =>
@@ -452,23 +599,26 @@ const PharmacyDashboard = () => {
               }
               className="text-left border border-border rounded-xl p-5 hover:border-primary/40 hover:bg-secondary/30 transition-all"
             >
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-3">
+
+              <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-3">
+
                 <UserSearch
-                  size={20}
+                  size={22}
                 />
+
               </div>
 
               <p className="text-sm font-bold text-foreground">
-                Patient QR Lookup
+                Find Patient
               </p>
 
               <p className="text-xs text-muted-foreground mt-1">
-                Find prescriptions for
-                patients without smartphones.
+                Scan a patient identity QR card or search using NIC.
               </p>
+
             </button>
 
-            {/* Dispensing History */}
+            {/* History */}
             <button
               type="button"
               onClick={() =>
@@ -478,8 +628,13 @@ const PharmacyDashboard = () => {
               }
               className="text-left border border-border rounded-xl p-5 hover:border-primary/40 hover:bg-secondary/30 transition-all"
             >
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-3">
-                <History size={20} />
+
+              <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-3">
+
+                <History
+                  size={22}
+                />
+
               </div>
 
               <p className="text-sm font-bold text-foreground">
@@ -487,112 +642,180 @@ const PharmacyDashboard = () => {
               </p>
 
               <p className="text-xs text-muted-foreground mt-1">
-                Review previous
-                prescription dispensing activity.
+                Review medicines previously dispensed by this pharmacy.
               </p>
+
             </button>
 
           </div>
+
         </Card>
 
         {/* ─────────────────────────────────────────
-            QR Prescription Verification
+            Prescription QR Scanner
         ───────────────────────────────────────── */}
-        <Card
-          title="Verify Prescription by QR Code"
-          icon={<QrCode size={18} />}
-        >
-          <p className="text-xs text-muted-foreground mb-4">
-            Enter the QR code value from
-            the patient's prescription to
-            verify and dispense.
-          </p>
-
-          <form
-            onSubmit={handleQrSearch}
-            className="flex flex-col sm:flex-row gap-3"
+        {scannerOpen && (
+          <Card
+            title="Scan Prescription QR"
+            icon={
+              <QrCode
+                size={18}
+              />
+            }
           >
-            <Input
-              id="prescription-qr-input"
-              name="qrInput"
-              value={qrInput}
-              onChange={(e) =>
-                setQrInput(
-                  e.target.value
-                )
+
+            <QRScanner
+              title="Scan Prescription QR"
+              description="Point the camera at the prescription QR displayed on the patient's smartphone."
+              onScan={
+                handlePrescriptionQrScan
               }
-              placeholder="e.g. RX-550e8400-e29b-41d4-..."
-              className="flex-1"
+              onClose={() =>
+                setScannerOpen(false)
+              }
             />
 
-            <Button
-              type="submit"
-              variant="primary"
-              icon={
-                <Search size={16} />
-              }
-            >
-              Verify Prescription
-            </Button>
-          </form>
+          </Card>
+        )}
 
-          {/* Patient card lookup */}
-          <div className="mt-5 pt-5 border-t border-border">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        {/* ─────────────────────────────────────────
+            Manual Prescription QR Fallback
+        ───────────────────────────────────────── */}
+        <Card
+          title="Prescription QR Fallback"
+          icon={
+            <QrCode
+              size={18}
+            />
+          }
+        >
+
+          {!manualQrEntry ? (
+
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Patient without smartphone?
+
+                <p className="text-sm font-semibold text-foreground">
+                  Having trouble scanning?
                 </p>
 
                 <p className="text-xs text-muted-foreground mt-1">
-                  Use the patient's Care4U
-                  identity QR card instead.
+                  Manually enter the prescription QR value only when camera scanning is unavailable.
                 </p>
+
               </div>
 
               <Button
                 variant="secondary"
                 icon={
-                  <UserSearch
+                  <Keyboard
                     size={16}
                   />
                 }
                 onClick={() =>
-                  navigate(
-                    '/pharmacy/patient-lookup'
+                  setManualQrEntry(
+                    true
                   )
                 }
               >
-                Patient QR Lookup
+                Enter QR Manually
               </Button>
 
             </div>
-          </div>
+
+          ) : (
+
+            <div>
+
+              <form
+                onSubmit={
+                  handleQrSearch
+                }
+                className="flex flex-col sm:flex-row gap-3"
+              >
+
+                <Input
+                  name="qrInput"
+                  value={
+                    qrInput
+                  }
+                  onChange={(e) =>
+                    setQrInput(
+                      e.target.value
+                    )
+                  }
+                  placeholder="e.g. RX-550e8400-e29b-41d4-..."
+                  className="flex-1"
+                />
+
+                <Button
+                  type="submit"
+                  variant="primary"
+                  icon={
+                    <Search
+                      size={16}
+                    />
+                  }
+                >
+                  Verify
+                </Button>
+
+              </form>
+
+              <div className="mt-3">
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setManualQrEntry(
+                      false
+                    );
+
+                    setQrInput('');
+                  }}
+                  className="text-xs font-semibold text-muted-foreground hover:text-foreground"
+                >
+                  Hide manual entry
+                </button>
+
+              </div>
+
+            </div>
+
+          )}
+
         </Card>
 
         {/* ─────────────────────────────────────────
-            Account Information
+            Pharmacy Information
         ───────────────────────────────────────── */}
         <Card
           title="Pharmacy Information"
           icon={
-            <Building2 size={18} />
+            <Building2
+              size={18}
+            />
           }
         >
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
 
             <div>
+
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 Pharmacy
               </p>
 
               <p className="text-sm font-semibold text-foreground mt-1">
-                {pharmacy?.name || '—'}
+                {pharmacy?.name ||
+                  '—'}
               </p>
+
             </div>
 
             <div>
+
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 License Number
               </p>
@@ -601,25 +824,32 @@ const PharmacyDashboard = () => {
                 {pharmacy?.license_number ||
                   '—'}
               </p>
+
             </div>
 
             <div>
+
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 Phone
               </p>
 
               <p className="text-sm font-semibold text-foreground mt-1">
-                {pharmacy?.phone || '—'}
+                {pharmacy?.phone ||
+                  '—'}
               </p>
+
             </div>
 
             <div>
+
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 Status
               </p>
 
               <div className="mt-1 flex items-center gap-2">
+
                 {pharmacy?.is_verified ? (
+
                   <>
                     <ShieldCheck
                       size={16}
@@ -630,7 +860,9 @@ const PharmacyDashboard = () => {
                       Verified
                     </span>
                   </>
+
                 ) : (
+
                   <>
                     <ShieldAlert
                       size={16}
@@ -641,13 +873,17 @@ const PharmacyDashboard = () => {
                       Pending Approval
                     </span>
                   </>
+
                 )}
+
               </div>
+
             </div>
 
           </div>
 
           <div className="mt-5 pt-5 border-t border-border flex justify-end">
+
             <Button
               variant="secondary"
               icon={
@@ -663,7 +899,9 @@ const PharmacyDashboard = () => {
             >
               View Profile
             </Button>
+
           </div>
+
         </Card>
 
         {/* ─────────────────────────────────────────
@@ -677,23 +915,27 @@ const PharmacyDashboard = () => {
             />
           }
         >
+
           {recentPrescriptions.length ===
           0 ? (
+
             <div className="flex flex-col items-center justify-center text-center py-10 px-4 rounded-xl border border-dashed border-border bg-secondary/40">
 
               <ClipboardList className="w-8 h-8 text-muted-foreground/50 mb-3" />
 
               <p className="text-sm font-medium text-muted-foreground">
-                No prescriptions have been
-                dispensed by this pharmacy yet.
+                No prescriptions have been dispensed by this pharmacy yet.
               </p>
 
             </div>
+
           ) : (
+
             <div className="flex flex-col gap-3">
 
               {recentPrescriptions.map(
                 (rx) => (
+
                   <div
                     key={rx.id}
                     onClick={() =>
@@ -705,28 +947,38 @@ const PharmacyDashboard = () => {
                   >
 
                     <div>
+
                       <p className="text-sm font-semibold text-foreground font-mono">
                         {rx.qr_code_value}
                       </p>
 
                       <p className="text-xs text-muted-foreground mt-1">
+
                         Issued:{' '}
+
                         {formatDate(
                           rx.created_at
                         )}
+
                         {' · '}
+
                         Dispensed:{' '}
+
                         {formatDate(
                           rx.dispensed_at
                         )}
+
                       </p>
 
                       {rx.expires_at && (
                         <p className="text-xs text-muted-foreground mt-1">
+
                           Expires:{' '}
+
                           {formatDate(
                             rx.expires_at
                           )}
+
                         </p>
                       )}
 
@@ -735,9 +987,11 @@ const PharmacyDashboard = () => {
                           {rx.notes}
                         </p>
                       )}
+
                     </div>
 
                     <div className="shrink-0 flex items-center gap-3">
+
                       <Badge
                         status={
                           rx.status
@@ -748,21 +1002,27 @@ const PharmacyDashboard = () => {
                         size={16}
                         className="text-primary opacity-50 group-hover:opacity-100 transition-opacity"
                       />
+
                     </div>
 
                   </div>
+
                 )
               )}
 
             </div>
+
           )}
 
           <div className="mt-5 pt-5 border-t border-border">
+
             <Button
               variant="secondary"
               className="w-full"
               icon={
-                <History size={16} />
+                <History
+                  size={16}
+                />
               }
               onClick={() =>
                 navigate(
@@ -772,10 +1032,13 @@ const PharmacyDashboard = () => {
             >
               View Full Dispensing History
             </Button>
+
           </div>
+
         </Card>
 
       </div>
+
     </div>
   );
 };
