@@ -368,6 +368,40 @@ const getPatientByQrCode = async (qrCodeId) => {
 };
 
 /**
+ * Retrieves a patient profile using their NIC.
+ * Used by pharmacy staff as a fallback lookup method
+ * when a patient QR code is unavailable.
+ *
+ * @param {string} nic - Patient NIC number
+ * @returns {Promise<Object>} Patient profile
+ */
+const getPatientByNic = async (nic) => {
+  if (!nic || !nic.trim()) {
+    const error = new Error(
+      'NIC is required'
+    );
+
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const patient =
+    await patientRepository.getPatientByNic(
+      nic.trim()
+    );
+
+  if (!patient) {
+    const error =
+      new Error('Patient not found');
+
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return patient;
+};
+
+/**
  * Uses AI to generate a highly precise clinical summary of a patient's medical history.
  * EPIC 8.12: Now respects privacy locks by passing the requesting user to getMedicalRecords.
  */
@@ -588,10 +622,11 @@ module.exports = {
   deleteCondition,
   getVaccinations,
   addVaccination,
-  addBulkVaccinations, 
+  addBulkVaccinations,
   deleteVaccination,
   getPatientPrescriptions,
   getPatientByQrCode,
+  getPatientByNic,
   getPatientHistorySummary,
   extractVaccinationDataFromImage,
   getLabReports,

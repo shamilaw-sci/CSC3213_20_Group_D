@@ -177,6 +177,47 @@ const getPatientByQrCodeController = async (req, res) => {
   }
 };
 
+/**
+ * Handles GET /api/patients/nic/:nic
+ * Retrieves a patient profile using their NIC.
+ * Intended for pharmacy staff fallback lookup when
+ * a patient QR code is unavailable.
+ *
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const getPatientByNicController = async (req, res) => {
+  try {
+    const { nic } = req.params;
+
+    const patient =
+      await patientService.getPatientByNic(
+        nic
+      );
+
+    res.status(200).json({
+      success: true,
+      message: 'Patient found',
+      data: patient
+    });
+
+  } catch (error) {
+    console.error(
+      'getPatientByNicController error:',
+      error
+    );
+
+    res.status(
+      error.statusCode || 500
+    ).json({
+      success: false,
+      message:
+        error.message ||
+        'Internal server error'
+    });
+  }
+};
+
 const getPatientHistorySummaryController = async (req, res) => {
   try {
     const { id } = req.params;
@@ -347,10 +388,11 @@ module.exports = {
   deleteConditionController,
   getVaccinationsController,
   addVaccinationController,
-  addBulkVaccinationsController, 
+  addBulkVaccinationsController,
   deleteVaccinationController,
   getPatientPrescriptionsController,
   getPatientByQrCodeController,
+  getPatientByNicController,
   getPatientHistorySummaryController,
   uploadPatientPhotoController,
   extractVaccinationDataController,

@@ -503,6 +503,45 @@ async function getPatientAppointments(patientId) {
   return result.rows;
 }
 
+/**
+ * Fetches a patient record by their NIC.
+ * Used by pharmacy staff as a fallback patient lookup method
+ * when a QR code cannot be scanned or is unavailable.
+ *
+ * @param {string} nic - Patient NIC number
+ * @returns {Promise<Object|null>} Patient row or null if not found
+ */
+async function getPatientByNic(nic) {
+  const result = await pool.query(
+    `SELECT
+      p.id,
+      p.user_id,
+      p.nic,
+      p.uhi,
+      p.date_of_birth,
+      p.gender,
+      p.blood_group,
+      p.emergency_contact_name,
+      p.emergency_contact_phone,
+      p.emergency_contact_relationship,
+      p.qr_code_id,
+      p.photo_url,
+      p.created_at,
+      p.full_name,
+      u.email,
+      u.phone,
+      u.is_verified,
+      u.role
+    FROM patients p
+    JOIN users u ON p.user_id = u.id
+    WHERE UPPER(TRIM(p.nic)) = UPPER(TRIM($1))
+    LIMIT 1`,
+    [nic]
+  );
+
+  return result.rows[0] || null;
+}
+
 
 module.exports = {
   getPatientById,
@@ -524,4 +563,5 @@ module.exports = {
   getLabReports,
   markLabReportAsRead,
   getPatientAppointments,
+  getPatientByNic,
 };
