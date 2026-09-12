@@ -11,6 +11,7 @@ import useAuthStore from './store/authStore';
 
 import PatientLayout          from './components/layout/PatientLayout';
 import AdminLayout            from './components/layout/AdminLayout';
+import HospitalLayout         from './components/layout/HospitalLayout';
 
 import PatientProfilePage     from './pages/patient/PatientProfilePage';
 import MedicalRecordsPage     from './pages/patient/MedicalRecordsPage';
@@ -45,6 +46,11 @@ import BookAppointmentPage    from './pages/patient/BookAppointmentPage';
 import MyAppointmentsPage     from './pages/patient/MyAppointmentsPage';
 
 import AIChatWidget           from './components/chat/AIChatWidget';
+
+import HospitalHomePage from './pages/hospital/HospitalHomePage';
+import HospitalEmergencyPage from './pages/hospital/HospitalEmergencyPage';
+
+import EmergencySnapshotPage from './pages/emergency/EmergencySnapshotPage';
 
 import AdminApprovalsPage from './pages/admin/AdminApprovalsPage';
 import AdminOverviewPage from './pages/admin/AdminOverviewPage';
@@ -223,6 +229,12 @@ function App() {
               user.role === 'pharmacist' ? (
                 <Navigate
                   to="/pharmacy/dashboard"
+                  replace
+                />
+              ) :
+              user.role === 'hospital_staff' ? (
+                <Navigate
+                  to="/hospital/dashboard"
                   replace
                 />
               ) :
@@ -492,6 +504,60 @@ function App() {
               ]}
             >
               <PharmacyDispensingHistoryPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Hospital pages — restricted to 'hospital_staff' */}
+        <Route
+          path="/hospital"
+          element={
+            <ProtectedRoute
+              allowedRoles={[
+                'hospital_staff'
+              ]}
+            >
+              <HospitalLayout />
+            </ProtectedRoute>
+          }
+        >
+
+          <Route
+            index
+            element={
+              <Navigate
+                to="/hospital/dashboard"
+                replace
+              />
+            }
+          />
+
+          <Route
+            path="dashboard"
+            element={
+              <HospitalHomePage />
+            }
+          />
+
+          <Route
+            path="emergency"
+            element={
+              <HospitalEmergencyPage />
+            }
+          />
+
+        </Route>
+
+        {/* Hospital Break-Glass snapshot — standalone crisis screen */}
+        <Route
+          path="/hospital/emergency/snapshot/:patientId"
+          element={
+            <ProtectedRoute
+              allowedRoles={[
+                'hospital_staff'
+              ]}
+            >
+              <EmergencySnapshotPage />
             </ProtectedRoute>
           }
         />
