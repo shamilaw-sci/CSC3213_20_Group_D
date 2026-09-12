@@ -69,6 +69,8 @@ import {
   getAllergies,
   getPatientHistorySummary,
   getPatientPrescriptions,
+  getMedicalDevices,
+  getHealthBackground,
 } from '../../services/patient.service';
 
 import {
@@ -537,6 +539,16 @@ const ConsultationPage = () => {
   ] = useState([]);
 
   const [
+    medicalDevices,
+    setMedicalDevices,
+  ] = useState([]);
+
+  const [
+    healthBackground,
+    setHealthBackground,
+  ] = useState([]);
+
+  const [
     previousNotes,
     setPreviousNotes,
   ] = useState([]);
@@ -965,6 +977,8 @@ const ConsultationPage = () => {
             allergyData,
             recordData,
             prescriptionData,
+            medicalDeviceData,
+            healthBackgroundData,
             noteResponse,
           ] =
             await Promise.all([
@@ -985,6 +999,16 @@ const ConsultationPage = () => {
               ),
 
               getPatientPrescriptions(
+                consultation
+                  .patient_id
+              ),
+
+              getMedicalDevices(
+                consultation
+                  .patient_id
+              ),
+
+              getHealthBackground(
                 consultation
                   .patient_id
               ),
@@ -1015,6 +1039,16 @@ const ConsultationPage = () => {
 
           setPrescriptions(
             prescriptionData ||
+            []
+          );
+
+          setMedicalDevices(
+            medicalDeviceData ||
+            []
+          );
+
+          setHealthBackground(
+            healthBackgroundData ||
             []
           );
 
@@ -1195,6 +1229,28 @@ const ConsultationPage = () => {
               'completed'
         ),
       [prescriptions]
+    );
+
+  const emergencyRelevantDevices =
+    useMemo(
+      () =>
+        medicalDevices.filter(
+          (device) =>
+            device
+              .is_emergency_relevant
+        ),
+      [medicalDevices]
+    );
+
+  const emergencyRelevantBackground =
+    useMemo(
+      () =>
+        healthBackground.filter(
+          (item) =>
+            item
+              .is_emergency_relevant
+        ),
+      [healthBackground]
     );
 
   const mostRecentVisit =
@@ -3071,6 +3127,225 @@ const ConsultationPage = () => {
 
                 </Card>
 
+                {/* Medical devices and implants */}
+                <Card
+                  title={`Medical Devices & Implants (${medicalDevices.length})`}
+                >
+
+                  {clinicalDataLoading ? (
+
+                    <div className="py-6 flex justify-center">
+
+                      <Spinner
+                        size="sm"
+                      />
+
+                    </div>
+
+                  ) : medicalDevices.length ===
+                    0 ? (
+
+                    <p className="text-sm text-muted-foreground py-3">
+                      No active medical devices or implants recorded.
+                    </p>
+
+                  ) : (
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+
+                      {medicalDevices.map(
+                        (device) => (
+
+                          <div
+                            key={
+                              device.id
+                            }
+                            className="rounded-xl border border-border p-4 bg-card"
+                          >
+
+                            <div className="flex items-start justify-between gap-3">
+
+                              <div className="min-w-0">
+
+                                <div className="flex items-center gap-2">
+
+                                  <HeartPulse
+                                    size={16}
+                                    className="text-primary shrink-0"
+                                  />
+
+                                  <p className="text-sm font-bold text-foreground">
+                                    {
+                                      device
+                                        .device_name
+                                    }
+                                  </p>
+
+                                </div>
+
+                                {device.device_type && (
+
+                                  <p className="text-xs font-medium text-primary mt-1">
+                                    {
+                                      device
+                                        .device_type
+                                    }
+                                  </p>
+
+                                )}
+
+                                <p className="text-xs text-muted-foreground mt-2">
+                                  Implanted / Started:{' '}
+                                  {formatDate(
+                                    device
+                                      .implanted_at
+                                  )}
+                                </p>
+
+                                {device.notes && (
+
+                                  <p className="text-xs text-muted-foreground mt-2 whitespace-pre-wrap">
+                                    {
+                                      device.notes
+                                    }
+                                  </p>
+
+                                )}
+
+                              </div>
+
+                              {device
+                                .is_emergency_relevant && (
+
+                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-destructive/10 text-destructive border border-destructive/20 text-[10px] uppercase tracking-wide font-bold shrink-0">
+                                  <ShieldAlert
+                                    size={10}
+                                  />
+                                  Emergency
+                                </span>
+
+                              )}
+
+                            </div>
+
+                          </div>
+
+                        )
+                      )}
+
+                    </div>
+
+                  )}
+
+                </Card>
+
+                {/* Important medical background */}
+                <Card
+                  title={`Important Medical Background (${healthBackground.length})`}
+                >
+
+                  {clinicalDataLoading ? (
+
+                    <div className="py-6 flex justify-center">
+
+                      <Spinner
+                        size="sm"
+                      />
+
+                    </div>
+
+                  ) : healthBackground.length ===
+                    0 ? (
+
+                    <p className="text-sm text-muted-foreground py-3">
+                      No important medical background recorded.
+                    </p>
+
+                  ) : (
+
+                    <div className="space-y-3 pt-2">
+
+                      {healthBackground.map(
+                        (item) => (
+
+                          <div
+                            key={
+                              item.id
+                            }
+                            className="rounded-xl border border-border p-4"
+                          >
+
+                            <div className="flex items-start justify-between gap-4">
+
+                              <div className="min-w-0">
+
+                                <div className="flex flex-wrap items-center gap-2">
+
+                                  <ClipboardList
+                                    size={16}
+                                    className="text-primary shrink-0"
+                                  />
+
+                                  <p className="text-sm font-bold text-foreground">
+                                    {
+                                      item.title
+                                    }
+                                  </p>
+
+                                  <span className="text-[10px] uppercase tracking-wide font-bold text-primary bg-primary/10 border border-primary/15 rounded-full px-2 py-1">
+                                    {formatStatus(
+                                      item
+                                        .background_type
+                                    )}
+                                  </span>
+
+                                </div>
+
+                                <p className="text-xs text-muted-foreground mt-2">
+                                  Event Date:{' '}
+                                  {formatDate(
+                                    item
+                                      .event_date
+                                  )}
+                                </p>
+
+                                {item.notes && (
+
+                                  <p className="text-xs text-muted-foreground mt-2 whitespace-pre-wrap">
+                                    {
+                                      item.notes
+                                    }
+                                  </p>
+
+                                )}
+
+                              </div>
+
+                              {item
+                                .is_emergency_relevant && (
+
+                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-destructive/10 text-destructive border border-destructive/20 text-[10px] uppercase tracking-wide font-bold shrink-0">
+                                  <ShieldAlert
+                                    size={10}
+                                  />
+                                  Emergency
+                                </span>
+
+                              )}
+
+                            </div>
+
+                          </div>
+
+                        )
+                      )}
+
+                    </div>
+
+                  )}
+
+                </Card>
+
                 {/* Visit details */}
                 <Card title="Visit Details">
 
@@ -4565,6 +4840,177 @@ const ConsultationPage = () => {
                                     ? ` · ${item.frequency}`
                                     : ''}
                                 </p>
+
+                              </div>
+
+                            )
+                          )}
+
+                      </div>
+
+                    )}
+
+                  </div>
+
+                  {/* Emergency-relevant medical devices */}
+                  <div className="rounded-xl border border-border bg-secondary/40 p-4">
+
+                    <div className="flex items-center gap-2">
+
+                      <HeartPulse
+                        size={17}
+                        className="text-primary"
+                      />
+
+                      <p className="text-sm font-bold text-foreground">
+                        Emergency Devices
+                      </p>
+
+                      <span className="ml-auto text-xs font-bold text-muted-foreground">
+                        {
+                          emergencyRelevantDevices
+                            .length
+                        }
+                      </span>
+
+                    </div>
+
+                    {emergencyRelevantDevices
+                      .length ===
+                      0 ? (
+
+                      <p className="text-xs text-muted-foreground mt-2">
+                        No emergency-relevant devices recorded.
+                      </p>
+
+                    ) : (
+
+                      <div className="mt-3 space-y-2">
+
+                        {emergencyRelevantDevices
+                          .slice(
+                            0,
+                            5
+                          )
+                          .map(
+                            (device) => (
+
+                              <div
+                                key={
+                                  device.id
+                                }
+                                className="flex items-start gap-2"
+                              >
+
+                                <ShieldAlert
+                                  size={12}
+                                  className="text-destructive shrink-0 mt-0.5"
+                                />
+
+                                <div>
+
+                                  <p className="text-xs font-semibold text-foreground">
+                                    {
+                                      device
+                                        .device_name
+                                    }
+                                  </p>
+
+                                  {device.device_type && (
+
+                                    <p className="text-[11px] text-muted-foreground">
+                                      {
+                                        device
+                                          .device_type
+                                      }
+                                    </p>
+
+                                  )}
+
+                                </div>
+
+                              </div>
+
+                            )
+                          )}
+
+                      </div>
+
+                    )}
+
+                  </div>
+
+                  {/* Emergency-relevant background */}
+                  <div className="rounded-xl border border-border bg-secondary/40 p-4">
+
+                    <div className="flex items-center gap-2">
+
+                      <ClipboardList
+                        size={17}
+                        className="text-primary"
+                      />
+
+                      <p className="text-sm font-bold text-foreground">
+                        Critical Background
+                      </p>
+
+                      <span className="ml-auto text-xs font-bold text-muted-foreground">
+                        {
+                          emergencyRelevantBackground
+                            .length
+                        }
+                      </span>
+
+                    </div>
+
+                    {emergencyRelevantBackground
+                      .length ===
+                      0 ? (
+
+                      <p className="text-xs text-muted-foreground mt-2">
+                        No emergency-relevant background recorded.
+                      </p>
+
+                    ) : (
+
+                      <div className="mt-3 space-y-2">
+
+                        {emergencyRelevantBackground
+                          .slice(
+                            0,
+                            5
+                          )
+                          .map(
+                            (item) => (
+
+                              <div
+                                key={
+                                  item.id
+                                }
+                                className="flex items-start gap-2"
+                              >
+
+                                <ShieldAlert
+                                  size={12}
+                                  className="text-destructive shrink-0 mt-0.5"
+                                />
+
+                                <div>
+
+                                  <p className="text-xs font-semibold text-foreground">
+                                    {
+                                      item.title
+                                    }
+                                  </p>
+
+                                  <p className="text-[11px] text-muted-foreground">
+                                    {formatStatus(
+                                      item
+                                        .background_type
+                                    )}
+                                  </p>
+
+                                </div>
 
                               </div>
 
