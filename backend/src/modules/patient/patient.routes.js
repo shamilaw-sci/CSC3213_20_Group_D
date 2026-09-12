@@ -142,20 +142,24 @@ router.delete(
 
 /**
  * GET /api/patients/:id/medical-devices
- * Retrieves active medical devices and implants
- * belonging to the authenticated patient.
+ * Retrieves active medical devices and implants.
+ * The owning patient and authenticated doctors
+ * have read-only access.
  */
 router.get(
   '/:id/medical-devices',
   isAuthenticated,
-  authorize('patient'),
+  authorize(
+    'patient',
+    'doctor'
+  ),
   getMedicalDevicesController
 );
 
 /**
  * POST /api/patients/:id/medical-devices
  * Adds a new medical device or implant to the
- * authenticated patient's profile.
+ * authenticated patient's own profile.
  */
 router.post(
   '/:id/medical-devices',
@@ -166,8 +170,8 @@ router.post(
 
 /**
  * DELETE /api/patients/:id/medical-devices/:deviceId
- * Removes a medical device from the patient's
- * active profile.
+ * Removes a medical device from the authenticated
+ * patient's own active profile.
  */
 router.delete(
   '/:id/medical-devices/:deviceId',
@@ -178,20 +182,24 @@ router.delete(
 
 /**
  * GET /api/patients/:id/health-background
- * Retrieves active important medical background
- * records belonging to the authenticated patient.
+ * Retrieves active important medical background records.
+ * The owning patient and authenticated doctors
+ * have read-only access.
  */
 router.get(
   '/:id/health-background',
   isAuthenticated,
-  authorize('patient'),
+  authorize(
+    'patient',
+    'doctor'
+  ),
   getHealthBackgroundController
 );
 
 /**
  * POST /api/patients/:id/health-background
  * Adds an important medical background record
- * to the authenticated patient's profile.
+ * to the authenticated patient's own profile.
  */
 router.post(
   '/:id/health-background',
@@ -203,7 +211,7 @@ router.post(
 /**
  * DELETE /api/patients/:id/health-background/:backgroundId
  * Removes an important medical background record
- * from the patient's active profile.
+ * from the authenticated patient's own active profile.
  */
 router.delete(
   '/:id/health-background/:backgroundId',

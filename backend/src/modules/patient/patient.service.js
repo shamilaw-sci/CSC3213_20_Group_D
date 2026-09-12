@@ -532,13 +532,15 @@ const ensurePatientOwnsMedicalDeviceData = (
 };
 
 /**
- * Retrieves all active medical devices and implants for a patient.
+ * Retrieves all active medical devices and implants.
+ * The owning patient and authenticated doctors may read
+ * this information. Management remains patient-only.
  */
 const getMedicalDevices = async (
   patientId,
   requestingUser
 ) => {
-  ensurePatientOwnsMedicalDeviceData(
+  ensureCanReadPatientSafetyData(
     patientId,
     requestingUser
   );
@@ -804,14 +806,15 @@ const ensurePatientOwnsHealthBackgroundData = (
 };
 
 /**
- * Retrieves all active important medical background records
- * belonging to the authenticated patient.
+ * Retrieves all active important medical background records.
+ * The owning patient and authenticated doctors may read
+ * this information. Management remains patient-only.
  */
 const getHealthBackground = async (
   patientId,
   requestingUser
 ) => {
-  ensurePatientOwnsHealthBackgroundData(
+  ensureCanReadPatientSafetyData(
     patientId,
     requestingUser
   );
@@ -823,9 +826,7 @@ const getHealthBackground = async (
 
   if (!existing) {
     const error =
-      new Error(
-        'Patient not found'
-      );
+      new Error('Patient not found');
 
     error.statusCode = 404;
     throw error;
@@ -1690,6 +1691,44 @@ const generatePatientChatResponse = async (
     reply:
       responseText
   };
+};
+
+/**
+ * Ensures that patient safety information is being read
+ * either by the owning patient or by an authenticated doctor.
+ */
+const ensureCanReadPatientSafetyData = (
+  patientId,
+  requestingUser
+) => {
+  if (!requestingUser) {
+    const error =
+      new Error('Authentication is required');
+
+    error.statusCode = 401;
+    throw error;
+  }
+
+  const isOwningPatient =
+    requestingUser.role === 'patient' &&
+    String(requestingUser.profile_id) ===
+      String(patientId);
+
+  const isDoctor =
+    requestingUser.role === 'doctor';
+
+  if (
+    !isOwningPatient &&
+    !isDoctor
+  ) {
+    const error =
+      new Error(
+        'You do not have permission to view this patient safety information'
+      );
+
+    error.statusCode = 403;
+    throw error;
+  }
 };
 
 module.exports = {
