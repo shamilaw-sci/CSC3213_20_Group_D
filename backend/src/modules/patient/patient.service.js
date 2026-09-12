@@ -26,6 +26,20 @@ const VALID_HEALTH_BACKGROUND_TYPES = [
   'other',
 ];
 
+const VALID_FAMILY_RELATIONS = [
+  'mother',
+  'father',
+  'sister',
+  'brother',
+  'daughter',
+  'son',
+  'maternal_grandmother',
+  'maternal_grandfather',
+  'paternal_grandmother',
+  'paternal_grandfather',
+  'other',
+];
+
 /**
  * Retrieves a patient's full profile by their patient UUID.
  */
@@ -530,6 +544,7 @@ const ensurePatientOwnsMedicalDeviceData = (
     throw error;
   }
 };
+
 
 /**
  * Retrieves all active medical devices and implants.
@@ -1052,6 +1067,246 @@ const deleteHealthBackground = async (
     const error =
       new Error(
         'Medical background record not found or does not belong to this patient'
+      );
+
+    error.statusCode = 404;
+    throw error;
+  }
+};
+
+/**
+ * Ensures that a family medical history management request
+ * is being performed by the patient who owns the profile.
+ */
+const ensurePatientOwnsFamilyHistoryData = (
+  patientId,
+  requestingUser
+) => {
+  if (!requestingUser) {
+    const error =
+      new Error(
+        'Authentication is required'
+      );
+
+    error.statusCode = 401;
+    throw error;
+  }
+
+  if (
+    requestingUser.role !==
+      'patient' ||
+    String(
+      requestingUser.profile_id
+    ) !==
+      String(patientId)
+  ) {
+    const error =
+      new Error(
+        'You can only manage family medical history on your own patient profile'
+      );
+
+    error.statusCode = 403;
+    throw error;
+  }
+};
+
+/**
+ * Retrieves all active family medical history records.
+ * The owning patient and authenticated doctors may read
+ * this information. Management remains patient-only.
+ */
+const getFamilyHistory = async (
+  patientId,
+  requestingUser
+) => {
+  ensureCanReadPatientSafetyData(
+    patientId,
+    requestingUser
+  );
+
+  const existing =
+    await patientRepository.getPatientById(
+      patientId
+    );
+
+  if (!existing) {
+    const error =
+      new Error(
+        'Patient not found'
+      );
+
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return await patientRepository
+    .getFamilyHistoryByPatientId(
+      patientId
+    );
+};
+
+/**
+ * Adds a family medical history record
+ * to the authenticated patient's profile.
+ */
+const addFamilyHistory = async (
+  patientId,
+  relation,
+  condition,
+  notes,
+  isEmergencyRelevant,
+  requestingUser
+) => {
+  ensurePatientOwnsFamilyHistoryData(
+    patientId,
+    requestingUser
+  );
+
+  if (
+    !relation ||
+    !relation.trim()
+  ) {
+    const error =
+      new Error(
+        'Family relationship is required'
+      );
+
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const normalizedRelation =
+    relation
+      .trim()
+      .toLowerCase();
+
+  if (
+    !VALID_FAMILY_RELATIONS.includes(
+      normalizedRelation
+    )
+  ) {
+    const error =
+      new Error(
+        'Invalid family relationship'
+      );
+
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (
+    !condition ||
+    !condition.trim()
+  ) {
+    const error =
+      new Error(
+        'Family medical condition is required'
+      );
+
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const normalizedCondition =
+    condition.trim();
+
+  if (
+    normalizedCondition.length >
+    200
+  ) {
+    const error =
+      new Error(
+        'Family medical condition must be 200 characters or fewer'
+      );
+
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const existing =
+    await patientRepository.getPatientById(
+      patientId
+    );
+
+  if (!existing) {
+    const error =
+      new Error(
+        'Patient not found'
+      );
+
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const emergencyRelevant =
+    isEmergencyRelevant ===
+      undefined
+      ? false
+      : Boolean(
+          isEmergencyRelevant
+        );
+
+  return await patientRepository
+    .addFamilyHistory(
+      patientId,
+      normalizedRelation,
+      normalizedCondition,
+      notes?.trim() ||
+        null,
+      emergencyRelevant
+    );
+};
+
+/**
+ * Removes a family medical history record from the
+ * patient's active profile while preserving historical data.
+ */
+const deleteFamilyHistory = async (
+  patientId,
+  familyHistoryId,
+  requestingUser
+) => {
+  ensurePatientOwnsFamilyHistoryData(
+    patientId,
+    requestingUser
+  );
+
+  if (!familyHistoryId) {
+    const error =
+      new Error(
+        'Family history ID is required'
+      );
+
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const existing =
+    await patientRepository.getPatientById(
+      patientId
+    );
+
+  if (!existing) {
+    const error =
+      new Error(
+        'Patient not found'
+      );
+
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const deleted =
+    await patientRepository
+      .deleteFamilyHistory(
+        patientId,
+        familyHistoryId
+      );
+
+  if (!deleted) {
+    const error =
+      new Error(
+        'Family history record not found or does not belong to this patient'
       );
 
     error.statusCode = 404;
@@ -1767,4 +2022,8 @@ module.exports = {
   markLabReportAsRead,
   getPatientAppointments,
   generatePatientChatResponse,
+
+  getFamilyHistory,
+  addFamilyHistory,
+  deleteFamilyHistory
 };

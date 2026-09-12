@@ -952,6 +952,125 @@ const deleteHealthBackgroundController = async (req, res) => {
   }
 };
 
+
+/**
+ * Retrieves all active family medical history records.
+ * The owning patient and authenticated doctors may read
+ * this information.
+ */
+const getFamilyHistoryController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = req.session?.user;
+
+    const familyHistory =
+      await patientService.getFamilyHistory(
+        id,
+        user
+      );
+
+    res.status(200).json({
+      success: true,
+      message: 'Family medical history retrieved',
+      data: familyHistory
+    });
+
+  } catch (error) {
+    res.status(
+      error.statusCode || 500
+    ).json({
+      success: false,
+      message:
+        error.message ||
+        'Internal server error'
+    });
+  }
+};
+
+/**
+ * Adds a family medical history record
+ * to the authenticated patient's profile.
+ */
+const addFamilyHistoryController = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const {
+      relation,
+      condition,
+      notes,
+      isEmergencyRelevant
+    } = req.body || {};
+
+    const user =
+      req.session?.user;
+
+    const familyHistory =
+      await patientService.addFamilyHistory(
+        id,
+        relation,
+        condition,
+        notes,
+        isEmergencyRelevant,
+        user
+      );
+
+    res.status(201).json({
+      success: true,
+      message: 'Family medical history added successfully',
+      data: familyHistory
+    });
+
+  } catch (error) {
+    res.status(
+      error.statusCode || 500
+    ).json({
+      success: false,
+      message:
+        error.message ||
+        'Internal server error'
+    });
+  }
+};
+
+/**
+ * Removes a family medical history record
+ * from the patient's active profile while preserving
+ * its historical database record.
+ */
+const deleteFamilyHistoryController = async (req, res) => {
+  try {
+    const {
+      id,
+      familyHistoryId
+    } = req.params;
+
+    const user =
+      req.session?.user;
+
+    await patientService.deleteFamilyHistory(
+      id,
+      familyHistoryId,
+      user
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Family medical history removed successfully'
+    });
+
+  } catch (error) {
+    res.status(
+      error.statusCode || 500
+    ).json({
+      success: false,
+      message:
+        error.message ||
+        'Internal server error'
+    });
+  }
+};
+
 module.exports = {
   getPatientController,
   updatePatientController,
@@ -972,6 +1091,10 @@ module.exports = {
   getHealthBackgroundController,
   addHealthBackgroundController,
   deleteHealthBackgroundController,
+
+  getFamilyHistoryController,
+  addFamilyHistoryController,
+  deleteFamilyHistoryController,
 
   getVaccinationsController,
   addVaccinationController,

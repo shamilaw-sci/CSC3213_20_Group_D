@@ -220,6 +220,47 @@ router.delete(
   deleteHealthBackgroundController
 );
 
+
+/**
+ * GET /api/patients/:id/family-history
+ * Retrieves active family medical history records.
+ * The owning patient and authenticated doctors
+ * have read-only access.
+ */
+router.get(
+  '/:id/family-history',
+  isAuthenticated,
+  authorize(
+    'patient',
+    'doctor'
+  ),
+  getFamilyHistoryController
+);
+
+/**
+ * POST /api/patients/:id/family-history
+ * Adds a family medical history record to the
+ * authenticated patient's own profile.
+ */
+router.post(
+  '/:id/family-history',
+  isAuthenticated,
+  authorize('patient'),
+  addFamilyHistoryController
+);
+
+/**
+ * DELETE /api/patients/:id/family-history/:familyHistoryId
+ * Removes a family medical history record from the
+ * authenticated patient's active profile.
+ */
+router.delete(
+  '/:id/family-history/:familyHistoryId',
+  isAuthenticated,
+  authorize('patient'),
+  deleteFamilyHistoryController
+);
+
 // AI Scan Route (Must be before generic /:vaccinationId)
 router.post(
   '/:id/vaccinations/scan',

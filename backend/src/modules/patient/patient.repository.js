@@ -939,6 +939,120 @@ async function deleteHealthBackground(
   return result.rowCount > 0;
 }
 
+/**
+ * Fetches all active family medical history records for a patient.
+ * Emergency-relevant records are ordered first.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @returns {Promise<Array>} Array of active family history rows
+ */
+async function getFamilyHistoryByPatientId(
+  patientId
+) {
+  const result = await pool.query(
+    `SELECT
+      id,
+      patient_id,
+      relation,
+      condition,
+      notes,
+      is_emergency_relevant,
+      is_active,
+      created_at,
+      updated_at
+    FROM patient_family_history
+    WHERE patient_id = $1
+      AND is_active = true
+    ORDER BY
+      is_emergency_relevant DESC,
+      created_at DESC`,
+    [patientId]
+  );
+
+  return result.rows;
+}
+
+/**
+ * Inserts a family medical history record for a patient.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @param {string} relation - Relationship of the affected family member
+ * @param {string} condition - Medical condition or relevant family history
+ * @param {string|null} notes - Optional additional notes
+ * @param {boolean} isEmergencyRelevant - Whether emergency staff should see it
+ * @returns {Promise<Object>} Newly created family history row
+ */
+async function addFamilyHistory(
+  patientId,
+  relation,
+  condition,
+  notes,
+  isEmergencyRelevant
+) {
+  const result = await pool.query(
+    `INSERT INTO patient_family_history
+      (
+        patient_id,
+        relation,
+        condition,
+        notes,
+        is_emergency_relevant,
+        is_active
+      )
+     VALUES
+      (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        true
+      )
+     RETURNING *`,
+    [
+      patientId,
+      relation,
+      condition,
+      notes || null,
+      Boolean(
+        isEmergencyRelevant
+      )
+    ]
+  );
+
+  return result.rows[0];
+}
+
+/**
+ * Removes a family medical history record from the patient's
+ * active profile while preserving historical data.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @param {string} familyHistoryId - UUID of the family history record
+ * @returns {Promise<boolean>} True if a row was deactivated
+ */
+async function deleteFamilyHistory(
+  patientId,
+  familyHistoryId
+) {
+  const result = await pool.query(
+    `UPDATE patient_family_history
+     SET
+       is_active = false,
+       updated_at = NOW()
+     WHERE id = $1
+       AND patient_id = $2
+       AND is_active = true
+     RETURNING id`,
+    [
+      familyHistoryId,
+      patientId
+    ]
+  );
+
+  return result.rowCount > 0;
+}
+
 
 module.exports = {
   getPatientById,
@@ -967,4 +1081,7 @@ module.exports = {
   getHealthBackgroundByPatientId,
   addHealthBackground,
   deleteHealthBackground,
+  getFamilyHistoryByPatientId,
+  addFamilyHistory,
+  deleteFamilyHistory,
 };
