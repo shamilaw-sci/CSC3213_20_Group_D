@@ -16,6 +16,7 @@ const { sendOtpEmail, sendPasswordResetEmail } = require('../../utils/email');
 const { generatePatientQR } = require('../../utils/qr');
 
 const {
+    withTransaction,
     createUser,
     createPatient,
     createDoctor,
@@ -135,69 +136,85 @@ const verifyOtp = async (email, otpCode) => {
         throw new Error('OTP has expired');
     }
 
-    const user = await createUser(
-        pending.email,
-        pending.phone,
-        pending.password_hash,
-        pending.role
-    );
-
-    let profile = null;
-
-    if (pending.role === 'patient') {
-        const qrCodeId = generatePatientQR();
-
-        profile = await createPatient(
-            user.id,
-            pending.profile_data.fullName,
-            pending.profile_data.nic,
-            pending.profile_data.dateOfBirth,
-            qrCodeId
+    const result = await withTransaction(async (db) => {
+        const user = await createUser(
+            pending.email,
+            pending.phone,
+            pending.password_hash,
+            pending.role,
+            db
         );
 
-    } else if (pending.role === 'doctor') {
+        let profile = null;
 
-        profile = await createDoctor(
-            user.id,
-            pending.profile_data.fullName,
-            pending.profile_data.slmcRegNumber,
-            pending.profile_data.specialization
+        if (pending.role === 'patient') {
+            const qrCodeId = generatePatientQR();
+
+            profile = await createPatient(
+                user.id,
+                pending.profile_data.fullName,
+                pending.profile_data.nic,
+                pending.profile_data.dateOfBirth,
+                qrCodeId,
+                db
+            );
+
+        } else if (pending.role === 'doctor') {
+
+            profile = await createDoctor(
+                user.id,
+                pending.profile_data.fullName,
+                pending.profile_data.slmcRegNumber,
+                pending.profile_data.specialization,
+                db
+            );
+
+        } else if (pending.role === 'pharmacist') {
+
+            profile = await createPharmacy(
+                user.id,
+                pending.profile_data.name,
+                pending.profile_data.licenseNumber,
+                pending.profile_data.address,
+                pending.profile_data.phone,
+                db
+            );
+
+        } else if (pending.role === 'lab_technician') {
+
+            profile = await createLaboratory(
+                user.id,
+                pending.profile_data.name,
+                pending.profile_data.licenseNumber,
+                pending.profile_data.address,
+                pending.profile_data.phone,
+                db
+            );
+
+        } else if (pending.role === 'hospital_staff') {
+
+            profile = await createHospital(
+                user.id,
+                pending.profile_data.name,
+                pending.profile_data.type,
+                pending.profile_data.location,
+                pending.profile_data.departments,
+                db
+            );
+        }
+
+        await deleteOtpByEmail(
+            email,
+            db
         );
 
-    } else if (pending.role === 'pharmacist') {
+        return {
+            user,
+            profile
+        };
+    });
 
-        profile = await createPharmacy(
-            user.id,
-            pending.profile_data.name,
-            pending.profile_data.licenseNumber,
-            pending.profile_data.address,
-            pending.profile_data.phone
-        );
-
-    } else if (pending.role === 'lab_technician') {
-
-        profile = await createLaboratory(
-            user.id,
-            pending.profile_data.name,
-            pending.profile_data.licenseNumber,
-            pending.profile_data.address,
-            pending.profile_data.phone
-        );
-
-    } else if (pending.role === 'hospital_staff') {
-
-        profile = await createHospital(
-            user.id,
-            pending.profile_data.name,
-            pending.profile_data.type,
-            pending.profile_data.location,
-            pending.profile_data.departments
-        );
-    }
-
-    await deleteOtpByEmail(email);
-
-    return { user, profile };
+    return result;
 };
 
 

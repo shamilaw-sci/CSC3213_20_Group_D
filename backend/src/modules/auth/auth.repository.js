@@ -8,6 +8,33 @@
 const { pool } = require('../../config/db');
 
 /**
+ * Executes a database operation inside a PostgreSQL transaction.
+ *
+ * @param {Function} callback - Database work to execute using the transaction client
+ * @returns {Promise<*>} Result returned by the callback
+ */
+const withTransaction = async (callback) => {
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN');
+
+        const result = await callback(client);
+
+        await client.query('COMMIT');
+
+        return result;
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+
+    } finally {
+        client.release();
+    }
+};
+
+/**
  * Creates a new user in the users table with is_verified = true.
  * Only called from verifyOtp, after OTP verification has already
  * succeeded - so the email/OTP is verified at account creation.
@@ -20,9 +47,16 @@ const { pool } = require('../../config/db');
  * @param {string} phone - User phone number
  * @param {string} passwordHash - Bcrypt hashed password
  * @param {string} role - User role
+ * @param {Object} db - PostgreSQL pool or transaction client
  * @returns {Promise<object>} Created user row
  */
-const createUser = async (email, phone, passwordHash, role) => {
+const createUser = async (
+    email,
+    phone,
+    passwordHash,
+    role,
+    db = pool
+) => {
     const requiresApproval = [
         'doctor',
         'pharmacist',
@@ -33,7 +67,7 @@ const createUser = async (email, phone, passwordHash, role) => {
     const verificationStatus =
         requiresApproval ? 'pending' : 'approved';
 
-    const result = await pool.query(
+    const result = await db.query(
         `INSERT INTO users
             (
                 email,
@@ -73,6 +107,7 @@ const createUser = async (email, phone, passwordHash, role) => {
  * @param {string} nic - National Identity Card number
  * @param {string} dateOfBirth - Date of birth (YYYY-MM-DD)
  * @param {string} qrCodeId - Unique QR code identifier
+ * @param {Object} db - PostgreSQL pool or transaction client
  * @returns {Promise<object>} Created patient row
  */
 const createPatient = async (
@@ -80,9 +115,10 @@ const createPatient = async (
     fullName,
     nic,
     dateOfBirth,
-    qrCodeId
+    qrCodeId,
+    db = pool
 ) => {
-    const result = await pool.query(
+    const result = await db.query(
         `INSERT INTO patients
             (
                 user_id,
@@ -122,15 +158,17 @@ const createPatient = async (
  * @param {string} fullName - Doctor full name
  * @param {string} slmcRegNumber - SLMC register number
  * @param {string} specialization - Doctor specialization
+ * @param {Object} db - PostgreSQL pool or transaction client
  * @returns {Promise<object>} Created doctor row
  */
 const createDoctor = async (
     userId,
     fullName,
     slmcRegNumber,
-    specialization
+    specialization,
+    db = pool
 ) => {
-    const result = await pool.query(
+    const result = await db.query(
         `INSERT INTO doctors
             (
                 user_id,
@@ -167,6 +205,7 @@ const createDoctor = async (
  * @param {string} licenseNumber - Pharmacy license number
  * @param {string} address - Pharmacy address
  * @param {string} phone - Pharmacy contact phone
+ * @param {Object} db - PostgreSQL pool or transaction client
  * @returns {Promise<object>} Created pharmacy row
  */
 const createPharmacy = async (
@@ -174,9 +213,10 @@ const createPharmacy = async (
     name,
     licenseNumber,
     address,
-    phone
+    phone,
+    db = pool
 ) => {
-    const result = await pool.query(
+    const result = await db.query(
         `INSERT INTO pharmacies
             (
                 user_id,
@@ -218,6 +258,7 @@ const createPharmacy = async (
  * @param {string} licenseNumber - License number
  * @param {string} address - Address
  * @param {string} phone - Contact phone
+ * @param {Object} db - PostgreSQL pool or transaction client
  * @returns {Promise<object>} Created laboratory row
  */
 const createLaboratory = async (
@@ -225,9 +266,10 @@ const createLaboratory = async (
     name,
     licenseNumber,
     address,
-    phone
+    phone,
+    db = pool
 ) => {
-    const result = await pool.query(
+    const result = await db.query(
         `INSERT INTO laboratories
             (
                 user_id,
@@ -269,6 +311,7 @@ const createLaboratory = async (
  * @param {string} type - Hospital type
  * @param {string} location - Location/Address
  * @param {string} departments - Departments JSON/Text
+ * @param {Object} db - PostgreSQL pool or transaction client
  * @returns {Promise<object>} Created hospital row
  */
 const createHospital = async (
@@ -276,9 +319,10 @@ const createHospital = async (
     name,
     type,
     location,
-    departments
+    departments,
+    db = pool
 ) => {
-    const result = await pool.query(
+    const result = await db.query(
         `INSERT INTO hospitals
             (
                 user_id,
@@ -496,9 +540,13 @@ const findOtpByEmail = async (email) => {
 /**
  * Deletes a pending OTP verification record by email.
  * @param {string} email - Email to delete the pending record for
+ * @param {Object} db - PostgreSQL pool or transaction client
  */
-const deleteOtpByEmail = async (email) => {
-    await pool.query(
+const deleteOtpByEmail = async (
+    email,
+    db = pool
+) => {
+    await db.query(
         `DELETE FROM otp_verifications
          WHERE email = $1`,
         [email]
@@ -560,6 +608,7 @@ const resetFailedLoginAttempts = async (userId) => {
 };
 
 module.exports = {
+    withTransaction,
     createUser,
     createPatient,
     createDoctor,
