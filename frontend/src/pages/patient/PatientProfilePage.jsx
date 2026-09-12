@@ -11,6 +11,7 @@
  * Smart Health Awareness Feed added in CARE4U-280 (Epic 8.13).
  * Privacy & Consent Controls added in CARE4U-284 (Epic 8.12).
  * Medical Devices & Implants management added for emergency readiness.
+ * Important Medical Background management added for major past health events.
  * UI Refactor: Edit actions isolated to Edit Mode.
  * @author  Wasana Karunanayaka (S/21/081)
  */
@@ -36,7 +37,8 @@ import {
   Shield,
   Lock,
   Unlock,
-  HeartPulse
+  HeartPulse,
+  History
 } from 'lucide-react';
 
 import { 
@@ -52,6 +54,9 @@ import {
   getMedicalDevices,
   addMedicalDevice,
   deleteMedicalDevice,
+  getHealthBackground,
+  addHealthBackground,
+  deleteHealthBackground,
   getVaccinations,
   addBulkVaccinations,
   deleteVaccination,
@@ -129,6 +134,33 @@ const SENSITIVE_CATEGORIES = [
   'STD/STI Records'
 ];
 
+const HEALTH_BACKGROUND_TYPES = [
+  {
+    value: 'major_surgery',
+    label: 'Major Surgery'
+  },
+  {
+    value: 'major_procedure',
+    label: 'Major Procedure'
+  },
+  {
+    value: 'organ_transplant',
+    label: 'Organ Transplant'
+  },
+  {
+    value: 'major_hospitalization',
+    label: 'Major Hospitalization'
+  },
+  {
+    value: 'serious_past_condition',
+    label: 'Serious Past Condition'
+  },
+  {
+    value: 'other',
+    label: 'Other'
+  }
+];
+
 // ─── Photo upload constraints (mirrors backend middleware/upload.js) ──────────
 const ALLOWED_PHOTO_TYPES = [
   'image/jpeg',
@@ -180,6 +212,23 @@ const getFirstName = (fullName) => {
   return fullName
     .trim()
     .split(' ')[0];
+};
+
+const getHealthBackgroundTypeLabel = (
+  type
+) => {
+  const match =
+    HEALTH_BACKGROUND_TYPES.find(
+      item =>
+        item.value === type
+    );
+
+  return (
+    match?.label ||
+    capitalise(
+      type?.replaceAll('_', ' ')
+    )
+  );
 };
 
 // ─── Severity Badge ───────────────────────────────────────────────────────────
@@ -398,6 +447,47 @@ const PatientProfilePage = () => {
     isEmergencyRelevantInput,
     setIsEmergencyRelevantInput
   ] = useState(true);
+
+  // ── Important Medical Background UI State ──
+  const [
+    isAddBackgroundModalOpen,
+    setIsAddBackgroundModalOpen
+  ] = useState(false);
+
+  const [
+    isDeleteBackgroundModalOpen,
+    setIsDeleteBackgroundModalOpen
+  ] = useState(false);
+
+  const [
+    backgroundToDelete,
+    setBackgroundToDelete
+  ] = useState(null);
+
+  const [
+    backgroundTypeInput,
+    setBackgroundTypeInput
+  ] = useState('major_surgery');
+
+  const [
+    backgroundTitleInput,
+    setBackgroundTitleInput
+  ] = useState('');
+
+  const [
+    backgroundEventDateInput,
+    setBackgroundEventDateInput
+  ] = useState('');
+
+  const [
+    backgroundNotesInput,
+    setBackgroundNotesInput
+  ] = useState('');
+
+  const [
+    isBackgroundEmergencyRelevantInput,
+    setIsBackgroundEmergencyRelevantInput
+  ] = useState(false);
 
   // ── Vaccination UI State ──
   const [
@@ -686,6 +776,23 @@ const PatientProfilePage = () => {
     ],
     queryFn: () =>
       getMedicalDevices(
+        TEST_PATIENT_ID
+      ),
+    enabled:
+      !!patient,
+  });
+
+  const {
+    data: healthBackground = [],
+    isLoading:
+      healthBackgroundLoading
+  } = useQuery({
+    queryKey: [
+      'health-background',
+      TEST_PATIENT_ID
+    ],
+    queryFn: () =>
+      getHealthBackground(
         TEST_PATIENT_ID
       ),
     enabled:
@@ -1045,6 +1152,90 @@ const PatientProfilePage = () => {
           toast.error(
             err?.response?.data?.message ||
             'Failed to remove medical device.'
+          ),
+    });
+
+  const addHealthBackgroundMutation =
+    useMutation({
+      mutationFn:
+        (backgroundData) =>
+          addHealthBackground(
+            TEST_PATIENT_ID,
+            backgroundData
+          ),
+
+      onSuccess:
+        () => {
+          queryClient.invalidateQueries({
+            queryKey: [
+              'health-background',
+              TEST_PATIENT_ID
+            ]
+          });
+
+          toast.success(
+            'Medical background added successfully'
+          );
+
+          setIsAddBackgroundModalOpen(
+            false
+          );
+
+          setBackgroundTypeInput(
+            'major_surgery'
+          );
+          setBackgroundTitleInput('');
+          setBackgroundEventDateInput('');
+          setBackgroundNotesInput('');
+          setIsBackgroundEmergencyRelevantInput(
+            false
+          );
+        },
+
+      onError:
+        (err) =>
+          toast.error(
+            err?.response?.data?.message ||
+            'Failed to add medical background.'
+          ),
+    });
+
+  const deleteHealthBackgroundMutation =
+    useMutation({
+      mutationFn:
+        (backgroundId) =>
+          deleteHealthBackground(
+            TEST_PATIENT_ID,
+            backgroundId
+          ),
+
+      onSuccess:
+        () => {
+          queryClient.invalidateQueries({
+            queryKey: [
+              'health-background',
+              TEST_PATIENT_ID
+            ]
+          });
+
+          toast.success(
+            'Medical background removed successfully'
+          );
+
+          setIsDeleteBackgroundModalOpen(
+            false
+          );
+
+          setBackgroundToDelete(
+            null
+          );
+        },
+
+      onError:
+        (err) =>
+          toast.error(
+            err?.response?.data?.message ||
+            'Failed to remove medical background.'
           ),
     });
 
@@ -1420,6 +1611,33 @@ const PatientProfilePage = () => {
     });
   };
 
+  const submitAddHealthBackground = (
+    e
+  ) => {
+    e.preventDefault();
+
+    if (
+      !backgroundTitleInput.trim()
+    ) {
+      return toast.error(
+        'Please enter a title for this medical background record.'
+      );
+    }
+
+    addHealthBackgroundMutation.mutate({
+      backgroundType:
+        backgroundTypeInput,
+      title:
+        backgroundTitleInput.trim(),
+      eventDate:
+        backgroundEventDateInput,
+      notes:
+        backgroundNotesInput.trim(),
+      isEmergencyRelevant:
+        isBackgroundEmergencyRelevantInput
+    });
+  };
+
   const submitBulkVaccination = (
     e
   ) => {
@@ -1501,6 +1719,18 @@ const PatientProfilePage = () => {
     );
 
     setIsDeleteDeviceModalOpen(
+      true
+    );
+  };
+
+  const promptDeleteHealthBackground = (
+    background
+  ) => {
+    setBackgroundToDelete(
+      background
+    );
+
+    setIsDeleteBackgroundModalOpen(
       true
     );
   };
@@ -2463,6 +2693,214 @@ const PatientProfilePage = () => {
 
         </div>
 
+        {/* ── Important Medical Background ── */}
+        <div className="mb-6">
+
+          <Card
+            title={
+              <span className="flex items-center gap-2">
+                <History
+                  size={18}
+                  className="text-primary"
+                />
+                Important Medical Background
+              </span>
+            }
+          >
+
+            <div className="pt-3">
+
+              <div className="mb-4 p-4 rounded-xl bg-primary/5 border border-primary/15">
+
+                <div className="flex items-start gap-3">
+
+                  <History
+                    size={18}
+                    className="text-primary shrink-0 mt-0.5"
+                  />
+
+                  <div>
+
+                    <p className="text-sm font-semibold text-foreground">
+                      Major past health events
+                    </p>
+
+                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                      Record major surgeries, procedures, transplants,
+                      hospitalizations, and other serious past conditions
+                      that remain important to your care.
+                    </p>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+              {healthBackgroundLoading ? (
+
+                <div className="py-6 flex justify-center">
+                  <Spinner size="sm" />
+                </div>
+
+              ) : healthBackground.length ===
+                0 ? (
+
+                <div className="text-center py-8">
+
+                  <div className="inline-flex p-3 rounded-full bg-secondary mb-3">
+                    <History
+                      className="text-muted-foreground"
+                      size={26}
+                    />
+                  </div>
+
+                  <p className="text-sm font-semibold text-foreground">
+                    No important medical background recorded
+                  </p>
+
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Add major past health events that may still be
+                    important for future treatment.
+                  </p>
+
+                </div>
+
+              ) : (
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                  {healthBackground.map(
+                    (
+                      background
+                    ) => (
+
+                      <div
+                        key={
+                          background.id
+                        }
+                        className="relative p-4 rounded-xl border border-border bg-card shadow-sm hover:border-primary/30 transition-all"
+                      >
+
+                        <div className="flex items-start gap-3 pr-8">
+
+                          <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                            <History
+                              size={19}
+                            />
+                          </div>
+
+                          <div className="min-w-0">
+
+                            <div className="flex flex-wrap items-center gap-2">
+
+                              <p className="text-sm font-bold text-foreground">
+                                {
+                                  background.title
+                                }
+                              </p>
+
+                              {background.is_emergency_relevant && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-destructive/10 text-destructive text-[10px] font-bold uppercase tracking-wide">
+                                  <Shield
+                                    size={10}
+                                  />
+                                  Emergency
+                                </span>
+                              )}
+
+                            </div>
+
+                            <p className="text-xs font-medium text-primary mt-1">
+                              {getHealthBackgroundTypeLabel(
+                                background.background_type
+                              )}
+                            </p>
+
+                            <p className="text-xs text-muted-foreground mt-2">
+                              Event Date:{' '}
+                              <span className="text-foreground font-medium">
+                                {formatDate(
+                                  background.event_date
+                                )}
+                              </span>
+                            </p>
+
+                            {background.notes && (
+                              <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                                {
+                                  background.notes
+                                }
+                              </p>
+                            )}
+
+                          </div>
+
+                        </div>
+
+                        {isEditing && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              promptDeleteHealthBackground(
+                                background
+                              )
+                            }
+                            className="absolute right-3 top-3 p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+                            title="Remove medical background"
+                          >
+                            <Trash2
+                              size={16}
+                            />
+                          </button>
+                        )}
+
+                      </div>
+
+                    )
+                  )}
+
+                </div>
+              )}
+
+              {isEditing && (
+                <div className="mt-5 flex justify-center">
+
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setBackgroundTypeInput(
+                        'major_surgery'
+                      );
+                      setBackgroundTitleInput('');
+                      setBackgroundEventDateInput('');
+                      setBackgroundNotesInput('');
+                      setIsBackgroundEmergencyRelevantInput(
+                        false
+                      );
+
+                      setIsAddBackgroundModalOpen(
+                        true
+                      );
+                    }}
+                    className="w-full sm:w-auto text-primary border-primary/20 hover:bg-primary/5"
+                  >
+                    <Plus
+                      size={16}
+                      className="mr-2"
+                    />
+                    Add Medical Background
+                  </Button>
+
+                </div>
+              )}
+
+            </div>
+
+          </Card>
+
+        </div>
+
         {/* ── Vaccination Records (CARE4U-148) ── */}
         <div className="mb-6">
 
@@ -3340,6 +3778,221 @@ const PatientProfilePage = () => {
         </Modal>
       )}
 
+      {/* ── Add Important Medical Background Modal ── */}
+      {isAddBackgroundModalOpen && (
+
+        <Modal
+          isOpen={
+            isAddBackgroundModalOpen
+          }
+          onClose={() =>
+            setIsAddBackgroundModalOpen(
+              false
+            )
+          }
+          title="Add Important Medical Background"
+        >
+
+          <form
+            onSubmit={
+              submitAddHealthBackground
+            }
+            className="space-y-5 p-1"
+          >
+
+            <div className="flex flex-col gap-1">
+
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Background Type{' '}
+                <span className="text-destructive">
+                  *
+                </span>
+              </label>
+
+              <select
+                className="w-full px-3 py-2 text-sm text-foreground bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                value={
+                  backgroundTypeInput
+                }
+                onChange={
+                  (
+                    e
+                  ) =>
+                    setBackgroundTypeInput(
+                      e.target.value
+                    )
+                }
+              >
+                {HEALTH_BACKGROUND_TYPES.map(
+                  (
+                    type
+                  ) => (
+                    <option
+                      key={
+                        type.value
+                      }
+                      value={
+                        type.value
+                      }
+                    >
+                      {
+                        type.label
+                      }
+                    </option>
+                  )
+                )}
+              </select>
+
+            </div>
+
+            <div className="flex flex-col gap-1">
+
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Title{' '}
+                <span className="text-destructive">
+                  *
+                </span>
+              </label>
+
+              <input
+                type="text"
+                maxLength={200}
+                placeholder="E.g. Coronary Artery Bypass Surgery"
+                className="w-full px-3 py-2 text-sm text-foreground bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                value={
+                  backgroundTitleInput
+                }
+                onChange={
+                  (
+                    e
+                  ) =>
+                    setBackgroundTitleInput(
+                      e.target.value
+                    )
+                }
+              />
+
+            </div>
+
+            <div className="flex flex-col gap-1">
+
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Event Date (Optional)
+              </label>
+
+              <input
+                type="date"
+                max={
+                  new Date()
+                    .toISOString()
+                    .split('T')[0]
+                }
+                className="w-full px-3 py-2 text-sm text-foreground bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                value={
+                  backgroundEventDateInput
+                }
+                onChange={
+                  (
+                    e
+                  ) =>
+                    setBackgroundEventDateInput(
+                      e.target.value
+                    )
+                }
+              />
+
+            </div>
+
+            <div className="flex flex-col gap-1">
+
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Notes (Optional)
+              </label>
+
+              <textarea
+                placeholder="Add only useful details about this past health event"
+                rows={3}
+                className="w-full px-3 py-2 text-sm text-foreground bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                value={
+                  backgroundNotesInput
+                }
+                onChange={
+                  (
+                    e
+                  ) =>
+                    setBackgroundNotesInput(
+                      e.target.value
+                    )
+                }
+              />
+
+            </div>
+
+            <label className="flex items-start gap-3 cursor-pointer p-4 bg-destructive/5 border border-destructive/20 rounded-xl">
+
+              <input
+                type="checkbox"
+                className="w-4 h-4 mt-0.5 text-destructive rounded border-border focus:ring-destructive"
+                checked={
+                  isBackgroundEmergencyRelevantInput
+                }
+                onChange={
+                  (
+                    e
+                  ) =>
+                    setIsBackgroundEmergencyRelevantInput(
+                      e.target.checked
+                    )
+                }
+              />
+
+              <div>
+
+                <span className="text-sm font-semibold text-foreground block">
+                  Emergency Relevant
+                </span>
+
+                <span className="text-xs text-muted-foreground block mt-1 leading-relaxed">
+                  Mark this only when the past event is important
+                  for authorized hospital staff to know during
+                  audited Break-Glass emergency access.
+                </span>
+
+              </div>
+
+            </label>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-border">
+
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() =>
+                  setIsAddBackgroundModalOpen(
+                    false
+                  )
+                }
+              >
+                Cancel
+              </Button>
+
+              <Button
+                type="submit"
+                variant="primary"
+                loading={
+                  addHealthBackgroundMutation.isPending
+                }
+              >
+                Save Medical Background
+              </Button>
+
+            </div>
+
+          </form>
+
+        </Modal>
+      )}
+
       {/* ── Add Bulk Vaccination Modal ── */}
       {isAddVaccinationModalOpen && (
 
@@ -3937,6 +4590,95 @@ const PatientProfilePage = () => {
                 }
               >
                 Yes, Remove Device
+              </Button>
+
+            </div>
+
+          </div>
+
+        </Modal>
+      )}
+
+      {isDeleteBackgroundModalOpen && (
+
+        <Modal
+          isOpen={
+            isDeleteBackgroundModalOpen
+          }
+          onClose={() =>
+            setIsDeleteBackgroundModalOpen(
+              false
+            )
+          }
+          title="Remove Medical Background"
+        >
+
+          <div className="p-1 space-y-4">
+
+            <div className="flex items-start gap-4 p-4 bg-destructive/10 rounded-lg border border-destructive/20">
+
+              <div className="p-2 bg-destructive/20 rounded-full shrink-0">
+                <AlertTriangle
+                  size={24}
+                  className="text-destructive"
+                />
+              </div>
+
+              <div>
+
+                <h4 className="font-semibold text-foreground">
+                  Remove this record from your active profile?
+                </h4>
+
+                <p className="text-sm text-foreground mt-1">
+                  You are about to remove{' '}
+                  <strong>
+                    {
+                      backgroundToDelete?.title
+                    }
+                  </strong>
+                  {' '}
+                  from your important medical background.
+                </p>
+
+                <p className="text-xs text-muted-foreground mt-2">
+                  Care4U will preserve the historical database record,
+                  but it will no longer appear as active background
+                  information or in future emergency snapshots.
+                </p>
+
+              </div>
+
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4">
+
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() =>
+                  setIsDeleteBackgroundModalOpen(
+                    false
+                  )
+                }
+              >
+                Cancel
+              </Button>
+
+              <Button
+                type="button"
+                variant="primary"
+                className="bg-destructive! hover:bg-destructive/90! border-destructive! hover:border-destructive/90!"
+                onClick={() =>
+                  deleteHealthBackgroundMutation.mutate(
+                    backgroundToDelete.id
+                  )
+                }
+                loading={
+                  deleteHealthBackgroundMutation.isPending
+                }
+              >
+                Yes, Remove Record
               </Button>
 
             </div>
