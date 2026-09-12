@@ -23,6 +23,9 @@ const {
   getMedicalDevicesController,
   addMedicalDeviceController,
   deleteMedicalDeviceController,
+  getHealthBackgroundController,
+  addHealthBackgroundController,
+  deleteHealthBackgroundController,
   getVaccinationsController,
   addVaccinationController,
   addBulkVaccinationsController,
@@ -171,6 +174,42 @@ router.delete(
   isAuthenticated,
   authorize('patient'),
   deleteMedicalDeviceController
+);
+
+/**
+ * GET /api/patients/:id/health-background
+ * Retrieves active important medical background
+ * records belonging to the authenticated patient.
+ */
+router.get(
+  '/:id/health-background',
+  isAuthenticated,
+  authorize('patient'),
+  getHealthBackgroundController
+);
+
+/**
+ * POST /api/patients/:id/health-background
+ * Adds an important medical background record
+ * to the authenticated patient's profile.
+ */
+router.post(
+  '/:id/health-background',
+  isAuthenticated,
+  authorize('patient'),
+  addHealthBackgroundController
+);
+
+/**
+ * DELETE /api/patients/:id/health-background/:backgroundId
+ * Removes an important medical background record
+ * from the patient's active profile.
+ */
+router.delete(
+  '/:id/health-background/:backgroundId',
+  isAuthenticated,
+  authorize('patient'),
+  deleteHealthBackgroundController
 );
 
 // AI Scan Route (Must be before generic /:vaccinationId)

@@ -833,23 +833,151 @@ const generatePatientChatController = async (req, res) => {
   }
 };
 
+/**
+ * Retrieves all active important medical background records
+ * belonging to the authenticated patient.
+ */
+const getHealthBackgroundController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = req.session?.user;
+
+    const background =
+      await patientService.getHealthBackground(
+        id,
+        user
+      );
+
+    res.status(200).json({
+      success: true,
+      message: 'Medical background retrieved',
+      data: background
+    });
+
+  } catch (error) {
+    res.status(
+      error.statusCode || 500
+    ).json({
+      success: false,
+      message:
+        error.message ||
+        'Internal server error'
+    });
+  }
+};
+
+/**
+ * Adds an important medical background record
+ * to the authenticated patient's profile.
+ */
+const addHealthBackgroundController = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const {
+      backgroundType,
+      title,
+      eventDate,
+      notes,
+      isEmergencyRelevant
+    } = req.body || {};
+
+    const user =
+      req.session?.user;
+
+    const background =
+      await patientService.addHealthBackground(
+        id,
+        backgroundType,
+        title,
+        eventDate,
+        notes,
+        isEmergencyRelevant,
+        user
+      );
+
+    res.status(201).json({
+      success: true,
+      message: 'Medical background added successfully',
+      data: background
+    });
+
+  } catch (error) {
+    res.status(
+      error.statusCode || 500
+    ).json({
+      success: false,
+      message:
+        error.message ||
+        'Internal server error'
+    });
+  }
+};
+
+/**
+ * Removes an important medical background record
+ * from the patient's active profile while preserving
+ * its historical database record.
+ */
+const deleteHealthBackgroundController = async (req, res) => {
+  try {
+    const {
+      id,
+      backgroundId
+    } = req.params;
+
+    const user =
+      req.session?.user;
+
+    await patientService.deleteHealthBackground(
+      id,
+      backgroundId,
+      user
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Medical background removed successfully'
+    });
+
+  } catch (error) {
+    res.status(
+      error.statusCode || 500
+    ).json({
+      success: false,
+      message:
+        error.message ||
+        'Internal server error'
+    });
+  }
+};
+
 module.exports = {
   getPatientController,
   updatePatientController,
   getMedicalRecordsController,
+
   getAllergiesController,
   addAllergyController,
   deleteAllergyController,
+
   getConditionsController,
   addConditionController,
   deleteConditionController,
+
   getMedicalDevicesController,
   addMedicalDeviceController,
   deleteMedicalDeviceController,
+
+  getHealthBackgroundController,
+  addHealthBackgroundController,
+  deleteHealthBackgroundController,
+
   getVaccinationsController,
   addVaccinationController,
   addBulkVaccinationsController,
   deleteVaccinationController,
+
   getPatientPrescriptionsController,
   getPatientByQrCodeController,
   getPatientByNicController,

@@ -820,6 +820,125 @@ async function getPatientByNic(
   return result.rows[0] || null;
 }
 
+/**
+ * Fetches all active important medical background records for a patient.
+ * Emergency-relevant records are ordered first.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @returns {Promise<Array>} Array of active health background rows
+ */
+async function getHealthBackgroundByPatientId(
+  patientId
+) {
+  const result = await pool.query(
+    `SELECT
+      id,
+      patient_id,
+      background_type,
+      title,
+      event_date,
+      notes,
+      is_emergency_relevant,
+      is_active,
+      created_at,
+      updated_at
+    FROM patient_health_background
+    WHERE patient_id = $1
+      AND is_active = true
+    ORDER BY
+      is_emergency_relevant DESC,
+      event_date DESC NULLS LAST,
+      created_at DESC`,
+    [patientId]
+  );
+
+  return result.rows;
+}
+
+/**
+ * Inserts an important medical background record for a patient.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @param {string} backgroundType - Category of the medical background
+ * @param {string} title - Short description/title
+ * @param {string|null} eventDate - Optional date of event
+ * @param {string|null} notes - Optional additional notes
+ * @param {boolean} isEmergencyRelevant - Whether emergency staff should see it
+ * @returns {Promise<Object>} Newly created health background row
+ */
+async function addHealthBackground(
+  patientId,
+  backgroundType,
+  title,
+  eventDate,
+  notes,
+  isEmergencyRelevant
+) {
+  const result = await pool.query(
+    `INSERT INTO patient_health_background
+      (
+        patient_id,
+        background_type,
+        title,
+        event_date,
+        notes,
+        is_emergency_relevant,
+        is_active
+      )
+     VALUES
+      (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        true
+      )
+     RETURNING *`,
+    [
+      patientId,
+      backgroundType,
+      title,
+      eventDate || null,
+      notes || null,
+      Boolean(isEmergencyRelevant)
+    ]
+  );
+
+  return result.rows[0];
+}
+
+/**
+ * Removes an important medical background record from the
+ * patient's active profile while preserving historical data.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @param {string} backgroundId - UUID of the background record
+ * @returns {Promise<boolean>} True if a row was deactivated
+ */
+async function deleteHealthBackground(
+  patientId,
+  backgroundId
+) {
+  const result = await pool.query(
+    `UPDATE patient_health_background
+     SET
+       is_active = false,
+       updated_at = NOW()
+     WHERE id = $1
+       AND patient_id = $2
+       AND is_active = true
+     RETURNING id`,
+    [
+      backgroundId,
+      patientId
+    ]
+  );
+
+  return result.rowCount > 0;
+}
+
 
 module.exports = {
   getPatientById,
@@ -845,4 +964,7 @@ module.exports = {
   markLabReportAsRead,
   getPatientAppointments,
   getPatientByNic,
+  getHealthBackgroundByPatientId,
+  addHealthBackground,
+  deleteHealthBackground,
 };
