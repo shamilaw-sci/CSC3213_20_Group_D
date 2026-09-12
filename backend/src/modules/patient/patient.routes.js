@@ -20,6 +20,9 @@ const {
   getConditionsController,
   addConditionController,
   deleteConditionController,
+  getMedicalDevicesController,
+  addMedicalDeviceController,
+  deleteMedicalDeviceController,
   getVaccinationsController,
   addVaccinationController,
   addBulkVaccinationsController,
@@ -72,9 +75,15 @@ router.get(
   getPatientByNicController
 );
 
-router.get('/:id', getPatientController);
+router.get(
+  '/:id',
+  getPatientController
+);
 
-router.put('/:id', updatePatientController);
+router.put(
+  '/:id',
+  updatePatientController
+);
 
 router.post(
   '/:id/photo',
@@ -126,6 +135,42 @@ router.post(
 router.delete(
   '/:id/conditions/:conditionId',
   deleteConditionController
+);
+
+/**
+ * GET /api/patients/:id/medical-devices
+ * Retrieves active medical devices and implants
+ * belonging to the authenticated patient.
+ */
+router.get(
+  '/:id/medical-devices',
+  isAuthenticated,
+  authorize('patient'),
+  getMedicalDevicesController
+);
+
+/**
+ * POST /api/patients/:id/medical-devices
+ * Adds a new medical device or implant to the
+ * authenticated patient's profile.
+ */
+router.post(
+  '/:id/medical-devices',
+  isAuthenticated,
+  authorize('patient'),
+  addMedicalDeviceController
+);
+
+/**
+ * DELETE /api/patients/:id/medical-devices/:deviceId
+ * Removes a medical device from the patient's
+ * active profile.
+ */
+router.delete(
+  '/:id/medical-devices/:deviceId',
+  isAuthenticated,
+  authorize('patient'),
+  deleteMedicalDeviceController
 );
 
 // AI Scan Route (Must be before generic /:vaccinationId)

@@ -252,6 +252,238 @@ const deleteCondition = async (patientId, conditionId) => {
 };
 
 /**
+ * Ensures that a medical-device management request is being
+ * performed by the patient who owns the requested profile.
+ */
+const ensurePatientOwnsMedicalDeviceData = (patientId, requestingUser) => {
+  if (!requestingUser) {
+    const error = new Error('Authentication is required');
+    error.statusCode = 401;
+    throw error;
+  }
+
+  if (
+    requestingUser.role !== 'patient' ||
+    String(requestingUser.profile_id) !== String(patientId)
+  ) {
+    const error = new Error('You can only manage medical devices on your own patient profile');
+    error.statusCode = 403;
+    throw error;
+  }
+};
+
+/**
+ * Retrieves all active medical devices and implants for a patient.
+ */
+const getMedicalDevices = async (
+  patientId,
+  requestingUser
+) => {
+  ensurePatientOwnsMedicalDeviceData(
+    patientId,
+    requestingUser
+  );
+
+  const existing =
+    await patientRepository.getPatientById(
+      patientId
+    );
+
+  if (!existing) {
+    const error =
+      new Error('Patient not found');
+
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return await patientRepository
+    .getMedicalDevicesByPatientId(
+      patientId
+    );
+};
+
+/**
+ * Adds a medical device or implant to a patient's profile.
+ */
+const addMedicalDevice = async (
+  patientId,
+  deviceName,
+  deviceType,
+  implantedAt,
+  notes,
+  isEmergencyRelevant,
+  requestingUser
+) => {
+  ensurePatientOwnsMedicalDeviceData(
+    patientId,
+    requestingUser
+  );
+
+  if (
+    !deviceName ||
+    !deviceName.trim()
+  ) {
+    const error =
+      new Error('Device name is required');
+
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const normalizedDeviceName =
+    deviceName.trim();
+
+  if (
+    normalizedDeviceName.length > 150
+  ) {
+    const error =
+      new Error('Device name must be 150 characters or fewer');
+
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const normalizedDeviceType =
+    deviceType?.trim() || null;
+
+  if (
+    normalizedDeviceType &&
+    normalizedDeviceType.length > 100
+  ) {
+    const error =
+      new Error('Device type must be 100 characters or fewer');
+
+    error.statusCode = 400;
+    throw error;
+  }
+
+  let normalizedImplantedAt = null;
+
+  if (implantedAt) {
+    const implantedDate =
+      new Date(implantedAt);
+
+    if (
+      Number.isNaN(
+        implantedDate.getTime()
+      )
+    ) {
+      const error =
+        new Error('Implanted date is invalid');
+
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const today =
+      new Date();
+
+    today.setHours(
+      23,
+      59,
+      59,
+      999
+    );
+
+    if (
+      implantedDate > today
+    ) {
+      const error =
+        new Error('Implanted date cannot be in the future');
+
+      error.statusCode = 400;
+      throw error;
+    }
+
+    normalizedImplantedAt =
+      implantedAt;
+  }
+
+  const existing =
+    await patientRepository.getPatientById(
+      patientId
+    );
+
+  if (!existing) {
+    const error =
+      new Error('Patient not found');
+
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const emergencyRelevant =
+    isEmergencyRelevant === undefined
+      ? true
+      : Boolean(
+          isEmergencyRelevant
+        );
+
+  return await patientRepository
+    .addMedicalDevice(
+      patientId,
+      normalizedDeviceName,
+      normalizedDeviceType,
+      normalizedImplantedAt,
+      notes?.trim() || null,
+      emergencyRelevant
+    );
+};
+
+/**
+ * Removes a medical device or implant from a patient's
+ * active profile while preserving the historical row.
+ */
+const deleteMedicalDevice = async (
+  patientId,
+  deviceId,
+  requestingUser
+) => {
+  ensurePatientOwnsMedicalDeviceData(
+    patientId,
+    requestingUser
+  );
+
+  if (!deviceId) {
+    const error =
+      new Error('Medical device ID is required');
+
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const existing =
+    await patientRepository.getPatientById(
+      patientId
+    );
+
+  if (!existing) {
+    const error =
+      new Error('Patient not found');
+
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const deleted =
+    await patientRepository.deleteMedicalDevice(
+      patientId,
+      deviceId
+    );
+
+  if (!deleted) {
+    const error =
+      new Error(
+        'Medical device not found or does not belong to this patient'
+      );
+
+    error.statusCode = 404;
+    throw error;
+  }
+};
+
+/**
  * Retrieves all vaccination records for a patient.
  */
 const getVaccinations = async (patientId) => {
@@ -363,8 +595,13 @@ const getPatientByQrCode = async (qrCodeId) => {
     error.statusCode = 404;
     throw error;
   }
+
   const conditions = await patientRepository.getConditionsByPatientId(patient.id);
-  return { ...patient, conditions };
+
+  return {
+    ...patient,
+    conditions
+  };
 };
 
 /**
@@ -620,6 +857,9 @@ module.exports = {
   getConditions,
   addCondition,
   deleteCondition,
+  getMedicalDevices,
+  addMedicalDevice,
+  deleteMedicalDevice,
   getVaccinations,
   addVaccination,
   addBulkVaccinations,
