@@ -162,11 +162,6 @@ const createDoctor = async (
 
 /**
  * Creates a new pharmacy profile linked to a user (pharmacist role).
- * Newly registered pharmacies default to unverified and inactive -
- * separate from the account's own verification_status ('pending' until
- * admin-approved) - matching the pattern used elsewhere (e.g. is_verified
- * on doctors), and leaving room for a future admin verification step
- * specific to pharmacy licenses if needed.
  * @param {string} userId - UUID of the user
  * @param {string} name - Pharmacy name
  * @param {string} licenseNumber - Pharmacy license number
@@ -210,6 +205,108 @@ const createPharmacy = async (
             licenseNumber,
             address,
             phone
+        ]
+    );
+
+    return result.rows[0];
+};
+
+/**
+ * Creates a new laboratory profile linked to a user (lab_technician role).
+ * @param {string} userId - UUID of the user
+ * @param {string} name - Laboratory name
+ * @param {string} licenseNumber - License number
+ * @param {string} address - Address
+ * @param {string} phone - Contact phone
+ * @returns {Promise<object>} Created laboratory row
+ */
+const createLaboratory = async (
+    userId,
+    name,
+    licenseNumber,
+    address,
+    phone
+) => {
+    const result = await pool.query(
+        `INSERT INTO laboratories
+            (
+                user_id,
+                name,
+                license_number,
+                address,
+                phone,
+                is_verified,
+                is_active
+            )
+         VALUES
+            ($1, $2, $3, $4, $5, false, true)
+         RETURNING
+            id,
+            user_id,
+            name,
+            license_number,
+            address,
+            phone,
+            is_verified,
+            is_active,
+            created_at`,
+        [
+            userId,
+            name,
+            licenseNumber,
+            address,
+            phone
+        ]
+    );
+
+    return result.rows[0];
+};
+
+/**
+ * Creates a new hospital profile linked to a user (hospital_staff role).
+ * @param {string} userId - UUID of the user
+ * @param {string} name - Hospital name
+ * @param {string} type - Hospital type
+ * @param {string} location - Location/Address
+ * @param {string} departments - Departments JSON/Text
+ * @returns {Promise<object>} Created hospital row
+ */
+const createHospital = async (
+    userId,
+    name,
+    type,
+    location,
+    departments
+) => {
+    const result = await pool.query(
+        `INSERT INTO hospitals
+            (
+                user_id,
+                name,
+                type,
+                location,
+                departments,
+                is_verified,
+                is_active
+            )
+         VALUES
+            ($1, $2, $3, $4, $5, false, true)
+         RETURNING
+            id,
+            user_id,
+            name,
+            type,
+            location,
+            departments,
+            is_verified,
+            is_active,
+            created_at`,
+        [
+            userId,
+            name,
+            type,
+            location,
+            departments
         ]
     );
 
@@ -317,9 +414,6 @@ const updateUserPassword = async (
 
 /**
  * Creates or overwrites a pending OTP verification record for an email.
- * Used on both initial registration and OTP resend - if a pending record
- * already exists for this email, it is replaced with a fresh OTP/expiry
- * and the latest submitted registration data.
  * @param {string} email - Email being registered
  * @param {string} phone - Phone number
  * @param {string} passwordHash - Bcrypt hashed password
@@ -401,7 +495,6 @@ const findOtpByEmail = async (email) => {
 
 /**
  * Deletes a pending OTP verification record by email.
- * Called after successful verification to clean up the pending row.
  * @param {string} email - Email to delete the pending record for
  */
 const deleteOtpByEmail = async (email) => {
@@ -413,9 +506,7 @@ const deleteOtpByEmail = async (email) => {
 };
 
 /**
- * Increments a user's failed login attempt count. If the count reaches
- * the lockout threshold, also sets locked_until to now + cooldown period,
- * blocking further login attempts on this account until it passes.
+ * Increments a user's failed login attempt count.
  * @param {string} userId - UUID of the user
  * @param {number} maxAttempts - Number of failures before locking
  * @param {number} cooldownMinutes - Lockout duration in minutes
@@ -456,7 +547,6 @@ const incrementFailedLoginAttempts = async (
 
 /**
  * Resets a user's failed login attempt count and clears any lockout.
- * Called after a successful login.
  * @param {string} userId - UUID of the user
  */
 const resetFailedLoginAttempts = async (userId) => {
@@ -474,6 +564,8 @@ module.exports = {
     createPatient,
     createDoctor,
     createPharmacy,
+    createLaboratory,
+    createHospital,
     findUserByEmail,
     savePasswordResetToken,
     getValidPasswordResetToken,

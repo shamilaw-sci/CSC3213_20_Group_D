@@ -628,11 +628,7 @@ const ConsultationPage = () => {
     setNotesSaved,
   ] = useState(false);
 
-  const [
-    currentConsultationRecord,
-    setCurrentConsultationRecord,
-  ] = useState(null);
-
+  
   /* =========================================================
      PRESCRIPTION FORM
   ========================================================= */
@@ -1054,9 +1050,6 @@ const ConsultationPage = () => {
             existingCurrentNote
           ) {
 
-            setCurrentConsultationRecord(
-              existingCurrentNote
-            );
 
             setNotesSaved(true);
 
@@ -1121,8 +1114,12 @@ const ConsultationPage = () => {
   ========================================================= */
 
   const conditions =
-    patient?.conditions ||
-    [];
+  useMemo(
+    () =>
+      patient?.conditions ||
+      [],
+    [patient?.conditions]
+  );
 
   const priorityConditions =
     useMemo(
@@ -1570,9 +1567,6 @@ const ConsultationPage = () => {
           true
         );
 
-        setCurrentConsultationRecord(
-          result.data
-        );
 
         setPreviousNotes(
           (previous) => [

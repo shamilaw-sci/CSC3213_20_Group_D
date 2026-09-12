@@ -18,7 +18,8 @@ const {
 const patientRepository = require('../patient/patient.repository');
 const doctorRepository = require('../doctor/doctor.repository');
 const pharmacyRepository = require('../pharmacy/pharmacy.repository');
-
+const laboratoryRepository = require('../laboratory/laboratory.repository');
+const hospitalRepository = require('../hospital/hospital.repository');
 
 /**
  * Handles POST /api/auth/register
@@ -281,6 +282,24 @@ const loginController = async (req, res) => {
       if (pharmacyProfile) {
         profileId = pharmacyProfile.id;
         fullName = pharmacyProfile.name;
+      }
+
+    } else if (userRole === 'lab_technician') {
+      const laboratoryProfile =
+        await laboratoryRepository.getLaboratoryByUserId(user.id);
+
+      if (laboratoryProfile) {
+        profileId = laboratoryProfile.id;
+        fullName = laboratoryProfile.name;
+      }
+
+    } else if (userRole === 'hospital_staff') {
+      const hospitalProfile =
+        await hospitalRepository.getHospitalByUserId(user.id);
+
+      if (hospitalProfile) {
+        profileId = hospitalProfile.id;
+        fullName = hospitalProfile.name;
       }
     }
 

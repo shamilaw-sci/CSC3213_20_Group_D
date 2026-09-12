@@ -20,6 +20,8 @@ const {
     createPatient,
     createDoctor,
     createPharmacy,
+    createLaboratory,
+    createHospital,
     findUserByEmail,
     savePasswordResetToken,
     getValidPasswordResetToken,
@@ -170,6 +172,26 @@ const verifyOtp = async (email, otpCode) => {
             pending.profile_data.licenseNumber,
             pending.profile_data.address,
             pending.profile_data.phone
+        );
+
+    } else if (pending.role === 'lab_technician') {
+
+        profile = await createLaboratory(
+            user.id,
+            pending.profile_data.name,
+            pending.profile_data.licenseNumber,
+            pending.profile_data.address,
+            pending.profile_data.phone
+        );
+
+    } else if (pending.role === 'hospital_staff') {
+
+        profile = await createHospital(
+            user.id,
+            pending.profile_data.name,
+            pending.profile_data.type,
+            pending.profile_data.location,
+            pending.profile_data.departments
         );
     }
 
