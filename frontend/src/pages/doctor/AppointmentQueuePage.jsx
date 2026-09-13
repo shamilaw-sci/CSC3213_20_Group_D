@@ -5,10 +5,10 @@
  *          Shows all patients scheduled for today with
  *          streamlined consultation workflow actions.
  *
- *          Scheduled appointments can be started,
- *          in-progress consultations can be resumed,
- *          and completed consultations can be reviewed
- *          through the central Consultation Workspace.
+ *          Scheduled and checked-in waiting appointments
+ *          can be started, in-progress consultations can
+ *          be resumed, and completed consultations can be
+ *          reviewed through the central Consultation Workspace.
  *
  *          Auto-refreshes in the background so the doctor
  *          never has to manually reload to see queue changes.
@@ -390,7 +390,7 @@ const AppointmentQueuePage = () => {
     };
 
   /**
-   * Starts a scheduled appointment.
+   * Starts a scheduled or waiting appointment.
    *
    * The appointment is first moved to in_progress
    * and then opened directly in the Consultation
@@ -662,6 +662,14 @@ const AppointmentQueuePage = () => {
                   appt.status ===
                   'scheduled';
 
+                const isWaiting =
+                  appt.status ===
+                  'confirmed';
+
+                const canStartConsultation =
+                  isScheduled ||
+                  isWaiting;
+
                 const isInProgress =
                   appt.status ===
                   'in_progress';
@@ -695,7 +703,9 @@ const AppointmentQueuePage = () => {
                             ? 'bg-success'
                             : isCancelled
                               ? 'bg-destructive/60'
-                              : 'bg-gradient-to-r from-primary to-primary/30'
+                              : isWaiting
+                                ? 'bg-amber-500'
+                                : 'bg-gradient-to-r from-primary to-primary/30'
                       }`}
                     />
 
@@ -762,8 +772,8 @@ const AppointmentQueuePage = () => {
                     ================================================== */}
                     <div className="flex flex-wrap gap-3 mt-5 pt-5 border-t border-border relative z-10">
 
-                      {/* Scheduled -> Start */}
-                      {isScheduled && (
+                      {/* Scheduled / Waiting -> Start */}
+                      {canStartConsultation && (
 
                         <button
                           type="button"
@@ -844,6 +854,7 @@ const AppointmentQueuePage = () => {
 
                       {/* Cancel */}
                       {(isScheduled ||
+                        isWaiting ||
                         isInProgress) && (
 
                         <button

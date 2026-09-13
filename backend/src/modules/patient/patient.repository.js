@@ -9,8 +9,11 @@
 const { pool } = require('../../config/db');
 
 /**
- * Fetches a patient record by their patient table ID,
- * joined with the users table for full profile data.
+ * Fetches a patient record by their patient table ID.
+ *
+ * Account information is optional because hospital-assisted
+ * patients may exist without a linked Care4U user account.
+ *
  * @param {string} id - UUID of the patient (patients.id)
  * @returns {Promise<Object|null>} Patient row or null if not found
  */
@@ -36,7 +39,8 @@ async function getPatientById(id) {
       u.is_verified,
       u.role
     FROM patients p
-    JOIN users u ON p.user_id = u.id
+    LEFT JOIN users u
+      ON p.user_id = u.id
     WHERE p.id = $1`,
     [id]
   );
@@ -648,7 +652,11 @@ async function getPatientPrescriptions(
 /**
  * Fetches a patient record by their QR code ID.
  * Used by the doctor-facing QR lookup endpoint.
- * @param {string} qrCodeId - The qr_code_id value (e.g. "QR-TEST-001")
+ *
+ * Account information is optional because hospital-assisted
+ * patients may not have a linked user account.
+ *
+ * @param {string} qrCodeId - Patient QR identity
  * @returns {Promise<Object|null>} Patient row or null if not found
  */
 async function getPatientByQrCodeId(
@@ -675,7 +683,7 @@ async function getPatientByQrCodeId(
       u.is_verified,
       u.role
     FROM patients p
-    JOIN users u
+    LEFT JOIN users u
       ON p.user_id = u.id
     WHERE p.qr_code_id = $1`,
     [qrCodeId]
@@ -779,8 +787,9 @@ async function getPatientAppointments(
 
 /**
  * Fetches a patient record by their NIC.
- * Used by pharmacy staff as a fallback patient lookup method
- * when a QR code cannot be scanned or is unavailable.
+ *
+ * Account information is optional because hospital-assisted
+ * patients may not have a linked user account.
  *
  * @param {string} nic - Patient NIC number
  * @returns {Promise<Object|null>} Patient row or null if not found
@@ -809,7 +818,7 @@ async function getPatientByNic(
       u.is_verified,
       u.role
     FROM patients p
-    JOIN users u
+    LEFT JOIN users u
       ON p.user_id = u.id
     WHERE UPPER(TRIM(p.nic)) =
           UPPER(TRIM($1))
