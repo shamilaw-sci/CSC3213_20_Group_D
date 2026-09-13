@@ -51,5 +51,5 @@ const navItems = [
 ];
 
 export default function AdminNavbar() {
-  return <TopNavbar portalLabel="Admin Panel" navItems={navItems} onLogout={handleLogout} />;
+  return <TopNavbar portalLabel="Admin Panel" theme="admin" navItems={navItems} onLogout={handleLogout} />;
 }

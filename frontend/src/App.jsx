@@ -12,6 +12,8 @@ import useAuthStore from './store/authStore';
 import PatientLayout          from './components/layout/PatientLayout';
 import AdminLayout            from './components/layout/AdminLayout';
 import HospitalLayout         from './components/layout/HospitalLayout';
+import DoctorLayout from './components/layout/DoctorLayout';
+import PharmacyLayout from './components/layout/PharmacyLayout';
 
 import PatientProfilePage     from './pages/patient/PatientProfilePage';
 import MedicalRecordsPage     from './pages/patient/MedicalRecordsPage';
@@ -387,127 +389,39 @@ function App() {
           />
         </Route>
 
-        {/* Doctor pages — restricted to 'doctor' */}
+{/* --- DOCTOR ROUTES --- */}
         <Route
-          path="/doctor/dashboard"
+          path="/doctor"
           element={
-            <ProtectedRoute
-              allowedRoles={[
-                'doctor'
-              ]}
-            >
-              <DoctorDashboard />
+            <ProtectedRoute allowedRoles={['doctor']}>
+              <DoctorLayout />
             </ProtectedRoute>
           }
-        />
+        >
+          {/* Default redirect to dashboard if they just go to /doctor */}
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<DoctorDashboard />} />
+          <Route path="queue" element={<AppointmentQueuePage />} />
+          <Route path="consultation/:appointmentId" element={<ConsultationPage />} />
+          <Route path="profile" element={<DoctorProfilePage />} />
+          <Route path="issue-prescription" element={<IssuePrescriptionPage />} />
+        </Route>
 
+        {/* --- PHARMACY ROUTES --- */}
         <Route
-          path="/doctor/queue"
+          path="/pharmacy"
           element={
-            <ProtectedRoute
-              allowedRoles={[
-                'doctor'
-              ]}
-            >
-              <AppointmentQueuePage />
+            <ProtectedRoute allowedRoles={['pharmacist']}>
+              <PharmacyLayout />
             </ProtectedRoute>
           }
-        />
-
-        <Route
-          path="/doctor/consultation/:appointmentId"
-          element={
-            <ProtectedRoute
-              allowedRoles={[
-                'doctor'
-              ]}
-            >
-              <ConsultationPage />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/doctor/profile"
-          element={
-            <ProtectedRoute
-              allowedRoles={[
-                'doctor'
-              ]}
-            >
-              <DoctorProfilePage />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/doctor/issue-prescription"
-          element={
-            <ProtectedRoute
-              allowedRoles={[
-                'doctor'
-              ]}
-            >
-              <IssuePrescriptionPage />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Pharmacy pages — restricted to 'pharmacist' */}
-
-        <Route
-          path="/pharmacy/dashboard"
-          element={
-            <ProtectedRoute
-              allowedRoles={[
-                'pharmacist'
-              ]}
-            >
-              <PharmacyDashboard />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/pharmacy/patient-lookup"
-          element={
-            <ProtectedRoute
-              allowedRoles={[
-                'pharmacist'
-              ]}
-            >
-              <PatientQRLookupPage />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Pharmacy profile page */}
-        <Route
-          path="/pharmacy/profile"
-          element={
-            <ProtectedRoute
-              allowedRoles={[
-                'pharmacist'
-              ]}
-            >
-              <PharmacyProfilePage />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Pharmacy dispensing history page */}
-        <Route
-          path="/pharmacy/history"
-          element={
-            <ProtectedRoute
-              allowedRoles={[
-                'pharmacist'
-              ]}
-            >
-              <PharmacyDispensingHistoryPage />
-            </ProtectedRoute>
-          }
-        />
+        >
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<PharmacyDashboard />} />
+          <Route path="patient-lookup" element={<PatientQRLookupPage />} />
+          <Route path="profile" element={<PharmacyProfilePage />} />
+          <Route path="history" element={<PharmacyDispensingHistoryPage />} />
+        </Route>
 
         {/* Hospital pages — restricted to 'hospital_staff' */}
         <Route

@@ -39,5 +39,5 @@ export default function PatientNavbar() {
     { type: 'link', to: '/patient/lab-reports', label: 'Lab Reports', icon: FlaskConical, badge: hasNewReports },
   ];
 
-  return <TopNavbar portalLabel="Patient Portal" navItems={navItems} onLogout={handleLogout} />;
+  return <TopNavbar portalLabel="Patient Portal" theme="patient" navItems={navItems} onLogout={handleLogout} />;
 }

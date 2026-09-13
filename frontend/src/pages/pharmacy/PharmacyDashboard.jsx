@@ -2,8 +2,7 @@
  * @component PharmacyDashboard
  * @desc      Landing page for pharmacists after login.
  *            Shows pharmacy statistics, quick actions,
- *            prescription QR scanning, recent activity,
- *            profile access, and logout.
+ *            prescription QR scanning, recent activity.
  * @author    Pamudika Abayarathna (S/21/001)
  */
 
@@ -15,18 +14,13 @@ import {
   Search,
   QrCode,
   UserSearch,
-  ShieldCheck,
-  ShieldAlert,
   ArrowRight,
   ClipboardList,
   History,
-  Building2,
   CalendarDays,
   CircleCheckBig,
   Clock3,
-  LogOut,
   Pill,
-  UserRoundPen,
   Camera,
   Keyboard,
   ScanLine,
@@ -35,10 +29,10 @@ import {
 import api from '../../services/api';
 
 import Spinner from '../../components/common/Spinner';
-import Badge from '../../components/common/Badge';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
+import Badge from '../../components/common/Badge';
 import QRScanner from '../../components/common/QRScanner';
 
 import useAuthStore from '../../store/authStore';
@@ -141,11 +135,6 @@ const PharmacyDashboard = () => {
       (state) => state.user
     );
 
-  const clearUser =
-    useAuthStore(
-      (state) => state.clearUser
-    );
-
   /**
    * profile_id should contain the linked pharmacy ID.
    * The user ID fallback is kept from the previous implementation.
@@ -172,16 +161,6 @@ const PharmacyDashboard = () => {
     manualQrEntry,
     setManualQrEntry
   ] = useState(false);
-
-  const [
-    logoutLoading,
-    setLogoutLoading
-  ] = useState(false);
-
-  const [
-    logoutError,
-    setLogoutError
-  ] = useState(null);
 
   /**
    * Loads pharmacy profile information and
@@ -257,38 +236,6 @@ const PharmacyDashboard = () => {
     );
   };
 
-  /**
-   * Logs the pharmacist out of the application.
-   */
-  const handleLogout = async () => {
-    setLogoutLoading(true);
-    setLogoutError(null);
-
-    try {
-      await api.post(
-        '/api/auth/logout'
-      );
-
-      clearUser();
-
-      navigate('/login');
-
-    } catch (error) {
-      console.error(
-        'Pharmacy logout error:',
-        error
-      );
-
-      setLogoutError(
-        error.response?.data?.message ||
-        'Logout failed. Please try again.'
-      );
-
-    } finally {
-      setLogoutLoading(false);
-    }
-  };
-
   // ── Loading ──
   if (isLoading) {
     return (
@@ -333,9 +280,6 @@ const PharmacyDashboard = () => {
     );
   }
 
-  const pharmacy =
-    data?.pharmacy;
-
   const stats =
     data?.stats;
 
@@ -345,143 +289,6 @@ const PharmacyDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-
-      {/* ─────────────────────────────────────────────
-          Header
-      ───────────────────────────────────────────── */}
-      <div className="px-6 py-7 sm:px-8 bg-brand-deep">
-
-        <div className="max-w-6xl mx-auto">
-
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
-
-            {/* Pharmacy identity */}
-            <div>
-
-              <div className="flex items-center gap-2 mb-2">
-
-                <Building2
-                  size={18}
-                  className="text-brand-deep-foreground/70"
-                />
-
-                <p className="text-xs font-semibold uppercase tracking-widest text-brand-deep-foreground/70">
-                  Pharmacy Portal
-                </p>
-
-              </div>
-
-              <h1 className="text-2xl sm:text-3xl font-bold text-brand-deep-foreground">
-                {pharmacy?.name ||
-                  'Pharmacy Dashboard'}
-              </h1>
-
-              <p className="text-sm mt-1 text-brand-deep-foreground/80">
-                {pharmacy?.address ||
-                  'Manage prescriptions and dispensing activity'}
-              </p>
-
-              <div className="mt-3">
-
-                {pharmacy?.is_verified ? (
-
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-brand-deep-foreground text-xs font-semibold">
-
-                    <ShieldCheck
-                      size={14}
-                    />
-
-                    Verified Pharmacy
-
-                  </div>
-
-                ) : (
-
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-brand-deep-foreground text-xs font-semibold">
-
-                    <ShieldAlert
-                      size={14}
-                    />
-
-                    Pending Verification
-
-                  </div>
-
-                )}
-
-              </div>
-
-            </div>
-
-            {/* Header actions */}
-            <div className="flex flex-wrap gap-2">
-
-              <Button
-                variant="secondary"
-                icon={
-                  <UserRoundPen
-                    size={16}
-                  />
-                }
-                onClick={() =>
-                  navigate(
-                    '/pharmacy/profile'
-                  )
-                }
-              >
-                Profile
-              </Button>
-
-              <Button
-                variant="secondary"
-                icon={
-                  <History
-                    size={16}
-                  />
-                }
-                onClick={() =>
-                  navigate(
-                    '/pharmacy/history'
-                  )
-                }
-              >
-                History
-              </Button>
-
-              <Button
-                variant="secondary"
-                loading={
-                  logoutLoading
-                }
-                icon={
-                  <LogOut
-                    size={16}
-                  />
-                }
-                onClick={
-                  handleLogout
-                }
-              >
-                Logout
-              </Button>
-
-            </div>
-
-          </div>
-
-          {logoutError && (
-            <p className="mt-4 text-sm text-destructive-foreground">
-              {logoutError}
-            </p>
-          )}
-
-        </div>
-
-      </div>
-
-      {/* ─────────────────────────────────────────────
-          Main Content
-      ───────────────────────────────────────────── */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-7">
 
         {/* ─────────────────────────────────────────
@@ -784,123 +591,6 @@ const PharmacyDashboard = () => {
             </div>
 
           )}
-
-        </Card>
-
-        {/* ─────────────────────────────────────────
-            Pharmacy Information
-        ───────────────────────────────────────── */}
-        <Card
-          title="Pharmacy Information"
-          icon={
-            <Building2
-              size={18}
-            />
-          }
-        >
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-
-            <div>
-
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                Pharmacy
-              </p>
-
-              <p className="text-sm font-semibold text-foreground mt-1">
-                {pharmacy?.name ||
-                  '—'}
-              </p>
-
-            </div>
-
-            <div>
-
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                License Number
-              </p>
-
-              <p className="text-sm font-semibold text-foreground mt-1">
-                {pharmacy?.license_number ||
-                  '—'}
-              </p>
-
-            </div>
-
-            <div>
-
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                Phone
-              </p>
-
-              <p className="text-sm font-semibold text-foreground mt-1">
-                {pharmacy?.phone ||
-                  '—'}
-              </p>
-
-            </div>
-
-            <div>
-
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                Status
-              </p>
-
-              <div className="mt-1 flex items-center gap-2">
-
-                {pharmacy?.is_verified ? (
-
-                  <>
-                    <ShieldCheck
-                      size={16}
-                      className="text-success"
-                    />
-
-                    <span className="text-sm font-semibold text-success">
-                      Verified
-                    </span>
-                  </>
-
-                ) : (
-
-                  <>
-                    <ShieldAlert
-                      size={16}
-                      className="text-urgent-foreground"
-                    />
-
-                    <span className="text-sm font-semibold text-urgent-foreground">
-                      Pending Approval
-                    </span>
-                  </>
-
-                )}
-
-              </div>
-
-            </div>
-
-          </div>
-
-          <div className="mt-5 pt-5 border-t border-border flex justify-end">
-
-            <Button
-              variant="secondary"
-              icon={
-                <UserRoundPen
-                  size={16}
-                />
-              }
-              onClick={() =>
-                navigate(
-                  '/pharmacy/profile'
-                )
-              }
-            >
-              View Profile
-            </Button>
-
-          </div>
 
         </Card>
 

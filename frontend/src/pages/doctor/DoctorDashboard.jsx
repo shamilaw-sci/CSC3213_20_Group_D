@@ -39,7 +39,6 @@ import {
   FileText,
   IdCard,
   LayoutList,
-  LogOut,
   Play,
   RefreshCw,
   ScanLine,
@@ -372,12 +371,6 @@ const DoctorDashboard = () => {
     useAuthStore(
       (state) =>
         state.user
-    );
-
-  const clearUser =
-    useAuthStore(
-      (state) =>
-        state.clearUser
     );
 
   const DOCTOR_ID =
@@ -742,60 +735,6 @@ const DoctorDashboard = () => {
 
   }, [fetchDashboardData]);
 
-  /**
-   * Logs the doctor out by destroying the backend
-   * session and clearing frontend auth state.
-   */
-  const handleLogout =
-    async () => {
-
-      try {
-
-        const response =
-          await fetch(
-            `${API_URL}/api/auth/logout`,
-            {
-              method:
-                'POST',
-
-              credentials:
-                'include',
-            }
-          );
-
-        const result =
-          await response.json();
-
-        if (
-          !response.ok ||
-          !result.success
-        ) {
-          throw new Error(
-            result.message ||
-            'Logout failed'
-          );
-        }
-
-        clearUser();
-
-        navigate(
-          '/login'
-        );
-
-      } catch (err) {
-
-        console.error(
-          'Logout error:',
-          err
-        );
-
-        toast.error(
-          err.message ||
-          'Unable to log out.'
-        );
-      }
-    };
-
   /* =========================================================
      LAB REPORT REVIEW
   ========================================================= */
@@ -1128,14 +1067,6 @@ const DoctorDashboard = () => {
 
         setFinderMode(
           FINDER_MODE.CONFIRM
-        );
-
-        /**
-         * Proactively check whether this patient already
-         * has an active consultation with the doctor.
-         */
-        await checkExistingActiveConsultation(
-          result.data.id
         );
 
         /**
@@ -1655,12 +1586,6 @@ const DoctorDashboard = () => {
     },
   ];
 
-  const initials =
-    getInitials(
-      doctor?.full_name ||
-      'Doctor'
-    );
-
   /* =========================================================
      LOADING / ERROR
   ========================================================= */
@@ -1722,179 +1647,6 @@ const DoctorDashboard = () => {
 
   return (
     <div className="min-h-screen bg-muted/30">
-
-      {/* =====================================================
-          DOCTOR HEADER
-      ====================================================== */}
-      <header className="bg-brand-deep border-b border-white/10 shadow-sm">
-
-        <div className="max-w-[1500px] mx-auto px-4 sm:px-6 py-5">
-
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
-
-            {/* Doctor identity */}
-            <div className="flex items-center gap-4 min-w-0">
-
-              {doctor?.photo_url ? (
-
-                <img
-                  src={
-                    doctor.photo_url
-                  }
-                  alt="Doctor profile"
-                  className="h-14 w-14 sm:h-16 sm:w-16 shrink-0 rounded-full object-cover border-2 border-white/20 shadow-sm"
-                />
-
-              ) : (
-
-                <div className="h-14 w-14 sm:h-16 sm:w-16 shrink-0 flex items-center justify-center rounded-full bg-white/10 border-2 border-white/20 text-brand-deep-foreground font-bold text-lg">
-                  {initials}
-                </div>
-
-              )}
-
-              <div className="min-w-0">
-
-                <p className="text-[10px] uppercase tracking-[0.18em] font-bold text-brand-deep-foreground/55">
-                  Clinical Dashboard
-                </p>
-
-                <h1 className="text-xl sm:text-2xl font-bold text-brand-deep-foreground truncate mt-0.5">
-                  {doctor?.full_name
-                    ? `Dr. ${doctor.full_name}`
-                    : 'Doctor'}
-                </h1>
-
-                <div className="flex flex-wrap items-center gap-2 mt-1.5">
-
-                  <span className="inline-flex items-center gap-1 bg-white/10 border border-white/20 text-brand-deep-foreground text-xs font-semibold px-2.5 py-1 rounded-full">
-
-                    <Stethoscope
-                      size={12}
-                    />
-
-                    {doctor?.specialization ||
-                      'Doctor'}
-
-                  </span>
-
-                  {doctor?.hospital_name && (
-
-                    <span className="text-xs sm:text-sm font-medium text-brand-deep-foreground/70">
-                      {
-                        doctor
-                          .hospital_name
-                      }
-                    </span>
-
-                  )}
-
-                </div>
-
-              </div>
-
-            </div>
-
-            {/* Header actions */}
-            <div className="flex flex-wrap items-center gap-2">
-
-              {refreshing && (
-
-                <span className="hidden sm:flex items-center gap-1.5 text-xs text-brand-deep-foreground/60 mr-1">
-
-                  <RefreshCw
-                    size={12}
-                    className="animate-spin"
-                  />
-
-                  Updating
-
-                </span>
-
-              )}
-
-              {/* Lab reports */}
-              <button
-                type="button"
-                onClick={() =>
-                  setShowLabModal(
-                    true
-                  )
-                }
-                className="relative flex items-center gap-2 bg-white/10 border border-white/20 rounded-lg px-3 sm:px-4 py-2.5 hover:bg-white/20 transition-colors"
-              >
-
-                <FileText
-                  size={16}
-                  className="text-brand-deep-foreground"
-                />
-
-                <span className="hidden sm:inline text-sm font-semibold text-brand-deep-foreground">
-                  Lab Reports
-                </span>
-
-                {unreviewedCount >
-                  0 && (
-
-                  <span className="flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-urgent text-urgent-foreground text-[10px] font-bold">
-                    {
-                      unreviewedCount
-                    }
-                  </span>
-
-                )}
-
-              </button>
-
-              {/* Profile */}
-              <button
-                type="button"
-                onClick={() =>
-                  navigate(
-                    '/doctor/profile'
-                  )
-                }
-                className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-lg px-3 sm:px-4 py-2.5 hover:bg-white/20 transition-colors"
-              >
-
-                <UserRound
-                  size={16}
-                  className="text-brand-deep-foreground"
-                />
-
-                <span className="hidden sm:inline text-sm font-semibold text-brand-deep-foreground">
-                  Profile
-                </span>
-
-              </button>
-
-              {/* Logout */}
-              <button
-                type="button"
-                onClick={
-                  handleLogout
-                }
-                className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-lg px-3 sm:px-4 py-2.5 hover:bg-white/20 transition-colors"
-              >
-
-                <LogOut
-                  size={16}
-                  className="text-brand-deep-foreground"
-                />
-
-                <span className="hidden sm:inline text-sm font-semibold text-brand-deep-foreground">
-                  Logout
-                </span>
-
-              </button>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </header>
 
       <main className="max-w-[1500px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
 
