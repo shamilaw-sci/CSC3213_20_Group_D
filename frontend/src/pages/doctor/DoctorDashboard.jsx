@@ -496,11 +496,11 @@ const DoctorDashboard = () => {
   ] = useState(false);
 
   /**
-   * Existing in-progress consultation for the
-   * patient currently selected in the finder.
+   * Existing open appointment for the patient currently
+   * selected in the finder.
    *
-   * When present, Care4U resumes this appointment
-   * instead of creating another walk-in visit.
+   * This may be scheduled, confirmed, or in_progress.
+   * Care4U reuses it instead of creating a duplicate visit.
    */
   const [
     existingPatientConsultation,
@@ -913,10 +913,12 @@ const DoctorDashboard = () => {
 
   /**
    * Checks whether the authenticated doctor already has
-   * an in-progress consultation with the selected patient.
+   * an open appointment with the selected patient today.
    *
-   * The backend resolves the doctor from the authenticated
-   * session, so the browser only needs to send patientId.
+   * Open appointments include scheduled, confirmed,
+   * and in_progress visits. The backend resolves the doctor
+   * from the authenticated session, so the browser only needs
+   * to send patientId.
    *
    * This is a proactive UX check. The appointment booking
    * controller also performs the same protection server-side,
@@ -966,7 +968,7 @@ const DoctorDashboard = () => {
         ) {
           throw new Error(
             result.message ||
-            'Unable to check active consultation.'
+            'Unable to check today\'s existing appointment.'
           );
         }
 
@@ -988,7 +990,7 @@ const DoctorDashboard = () => {
          * same duplicate protection before inserting.
          */
         console.warn(
-          'Active consultation check warning:',
+          'Existing appointment check warning:',
           err
         );
 
@@ -1071,7 +1073,7 @@ const DoctorDashboard = () => {
 
         /**
          * Proactively check whether this patient already
-         * has an active consultation with the doctor.
+         * has an open appointment with the doctor today.
          */
         await checkExistingActiveConsultation(
           result.data.id
@@ -1166,6 +1168,14 @@ const DoctorDashboard = () => {
           FINDER_MODE.CONFIRM
         );
 
+        /**
+         * NIC lookup follows the same duplicate-safe flow
+         * as QR lookup by checking today's existing visit.
+         */
+        await checkExistingActiveConsultation(
+          result.data.id
+        );
+
       } catch (err) {
 
         console.error(
@@ -1237,8 +1247,10 @@ const DoctorDashboard = () => {
         );
 
         /**
-         * If the proactive check already found an active
-         * consultation, resume it immediately.
+         * Reuse today's existing appointment when one exists.
+         *
+         * scheduled / confirmed -> start it
+         * in_progress           -> resume it
          */
         if (
           existingPatientConsultation?.id
@@ -1247,9 +1259,37 @@ const DoctorDashboard = () => {
           const existingId =
             existingPatientConsultation.id;
 
-          toast.success(
-            `Active consultation found for ${selectedPatient.full_name || 'patient'}. Resuming it.`
-          );
+          const existingStatus =
+            existingPatientConsultation.status;
+
+          if (
+            existingStatus ===
+              'scheduled' ||
+            existingStatus ===
+              'confirmed'
+          ) {
+            await updateAppointmentStatus(
+              existingId,
+              'in_progress'
+            );
+
+            toast.success(
+              `Existing appointment started for ${selectedPatient.full_name || 'patient'}.`
+            );
+
+          } else if (
+            existingStatus ===
+            'in_progress'
+          ) {
+            toast.success(
+              `Active consultation found for ${selectedPatient.full_name || 'patient'}. Resuming it.`
+            );
+
+          } else {
+            throw new Error(
+              'The existing appointment cannot be started from its current status.'
+            );
+          }
 
           closePatientFinder();
 
@@ -1260,6 +1300,12 @@ const DoctorDashboard = () => {
           return;
         }
 
+        /**
+         * No appointment was found during the proactive check.
+         * Create a doctor walk-in appointment. The backend still
+         * performs its own duplicate check to protect against races
+         * or a stale browser state.
+         */
         const appointment =
           await bookAppointment({
             patientId:
@@ -1286,15 +1332,15 @@ const DoctorDashboard = () => {
         }
 
         /**
-         * If the backend returned an existing active
-         * consultation, it is already in_progress.
-         *
-         * Newly-created walk-ins begin immediately rather
-         * than remaining in scheduled state.
+         * The booking endpoint may return either a newly-created
+         * scheduled appointment or an existing scheduled/confirmed/
+         * in-progress appointment found by the backend duplicate check.
          */
         if (
-          appointment.status !==
-          'in_progress'
+          appointment.status ===
+            'scheduled' ||
+          appointment.status ===
+            'confirmed'
         ) {
           await updateAppointmentStatus(
             appointment.id,
@@ -1305,10 +1351,17 @@ const DoctorDashboard = () => {
             `Consultation started for ${selectedPatient.full_name || 'patient'}.`
           );
 
-        } else {
-
+        } else if (
+          appointment.status ===
+          'in_progress'
+        ) {
           toast.success(
             `Existing active consultation found for ${selectedPatient.full_name || 'patient'}. Resuming it.`
+          );
+
+        } else {
+          throw new Error(
+            'The appointment cannot be started from its current status.'
           );
         }
 
@@ -3030,11 +3083,11 @@ const DoctorDashboard = () => {
                       <div>
 
                         <p className="text-xs font-bold text-foreground">
-                          Checking active consultations...
+                          Checking today&apos;s appointments...
                         </p>
 
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          Care4U is checking whether this patient already has an active visit with you.
+                          Care4U is checking whether this patient already has an open appointment with you today.
                         </p>
 
                       </div>
@@ -3058,11 +3111,17 @@ const DoctorDashboard = () => {
                         <div className="min-w-0">
 
                           <p className="text-sm font-bold text-foreground">
-                            Active consultation already exists
+                            {existingPatientConsultation.status ===
+                            'in_progress'
+                              ? 'Active consultation already exists'
+                              : 'Existing appointment found for today'}
                           </p>
 
                           <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                            This patient already has an in-progress consultation with you. Care4U will resume that visit instead of creating a duplicate appointment.
+                            {existingPatientConsultation.status ===
+                            'in_progress'
+                              ? 'This patient already has an in-progress consultation with you. Care4U will resume that visit instead of creating a duplicate appointment.'
+                              : 'This patient already has an appointment with you today. Care4U will start that existing appointment instead of creating a duplicate walk-in visit.'}
                           </p>
 
                           <div className="flex flex-wrap items-center gap-2 mt-3 text-xs">
@@ -3073,7 +3132,10 @@ const DoctorDashboard = () => {
                                 size={11}
                               />
 
-                              Started{' '}
+                              {existingPatientConsultation.status ===
+                              'in_progress'
+                                ? 'Started'
+                                : 'Scheduled'}{' '}
                               {formatTime(
                                 existingPatientConsultation.scheduled_at
                               )}
@@ -3090,6 +3152,15 @@ const DoctorDashboard = () => {
                                 ?.toUpperCase() ||
                                 'VISIT'}
 
+                            </span>
+
+                            <span className="inline-flex items-center gap-1.5 bg-card border border-border rounded-full px-2.5 py-1 text-muted-foreground capitalize">
+                              {existingPatientConsultation.status
+                                ?.replace(
+                                  '_',
+                                  ' '
+                                ) ||
+                                'open'}
                             </span>
 
                           </div>
@@ -3110,7 +3181,7 @@ const DoctorDashboard = () => {
                       />
 
                       <p className="text-xs text-muted-foreground">
-                        Verify the patient's identity verbally before starting the consultation. A new walk-in appointment will be created for this patient.
+                        Verify the patient&apos;s identity verbally before starting the consultation. No open appointment exists with you today, so a new walk-in appointment will be created.
                       </p>
 
                     </div>
@@ -3166,7 +3237,8 @@ const DoctorDashboard = () => {
                     handleStartWalkInVisit
                   }
                 >
-                  {existingPatientConsultation ? (
+                  {existingPatientConsultation?.status ===
+                  'in_progress' ? (
 
                     <Activity
                       size={16}
@@ -3184,9 +3256,12 @@ const DoctorDashboard = () => {
 
                   {checkingActiveConsultation
                     ? 'Checking Existing Visit...'
-                    : existingPatientConsultation
+                    : existingPatientConsultation?.status ===
+                        'in_progress'
                       ? 'Resume Existing Consultation'
-                      : 'Confirm & Start Consultation'}
+                      : existingPatientConsultation
+                        ? 'Start Existing Appointment'
+                        : 'Confirm & Start Consultation'}
                 </Button>
 
               </div>

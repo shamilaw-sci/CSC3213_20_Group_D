@@ -336,12 +336,16 @@ const getPatientConsultationNotesController =
 /**
  * Handles GET /api/appointments/active
  *
- * Checks whether the authenticated doctor already
- * has an in-progress consultation with a patient.
+ * Checks whether the authenticated doctor already has
+ * an open appointment with the supplied patient today.
  *
- * The doctor ID is taken from the authenticated
- * session instead of trusting a doctor ID supplied
- * by the browser.
+ * Open appointments include:
+ * - scheduled
+ * - confirmed
+ * - in_progress
+ *
+ * This allows QR/NIC patient lookup to reuse an existing
+ * appointment instead of creating a duplicate walk-in visit.
  *
  * Query:
  * ?patientId=<patient-profile-uuid>
@@ -403,7 +407,7 @@ const getActiveConsultationController =
 
       const activeAppointment =
         await appointmentRepository
-          .getActiveConsultationByPatientAndDoctor(
+          .getTodayActiveAppointmentByPatientAndDoctor(
             patientId,
             doctorId
           );
@@ -412,8 +416,8 @@ const getActiveConsultationController =
         success: true,
         message:
           activeAppointment
-            ? 'Active consultation found'
-            : 'No active consultation found',
+            ? 'Existing appointment found for today'
+            : 'No existing appointment found for today',
         data:
           activeAppointment,
       });
@@ -808,33 +812,29 @@ const bookAppointmentController =
          * The existing frontend remains compatible because
          * it receives the normal appointment object in data.
          */
-        const activeAppointment =
-          await appointmentRepository
-            .getActiveConsultationByPatientAndDoctor(
-              patientId,
-              doctorId
-            );
+const activeAppointment =
+  await appointmentRepository
+    .getTodayActiveAppointmentByPatientAndDoctor(
+      patientId,
+      doctorId
+    );
 
-        if (
-          activeAppointment
-        ) {
-          return res.status(200).json({
-            success: true,
-            message:
-              'An active consultation already exists for this patient. Resuming the existing consultation.',
-            data:
-              activeAppointment,
+if (
+  activeAppointment
+) {
+  return res.status(200).json({
+    success: true,
+    message:
+      'An existing appointment already exists for this patient today. Reusing the existing appointment.',
+    data:
+      activeAppointment,
 
-            /**
-             * Optional metadata for newer frontends.
-             * Older frontend code can safely ignore this.
-             */
-            meta: {
-              existingActiveConsultation:
-                true,
-            },
-          });
-        }
+    meta: {
+      existingActiveConsultation:
+        true,
+    },
+  });
+}
 
       } else {
 
