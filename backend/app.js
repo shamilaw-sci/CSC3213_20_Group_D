@@ -30,9 +30,11 @@ const laboratoryRoutes = require('./src/modules/laboratory/laboratory.routes');
 
 const hospitalRoutes = require('./src/modules/hospital/hospital.routes');
 
-const emergencyRoutes = require('./src/modules/emergency/emergency.routes'); 
+const emergencyRoutes = require('./src/modules/emergency/emergency.routes');
 
 const orderRoutes = require('./src/modules/order/order.routes');
+
+const paymentRoutes = require('./src/modules/payment/payment.routes');
 
 const interactionRoutes = require('./src/modules/interaction/interaction.routes');
 
@@ -156,9 +158,11 @@ app.use('/api/laboratories', laboratoryRoutes);
 
 app.use('/api/hospitals', hospitalRoutes);
 
-app.use('/api/emergencies', emergencyRoutes); 
+app.use('/api/emergencies', emergencyRoutes);
 
 app.use('/api/orders', orderRoutes);
+
+app.use('/api/payments', paymentRoutes);
 
 app.use('/api/interactions', interactionRoutes);
 

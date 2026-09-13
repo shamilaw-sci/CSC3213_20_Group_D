@@ -1,12 +1,20 @@
 /**
  * @file    payment.routes.js
  * @module  Payment
- * @desc    API routes for payment endpoints.
+ * @desc    API routes for patient sandbox payment endpoints.
+ *          All payment operations require an authenticated patient session.
  * @author  Pamudika Abayarathna (S/21/001)
  */
 
 const express = require('express');
+
 const router = express.Router();
+
+const {
+  isAuthenticated,
+  authorize,
+} = require('../../middleware/auth');
+
 const {
   initiatePaymentController,
   confirmPaymentController,
@@ -14,16 +22,37 @@ const {
   getPaymentByIdController,
 } = require('./payment.controller');
 
-// POST /api/payments — Initiate a new payment
-router.post('/', initiatePaymentController);
+/**
+ * All payment routes in the current Care4U sandbox flow
+ * are patient-facing and require an authenticated patient.
+ */
+router.use(
+  isAuthenticated,
+  authorize('patient')
+);
 
-// PUT /api/payments/:id/confirm — Confirm a sandbox payment
-router.put('/:id/confirm', confirmPaymentController);
+// POST /api/payments
+router.post(
+  '/',
+  initiatePaymentController
+);
 
-// GET /api/payments/patient/:patientId — Get patient payment history
-router.get('/patient/:patientId', getPatientPaymentsController);
+// PUT /api/payments/:id/confirm
+router.put(
+  '/:id/confirm',
+  confirmPaymentController
+);
 
-// GET /api/payments/:id — Get payment by ID
-router.get('/:id', getPaymentByIdController);
+// GET /api/payments/patient/:patientId
+router.get(
+  '/patient/:patientId',
+  getPatientPaymentsController
+);
+
+// GET /api/payments/:id
+router.get(
+  '/:id',
+  getPaymentByIdController
+);
 
 module.exports = router;
