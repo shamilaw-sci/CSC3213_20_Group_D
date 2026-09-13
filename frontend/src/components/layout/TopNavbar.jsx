@@ -149,7 +149,7 @@ const TopNavbar = ({ portalLabel, navItems, onLogout, theme, user: customUser })
           {/* =========================================
               MIDDLE: DESKTOP NAVIGATION
           ========================================= */}
-          <nav ref={navRef} className="hidden md:flex items-center gap-1 overflow-x-auto max-w-full py-1">
+          <nav ref={navRef} className="hidden md:flex items-center gap-1 max-w-full py-1">
             {navItems.map((item) => {
               
               // Render Dropdown Group
