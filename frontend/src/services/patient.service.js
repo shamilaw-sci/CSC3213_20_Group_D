@@ -325,6 +325,64 @@ export const deleteHealthBackground = async (
 };
 
 /**
+ * Fetches all active family medical history records.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @returns {Promise<Array>} Array of family history records
+ */
+export const getFamilyHistory = async (
+  patientId
+) => {
+  const response =
+    await api.get(
+      `/api/patients/${patientId}/family-history`
+    );
+
+  return response.data.data;
+};
+
+/**
+ * Adds a family medical history record
+ * to the patient's profile.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @param {Object} familyHistoryData - Family history information
+ * @returns {Promise<Object>} Created family history record
+ */
+export const addFamilyHistory = async (
+  patientId,
+  familyHistoryData
+) => {
+  const response =
+    await api.post(
+      `/api/patients/${patientId}/family-history`,
+      familyHistoryData
+    );
+
+  return response.data.data;
+};
+
+/**
+ * Removes a family medical history record
+ * from the patient's active profile.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @param {string} familyHistoryId - UUID of the family history record
+ * @returns {Promise<Object>} Success response
+ */
+export const deleteFamilyHistory = async (
+  patientId,
+  familyHistoryId
+) => {
+  const response =
+    await api.delete(
+      `/api/patients/${patientId}/family-history/${familyHistoryId}`
+    );
+
+  return response.data;
+};
+
+/**
  * Fetches all vaccination records for a patient.
  */
 export const getVaccinations = async (

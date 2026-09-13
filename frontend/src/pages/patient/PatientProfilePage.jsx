@@ -12,6 +12,7 @@
  * Privacy & Consent Controls added in CARE4U-284 (Epic 8.12).
  * Medical Devices & Implants management added for emergency readiness.
  * Important Medical Background management added for major past health events.
+ * Family Medical History management added for clinically relevant family conditions.
  * UI Refactor: Edit actions isolated to Edit Mode.
  * @author  Wasana Karunanayaka (S/21/081)
  */
@@ -38,7 +39,8 @@ import {
   Lock,
   Unlock,
   HeartPulse,
-  History
+  History,
+  Users
 } from 'lucide-react';
 
 import { 
@@ -57,6 +59,9 @@ import {
   getHealthBackground,
   addHealthBackground,
   deleteHealthBackground,
+  getFamilyHistory,
+  addFamilyHistory,
+  deleteFamilyHistory,
   getVaccinations,
   addBulkVaccinations,
   deleteVaccination,
@@ -161,6 +166,54 @@ const HEALTH_BACKGROUND_TYPES = [
   }
 ];
 
+
+const FAMILY_RELATIONS = [
+  {
+    value: 'mother',
+    label: 'Mother'
+  },
+  {
+    value: 'father',
+    label: 'Father'
+  },
+  {
+    value: 'sister',
+    label: 'Sister'
+  },
+  {
+    value: 'brother',
+    label: 'Brother'
+  },
+  {
+    value: 'daughter',
+    label: 'Daughter'
+  },
+  {
+    value: 'son',
+    label: 'Son'
+  },
+  {
+    value: 'maternal_grandmother',
+    label: 'Maternal Grandmother'
+  },
+  {
+    value: 'maternal_grandfather',
+    label: 'Maternal Grandfather'
+  },
+  {
+    value: 'paternal_grandmother',
+    label: 'Paternal Grandmother'
+  },
+  {
+    value: 'paternal_grandfather',
+    label: 'Paternal Grandfather'
+  },
+  {
+    value: 'other',
+    label: 'Other'
+  }
+];
+
 // ─── Photo upload constraints (mirrors backend middleware/upload.js) ──────────
 const ALLOWED_PHOTO_TYPES = [
   'image/jpeg',
@@ -227,6 +280,24 @@ const getHealthBackgroundTypeLabel = (
     match?.label ||
     capitalise(
       type?.replaceAll('_', ' ')
+    )
+  );
+};
+
+
+const getFamilyRelationLabel = (
+  relation
+) => {
+  const match =
+    FAMILY_RELATIONS.find(
+      item =>
+        item.value === relation
+    );
+
+  return (
+    match?.label ||
+    capitalise(
+      relation?.replaceAll('_', ' ')
     )
   );
 };
@@ -487,6 +558,43 @@ const PatientProfilePage = () => {
   const [
     isBackgroundEmergencyRelevantInput,
     setIsBackgroundEmergencyRelevantInput
+  ] = useState(false);
+
+
+  // ── Family Medical History UI State ──
+  const [
+    isAddFamilyHistoryModalOpen,
+    setIsAddFamilyHistoryModalOpen
+  ] = useState(false);
+
+  const [
+    isDeleteFamilyHistoryModalOpen,
+    setIsDeleteFamilyHistoryModalOpen
+  ] = useState(false);
+
+  const [
+    familyHistoryToDelete,
+    setFamilyHistoryToDelete
+  ] = useState(null);
+
+  const [
+    familyRelationInput,
+    setFamilyRelationInput
+  ] = useState('mother');
+
+  const [
+    familyConditionInput,
+    setFamilyConditionInput
+  ] = useState('');
+
+  const [
+    familyHistoryNotesInput,
+    setFamilyHistoryNotesInput
+  ] = useState('');
+
+  const [
+    isFamilyHistoryEmergencyRelevantInput,
+    setIsFamilyHistoryEmergencyRelevantInput
   ] = useState(false);
 
   // ── Vaccination UI State ──
@@ -793,6 +901,24 @@ const PatientProfilePage = () => {
     ],
     queryFn: () =>
       getHealthBackground(
+        TEST_PATIENT_ID
+      ),
+    enabled:
+      !!patient,
+  });
+
+
+  const {
+    data: familyHistory = [],
+    isLoading:
+      familyHistoryLoading
+  } = useQuery({
+    queryKey: [
+      'family-history',
+      TEST_PATIENT_ID
+    ],
+    queryFn: () =>
+      getFamilyHistory(
         TEST_PATIENT_ID
       ),
     enabled:
@@ -1239,6 +1365,90 @@ const PatientProfilePage = () => {
           ),
     });
 
+
+  const addFamilyHistoryMutation =
+    useMutation({
+      mutationFn:
+        (familyHistoryData) =>
+          addFamilyHistory(
+            TEST_PATIENT_ID,
+            familyHistoryData
+          ),
+
+      onSuccess:
+        () => {
+          queryClient.invalidateQueries({
+            queryKey: [
+              'family-history',
+              TEST_PATIENT_ID
+            ]
+          });
+
+          toast.success(
+            'Family medical history added successfully'
+          );
+
+          setIsAddFamilyHistoryModalOpen(
+            false
+          );
+
+          setFamilyRelationInput(
+            'mother'
+          );
+          setFamilyConditionInput('');
+          setFamilyHistoryNotesInput('');
+          setIsFamilyHistoryEmergencyRelevantInput(
+            false
+          );
+        },
+
+      onError:
+        (err) =>
+          toast.error(
+            err?.response?.data?.message ||
+            'Failed to add family medical history.'
+          ),
+    });
+
+  const deleteFamilyHistoryMutation =
+    useMutation({
+      mutationFn:
+        (familyHistoryId) =>
+          deleteFamilyHistory(
+            TEST_PATIENT_ID,
+            familyHistoryId
+          ),
+
+      onSuccess:
+        () => {
+          queryClient.invalidateQueries({
+            queryKey: [
+              'family-history',
+              TEST_PATIENT_ID
+            ]
+          });
+
+          toast.success(
+            'Family medical history removed successfully'
+          );
+
+          setIsDeleteFamilyHistoryModalOpen(
+            false
+          );
+
+          setFamilyHistoryToDelete(
+            null
+          );
+        },
+
+      onError:
+        (err) =>
+          toast.error(
+            err?.response?.data?.message ||
+            'Failed to remove family medical history.'
+          ),
+    });
+
   const addBulkVaccinationMutation =
     useMutation({
       mutationFn:
@@ -1638,6 +1848,32 @@ const PatientProfilePage = () => {
     });
   };
 
+
+  const submitAddFamilyHistory = (
+    e
+  ) => {
+    e.preventDefault();
+
+    if (
+      !familyConditionInput.trim()
+    ) {
+      return toast.error(
+        'Please enter the family medical condition.'
+      );
+    }
+
+    addFamilyHistoryMutation.mutate({
+      relation:
+        familyRelationInput,
+      condition:
+        familyConditionInput.trim(),
+      notes:
+        familyHistoryNotesInput.trim(),
+      isEmergencyRelevant:
+        isFamilyHistoryEmergencyRelevantInput
+    });
+  };
+
   const submitBulkVaccination = (
     e
   ) => {
@@ -1731,6 +1967,19 @@ const PatientProfilePage = () => {
     );
 
     setIsDeleteBackgroundModalOpen(
+      true
+    );
+  };
+
+
+  const promptDeleteFamilyHistory = (
+    familyHistoryRecord
+  ) => {
+    setFamilyHistoryToDelete(
+      familyHistoryRecord
+    );
+
+    setIsDeleteFamilyHistoryModalOpen(
       true
     );
   };
@@ -2901,6 +3150,205 @@ const PatientProfilePage = () => {
 
         </div>
 
+
+        {/* ── Family Medical History ── */}
+        <div className="mb-6">
+
+          <Card
+            title={
+              <span className="flex items-center gap-2">
+                <Users
+                  size={18}
+                  className="text-primary"
+                />
+                Family Medical History
+              </span>
+            }
+          >
+
+            <div className="pt-3">
+
+              <div className="mb-4 p-4 rounded-xl bg-primary/5 border border-primary/15">
+
+                <div className="flex items-start gap-3">
+
+                  <Users
+                    size={18}
+                    className="text-primary shrink-0 mt-0.5"
+                  />
+
+                  <div>
+
+                    <p className="text-sm font-semibold text-foreground">
+                      Clinically relevant family history
+                    </p>
+
+                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                      Record important conditions in close family members that
+                      may help doctors understand inherited or familial health
+                      risks. You do not need to enter relatives&apos; names.
+                    </p>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+              {familyHistoryLoading ? (
+
+                <div className="py-6 flex justify-center">
+                  <Spinner size="sm" />
+                </div>
+
+              ) : familyHistory.length ===
+                0 ? (
+
+                <div className="text-center py-8">
+
+                  <div className="inline-flex p-3 rounded-full bg-secondary mb-3">
+                    <Users
+                      className="text-muted-foreground"
+                      size={26}
+                    />
+                  </div>
+
+                  <p className="text-sm font-semibold text-foreground">
+                    No family medical history recorded
+                  </p>
+
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Add clinically important conditions affecting close
+                    family members.
+                  </p>
+
+                </div>
+
+              ) : (
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                  {familyHistory.map(
+                    (
+                      history
+                    ) => (
+
+                      <div
+                        key={
+                          history.id
+                        }
+                        className="relative p-4 rounded-xl border border-border bg-card shadow-sm hover:border-primary/30 transition-all"
+                      >
+
+                        <div className="flex items-start gap-3 pr-8">
+
+                          <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                            <Users
+                              size={19}
+                            />
+                          </div>
+
+                          <div className="min-w-0">
+
+                            <div className="flex flex-wrap items-center gap-2">
+
+                              <p className="text-sm font-bold text-foreground">
+                                {
+                                  history.condition
+                                }
+                              </p>
+
+                              {history.is_emergency_relevant && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-destructive/10 text-destructive text-[10px] font-bold uppercase tracking-wide">
+                                  <Shield
+                                    size={10}
+                                  />
+                                  Emergency
+                                </span>
+                              )}
+
+                            </div>
+
+                            <p className="text-xs font-medium text-primary mt-1">
+                              {getFamilyRelationLabel(
+                                history.relation
+                              )}
+                            </p>
+
+                            {history.notes && (
+                              <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                                {
+                                  history.notes
+                                }
+                              </p>
+                            )}
+
+                          </div>
+
+                        </div>
+
+                        {isEditing && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              promptDeleteFamilyHistory(
+                                history
+                              )
+                            }
+                            className="absolute right-3 top-3 p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+                            title="Remove family medical history"
+                          >
+                            <Trash2
+                              size={16}
+                            />
+                          </button>
+                        )}
+
+                      </div>
+
+                    )
+                  )}
+
+                </div>
+              )}
+
+              {isEditing && (
+                <div className="mt-5 flex justify-center">
+
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setFamilyRelationInput(
+                        'mother'
+                      );
+                      setFamilyConditionInput('');
+                      setFamilyHistoryNotesInput('');
+                      setIsFamilyHistoryEmergencyRelevantInput(
+                        false
+                      );
+
+                      setIsAddFamilyHistoryModalOpen(
+                        true
+                      );
+                    }}
+                    className="w-full sm:w-auto text-primary border-primary/20 hover:bg-primary/5"
+                  >
+                    <Plus
+                      size={16}
+                      className="mr-2"
+                    />
+                    Add Family History
+                  </Button>
+
+                </div>
+              )}
+
+            </div>
+
+          </Card>
+
+        </div>
+
         {/* ── Vaccination Records (CARE4U-148) ── */}
         <div className="mb-6">
 
@@ -3993,6 +4441,193 @@ const PatientProfilePage = () => {
         </Modal>
       )}
 
+
+      {/* ── Add Family Medical History Modal ── */}
+      {isAddFamilyHistoryModalOpen && (
+
+        <Modal
+          isOpen={
+            isAddFamilyHistoryModalOpen
+          }
+          onClose={() =>
+            setIsAddFamilyHistoryModalOpen(
+              false
+            )
+          }
+          title="Add Family Medical History"
+        >
+
+          <form
+            onSubmit={
+              submitAddFamilyHistory
+            }
+            className="space-y-5 p-1"
+          >
+
+            <div className="flex flex-col gap-1">
+
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Relationship{' '}
+                <span className="text-destructive">
+                  *
+                </span>
+              </label>
+
+              <select
+                className="w-full px-3 py-2 text-sm text-foreground bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                value={
+                  familyRelationInput
+                }
+                onChange={
+                  (
+                    e
+                  ) =>
+                    setFamilyRelationInput(
+                      e.target.value
+                    )
+                }
+              >
+                {FAMILY_RELATIONS.map(
+                  (
+                    relation
+                  ) => (
+                    <option
+                      key={
+                        relation.value
+                      }
+                      value={
+                        relation.value
+                      }
+                    >
+                      {
+                        relation.label
+                      }
+                    </option>
+                  )
+                )}
+              </select>
+
+            </div>
+
+            <div className="flex flex-col gap-1">
+
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Medical Condition{' '}
+                <span className="text-destructive">
+                  *
+                </span>
+              </label>
+
+              <input
+                type="text"
+                maxLength={200}
+                placeholder="E.g. Premature coronary artery disease"
+                className="w-full px-3 py-2 text-sm text-foreground bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                value={
+                  familyConditionInput
+                }
+                onChange={
+                  (
+                    e
+                  ) =>
+                    setFamilyConditionInput(
+                      e.target.value
+                    )
+                }
+              />
+
+            </div>
+
+            <div className="flex flex-col gap-1">
+
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Notes (Optional)
+              </label>
+
+              <textarea
+                placeholder="E.g. Heart attack at age 42"
+                rows={3}
+                className="w-full px-3 py-2 text-sm text-foreground bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                value={
+                  familyHistoryNotesInput
+                }
+                onChange={
+                  (
+                    e
+                  ) =>
+                    setFamilyHistoryNotesInput(
+                      e.target.value
+                    )
+                }
+              />
+
+            </div>
+
+            <label className="flex items-start gap-3 cursor-pointer p-4 bg-destructive/5 border border-destructive/20 rounded-xl">
+
+              <input
+                type="checkbox"
+                className="w-4 h-4 mt-0.5 text-destructive rounded border-border focus:ring-destructive"
+                checked={
+                  isFamilyHistoryEmergencyRelevantInput
+                }
+                onChange={
+                  (
+                    e
+                  ) =>
+                    setIsFamilyHistoryEmergencyRelevantInput(
+                      e.target.checked
+                    )
+                }
+              />
+
+              <div>
+
+                <span className="text-sm font-semibold text-foreground block">
+                  Emergency Relevant
+                </span>
+
+                <span className="text-xs text-muted-foreground block mt-1 leading-relaxed">
+                  Mark this only when the family history could materially
+                  affect urgent treatment. Marked records may appear during
+                  audited Break-Glass emergency access.
+                </span>
+
+              </div>
+
+            </label>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-border">
+
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() =>
+                  setIsAddFamilyHistoryModalOpen(
+                    false
+                  )
+                }
+              >
+                Cancel
+              </Button>
+
+              <Button
+                type="submit"
+                variant="primary"
+                loading={
+                  addFamilyHistoryMutation.isPending
+                }
+              >
+                Save Family History
+              </Button>
+
+            </div>
+
+          </form>
+
+        </Modal>
+      )}
+
       {/* ── Add Bulk Vaccination Modal ── */}
       {isAddVaccinationModalOpen && (
 
@@ -4676,6 +5311,96 @@ const PatientProfilePage = () => {
                 }
                 loading={
                   deleteHealthBackgroundMutation.isPending
+                }
+              >
+                Yes, Remove Record
+              </Button>
+
+            </div>
+
+          </div>
+
+        </Modal>
+      )}
+
+
+      {isDeleteFamilyHistoryModalOpen && (
+
+        <Modal
+          isOpen={
+            isDeleteFamilyHistoryModalOpen
+          }
+          onClose={() =>
+            setIsDeleteFamilyHistoryModalOpen(
+              false
+            )
+          }
+          title="Remove Family Medical History"
+        >
+
+          <div className="p-1 space-y-4">
+
+            <div className="flex items-start gap-4 p-4 bg-destructive/10 rounded-lg border border-destructive/20">
+
+              <div className="p-2 bg-destructive/20 rounded-full shrink-0">
+                <AlertTriangle
+                  size={24}
+                  className="text-destructive"
+                />
+              </div>
+
+              <div>
+
+                <h4 className="font-semibold text-foreground">
+                  Remove this record from your active profile?
+                </h4>
+
+                <p className="text-sm text-foreground mt-1">
+                  You are about to remove{' '}
+                  <strong>
+                    {
+                      familyHistoryToDelete?.condition
+                    }
+                  </strong>
+                  {' '}
+                  from your family medical history.
+                </p>
+
+                <p className="text-xs text-muted-foreground mt-2">
+                  Care4U will preserve the historical database record,
+                  but it will no longer appear as active family history
+                  or in future emergency snapshots.
+                </p>
+
+              </div>
+
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4">
+
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() =>
+                  setIsDeleteFamilyHistoryModalOpen(
+                    false
+                  )
+                }
+              >
+                Cancel
+              </Button>
+
+              <Button
+                type="button"
+                variant="primary"
+                className="bg-destructive! hover:bg-destructive/90! border-destructive! hover:border-destructive/90!"
+                onClick={() =>
+                  deleteFamilyHistoryMutation.mutate(
+                    familyHistoryToDelete.id
+                  )
+                }
+                loading={
+                  deleteFamilyHistoryMutation.isPending
                 }
               >
                 Yes, Remove Record
