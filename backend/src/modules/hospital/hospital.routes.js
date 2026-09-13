@@ -10,6 +10,8 @@ const express = require('express');
 
 const {
   getMyHospitalProfileController,
+  getTodayOpdAppointmentsController,
+  checkInOpdAppointmentController,
   getHospitalProfileController
 } = require('./hospital.controller');
 
@@ -22,8 +24,6 @@ const router = express.Router();
 
 /**
  * GET /api/hospitals/me
- * Retrieves the hospital profile linked to the authenticated
- * hospital staff account.
  */
 router.get(
   '/me',
@@ -33,8 +33,27 @@ router.get(
 );
 
 /**
+ * GET /api/hospitals/opd/today
+ */
+router.get(
+  '/opd/today',
+  isAuthenticated,
+  authorize('hospital_staff'),
+  getTodayOpdAppointmentsController
+);
+
+/**
+ * PATCH /api/hospitals/opd/:appointmentId/check-in
+ */
+router.patch(
+  '/opd/:appointmentId/check-in',
+  isAuthenticated,
+  authorize('hospital_staff'),
+  checkInOpdAppointmentController
+);
+
+/**
  * GET /api/hospitals/:id
- * Retrieves a hospital profile by hospital ID.
  */
 router.get(
   '/:id',

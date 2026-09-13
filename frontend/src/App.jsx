@@ -49,6 +49,7 @@ import AIChatWidget           from './components/chat/AIChatWidget';
 
 import HospitalHomePage from './pages/hospital/HospitalHomePage';
 import HospitalEmergencyPage from './pages/hospital/HospitalEmergencyPage';
+import HospitalOPDPage from './pages/hospital/HospitalOPDPage';
 
 import EmergencySnapshotPage from './pages/emergency/EmergencySnapshotPage';
 
@@ -536,6 +537,13 @@ function App() {
             path="dashboard"
             element={
               <HospitalHomePage />
+            }
+          />
+
+          <Route
+            path="opd"
+            element={
+              <HospitalOPDPage />
             }
           />
 
