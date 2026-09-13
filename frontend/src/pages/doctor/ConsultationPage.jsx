@@ -71,6 +71,7 @@ import {
   getPatientPrescriptions,
   getMedicalDevices,
   getHealthBackground,
+  getFamilyHistory,
 } from '../../services/patient.service';
 
 import {
@@ -236,6 +237,22 @@ const capitalise = (
     value.charAt(0).toUpperCase() +
     value.slice(1)
   );
+};
+
+const formatFamilyRelation = (
+  relation
+) => {
+  if (!relation) {
+    return '—';
+  }
+
+  return relation
+    .replace(/_/g, ' ')
+    .replace(
+      /\b\w/g,
+      (char) =>
+        char.toUpperCase()
+    );
 };
 
 /**
@@ -546,6 +563,11 @@ const ConsultationPage = () => {
   const [
     healthBackground,
     setHealthBackground,
+  ] = useState([]);
+
+  const [
+    familyHistory,
+    setFamilyHistory,
   ] = useState([]);
 
   const [
@@ -979,6 +1001,7 @@ const ConsultationPage = () => {
             prescriptionData,
             medicalDeviceData,
             healthBackgroundData,
+            familyHistoryData,
             noteResponse,
           ] =
             await Promise.all([
@@ -1009,6 +1032,11 @@ const ConsultationPage = () => {
               ),
 
               getHealthBackground(
+                consultation
+                  .patient_id
+              ),
+
+              getFamilyHistory(
                 consultation
                   .patient_id
               ),
@@ -1049,6 +1077,11 @@ const ConsultationPage = () => {
 
           setHealthBackground(
             healthBackgroundData ||
+            []
+          );
+
+          setFamilyHistory(
+            familyHistoryData ||
             []
           );
 
@@ -1251,6 +1284,17 @@ const ConsultationPage = () => {
               .is_emergency_relevant
         ),
       [healthBackground]
+    );
+
+  const emergencyRelevantFamilyHistory =
+    useMemo(
+      () =>
+        familyHistory.filter(
+          (item) =>
+            item
+              .is_emergency_relevant
+        ),
+      [familyHistory]
     );
 
   const mostRecentVisit =
@@ -3346,6 +3390,104 @@ const ConsultationPage = () => {
 
                 </Card>
 
+                {/* Family medical history */}
+                <Card
+                  title={`Family Medical History (${familyHistory.length})`}
+                >
+
+                  {clinicalDataLoading ? (
+
+                    <div className="py-6 flex justify-center">
+
+                      <Spinner
+                        size="sm"
+                      />
+
+                    </div>
+
+                  ) : familyHistory.length ===
+                    0 ? (
+
+                    <p className="text-sm text-muted-foreground py-3">
+                      No family medical history recorded.
+                    </p>
+
+                  ) : (
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+
+                      {familyHistory.map(
+                        (item) => (
+
+                          <div
+                            key={
+                              item.id
+                            }
+                            className="rounded-xl border border-border p-4 bg-card"
+                          >
+
+                            <div className="flex items-start justify-between gap-3">
+
+                              <div className="min-w-0">
+
+                                <div className="flex items-center gap-2">
+
+                                  <UserRound
+                                    size={16}
+                                    className="text-primary shrink-0"
+                                  />
+
+                                  <p className="text-sm font-bold text-foreground">
+                                    {
+                                      item.condition
+                                    }
+                                  </p>
+
+                                </div>
+
+                                <p className="text-xs font-medium text-primary mt-1">
+                                  {formatFamilyRelation(
+                                    item.relation
+                                  )}
+                                </p>
+
+                                {item.notes && (
+
+                                  <p className="text-xs text-muted-foreground mt-2 whitespace-pre-wrap">
+                                    {
+                                      item.notes
+                                    }
+                                  </p>
+
+                                )}
+
+                              </div>
+
+                              {item
+                                .is_emergency_relevant && (
+
+                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-destructive/10 text-destructive border border-destructive/20 text-[10px] uppercase tracking-wide font-bold shrink-0">
+                                  <ShieldAlert
+                                    size={10}
+                                  />
+                                  Emergency
+                                </span>
+
+                              )}
+
+                            </div>
+
+                          </div>
+
+                        )
+                      )}
+
+                    </div>
+
+                  )}
+
+                </Card>
+
                 {/* Visit details */}
                 <Card title="Visit Details">
 
@@ -5007,6 +5149,88 @@ const ConsultationPage = () => {
                                     {formatStatus(
                                       item
                                         .background_type
+                                    )}
+                                  </p>
+
+                                </div>
+
+                              </div>
+
+                            )
+                          )}
+
+                      </div>
+
+                    )}
+
+                  </div>
+
+                  {/* Emergency-relevant family history */}
+                  <div className="rounded-xl border border-border bg-secondary/40 p-4">
+
+                    <div className="flex items-center gap-2">
+
+                      <UserRound
+                        size={17}
+                        className="text-primary"
+                      />
+
+                      <p className="text-sm font-bold text-foreground">
+                        Critical Family History
+                      </p>
+
+                      <span className="ml-auto text-xs font-bold text-muted-foreground">
+                        {
+                          emergencyRelevantFamilyHistory
+                            .length
+                        }
+                      </span>
+
+                    </div>
+
+                    {emergencyRelevantFamilyHistory
+                      .length ===
+                      0 ? (
+
+                      <p className="text-xs text-muted-foreground mt-2">
+                        No emergency-relevant family history recorded.
+                      </p>
+
+                    ) : (
+
+                      <div className="mt-3 space-y-2">
+
+                        {emergencyRelevantFamilyHistory
+                          .slice(
+                            0,
+                            5
+                          )
+                          .map(
+                            (item) => (
+
+                              <div
+                                key={
+                                  item.id
+                                }
+                                className="flex items-start gap-2"
+                              >
+
+                                <ShieldAlert
+                                  size={12}
+                                  className="text-destructive shrink-0 mt-0.5"
+                                />
+
+                                <div>
+
+                                  <p className="text-xs font-semibold text-foreground">
+                                    {
+                                      item.condition
+                                    }
+                                  </p>
+
+                                  <p className="text-[11px] text-muted-foreground">
+                                    {formatFamilyRelation(
+                                      item.relation
                                     )}
                                   </p>
 
