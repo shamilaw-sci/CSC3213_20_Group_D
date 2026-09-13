@@ -1,8 +1,8 @@
 /**
  * @file    hospital.repository.js
  * @module  Hospital
- * @desc    Database queries for hospital profiles and hospital
- *          staff account lookups.
+ * @desc    Database queries for hospital profiles, OPD operations,
+ *          hospital-assisted patients, and hospital doctor lookups.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -221,6 +221,39 @@ const findPatientByNic = async (
 };
 
 /**
+ * Retrieves a patient profile using the patient ID.
+ *
+ * Used before hospital staff place a patient into
+ * the OPD queue.
+ *
+ * @param {string} patientId - UUID of patient profile
+ * @returns {Promise<Object|null>} Patient profile or null
+ */
+const getPatientById = async (
+  patientId
+) => {
+  const result =
+    await pool.query(
+      `SELECT
+          id,
+          user_id,
+          full_name,
+          nic,
+          uhi,
+          date_of_birth,
+          gender,
+          blood_group,
+          qr_code_id
+       FROM patients
+       WHERE id = $1
+       LIMIT 1`,
+      [patientId]
+    );
+
+  return result.rows[0] || null;
+};
+
+/**
  * Creates a hospital-assisted patient profile.
  *
  * Hospital-assisted patients do not require a Care4U
@@ -302,6 +335,73 @@ const createAssistedPatient = async (
   return result.rows[0];
 };
 
+/**
+ * Retrieves doctors assigned to the specified hospital.
+ *
+ * Used by the hospital OPD interface when reception
+ * assigns a walk-in patient to a doctor.
+ *
+ * @param {string} hospitalName - Registered hospital name
+ * @returns {Promise<Array>} Hospital doctors
+ */
+const getHospitalDoctors = async (
+  hospitalName
+) => {
+  const result =
+    await pool.query(
+      `SELECT
+          id,
+          full_name,
+          specialization,
+          hospital_name
+       FROM doctors
+       WHERE LOWER(TRIM(hospital_name)) =
+             LOWER(TRIM($1))
+       ORDER BY
+          full_name ASC`,
+      [hospitalName]
+    );
+
+  return result.rows;
+};
+
+/**
+ * Retrieves a doctor only when the doctor belongs
+ * to the specified hospital.
+ *
+ * This prevents hospital staff from assigning a
+ * patient to a doctor from another hospital by
+ * manually supplying a different doctor ID.
+ *
+ * @param {string} doctorId - UUID of doctor profile
+ * @param {string} hospitalName - Registered hospital name
+ * @returns {Promise<Object|null>} Hospital doctor or null
+ */
+const getHospitalDoctorById = async (
+  doctorId,
+  hospitalName
+) => {
+  const result =
+    await pool.query(
+      `SELECT
+          id,
+          full_name,
+          specialization,
+          hospital_name
+       FROM doctors
+       WHERE id = $1
+         AND LOWER(TRIM(hospital_name)) =
+             LOWER(TRIM($2))
+       LIMIT 1`,
+      [
+        doctorId,
+        hospitalName
+      ]
+    );
+
+  return result.rows[0] || null;
+};
+
 module.exports = {
   getHospitalByUserId,
   getHospitalById,
@@ -309,5 +409,8 @@ module.exports = {
   getTodayOpdAppointmentById,
   checkInOpdAppointment,
   findPatientByNic,
-  createAssistedPatient
+  getPatientById,
+  createAssistedPatient,
+  getHospitalDoctors,
+  getHospitalDoctorById
 };

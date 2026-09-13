@@ -2,12 +2,16 @@
  * @file    hospital.service.js
  * @module  Hospital
  * @desc    Business logic for retrieving hospital profiles,
- *          managing OPD operations, and hospital-assisted
- *          patient registration.
+ *          managing OPD operations, hospital-assisted
+ *          patient registration, and walk-in patient assignment.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
-const hospitalRepository = require('./hospital.repository');
+const hospitalRepository =
+  require('./hospital.repository');
+
+const appointmentRepository =
+  require('../appointment/appointment.repository');
 
 const {
   generatePatientQR
@@ -127,6 +131,30 @@ const getTodayOpdAppointments = async (
 
   return await hospitalRepository
     .getTodayOpdAppointments(
+      hospital.name
+    );
+};
+
+/**
+ * Retrieves doctors who belong to the authenticated
+ * hospital staff user's hospital.
+ *
+ * Hospital membership is resolved on the backend rather
+ * than trusting a hospital name supplied by the browser.
+ *
+ * @param {string} userId - UUID of authenticated hospital staff user
+ * @returns {Promise<Array>} Doctors attached to the hospital
+ */
+const getHospitalDoctorsForStaff = async (
+  userId
+) => {
+  const hospital =
+    await getHospitalProfileByUserId(
+      userId
+    );
+
+  return await hospitalRepository
+    .getHospitalDoctors(
       hospital.name
     );
 };
@@ -369,10 +397,141 @@ const registerAssistedPatient = async (
     });
 };
 
+/**
+ * Assigns an existing patient to a doctor and places
+ * the patient into today's hospital OPD queue.
+ *
+ * Walk-in patients are already physically present at
+ * reception, so their appointment begins as confirmed
+ * and therefore appears as Waiting.
+ *
+ * @param {string} userId - Authenticated hospital staff user ID
+ * @param {Object} assignmentData - Walk-in assignment information
+ * @returns {Promise<Object>} Created OPD appointment
+ */
+const assignWalkInPatientToDoctor = async (
+  userId,
+  assignmentData = {}
+) => {
+  const patientId =
+    assignmentData.patientId
+      ?.trim();
+
+  const doctorId =
+    assignmentData.doctorId
+      ?.trim();
+
+  const notes =
+    assignmentData.notes
+      ?.trim() ||
+    null;
+
+  if (!patientId) {
+    const error =
+      new Error(
+        'Patient ID is required'
+      );
+
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (!doctorId) {
+    const error =
+      new Error(
+        'Doctor ID is required'
+      );
+
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const hospital =
+    await getHospitalProfileByUserId(
+      userId
+    );
+
+  const patient =
+    await hospitalRepository
+      .getPatientById(
+        patientId
+      );
+
+  if (!patient) {
+    const error =
+      new Error(
+        'Patient not found'
+      );
+
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const doctor =
+    await hospitalRepository
+      .getHospitalDoctorById(
+        doctorId,
+        hospital.name
+      );
+
+  if (!doctor) {
+    const error =
+      new Error(
+        'Selected doctor does not belong to this hospital'
+      );
+
+    error.statusCode = 403;
+    throw error;
+  }
+
+  const existingAppointment =
+    await appointmentRepository
+      .getTodayActiveAppointmentByPatientAndDoctor(
+        patientId,
+        doctorId
+      );
+
+  if (existingAppointment) {
+    const error =
+      new Error(
+        'This patient already has an active OPD appointment with the selected doctor today'
+      );
+
+    error.statusCode = 409;
+    throw error;
+  }
+
+  const appointment =
+    await appointmentRepository
+      .createHospitalWalkInAppointment(
+        patientId,
+        doctorId,
+        notes
+      );
+
+  return {
+    ...appointment,
+
+    patient_name:
+      patient.full_name,
+
+    patient_nic:
+      patient.nic,
+
+    doctor_name:
+      doctor.full_name,
+
+    specialization:
+      doctor.specialization
+  };
+};
+
 module.exports = {
   getHospitalProfile,
   getHospitalProfileByUserId,
   getTodayOpdAppointments,
+  getHospitalDoctorsForStaff,
   checkInOpdAppointment,
-  registerAssistedPatient
+  registerAssistedPatient,
+  assignWalkInPatientToDoctor
 };

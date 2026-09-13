@@ -2,7 +2,8 @@
  * @file    hospital.controller.js
  * @module  Hospital
  * @desc    Handles HTTP requests and responses for authenticated
- *          hospital profile, OPD, and assisted patient operations.
+ *          hospital profile, OPD, assisted patient registration,
+ *          and hospital walk-in operations.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -10,8 +11,10 @@ const {
   getHospitalProfile,
   getHospitalProfileByUserId,
   getTodayOpdAppointments,
+  getHospitalDoctorsForStaff,
   checkInOpdAppointment,
-  registerAssistedPatient
+  registerAssistedPatient,
+  assignWalkInPatientToDoctor
 } = require('./hospital.service');
 
 /**
@@ -97,6 +100,50 @@ const getTodayOpdAppointmentsController = async (
 };
 
 /**
+ * Handles GET /api/hospitals/opd/doctors
+ *
+ * Returns only doctors attached to the authenticated
+ * hospital staff member's hospital.
+ */
+const getHospitalDoctorsController = async (
+  req,
+  res
+) => {
+  try {
+    const userId =
+      req.session?.user?.id;
+
+    const doctors =
+      await getHospitalDoctorsForStaff(
+        userId
+      );
+
+    return res.status(200).json({
+      success: true,
+      message:
+        'Hospital doctors retrieved successfully',
+      data: doctors
+    });
+
+  } catch (error) {
+    console.error(
+      'getHospitalDoctorsController error:',
+      error
+    );
+
+    return res.status(
+      error.statusCode || 500
+    ).json({
+      success: false,
+      message:
+        error.statusCode
+          ? error.message
+          : 'Internal server error'
+    });
+  }
+};
+
+/**
  * Handles PATCH /api/hospitals/opd/:appointmentId/check-in
  */
 const checkInOpdAppointmentController = async (
@@ -127,6 +174,52 @@ const checkInOpdAppointmentController = async (
   } catch (error) {
     console.error(
       'checkInOpdAppointmentController error:',
+      error
+    );
+
+    return res.status(
+      error.statusCode || 500
+    ).json({
+      success: false,
+      message:
+        error.statusCode
+          ? error.message
+          : 'Internal server error'
+    });
+  }
+};
+
+/**
+ * Handles POST /api/hospitals/opd/walk-in
+ *
+ * Assigns an existing patient to a doctor belonging
+ * to the authenticated hospital and immediately places
+ * the patient into today's waiting queue.
+ */
+const assignWalkInPatientController = async (
+  req,
+  res
+) => {
+  try {
+    const userId =
+      req.session?.user?.id;
+
+    const appointment =
+      await assignWalkInPatientToDoctor(
+        userId,
+        req.body
+      );
+
+    return res.status(201).json({
+      success: true,
+      message:
+        'Walk-in patient assigned to OPD successfully',
+      data: appointment
+    });
+
+  } catch (error) {
+    console.error(
+      'assignWalkInPatientController error:',
       error
     );
 
@@ -232,7 +325,9 @@ const getHospitalProfileController = async (
 module.exports = {
   getMyHospitalProfileController,
   getTodayOpdAppointmentsController,
+  getHospitalDoctorsController,
   checkInOpdAppointmentController,
+  assignWalkInPatientController,
   registerAssistedPatientController,
   getHospitalProfileController
 };

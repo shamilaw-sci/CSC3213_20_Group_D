@@ -3,8 +3,8 @@
  * @module  Hospital
  * @desc    Hospital-wide OPD queue for reception and hospital staff.
  *          Displays today's appointments across all doctors,
- *          supports patient check-in, and allows hospital-assisted
- *          patient registration.
+ *          supports patient check-in, hospital-assisted patient
+ *          registration, and walk-in doctor assignment.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -179,6 +179,36 @@ const HospitalOPDPage = () => {
     setRegisteredPatient
   ] = useState(null);
 
+  const [
+    hospitalDoctors,
+    setHospitalDoctors
+  ] = useState([]);
+
+  const [
+    doctorsLoading,
+    setDoctorsLoading
+  ] = useState(false);
+
+  const [
+    selectedDoctorId,
+    setSelectedDoctorId
+  ] = useState('');
+
+  const [
+    walkInNotes,
+    setWalkInNotes
+  ] = useState('');
+
+  const [
+    assigningWalkIn,
+    setAssigningWalkIn
+  ] = useState(false);
+
+  const [
+    assignedAppointment,
+    setAssignedAppointment
+  ] = useState(null);
+
   const loadAppointments =
     async (
       background = false
@@ -223,6 +253,54 @@ const HospitalOPDPage = () => {
 
         setLoading(false);
         setRefreshing(false);
+      }
+    };
+
+  const loadHospitalDoctors =
+    async () => {
+      try {
+
+        setDoctorsLoading(
+          true
+        );
+
+        const response =
+          await api.get(
+            '/api/hospitals/opd/doctors'
+          );
+
+        if (
+          response.data.success
+        ) {
+          setHospitalDoctors(
+            response.data.data ||
+            []
+          );
+        }
+
+      } catch (error) {
+
+        console.error(
+          'Hospital doctor load error:',
+          error
+        );
+
+        setHospitalDoctors(
+          []
+        );
+
+        toast.error(
+          error.response
+            ?.data
+            ?.message ||
+          'Unable to load hospital doctors.'
+        );
+
+      } finally {
+
+        setDoctorsLoading(
+          false
+        );
       }
     };
 
@@ -329,6 +407,21 @@ const HospitalOPDPage = () => {
       );
     };
 
+  const resetWalkInAssignment =
+    () => {
+      setSelectedDoctorId(
+        ''
+      );
+
+      setWalkInNotes(
+        ''
+      );
+
+      setAssignedAppointment(
+        null
+      );
+    };
+
   const openRegistrationModal =
     () => {
       setRegistrationForm(
@@ -339,14 +432,21 @@ const HospitalOPDPage = () => {
         null
       );
 
+      resetWalkInAssignment();
+
       setShowRegistrationModal(
         true
       );
+
+      loadHospitalDoctors();
     };
 
   const closeRegistrationModal =
     () => {
-      if (registering) {
+      if (
+        registering ||
+        assigningWalkIn
+      ) {
         return;
       }
 
@@ -361,6 +461,8 @@ const HospitalOPDPage = () => {
       setRegisteredPatient(
         null
       );
+
+      resetWalkInAssignment();
     };
 
   const handleRegisterPatient =
@@ -448,6 +550,8 @@ const HospitalOPDPage = () => {
             response.data.data
           );
 
+          resetWalkInAssignment();
+
           toast.success(
             'Patient registered successfully.'
           );
@@ -473,6 +577,98 @@ const HospitalOPDPage = () => {
           false
         );
       }
+    };
+
+  const handleAssignWalkIn =
+    async () => {
+      if (
+        !registeredPatient?.id
+      ) {
+        toast.error(
+          'Patient profile is unavailable.'
+        );
+
+        return;
+      }
+
+      if (!selectedDoctorId) {
+        toast.error(
+          'Please select a doctor.'
+        );
+
+        return;
+      }
+
+      try {
+
+        setAssigningWalkIn(
+          true
+        );
+
+        const response =
+          await api.post(
+            '/api/hospitals/opd/walk-in',
+            {
+              patientId:
+                registeredPatient.id,
+
+              doctorId:
+                selectedDoctorId,
+
+              notes:
+                walkInNotes.trim(),
+            }
+          );
+
+        if (
+          response.data.success
+        ) {
+          setAssignedAppointment(
+            response.data.data
+          );
+
+          toast.success(
+            'Patient added to the OPD waiting queue.'
+          );
+
+          await loadAppointments(
+            true
+          );
+        }
+
+      } catch (error) {
+
+        console.error(
+          'Hospital walk-in assignment error:',
+          error
+        );
+
+        toast.error(
+          error.response
+            ?.data
+            ?.message ||
+          'Unable to add patient to the OPD queue.'
+        );
+
+      } finally {
+
+        setAssigningWalkIn(
+          false
+        );
+      }
+    };
+
+  const handleRegisterAnother =
+    () => {
+      setRegistrationForm(
+        createEmptyRegistrationForm()
+      );
+
+      setRegisteredPatient(
+        null
+      );
+
+      resetWalkInAssignment();
     };
 
   const stats =
@@ -1018,7 +1214,7 @@ const HospitalOPDPage = () => {
                 </h2>
 
                 <p className="text-sm text-muted-foreground mt-1">
-                  Create a Care4U patient profile without requiring the patient to have an online account.
+                  Create a Care4U patient profile and place the patient into today&apos;s OPD queue.
                 </p>
 
               </div>
@@ -1029,7 +1225,8 @@ const HospitalOPDPage = () => {
                   closeRegistrationModal
                 }
                 disabled={
-                  registering
+                  registering ||
+                  assigningWalkIn
                 }
                 className="w-9 h-9 shrink-0 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors disabled:opacity-50"
                 aria-label="Close"
@@ -1061,7 +1258,7 @@ const HospitalOPDPage = () => {
                   </h3>
 
                   <p className="text-sm text-muted-foreground mt-2">
-                    A Care4U patient profile has been created. No patient login account was required.
+                    A Care4U patient profile has been created without requiring a patient login account.
                   </p>
 
                   <div className="mt-6 grid sm:grid-cols-2 gap-4">
@@ -1131,52 +1328,295 @@ const HospitalOPDPage = () => {
 
                   </div>
 
-                  <div className="mt-6 rounded-xl bg-secondary/50 border border-border p-4">
-
-                    <p className="text-sm font-semibold text-foreground">
-                      Patient profile created
-                    </p>
-
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Registration creates the patient profile only. The patient must still be assigned or booked for an OPD consultation before appearing in the queue.
-                    </p>
-
-                  </div>
-
-                  <div className="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
-
-                    <Button
-                      variant="secondary"
-                      onClick={
-                        closeRegistrationModal
-                      }
-                    >
-                      Close
-                    </Button>
-
-                    <Button
-                      variant="primary"
-                      onClick={() => {
-                        setRegistrationForm(
-                          createEmptyRegistrationForm()
-                        );
-
-                        setRegisteredPatient(
-                          null
-                        );
-                      }}
-                    >
-                      <UserPlus
-                        size={16}
-                        className="mr-2"
-                      />
-
-                      Register Another Patient
-                    </Button>
-
-                  </div>
-
                 </div>
+
+                {assignedAppointment ? (
+
+                  <div className="mt-6 rounded-2xl border border-primary/20 bg-primary/5 p-6">
+
+                    <div className="flex items-start gap-4">
+
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+
+                        <CheckCircle2
+                          size={24}
+                          className="text-primary"
+                        />
+
+                      </div>
+
+                      <div>
+
+                        <h3 className="text-lg font-bold text-foreground">
+                          Added to OPD Waiting Queue
+                        </h3>
+
+                        <p className="text-sm text-muted-foreground mt-1">
+                          The patient has been assigned to{' '}
+                          <span className="font-semibold text-foreground">
+                            Dr. {
+                              assignedAppointment
+                                .doctor_name ||
+                              'Assigned Doctor'
+                            }
+                          </span>
+                          {assignedAppointment.specialization
+                            ? ` (${assignedAppointment.specialization})`
+                            : ''}
+                          .
+                        </p>
+
+                        <div className="flex flex-wrap gap-2 mt-4">
+
+                          <span className="inline-flex items-center rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-700">
+                            Waiting
+                          </span>
+
+                          <span className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold text-muted-foreground">
+                            OPD
+                          </span>
+
+                        </div>
+
+                      </div>
+
+                    </div>
+
+                    <div className="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+
+                      <Button
+                        variant="secondary"
+                        onClick={
+                          closeRegistrationModal
+                        }
+                      >
+                        Close
+                      </Button>
+
+                      <Button
+                        variant="primary"
+                        onClick={
+                          handleRegisterAnother
+                        }
+                      >
+                        <UserPlus
+                          size={16}
+                          className="mr-2"
+                        />
+
+                        Register Another Patient
+                      </Button>
+
+                    </div>
+
+                  </div>
+
+                ) : (
+
+                  <div className="mt-6 rounded-2xl border border-border bg-background p-6">
+
+                    <div className="flex items-start gap-3 mb-5">
+
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+
+                        <Stethoscope
+                          size={19}
+                          className="text-primary"
+                        />
+
+                      </div>
+
+                      <div>
+
+                        <h3 className="text-base font-bold text-foreground">
+                          Add Patient to Today&apos;s OPD Queue
+                        </h3>
+
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Assign the walk-in patient to a doctor working at this hospital.
+                        </p>
+
+                      </div>
+
+                    </div>
+
+                    <div className="grid gap-5">
+
+                      <div>
+
+                        <label
+                          htmlFor="walkInDoctor"
+                          className="block text-sm font-semibold text-foreground mb-2"
+                        >
+                          Doctor
+                          <span className="text-destructive ml-1">
+                            *
+                          </span>
+                        </label>
+
+                        {doctorsLoading ? (
+
+                          <div className="h-11 rounded-lg border border-border bg-secondary/30 px-3 flex items-center gap-2">
+
+                            <Spinner
+                              size="sm"
+                            />
+
+                            <span className="text-sm text-muted-foreground">
+                              Loading hospital doctors...
+                            </span>
+
+                          </div>
+
+                        ) : (
+
+                          <select
+                            id="walkInDoctor"
+                            value={
+                              selectedDoctorId
+                            }
+                            onChange={
+                              (
+                                event
+                              ) =>
+                                setSelectedDoctorId(
+                                  event.target.value
+                                )
+                            }
+                            disabled={
+                              assigningWalkIn
+                            }
+                            className="w-full h-11 rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+                          >
+                            <option value="">
+                              Select a doctor
+                            </option>
+
+                            {hospitalDoctors.map(
+                              (
+                                doctor
+                              ) => (
+
+                                <option
+                                  key={
+                                    doctor.id
+                                  }
+                                  value={
+                                    doctor.id
+                                  }
+                                >
+                                  Dr. {doctor.full_name}
+                                  {
+                                    doctor.specialization
+                                      ? ` — ${doctor.specialization}`
+                                      : ''
+                                  }
+                                </option>
+
+                              )
+                            )}
+
+                          </select>
+
+                        )}
+
+                        {!doctorsLoading &&
+                        hospitalDoctors.length === 0 && (
+
+                          <p className="text-xs text-destructive mt-2">
+                            No doctors are currently linked to this hospital.
+                          </p>
+
+                        )}
+
+                      </div>
+
+                      <div>
+
+                        <label
+                          htmlFor="walkInNotes"
+                          className="block text-sm font-semibold text-foreground mb-2"
+                        >
+                          Reception Note
+                        </label>
+
+                        <textarea
+                          id="walkInNotes"
+                          value={
+                            walkInNotes
+                          }
+                          onChange={
+                            (
+                              event
+                            ) =>
+                              setWalkInNotes(
+                                event.target.value
+                              )
+                          }
+                          disabled={
+                            assigningWalkIn
+                          }
+                          rows={3}
+                          placeholder="Optional note for the OPD visit"
+                          className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none resize-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+                        />
+
+                      </div>
+
+                    </div>
+
+                    <div className="mt-6 rounded-xl bg-secondary/50 border border-border p-4">
+
+                      <p className="text-sm font-semibold text-foreground">
+                        Walk-in patient
+                      </p>
+
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Because the patient is already at the hospital, assigning them to a doctor places them directly into the Waiting queue.
+                      </p>
+
+                    </div>
+
+                    <div className="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+
+                      <Button
+                        variant="secondary"
+                        onClick={
+                          closeRegistrationModal
+                        }
+                        disabled={
+                          assigningWalkIn
+                        }
+                      >
+                        Finish Without Queue
+                      </Button>
+
+                      <Button
+                        variant="primary"
+                        onClick={
+                          handleAssignWalkIn
+                        }
+                        loading={
+                          assigningWalkIn
+                        }
+                        disabled={
+                          doctorsLoading ||
+                          hospitalDoctors.length === 0
+                        }
+                      >
+                        <Stethoscope
+                          size={16}
+                          className="mr-2"
+                        />
+
+                        Assign & Add to Queue
+                      </Button>
+
+                    </div>
+
+                  </div>
+
+                )}
 
               </div>
 
@@ -1356,6 +1796,7 @@ const HospitalOPDPage = () => {
                       <option value="other">
                         Other
                       </option>
+
                     </select>
 
                   </div>
@@ -1419,6 +1860,7 @@ const HospitalOPDPage = () => {
                       <option value="O-">
                         O-
                       </option>
+
                     </select>
 
                   </div>

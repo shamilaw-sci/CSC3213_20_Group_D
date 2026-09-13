@@ -365,6 +365,98 @@ const checkAppointmentConflict = async (
   return result.rows.length > 0;
 };
 
+/**
+ * Creates a hospital walk-in OPD appointment.
+ *
+ * Walk-in patients are already physically present at
+ * the hospital, so their appointment starts with the
+ * confirmed status rather than scheduled.
+ *
+ * @param {string} patientId - Patient profile UUID
+ * @param {string} doctorId - Assigned doctor profile UUID
+ * @param {string|null} notes - Optional reception notes
+ * @returns {Promise<Object>} Created appointment
+ */
+const createHospitalWalkInAppointment = async (
+  patientId,
+  doctorId,
+  notes = null
+) => {
+  const result = await pool.query(
+    `INSERT INTO appointments
+      (
+        patient_id,
+        doctor_id,
+        scheduled_at,
+        status,
+        type,
+        notes
+      )
+     VALUES
+      (
+        $1,
+        $2,
+        NOW(),
+        'confirmed',
+        'opd',
+        $3
+      )
+     RETURNING *`,
+    [
+      patientId,
+      doctorId,
+      notes || null
+    ]
+  );
+
+  return result.rows[0];
+};
+
+/**
+ * Checks whether the patient already has an active
+ * OPD appointment with the selected doctor today.
+ *
+ * Prevents reception from accidentally placing the
+ * same patient into the same doctor's queue twice.
+ *
+ * @param {string} patientId - Patient profile UUID
+ * @param {string} doctorId - Doctor profile UUID
+ * @returns {Promise<Object|null>} Existing appointment or null
+ */
+const getTodayActiveAppointmentByPatientAndDoctor =
+  async (
+    patientId,
+    doctorId
+  ) => {
+    const result = await pool.query(
+      `SELECT
+         id,
+         patient_id,
+         doctor_id,
+         scheduled_at,
+         status,
+         type,
+         notes
+       FROM appointments
+       WHERE patient_id = $1
+         AND doctor_id = $2
+         AND DATE(scheduled_at) = CURRENT_DATE
+         AND status IN (
+           'scheduled',
+           'confirmed',
+           'in_progress'
+         )
+       ORDER BY scheduled_at DESC
+       LIMIT 1`,
+      [
+        patientId,
+        doctorId
+      ]
+    );
+
+    return result.rows[0] || null;
+  };
+
 module.exports = {
   updateAppointmentStatus,
   getAppointmentById,
@@ -376,5 +468,7 @@ module.exports = {
   createConsultationNote,
   getConsultationNotesByPatientId,
   bookAppointment,
+  createHospitalWalkInAppointment,
+  getTodayActiveAppointmentByPatientAndDoctor,
   checkAppointmentConflict
 };

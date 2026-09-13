@@ -2,7 +2,7 @@
  * @file    hospital.routes.js
  * @module  Hospital
  * @desc    Route definitions for authenticated hospital profile,
- *          OPD, and assisted patient operations.
+ *          OPD, assisted patient registration, and walk-in operations.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -12,7 +12,9 @@ const express =
 const {
   getMyHospitalProfileController,
   getTodayOpdAppointmentsController,
+  getHospitalDoctorsController,
   checkInOpdAppointmentController,
+  assignWalkInPatientController,
   registerAssistedPatientController,
   getHospitalProfileController
 } = require('./hospital.controller');
@@ -50,6 +52,30 @@ router.get(
 );
 
 /**
+ * GET /api/hospitals/opd/doctors
+ */
+router.get(
+  '/opd/doctors',
+  isAuthenticated,
+  authorize(
+    'hospital_staff'
+  ),
+  getHospitalDoctorsController
+);
+
+/**
+ * POST /api/hospitals/opd/walk-in
+ */
+router.post(
+  '/opd/walk-in',
+  isAuthenticated,
+  authorize(
+    'hospital_staff'
+  ),
+  assignWalkInPatientController
+);
+
+/**
  * PATCH /api/hospitals/opd/:appointmentId/check-in
  */
 router.patch(
@@ -75,6 +101,9 @@ router.post(
 
 /**
  * GET /api/hospitals/:id
+ *
+ * Keep this generic parameterized route after all
+ * specific hospital routes.
  */
 router.get(
   '/:id',
