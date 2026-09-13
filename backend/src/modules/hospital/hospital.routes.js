@@ -1,17 +1,19 @@
 /**
  * @file    hospital.routes.js
  * @module  Hospital
- * @desc    Route definitions for authenticated hospital profile
- *          operations within the Care4U Hospital Portal.
+ * @desc    Route definitions for authenticated hospital profile,
+ *          OPD, and assisted patient operations.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
-const express = require('express');
+const express =
+  require('express');
 
 const {
   getMyHospitalProfileController,
   getTodayOpdAppointmentsController,
   checkInOpdAppointmentController,
+  registerAssistedPatientController,
   getHospitalProfileController
 } = require('./hospital.controller');
 
@@ -20,7 +22,8 @@ const {
   authorize
 } = require('../../middleware/auth');
 
-const router = express.Router();
+const router =
+  express.Router();
 
 /**
  * GET /api/hospitals/me
@@ -28,7 +31,9 @@ const router = express.Router();
 router.get(
   '/me',
   isAuthenticated,
-  authorize('hospital_staff'),
+  authorize(
+    'hospital_staff'
+  ),
   getMyHospitalProfileController
 );
 
@@ -38,7 +43,9 @@ router.get(
 router.get(
   '/opd/today',
   isAuthenticated,
-  authorize('hospital_staff'),
+  authorize(
+    'hospital_staff'
+  ),
   getTodayOpdAppointmentsController
 );
 
@@ -48,8 +55,22 @@ router.get(
 router.patch(
   '/opd/:appointmentId/check-in',
   isAuthenticated,
-  authorize('hospital_staff'),
+  authorize(
+    'hospital_staff'
+  ),
   checkInOpdAppointmentController
+);
+
+/**
+ * POST /api/hospitals/patients/register-assisted
+ */
+router.post(
+  '/patients/register-assisted',
+  isAuthenticated,
+  authorize(
+    'hospital_staff'
+  ),
+  registerAssistedPatientController
 );
 
 /**
@@ -58,7 +79,9 @@ router.patch(
 router.get(
   '/:id',
   isAuthenticated,
-  authorize('hospital_staff'),
+  authorize(
+    'hospital_staff'
+  ),
   getHospitalProfileController
 );
 

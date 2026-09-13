@@ -184,10 +184,130 @@ const checkInOpdAppointment = async (
   return result.rows[0] || null;
 };
 
+/**
+ * Finds an existing patient using their NIC.
+ *
+ * Used by hospital-assisted registration to avoid
+ * creating duplicate patient profiles.
+ *
+ * @param {string} nic - Patient National Identity Card number
+ * @returns {Promise<Object|null>} Existing patient or null
+ */
+const findPatientByNic = async (
+  nic
+) => {
+  if (!nic) {
+    return null;
+  }
+
+  const result =
+    await pool.query(
+      `SELECT
+          id,
+          user_id,
+          full_name,
+          nic,
+          date_of_birth,
+          gender,
+          blood_group,
+          qr_code_id
+       FROM patients
+       WHERE nic = $1
+       LIMIT 1`,
+      [nic]
+    );
+
+  return result.rows[0] || null;
+};
+
+/**
+ * Creates a hospital-assisted patient profile.
+ *
+ * Hospital-assisted patients do not require a Care4U
+ * login account, so user_id remains NULL.
+ *
+ * @param {Object} patientData - Patient registration details
+ * @returns {Promise<Object>} Created patient profile
+ */
+const createAssistedPatient = async (
+  patientData
+) => {
+  const {
+    fullName,
+    nic,
+    dateOfBirth,
+    gender,
+    bloodGroup,
+    emergencyContactName,
+    emergencyContactPhone,
+    emergencyContactRelationship,
+    qrCodeId
+  } = patientData;
+
+  const result =
+    await pool.query(
+      `INSERT INTO patients
+        (
+          user_id,
+          full_name,
+          nic,
+          date_of_birth,
+          gender,
+          blood_group,
+          emergency_contact_name,
+          emergency_contact_phone,
+          emergency_contact_relationship,
+          qr_code_id
+        )
+       VALUES
+        (
+          NULL,
+          $1,
+          $2,
+          $3,
+          $4,
+          $5,
+          $6,
+          $7,
+          $8,
+          $9
+        )
+       RETURNING
+          id,
+          user_id,
+          full_name,
+          nic,
+          uhi,
+          date_of_birth,
+          gender,
+          blood_group,
+          emergency_contact_name,
+          emergency_contact_phone,
+          emergency_contact_relationship,
+          qr_code_id,
+          created_at`,
+      [
+        fullName,
+        nic || null,
+        dateOfBirth,
+        gender || null,
+        bloodGroup || null,
+        emergencyContactName || null,
+        emergencyContactPhone || null,
+        emergencyContactRelationship || null,
+        qrCodeId
+      ]
+    );
+
+  return result.rows[0];
+};
+
 module.exports = {
   getHospitalByUserId,
   getHospitalById,
   getTodayOpdAppointments,
   getTodayOpdAppointmentById,
-  checkInOpdAppointment
+  checkInOpdAppointment,
+  findPatientByNic,
+  createAssistedPatient
 };
