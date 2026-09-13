@@ -125,7 +125,7 @@ const getEmergencySnapshot = async (
       patientQuery,
       [patientId]
     );
-  
+
   if (
     patientResult.rows.length ===
     0
@@ -238,6 +238,21 @@ const getEmergencySnapshot = async (
       updated_at DESC;
   `;
 
+  const familyHistoryQuery = `
+    SELECT
+      id,
+      relation,
+      condition,
+      notes,
+      is_emergency_relevant,
+      updated_at
+    FROM patient_family_history
+    WHERE patient_id = $1
+      AND is_active = true
+      AND is_emergency_relevant = true
+    ORDER BY updated_at DESC;
+  `;
+
   const freshnessQuery = `
     SELECT
       GREATEST(
@@ -276,6 +291,14 @@ const getEmergencySnapshot = async (
         COALESCE(
           (
             SELECT MAX(updated_at)
+            FROM patient_family_history
+            WHERE patient_id = $1
+          ),
+          'epoch'::TIMESTAMPTZ
+        ),
+        COALESCE(
+          (
+            SELECT MAX(updated_at)
             FROM prescriptions
             WHERE patient_id = $1
           ),
@@ -299,6 +322,7 @@ const getEmergencySnapshot = async (
     medicationResult,
     medicalDeviceResult,
     healthBackgroundResult,
+    familyHistoryResult,
     freshnessResult
   ] = await Promise.all([
     pool.query(
@@ -327,6 +351,11 @@ const getEmergencySnapshot = async (
     ),
 
     pool.query(
+      familyHistoryQuery,
+      [patientId]
+    ),
+
+    pool.query(
       freshnessQuery,
       [patientId]
     )
@@ -350,6 +379,9 @@ const getEmergencySnapshot = async (
 
     health_background:
       healthBackgroundResult.rows,
+
+    family_history:
+      familyHistoryResult.rows,
 
     information_last_updated:
       freshnessResult.rows[0]
