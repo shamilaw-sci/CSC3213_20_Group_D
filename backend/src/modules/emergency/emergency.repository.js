@@ -88,6 +88,39 @@ const logEmergencyAccess = async (
 };
 
 /**
+ * Retrieves the patient details required for
+ * Break-Glass security notifications.
+ *
+ * This information is used internally and is not
+ * returned as part of the emergency snapshot.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @returns {Promise<Object|null>} Patient name and email
+ */
+const getPatientEmergencyNotificationDetails = async (
+  patientId
+) => {
+  const query = `
+    SELECT
+      p.full_name,
+      u.email
+    FROM patients p
+    JOIN users u
+      ON u.id = p.user_id
+    WHERE p.id = $1
+    LIMIT 1;
+  `;
+
+  const { rows } =
+    await pool.query(
+      query,
+      [patientId]
+    );
+
+  return rows[0] || null;
+};
+
+/**
  * Retrieves the minimalist Break-Glass patient snapshot for emergency crisis reading.
  * Explicitly excludes full medical history to protect patient privacy.
  * @param {string} patientId - UUID of the patient
@@ -455,6 +488,7 @@ const resolveEmergencyAlert = async (
 module.exports = {
   logEmergencyAlert,
   logEmergencyAccess,
+  getPatientEmergencyNotificationDetails,
   getEmergencySnapshot,
   getActiveAlerts,
   resolveEmergencyAlert
