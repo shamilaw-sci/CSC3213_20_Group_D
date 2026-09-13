@@ -23,6 +23,7 @@ import {
   Clock3,
   ArrowLeft,
   ShieldCheck,
+  Users,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
@@ -72,6 +73,17 @@ const formatBackgroundType = (type) => {
   };
 
   return labels[type] || 'Medical Background';
+};
+
+const formatFamilyRelation = (relation) => {
+  if (!relation) return 'Relation not recorded';
+
+  return relation
+    .replace(/_/g, ' ')
+    .replace(
+      /\b\w/g,
+      (char) => char.toUpperCase()
+    );
 };
 
 const capitalise = (value) => {
@@ -160,6 +172,7 @@ const EmergencySnapshotPage = () => {
     current_prescribed_medications: currentMedications = [],
     medical_devices: medicalDevices = [],
     health_background: healthBackground = [],
+    family_history: familyHistory = [],
     information_last_updated: informationLastUpdated,
     snapshot_generated_at: snapshotGeneratedAt,
   } = snapshot;
@@ -585,6 +598,56 @@ const EmergencySnapshotPage = () => {
             ) : (
               <div className="bg-slate-950 border border-slate-800 p-5 rounded-2xl text-slate-400 text-center font-semibold">
                 No emergency-relevant medical background recorded.
+              </div>
+            )}
+          </section>
+
+          <section className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-7 shadow-xl">
+            <div className="flex items-center gap-3 mb-5">
+              <Users className="w-8 h-8 text-orange-400" />
+              <div>
+                <h3 className="text-2xl md:text-3xl font-bold text-white">
+                  Critical Family History
+                </h3>
+
+                <p className="text-xs text-slate-500 mt-1">
+                  Only family history marked as emergency relevant is shown here.
+                </p>
+              </div>
+            </div>
+
+            {familyHistory.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {familyHistory.map((item) => (
+                  <div
+                    key={item.id || `${item.relation}-${item.condition}`}
+                    className="bg-orange-500/10 border border-orange-500/30 rounded-2xl p-4"
+                  >
+                    <div className="flex items-start gap-3">
+                      <ShieldAlert className="w-5 h-5 text-orange-400 mt-0.5 shrink-0" />
+
+                      <div>
+                        <p className="text-lg font-black text-orange-200">
+                          {item.condition}
+                        </p>
+
+                        <p className="text-sm font-semibold text-orange-300 mt-1">
+                          {formatFamilyRelation(item.relation)}
+                        </p>
+
+                        {item.notes && (
+                          <p className="text-sm text-slate-300 mt-2 leading-relaxed">
+                            {item.notes}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-slate-950 border border-slate-800 p-5 rounded-2xl text-slate-400 text-center font-semibold">
+                No emergency-relevant family history recorded.
               </div>
             )}
           </section>
