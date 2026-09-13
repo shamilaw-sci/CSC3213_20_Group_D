@@ -34,6 +34,10 @@ import DoctorSearchPage       from './pages/patient/DoctorSearchPage';
 import BookAppointmentPage    from './pages/patient/BookAppointmentPage';
 import MyAppointmentsPage     from './pages/patient/MyAppointmentsPage';
 import AIChatWidget           from './components/chat/AIChatWidget';
+import LabRegisterPage      from './pages/laboratory/LabRegisterPage';
+import LabDashboard         from './pages/laboratory/LabDashboard';
+import LabQueuePage         from './pages/laboratory/LabQueuePage';
+import LabReportUploadPage  from './pages/laboratory/LabReportUploadPage';
 
 import AdminApprovalsPage from './pages/admin/AdminApprovalsPage';
 import AdminOverviewPage from './pages/admin/AdminOverviewPage';
@@ -164,6 +168,12 @@ function App() {
         {/* Pharmacy pages — restricted to 'pharmacist' */}
         <Route path="/pharmacy/dashboard"      element={<ProtectedRoute allowedRoles={['pharmacist', 'admin']}><PharmacyDashboard /></ProtectedRoute>} />
         <Route path="/pharmacy/patient-lookup" element={<ProtectedRoute allowedRoles={['pharmacist']}><PatientQRLookupPage /></ProtectedRoute>} />
+
+        {/* Laboratory routes */}
+        <Route path="/laboratory/register"        element={<LabRegisterPage />} />
+        <Route path="/laboratory/dashboard"       element={<LabDashboard />} />
+        <Route path="/laboratory/queue"           element={<LabQueuePage />} />
+        <Route path="/laboratory/report/:requestId" element={<LabReportUploadPage />} />
         
         {/* Admin pages — restricted to 'admin' */}
         <Route path="/admin" element={
