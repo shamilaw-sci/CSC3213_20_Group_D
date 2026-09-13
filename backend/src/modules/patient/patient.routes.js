@@ -44,15 +44,21 @@ const {
   generatePatientChatController,
 } = require('./patient.controller');
 
-// Import the new Consent Controller (Epic 8.12)
-const consentController = require('./consent.controller');
+const consentController =
+  require('./consent.controller');
 
-const { upload } = require('../../middleware/upload');
+const {
+  upload
+} = require('../../middleware/upload');
 
 const {
   isAuthenticated,
   authorize
 } = require('../../middleware/auth');
+
+/* =========================================================
+   PATIENT LOOKUP
+========================================================= */
 
 /**
  * GET /api/patients/qr/:qrCodeId
@@ -81,6 +87,10 @@ router.get(
   getPatientByNicController
 );
 
+/* =========================================================
+   PATIENT PROFILE
+========================================================= */
+
 router.get(
   '/:id',
   getPatientController
@@ -97,21 +107,101 @@ router.post(
   uploadPatientPhotoController
 );
 
-// Privacy & Consent Settings Routes
+/* =========================================================
+   PRIVACY & CONSENT
+========================================================= */
+
+/**
+ * GET /api/patients/:id/consent
+ *
+ * Only the authenticated patient may read their
+ * own privacy settings.
+ */
 router.get(
   '/:id/consent',
+  isAuthenticated,
+  authorize('patient'),
   consentController.getConsent
 );
 
+/**
+ * PUT /api/patients/:id/consent
+ *
+ * Only the authenticated patient may modify their
+ * own privacy settings.
+ */
 router.put(
   '/:id/consent',
+  isAuthenticated,
+  authorize('patient'),
   consentController.updateConsent
 );
 
+/**
+ * POST /api/patients/:id/consent/access/request
+ *
+ * Doctor requests an OTP from the patient during
+ * an active consultation.
+ */
+router.post(
+  '/:id/consent/access/request',
+  isAuthenticated,
+  authorize('doctor'),
+  consentController.requestConsentAccess
+);
+
+/**
+ * POST /api/patients/:id/consent/access/verify
+ *
+ * Doctor verifies the OTP supplied by the patient.
+ */
+router.post(
+  '/:id/consent/access/verify',
+  isAuthenticated,
+  authorize('doctor'),
+  consentController.verifyConsentAccess
+);
+
+/**
+ * GET /api/patients/:id/consent/access/status
+ *
+ * Returns temporary access status for the current
+ * doctor consultation.
+ */
+router.get(
+  '/:id/consent/access/status',
+  isAuthenticated,
+  authorize('doctor'),
+  consentController.getConsentAccessStatus
+);
+
+/* =========================================================
+   MEDICAL RECORDS
+========================================================= */
+
+/**
+ * GET /api/patients/:id/medical-records
+ *
+ * Medical records are available only to authenticated
+ * patients and doctors.
+ *
+ * Doctors may supply appointmentId as a query parameter
+ * so temporary OTP consent access can be evaluated for
+ * the current consultation.
+ */
 router.get(
   '/:id/medical-records',
+  isAuthenticated,
+  authorize(
+    'patient',
+    'doctor'
+  ),
   getMedicalRecordsController
 );
+
+/* =========================================================
+   ALLERGIES
+========================================================= */
 
 router.get(
   '/:id/allergies',
@@ -128,6 +218,10 @@ router.delete(
   deleteAllergyController
 );
 
+/* =========================================================
+   CHRONIC CONDITIONS
+========================================================= */
+
 router.get(
   '/:id/conditions',
   getConditionsController
@@ -142,6 +236,10 @@ router.delete(
   '/:id/conditions/:conditionId',
   deleteConditionController
 );
+
+/* =========================================================
+   MEDICAL DEVICES
+========================================================= */
 
 /**
  * GET /api/patients/:id/medical-devices
@@ -183,6 +281,10 @@ router.delete(
   deleteMedicalDeviceController
 );
 
+/* =========================================================
+   IMPORTANT MEDICAL BACKGROUND
+========================================================= */
+
 /**
  * GET /api/patients/:id/health-background
  * Retrieves active important medical background records.
@@ -223,6 +325,9 @@ router.delete(
   deleteHealthBackgroundController
 );
 
+/* =========================================================
+   FAMILY MEDICAL HISTORY
+========================================================= */
 
 /**
  * GET /api/patients/:id/family-history
@@ -264,14 +369,23 @@ router.delete(
   deleteFamilyHistoryController
 );
 
-// AI Scan Route (Must be before generic /:vaccinationId)
+/* =========================================================
+   VACCINATIONS
+========================================================= */
+
+/**
+ * AI Scan Route
+ * Must appear before generic vaccination routes.
+ */
 router.post(
   '/:id/vaccinations/scan',
   upload.single('image'),
   extractVaccinationDataController
 );
 
-// Bulk Insert Route (Must be before generic /:vaccinationId)
+/**
+ * Bulk Insert Route
+ */
 router.post(
   '/:id/vaccinations/bulk',
   addBulkVaccinationsController
@@ -292,17 +406,43 @@ router.delete(
   deleteVaccinationController
 );
 
+/* =========================================================
+   PRESCRIPTIONS
+========================================================= */
+
 router.get(
   '/:id/prescriptions',
   getPatientPrescriptionsController
 );
 
+/* =========================================================
+   HISTORY SUMMARY
+========================================================= */
+
+/**
+ * GET /api/patients/:id/summary
+ *
+ * AI history summaries are available only to
+ * authenticated patients and doctors.
+ *
+ * During a doctor consultation, appointmentId may be
+ * supplied so the summary follows the same temporary
+ * consent access rules as medical records.
+ */
 router.get(
   '/:id/summary',
+  isAuthenticated,
+  authorize(
+    'patient',
+    'doctor'
+  ),
   getPatientHistorySummaryController
 );
 
-// Lab Reports Route
+/* =========================================================
+   LAB REPORTS
+========================================================= */
+
 router.get(
   '/:id/lab-reports',
   getLabReportsController
@@ -313,22 +453,41 @@ router.put(
   markLabReportAsReadController
 );
 
+/* =========================================================
+   APPOINTMENTS
+========================================================= */
+
 router.get(
   '/:id/appointments',
   getPatientAppointmentsController
 );
 
-// Rate limiter for AI Chat (Max 5 requests per minute per IP to protect API quota)
-const chatRateLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute window
-  max: 500,
-  message: {
-    success: false,
-    message: 'Too many messages sent. Please wait a minute.'
-  }
-});
+/* =========================================================
+   PATIENT AI CHAT
+========================================================= */
 
-// POST /api/patients/:id/chat — AI Chat Assistant endpoint
+/**
+ * Rate limiter for AI Chat.
+ * Max 500 requests per minute per IP.
+ */
+const chatRateLimiter =
+  rateLimit({
+    windowMs:
+      1 * 60 * 1000,
+
+    max:
+      500,
+
+    message: {
+      success: false,
+      message:
+        'Too many messages sent. Please wait a minute.'
+    }
+  });
+
+/**
+ * POST /api/patients/:id/chat
+ */
 router.post(
   '/:id/chat',
   chatRateLimiter,

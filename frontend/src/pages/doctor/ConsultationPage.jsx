@@ -57,6 +57,9 @@ import {
   UserRound,
 } from 'lucide-react';
 
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+
 import {
   QRCodeSVG,
 } from 'qrcode.react';
@@ -72,6 +75,9 @@ import {
   getMedicalDevices,
   getHealthBackground,
   getFamilyHistory,
+  getConsentAccessStatus,
+  requestConsentAccess,
+  verifyConsentAccess,
 } from '../../services/patient.service';
 
 import {
@@ -294,6 +300,55 @@ const daysRemaining = (
       24
     )
   );
+};
+
+/**
+ * Calculates the remaining seconds until an expiry time.
+ */
+const secondsUntil = (
+  expiresAt
+) => {
+  if (!expiresAt) {
+    return 0;
+  }
+
+  const difference =
+    new Date(expiresAt).getTime() -
+    Date.now();
+
+  return Math.max(
+    0,
+    Math.ceil(
+      difference /
+      1000
+    )
+  );
+};
+
+/**
+ * Formats a countdown as MM:SS.
+ */
+const formatCountdown = (
+  totalSeconds
+) => {
+  const safeSeconds =
+    Math.max(
+      0,
+      totalSeconds ||
+      0
+    );
+
+  const minutes =
+    Math.floor(
+      safeSeconds /
+      60
+    );
+
+  const seconds =
+    safeSeconds %
+    60;
+
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 };
 
 /**
@@ -624,6 +679,50 @@ const ConsultationPage = () => {
     summaryError,
     setSummaryError,
   ] = useState('');
+
+  /* =========================================================
+     PATIENT CONSENT ACCESS
+  ========================================================= */
+
+  const [
+    consentAccessStatus,
+    setConsentAccessStatus,
+  ] = useState(null);
+
+  const [
+    consentStatusLoading,
+    setConsentStatusLoading,
+  ] = useState(false);
+
+  const [
+    isRequestingConsent,
+    setIsRequestingConsent,
+  ] = useState(false);
+
+  const [
+    isVerifyingConsent,
+    setIsVerifyingConsent,
+  ] = useState(false);
+
+  const [
+    showConsentOtpModal,
+    setShowConsentOtpModal,
+  ] = useState(false);
+
+  const [
+    consentOtp,
+    setConsentOtp,
+  ] = useState('');
+
+  const [
+    consentError,
+    setConsentError,
+  ] = useState('');
+
+  const [
+    consentSecondsRemaining,
+    setConsentSecondsRemaining,
+  ] = useState(0);
 
   /* =========================================================
      CONSULTATION NOTE FORM
@@ -1016,10 +1115,11 @@ const ConsultationPage = () => {
               ),
 
               getMedicalRecords(
-                consultation
-                  .patient_id,
-                user?.role
-              ),
+              consultation
+                .patient_id,
+              user?.role,
+              appointmentId
+            ),
 
               getPatientPrescriptions(
                 consultation
@@ -1704,6 +1804,536 @@ const ConsultationPage = () => {
     };
 
   /* =========================================================
+     TEMPORARY PATIENT CONSENT ACCESS
+  ========================================================= */
+
+  /**
+   * Refreshes medical records using the current appointment
+   * so the backend can apply any active temporary consent grant.
+   */
+  const refreshMedicalRecords =
+    async () => {
+
+      if (
+        !consultation
+          ?.patient_id
+      ) {
+        return;
+      }
+
+      const refreshedRecords =
+        await getMedicalRecords(
+          consultation
+            .patient_id,
+          user?.role,
+          appointmentId
+        );
+
+      setRecords(
+        refreshedRecords ||
+        []
+      );
+    };
+
+  /**
+   * Loads the temporary consent-access state for the
+   * current doctor consultation.
+   */
+  useEffect(() => {
+
+    let cancelled =
+      false;
+
+    const loadConsentStatus =
+      async () => {
+
+        if (
+          !consultation
+            ?.patient_id ||
+          !appointmentId ||
+          consultation.status !==
+            'in_progress'
+        ) {
+          setConsentAccessStatus(
+            null
+          );
+
+          setConsentSecondsRemaining(
+            0
+          );
+
+          return;
+        }
+
+        try {
+
+          setConsentStatusLoading(
+            true
+          );
+
+          const status =
+            await getConsentAccessStatus(
+              consultation
+                .patient_id,
+              appointmentId
+            );
+
+          if (cancelled) {
+            return;
+          }
+
+          setConsentAccessStatus(
+            status
+          );
+
+          setConsentSecondsRemaining(
+            status
+              ?.hasActiveGrant
+              ? secondsUntil(
+                  status.expiresAt
+                )
+              : 0
+          );
+
+        } catch (err) {
+
+          if (cancelled) {
+            return;
+          }
+
+          console.error(
+            'Consent status load error:',
+            err
+          );
+
+          setConsentAccessStatus(
+            null
+          );
+
+          setConsentSecondsRemaining(
+            0
+          );
+
+        } finally {
+
+          if (!cancelled) {
+            setConsentStatusLoading(
+              false
+            );
+          }
+        }
+      };
+
+    loadConsentStatus();
+
+    return () => {
+      cancelled =
+        true;
+    };
+
+  }, [
+    consultation
+      ?.patient_id,
+    consultation
+      ?.status,
+    appointmentId,
+  ]);
+
+  /**
+   * Keeps the temporary-access timer visible in the UI.
+   * When the grant expires, protected medical records are
+   * immediately reloaded so the workspace locks again.
+   */
+  useEffect(() => {
+
+    if (
+      !consentAccessStatus
+        ?.hasActiveGrant ||
+      !consentAccessStatus
+        ?.expiresAt
+    ) {
+      setConsentSecondsRemaining(
+        0
+      );
+
+      return undefined;
+    }
+
+    let expiryHandled =
+      false;
+
+    const updateCountdown =
+      async () => {
+
+        const remaining =
+          secondsUntil(
+            consentAccessStatus
+              .expiresAt
+          );
+
+        setConsentSecondsRemaining(
+          remaining
+        );
+
+        if (
+          remaining > 0 ||
+          expiryHandled
+        ) {
+          return;
+        }
+
+        expiryHandled =
+          true;
+
+        setConsentAccessStatus(
+          (previous) => ({
+            ...(previous || {}),
+            hasActiveGrant:
+              false,
+            grantedCategories:
+              [],
+            expiresAt:
+              null,
+          })
+        );
+
+        setAiSummary(
+          null
+        );
+
+        try {
+
+          await refreshMedicalRecords();
+
+          toast(
+            'Temporary patient consent access has expired.'
+          );
+
+        } catch (err) {
+
+          console.error(
+            'Medical record refresh after consent expiry failed:',
+            err
+          );
+        }
+      };
+
+    updateCountdown();
+
+    const interval =
+      window.setInterval(
+        updateCountdown,
+        1000
+      );
+
+    return () => {
+      window.clearInterval(
+        interval
+      );
+    };
+
+  }, [
+    consentAccessStatus
+      ?.hasActiveGrant,
+    consentAccessStatus
+      ?.expiresAt,
+    consultation
+      ?.patient_id,
+    appointmentId,
+    user?.role,
+  ]);
+
+  /**
+   * Requests a six-digit consent code from the patient.
+   * The backend sends the code to the patient's registered
+   * Care4U email address.
+   */
+  const handleRequestConsentAccess =
+    async () => {
+
+      if (
+        !consultation
+          ?.patient_id ||
+        !appointmentId
+      ) {
+        return;
+      }
+
+      try {
+
+        setIsRequestingConsent(
+          true
+        );
+
+        setConsentError(
+          ''
+        );
+
+        const result =
+          await requestConsentAccess(
+            consultation
+              .patient_id,
+            appointmentId
+          );
+
+        if (
+          result
+            ?.alreadyGranted
+        ) {
+          const updatedStatus = {
+            hasLockedCategories:
+              true,
+
+            lockedCategories:
+              result.lockedCategories ||
+              consentAccessStatus
+                ?.lockedCategories ||
+              [],
+
+            hasActiveGrant:
+              true,
+
+            grantedCategories:
+              result.grantedCategories ||
+              [],
+
+            expiresAt:
+              result.expiresAt ||
+              null,
+          };
+
+          setConsentAccessStatus(
+            updatedStatus
+          );
+
+          setConsentSecondsRemaining(
+            secondsUntil(
+              updatedStatus
+                .expiresAt
+            )
+          );
+
+          toast.success(
+            'Temporary patient consent access is already active.'
+          );
+
+          return;
+        }
+
+        setConsentAccessStatus(
+          (previous) => ({
+            ...(previous || {}),
+
+            hasLockedCategories:
+              true,
+
+            lockedCategories:
+              result
+                ?.lockedCategories ||
+              previous
+                ?.lockedCategories ||
+              [],
+
+            hasActiveGrant:
+              false,
+
+            grantedCategories:
+              [],
+
+            expiresAt:
+              null,
+          })
+        );
+
+        setConsentOtp(
+          ''
+        );
+
+        setShowConsentOtpModal(
+          true
+        );
+
+        toast.success(
+          'Consent code sent to the patient.'
+        );
+
+      } catch (err) {
+
+        console.error(
+          'Consent OTP request error:',
+          err
+        );
+
+        const message =
+          err.response
+            ?.data
+            ?.message ||
+          err.message ||
+          'Failed to request patient consent.';
+
+        setConsentError(
+          message
+        );
+
+        toast.error(
+          message
+        );
+
+      } finally {
+
+        setIsRequestingConsent(
+          false
+        );
+      }
+    };
+
+  /**
+   * Verifies the code verbally provided by the patient.
+   * A successful verification unlocks only the categories
+   * approved for this doctor/patient/appointment context.
+   */
+  const handleVerifyConsentAccess =
+    async () => {
+
+      const normalizedOtp =
+        consentOtp
+          .replace(
+            /\D/g,
+            ''
+          )
+          .slice(
+            0,
+            6
+          );
+
+      if (
+        normalizedOtp.length !==
+        6
+      ) {
+        setConsentError(
+          'Enter the complete 6-digit consent code.'
+        );
+
+        return;
+      }
+
+      if (
+        !consultation
+          ?.patient_id ||
+        !appointmentId
+      ) {
+        return;
+      }
+
+      try {
+
+        setIsVerifyingConsent(
+          true
+        );
+
+        setConsentError(
+          ''
+        );
+
+        const result =
+          await verifyConsentAccess(
+            consultation
+              .patient_id,
+            appointmentId,
+            normalizedOtp
+          );
+
+        const updatedStatus = {
+          hasLockedCategories:
+            true,
+
+          lockedCategories:
+            consentAccessStatus
+              ?.lockedCategories ||
+            result
+              ?.grantedCategories ||
+            [],
+
+          hasActiveGrant:
+            true,
+
+          grantedCategories:
+            result
+              ?.grantedCategories ||
+            [],
+
+          expiresAt:
+            result
+              ?.expiresAt ||
+            null,
+        };
+
+        setConsentAccessStatus(
+          updatedStatus
+        );
+
+        setConsentSecondsRemaining(
+          secondsUntil(
+            updatedStatus
+              .expiresAt
+          )
+        );
+
+        setConsentOtp(
+          ''
+        );
+
+        setShowConsentOtpModal(
+          false
+        );
+
+        /**
+         * An existing AI summary may have been generated
+         * while protected records were hidden. Clear it so
+         * the doctor can regenerate a summary from the newly
+         * available record set.
+         */
+        setAiSummary(
+          null
+        );
+
+        setSummaryError(
+          ''
+        );
+
+        await refreshMedicalRecords();
+
+        toast.success(
+          'Patient consent verified. Protected records are temporarily unlocked.'
+        );
+
+      } catch (err) {
+
+        console.error(
+          'Consent OTP verification error:',
+          err
+        );
+
+        const message =
+          err.response
+            ?.data
+            ?.message ||
+          err.message ||
+          'Failed to verify patient consent code.';
+
+        setConsentError(
+          message
+        );
+
+      } finally {
+
+        setIsVerifyingConsent(
+          false
+        );
+      }
+    };
+
+  /* =========================================================
      AI HISTORY SUMMARY
   ========================================================= */
 
@@ -1730,11 +2360,12 @@ const ConsultationPage = () => {
         setSummaryError('');
 
         const data =
-          await getPatientHistorySummary(
-            consultation
-              .patient_id,
-            user?.role
-          );
+        await getPatientHistorySummary(
+          consultation
+            .patient_id,
+          user?.role,
+          appointmentId
+        );
 
         setAiSummary(
           data.summary
@@ -3583,8 +4214,289 @@ const ConsultationPage = () => {
 
               <div className="space-y-5">
 
+                {/* Patient consent access */}
+                {!isCompleted && (
+
+                  <Card title="Protected Medical Information">
+
+                    {consentStatusLoading ? (
+
+                      <div className="py-6 flex justify-center">
+
+                        <Spinner
+                          size="sm"
+                        />
+
+                      </div>
+
+                    ) : !consentAccessStatus ? (
+
+                      <div className="rounded-xl border border-border bg-secondary/40 p-4">
+
+                        <div className="flex items-start gap-3">
+
+                          <Lock
+                            size={18}
+                            className="text-muted-foreground shrink-0 mt-0.5"
+                          />
+
+                          <div>
+
+                            <p className="text-sm font-bold text-foreground">
+                              Privacy status unavailable
+                            </p>
+
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Care4U could not confirm whether this patient has protected medical categories.
+                            </p>
+
+                          </div>
+
+                        </div>
+
+                      </div>
+
+                    ) : !consentAccessStatus
+                      .hasLockedCategories ? (
+
+                      <div className="rounded-xl border border-success/20 bg-success/5 p-4">
+
+                        <div className="flex items-start gap-3">
+
+                          <CheckCircle2
+                            size={18}
+                            className="text-success shrink-0 mt-0.5"
+                          />
+
+                          <div>
+
+                            <p className="text-sm font-bold text-foreground">
+                              No protected categories
+                            </p>
+
+                            <p className="text-xs text-muted-foreground mt-1">
+                              The patient has not locked any medical-record categories that require temporary doctor consent.
+                            </p>
+
+                          </div>
+
+                        </div>
+
+                      </div>
+
+                    ) : consentAccessStatus
+                      .hasActiveGrant ? (
+
+                      <div className="space-y-4">
+
+                        <div className="rounded-xl border border-success/25 bg-success/5 p-4">
+
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+
+                            <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center shrink-0">
+
+                              <CheckCircle2
+                                size={20}
+                                className="text-success"
+                              />
+
+                            </div>
+
+                            <div className="flex-1">
+
+                              <p className="text-sm font-bold text-foreground">
+                                Patient consent verified
+                              </p>
+
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Protected information is temporarily available for this consultation only.
+                              </p>
+
+                            </div>
+
+                            <div className="sm:text-right">
+
+                              <p className="text-[10px] uppercase tracking-wide font-bold text-muted-foreground">
+                                Access remaining
+                              </p>
+
+                              <p className="text-lg font-bold text-success font-mono mt-1">
+                                {formatCountdown(
+                                  consentSecondsRemaining
+                                )}
+                              </p>
+
+                            </div>
+
+                          </div>
+
+                        </div>
+
+                        <div>
+
+                          <p className="text-[11px] uppercase tracking-wide font-bold text-muted-foreground mb-2">
+                            Temporarily unlocked categories
+                          </p>
+
+                          <div className="flex flex-wrap gap-2">
+
+                            {(
+                              consentAccessStatus
+                                .grantedCategories ||
+                              []
+                            ).map(
+                              (category) => (
+
+                                <span
+                                  key={
+                                    category
+                                  }
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-success/20 bg-success/5 text-xs font-semibold text-foreground"
+                                >
+                                  <Check
+                                    size={12}
+                                    className="text-success"
+                                  />
+
+                                  {
+                                    category
+                                  }
+                                </span>
+
+                              )
+                            )}
+
+                          </div>
+
+                        </div>
+
+                        <p className="text-xs text-muted-foreground">
+                          Access expires automatically at{' '}
+                          <span className="font-semibold text-foreground">
+                            {formatDate(
+                              consentAccessStatus
+                                .expiresAt,
+                              true
+                            )}
+                          </span>.
+                          {' '}The patient's permanent privacy settings are not changed.
+                        </p>
+
+                      </div>
+
+                    ) : (
+
+                      <div className="space-y-4">
+
+                        <div className="rounded-xl border border-urgent/20 bg-urgent/5 p-4">
+
+                          <div className="flex items-start gap-3">
+
+                            <Lock
+                              size={18}
+                              className="text-urgent-foreground shrink-0 mt-0.5"
+                            />
+
+                            <div>
+
+                              <p className="text-sm font-bold text-foreground">
+                                Some medical information is protected
+                              </p>
+
+                              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                                These categories are hidden until the patient approves temporary access with a six-digit code sent to their registered Care4U email.
+                              </p>
+
+                            </div>
+
+                          </div>
+
+                        </div>
+
+                        <div>
+
+                          <p className="text-[11px] uppercase tracking-wide font-bold text-muted-foreground mb-2">
+                            Protected categories
+                          </p>
+
+                          <div className="flex flex-wrap gap-2">
+
+                            {(
+                              consentAccessStatus
+                                .lockedCategories ||
+                              []
+                            ).map(
+                              (category) => (
+
+                                <span
+                                  key={
+                                    category
+                                  }
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border bg-secondary/40 text-xs font-semibold text-foreground"
+                                >
+                                  <Lock
+                                    size={12}
+                                    className="text-muted-foreground"
+                                  />
+
+                                  {
+                                    category
+                                  }
+                                </span>
+
+                              )
+                            )}
+
+                          </div>
+
+                        </div>
+
+                        {consentError && (
+
+                          <Alert
+                            type="error"
+                            message={
+                              consentError
+                            }
+                          />
+
+                        )}
+
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">
+
+                          <p className="text-xs text-muted-foreground">
+                            Ask the patient before requesting access. The code expires after 10 minutes.
+                          </p>
+
+                          <Button
+                            variant="primary"
+                            loading={
+                              isRequestingConsent
+                            }
+                            onClick={
+                              handleRequestConsentAccess
+                            }
+                          >
+                            <Lock
+                              size={15}
+                              className="mr-2"
+                            />
+
+                            Request Patient Access
+                          </Button>
+
+                        </div>
+
+                      </div>
+
+                    )}
+
+                  </Card>
+
+                )}
+
                 {/* AI summary */}
-                <Card title="AI Clinical Timeline">
+                <Card title="AI Clinical Summary">
 
                   {!aiSummary && (
 
@@ -3648,11 +4560,80 @@ const ConsultationPage = () => {
 
                       </div>
 
-                      <div className="bg-secondary/40 border border-border rounded-xl p-4">
+                      <div className="bg-secondary/40 border border-border rounded-xl p-4 overflow-x-auto">
 
-                        <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">
+                        <ReactMarkdown
+                          remarkPlugins={[
+                            remarkGfm
+                          ]}
+                          components={{
+                            h3: ({
+                              children
+                            }) => (
+                              <h3 className="text-sm font-bold text-foreground mt-5 first:mt-0 mb-2">
+                                {children}
+                              </h3>
+                            ),
+
+                            p: ({
+                              children
+                            }) => (
+                              <p className="text-sm leading-relaxed text-foreground mb-2">
+                                {children}
+                              </p>
+                            ),
+
+                            ul: ({
+                              children
+                            }) => (
+                              <ul className="list-disc pl-5 space-y-1 mb-4 text-sm text-foreground">
+                                {children}
+                              </ul>
+                            ),
+
+                            li: ({
+                              children
+                            }) => (
+                              <li className="leading-relaxed">
+                                {children}
+                              </li>
+                            ),
+
+                            strong: ({
+                              children
+                            }) => (
+                              <strong className="font-bold text-foreground">
+                                {children}
+                              </strong>
+                            ),
+
+                            table: ({
+                              children
+                            }) => (
+                              <table className="w-full text-sm border-collapse my-3">
+                                {children}
+                              </table>
+                            ),
+
+                            th: ({
+                              children
+                            }) => (
+                              <th className="border border-border bg-secondary px-3 py-2 text-left font-bold">
+                                {children}
+                              </th>
+                            ),
+
+                            td: ({
+                              children
+                            }) => (
+                              <td className="border border-border px-3 py-2 align-top">
+                                {children}
+                              </td>
+                            ),
+                          }}
+                        >
                           {aiSummary}
-                        </p>
+                        </ReactMarkdown>
 
                       </div>
 
@@ -5511,6 +6492,233 @@ const ConsultationPage = () => {
         </div>
 
       </div>
+
+      {/* =====================================================
+          PATIENT CONSENT OTP MODAL
+      ====================================================== */}
+      <Modal
+        isOpen={
+          showConsentOtpModal
+        }
+        onClose={() => {
+
+          if (
+            isVerifyingConsent
+          ) {
+            return;
+          }
+
+          setShowConsentOtpModal(
+            false
+          );
+
+          setConsentOtp(
+            ''
+          );
+
+          setConsentError(
+            ''
+          );
+        }}
+        title="Verify Patient Consent"
+      >
+
+        <div className="space-y-5">
+
+          <div className="flex items-start gap-3">
+
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+
+              <Lock
+                size={19}
+                className="text-primary"
+              />
+
+            </div>
+
+            <div>
+
+              <p className="text-sm font-bold text-foreground">
+                Enter the code provided by the patient
+              </p>
+
+              <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                Care4U sent a six-digit consent code to the patient's registered email.
+                Ask the patient to read the code to you only if they agree to temporary access.
+              </p>
+
+            </div>
+
+          </div>
+
+          <div className="rounded-xl border border-border bg-secondary/40 p-4">
+
+            <label className="block text-xs uppercase tracking-wide font-bold text-muted-foreground mb-2">
+              6-digit consent code
+            </label>
+
+            <input
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              value={
+                consentOtp
+              }
+              maxLength={6}
+              disabled={
+                isVerifyingConsent
+              }
+              onChange={
+                (event) => {
+
+                  const value =
+                    event.target.value
+                      .replace(
+                        /\D/g,
+                        ''
+                      )
+                      .slice(
+                        0,
+                        6
+                      );
+
+                  setConsentOtp(
+                    value
+                  );
+
+                  if (
+                    consentError
+                  ) {
+                    setConsentError(
+                      ''
+                    );
+                  }
+                }
+              }
+              onKeyDown={
+                (event) => {
+
+                  if (
+                    event.key ===
+                      'Enter' &&
+                    consentOtp.length ===
+                      6 &&
+                    !isVerifyingConsent
+                  ) {
+                    event.preventDefault();
+
+                    handleVerifyConsentAccess();
+                  }
+                }
+              }
+              placeholder="000000"
+              className="w-full h-14 rounded-xl border border-border bg-background px-4 text-center text-2xl font-bold tracking-[0.45em] font-mono text-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60"
+            />
+
+            <p className="text-xs text-muted-foreground mt-2">
+              The code expires after 10 minutes and can be used only once.
+            </p>
+
+          </div>
+
+          {consentError && (
+
+            <Alert
+              type="error"
+              message={
+                consentError
+              }
+            />
+
+          )}
+
+          <div className="rounded-xl border border-urgent/20 bg-urgent/5 p-4">
+
+            <div className="flex items-start gap-2">
+
+              <ShieldAlert
+                size={15}
+                className="text-urgent-foreground shrink-0 mt-0.5"
+              />
+
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Successful verification grants temporary access only to this doctor,
+                this patient, and this active consultation. The patient's permanent
+                privacy settings remain unchanged.
+              </p>
+
+            </div>
+
+          </div>
+
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
+
+            <Button
+              variant="secondary"
+              disabled={
+                isRequestingConsent ||
+                isVerifyingConsent
+              }
+              onClick={
+                handleRequestConsentAccess
+              }
+            >
+              Resend Code
+            </Button>
+
+            <div className="flex flex-col-reverse sm:flex-row gap-3">
+
+              <Button
+                variant="secondary"
+                disabled={
+                  isVerifyingConsent
+                }
+                onClick={() => {
+
+                  setShowConsentOtpModal(
+                    false
+                  );
+
+                  setConsentOtp(
+                    ''
+                  );
+
+                  setConsentError(
+                    ''
+                  );
+                }}
+              >
+                Cancel
+              </Button>
+
+              <Button
+                variant="primary"
+                loading={
+                  isVerifyingConsent
+                }
+                disabled={
+                  consentOtp.length !==
+                    6
+                }
+                onClick={
+                  handleVerifyConsentAccess
+                }
+              >
+                <CheckCircle2
+                  size={16}
+                  className="mr-2"
+                />
+
+                Verify & Unlock
+              </Button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </Modal>
 
       {/* =====================================================
           MEDICAL RECORD DETAILS MODAL

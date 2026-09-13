@@ -43,27 +43,53 @@ const updatePatientController = async (req, res) => {
   }
 };
 
-const getMedicalRecordsController = async (req, res) => {
+const getMedicalRecordsController = async (
+  req,
+  res
+) => {
   try {
-    const { id } = req.params;
+    const {
+      id
+    } = req.params;
 
-    // Fallback: If auth middleware is missing, catch the role from the query string
-    const user = req.session?.user || req.user || {
-      role: req.query.role
-    };
+    const {
+      appointmentId
+    } = req.query;
 
-    // Pass the user to the service so it knows WHO is asking
-    const records = await patientService.getMedicalRecords(id, user);
+    const user =
+      req.session?.user;
 
-    res.status(200).json({
+    const records =
+      await patientService.getMedicalRecords(
+        id,
+        user,
+        appointmentId ||
+          null
+      );
+
+    return res.status(200).json({
       success: true,
-      message: 'Medical records retrieved',
-      data: records
+      message:
+        'Medical records retrieved',
+      data:
+        records
     });
+
   } catch (error) {
-    res.status(error.statusCode || 500).json({
+
+    console.error(
+      'getMedicalRecordsController error:',
+      error
+    );
+
+    return res.status(
+      error.statusCode ||
+      500
+    ).json({
       success: false,
-      message: error.message || 'Internal server error'
+      message:
+        error.message ||
+        'Internal server error'
     });
   }
 };
@@ -515,32 +541,49 @@ const getPatientByNicController = async (req, res) => {
   }
 };
 
-const getPatientHistorySummaryController = async (req, res) => {
+const getPatientHistorySummaryController = async (
+  req,
+  res
+) => {
   try {
-    const { id } = req.params;
+    const {
+      id
+    } = req.params;
 
-    // Fallback: Catch the role from the query string
+    const {
+      appointmentId
+    } = req.query;
+
     const user =
-      req.session?.user ||
-      req.user ||
-      {
-        role: req.query.role
-      };
+      req.session?.user;
 
-    // Pass the user down so the AI respects privacy locks
     const data =
-      await patientService.getPatientHistorySummary(
-        id,
-        user
-      );
+      await patientService
+        .getPatientHistorySummary(
+          id,
+          user,
+          appointmentId ||
+            null
+        );
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      message: 'AI summary generated',
+      message:
+        'AI summary generated',
       data
     });
+
   } catch (error) {
-    res.status(error.statusCode || 500).json({
+
+    console.error(
+      'getPatientHistorySummaryController error:',
+      error
+    );
+
+    return res.status(
+      error.statusCode ||
+      500
+    ).json({
       success: false,
       message:
         error.message ||

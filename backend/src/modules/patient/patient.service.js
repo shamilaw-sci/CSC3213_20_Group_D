@@ -9,6 +9,9 @@
 
 const patientRepository = require('./patient.repository');
 const consentRepository = require('./consent.repository'); // Import for Epic 8.12 Privacy Checks
+const consentService = require('./consent.service');
+
+
 const {
   generateAIResponse,
   generateAIVisionResponse
@@ -195,12 +198,23 @@ const uploadPatientPhoto = async (
 
 /**
  * Retrieves all medical records for a patient.
- * EPIC 8.12: Enforces Privacy & Consent Locks if the requester is a doctor.
- * Features Smart Keyword Filtering across the entire record.
+ *
+ * Patient owners always see their complete history.
+ *
+ * Doctors are subject to the patient's privacy locks.
+ * During an active consultation, a valid temporary
+ * OTP consent grant can unlock protected categories
+ * for that specific doctor/patient/appointment context.
+ *
+ * @param {string} patientId
+ * @param {Object} requestingUser
+ * @param {string|null} appointmentId
+ * @returns {Promise<Array>}
  */
 const getMedicalRecords = async (
   patientId,
-  requestingUser
+  requestingUser,
+  appointmentId = null
 ) => {
   const existing =
     await patientRepository.getPatientById(
@@ -214,25 +228,30 @@ const getMedicalRecords = async (
     error.statusCode = 404;
     throw error;
   }
-  
-  // 1. Fetch all records from the database
+
   const records =
     await patientRepository.getMedicalRecords(
       patientId
     );
 
-  // 2. OWNER BYPASS: If the user requesting the records IS the patient themselves, 
-  // NEVER hide the records. This fixes testing cookie mix-ups!
+  /**
+   * The patient always has access to their
+   * own complete medical history.
+   */
   if (
     requestingUser &&
+    requestingUser.role ===
+      'patient' &&
     requestingUser.id ===
       existing.user_id
   ) {
     return records;
   }
 
-  // 3. PRIVACY ENFORCEMENT LOGIC
-  // If the requester is a doctor (and NOT the patient themselves), enforce the locks.
+  /**
+   * Doctors must respect the patient's
+   * configured privacy categories.
+   */
   if (
     requestingUser &&
     requestingUser.role
@@ -240,44 +259,159 @@ const getMedicalRecords = async (
       'doctor'
   ) {
     const consentSettings =
-      await consentRepository.getConsentSettings(
-        patientId
-      );
-    
-    // Convert locked categories to lowercase for easy matching
+      await consentRepository
+        .getConsentSettings(
+          patientId
+        );
+
     const lockedCategories =
       (
-        consentSettings.locked_categories ||
+        consentSettings
+          .locked_categories ||
         []
-      ).map(
-        cat =>
-          cat.toLowerCase()
-      );
-    
-    // Smart Filter: Hide the record if the locked keyword appears anywhere in the text
-    const allowedRecords =
-      records.filter(
-        record => {
-          const searchText =
-            `${record.record_type} ${record.title} ${record.description} ${record.chief_complaint} ${record.diagnosis}`.toLowerCase();
-          
-          const hasLockedKeyword =
-            lockedCategories.some(
-              lockedCat =>
-                searchText.includes(
-                  lockedCat
-                )
+      )
+        .filter(
+          (category) =>
+            typeof category ===
+            'string'
+        )
+        .map(
+          (category) =>
+            category
+              .trim()
+              .toLowerCase()
+        )
+        .filter(Boolean);
+
+    /**
+     * Nothing is locked, so no temporary
+     * access check is necessary.
+     */
+    if (
+      lockedCategories.length ===
+      0
+    ) {
+      return records;
+    }
+
+    let grantedCategories =
+      [];
+
+    /**
+     * Temporary access is consultation-specific.
+     *
+     * If appointmentId is absent, invalid, belongs
+     * to another doctor/patient, is no longer active,
+     * or the grant has expired, access fails closed
+     * and the protected records remain hidden.
+     */
+    if (appointmentId) {
+      try {
+        const accessStatus =
+          await consentService
+            .getConsentAccessStatus(
+              patientId,
+              appointmentId,
+              requestingUser
             );
-          
-          // Only return the record if it DOES NOT contain a locked keyword
-          return !hasLockedKeyword;
+
+        if (
+          accessStatus
+            .hasActiveGrant
+        ) {
+          grantedCategories =
+            (
+              accessStatus
+                .grantedCategories ||
+              []
+            )
+              .filter(
+                (category) =>
+                  typeof category ===
+                  'string'
+              )
+              .map(
+                (category) =>
+                  category
+                    .trim()
+                    .toLowerCase()
+              )
+              .filter(Boolean);
         }
+
+      } catch (accessError) {
+
+        /**
+         * Do not expose protected information if
+         * temporary-access validation fails.
+         */
+        console.warn(
+          'Temporary consent access check failed:',
+          accessError.message
+        );
+
+        grantedCategories =
+          [];
+      }
+    }
+
+    const grantedCategorySet =
+      new Set(
+        grantedCategories
       );
-    
-    return allowedRecords;
+
+    return records.filter(
+      (record) => {
+        const searchText =
+          [
+            record.record_type,
+            record.title,
+            record.description,
+            record.chief_complaint,
+            record.diagnosis,
+            record.treatment_plan,
+          ]
+            .filter(Boolean)
+            .join(' ')
+            .toLowerCase();
+
+        const matchedLockedCategories =
+          lockedCategories.filter(
+            (lockedCategory) =>
+              searchText.includes(
+                lockedCategory
+              )
+          );
+
+        /**
+         * Record does not belong to any
+         * protected category.
+         */
+        if (
+          matchedLockedCategories
+            .length ===
+          0
+        ) {
+          return true;
+        }
+
+        /**
+         * Show a protected record only when
+         * every protected category matched by
+         * that record is included in the
+         * temporary consent grant.
+         */
+        return matchedLockedCategories
+          .every(
+            (lockedCategory) =>
+              grantedCategorySet.has(
+                lockedCategory
+              )
+          );
+      }
+    );
   }
 
-  // If it's anyone else (like a system admin), they see everything.
   return records;
 };
 
@@ -1607,13 +1741,15 @@ const getPatientByNic = async (
  */
 const getPatientHistorySummary = async (
   patientId,
-  requestingUser
+  requestingUser,
+  appointmentId = null
 ) => {
   // Pass the requestingUser down! The AI will now only summarize ALLOWED records.
   const records =
     await getMedicalRecords(
       patientId,
-      requestingUser
+      requestingUser,
+      appointmentId
     );
 
   const conditions =

@@ -13,8 +13,14 @@ import api from './api';
  * @param {string} patientId - UUID of the patient
  * @returns {Promise<Object>} The patient data object
  */
-export const getPatientProfile = async (patientId) => {
-  const response = await api.get(`/api/patients/${patientId}`);
+export const getPatientProfile = async (
+  patientId
+) => {
+  const response =
+    await api.get(
+      `/api/patients/${patientId}`
+    );
+
   return response.data.data;
 };
 
@@ -24,11 +30,15 @@ export const getPatientProfile = async (patientId) => {
  * @param {Object} data - Fields to update
  * @returns {Promise<Object>} The updated patient data object
  */
-export const updatePatientProfile = async (patientId, data) => {
-  const response = await api.put(
-    `/api/patients/${patientId}`,
-    data
-  );
+export const updatePatientProfile = async (
+  patientId,
+  data
+) => {
+  const response =
+    await api.put(
+      `/api/patients/${patientId}`,
+      data
+    );
 
   return response.data.data;
 };
@@ -67,21 +77,33 @@ export const uploadPatientPhoto = async (
 };
 
 /**
- * Fetches all medical records for a patient.
+ * Fetches medical records for a patient.
+ *
+ * During a doctor consultation, appointmentId is supplied
+ * so temporary patient-consent access can be evaluated.
+ *
  * @param {string} patientId - UUID of the patient
- * @param {string} role - Optional requester role
+ * @param {string|null} role - Existing caller compatibility
+ * @param {string|null} appointmentId - Current appointment UUID
+ * @returns {Promise<Array>} Medical records
  */
 export const getMedicalRecords = async (
   patientId,
-  role
+  role,
+  appointmentId = null
 ) => {
-  const url =
-    role
-      ? `/api/patients/${patientId}/medical-records?role=${role}`
-      : `/api/patients/${patientId}/medical-records`;
-
   const response =
-    await api.get(url);
+    await api.get(
+      `/api/patients/${patientId}/medical-records`,
+      {
+        params:
+          appointmentId
+            ? {
+                appointmentId
+              }
+            : {}
+      }
+    );
 
   return response.data.data;
 };
@@ -486,18 +508,32 @@ export const scanVaccinationCard = async (
 
 /**
  * Fetches an AI-generated clinical summary.
+ *
+ * During a consultation, appointmentId allows the
+ * summary to respect any active temporary consent grant.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @param {string|null} role - Existing caller compatibility
+ * @param {string|null} appointmentId - Current appointment UUID
+ * @returns {Promise<Object>} AI summary response
  */
 export const getPatientHistorySummary = async (
   patientId,
-  role
+  role,
+  appointmentId = null
 ) => {
-  const url =
-    role
-      ? `/api/patients/${patientId}/summary?role=${role}`
-      : `/api/patients/${patientId}/summary`;
-
   const response =
-    await api.get(url);
+    await api.get(
+      `/api/patients/${patientId}/summary`,
+      {
+        params:
+          appointmentId
+            ? {
+                appointmentId
+              }
+            : {}
+      }
+    );
 
   return response.data.data;
 };
@@ -512,7 +548,7 @@ export const getLabReports = async (
     await api.get(
       `/api/patients/${patientId}/lab-reports`
     );
-  
+
   if (
     !response.data.success
   ) {
@@ -571,8 +607,15 @@ export const getPatientAppointments = async (
   return response.data.data;
 };
 
+/* =========================================================
+   PRIVACY & CONSENT SETTINGS
+========================================================= */
+
 /**
  * Retrieves privacy and consent settings.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @returns {Promise<Array>} Locked category names
  */
 export const getConsentSettings = async (
   patientId
@@ -591,6 +634,10 @@ export const getConsentSettings = async (
 
 /**
  * Updates privacy and consent settings.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @param {Array<string>} lockedCategories - Protected categories
+ * @returns {Promise<Object>} Updated consent settings
  */
 export const updateConsentSettings = async (
   patientId,
@@ -605,4 +652,84 @@ export const updateConsentSettings = async (
     );
 
   return response.data?.data;
+};
+
+/* =========================================================
+   TEMPORARY DOCTOR CONSENT ACCESS
+========================================================= */
+
+/**
+ * Retrieves temporary consent-access status for
+ * the current doctor consultation.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @param {string} appointmentId - UUID of the appointment
+ * @returns {Promise<Object>} Current temporary-access status
+ */
+export const getConsentAccessStatus = async (
+  patientId,
+  appointmentId
+) => {
+  const response =
+    await api.get(
+      `/api/patients/${patientId}/consent/access/status`,
+      {
+        params: {
+          appointmentId
+        }
+      }
+    );
+
+  return response.data.data;
+};
+
+/**
+ * Requests a 6-digit patient consent OTP.
+ *
+ * The OTP is sent by the backend to the patient's
+ * registered Care4U email address.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @param {string} appointmentId - UUID of the appointment
+ * @returns {Promise<Object>} OTP request information
+ */
+export const requestConsentAccess = async (
+  patientId,
+  appointmentId
+) => {
+  const response =
+    await api.post(
+      `/api/patients/${patientId}/consent/access/request`,
+      {
+        appointmentId
+      }
+    );
+
+  return response.data.data;
+};
+
+/**
+ * Verifies the patient-provided OTP and creates
+ * a temporary doctor access grant.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @param {string} appointmentId - UUID of the appointment
+ * @param {string} otpCode - 6-digit OTP
+ * @returns {Promise<Object>} Temporary grant information
+ */
+export const verifyConsentAccess = async (
+  patientId,
+  appointmentId,
+  otpCode
+) => {
+  const response =
+    await api.post(
+      `/api/patients/${patientId}/consent/access/verify`,
+      {
+        appointmentId,
+        otpCode
+      }
+    );
+
+  return response.data.data;
 };
