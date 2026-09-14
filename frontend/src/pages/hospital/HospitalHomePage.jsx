@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 
 import useAuthStore from '../../store/authStore';
+import PageHeader from '../../components/common/PageHeader';
 
 /**
  * @component PortalActionCard
@@ -98,51 +99,40 @@ const HospitalHomePage = () => {
     user?.name ||
     'Hospital Staff';
 
-  return (
-    <div className="min-h-[calc(100vh-5rem)] bg-muted/30">
-      <section className="bg-card border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+return (
+  <div className="min-h-[calc(100vh-5rem)] bg-muted/30">
+
+    <div className="max-w-7xl mx-auto px-4 md:px-6 pt-8">
+
+      <PageHeader
+        eyebrow="Hospital Operations"
+        title={`Welcome, ${staffName}`}
+        description="Manage day-to-day OPD activity and respond to active emergency alerts from one Care4U hospital workspace."
+        icon={Building2}
+        meta={
+          <div className="flex items-center gap-3">
+
+            <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+              <ShieldAlert size={18} />
+            </div>
 
             <div>
-              <div className="flex items-center gap-2 text-primary mb-2">
-                <Building2 size={18} />
+              <p className="text-[10px] uppercase tracking-wide font-bold text-primary">
+                Access Level
+              </p>
 
-                <p className="text-xs font-bold uppercase tracking-[0.18em]">
-                  Hospital Operations
-                </p>
-              </div>
-
-              <h1 className="text-3xl font-bold text-foreground">
-                Welcome, {staffName}
-              </h1>
-
-              <p className="text-sm text-muted-foreground mt-2 max-w-2xl">
-                Manage day-to-day OPD activity and respond to active emergency alerts from one secure Care4U hospital portal.
+              <p className="text-sm font-bold text-foreground">
+                Hospital Staff
               </p>
             </div>
 
-            <div className="flex items-center gap-3 bg-secondary border border-border rounded-xl px-4 py-3">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                <ShieldAlert size={19} />
-              </div>
-
-              <div>
-                <p className="text-xs text-muted-foreground">
-                  Access Level
-                </p>
-
-                <p className="text-sm font-bold text-foreground">
-                  Hospital Staff
-                </p>
-              </div>
-            </div>
-
           </div>
-        </div>
-      </section>
+        }
+      />
 
-      <main className="max-w-7xl mx-auto px-4 md:px-6 py-8">
+    </div>
+
+    <main className="max-w-7xl mx-auto px-4 md:px-6 py-8">
 
         <section className="mb-8">
           <div className="flex items-center gap-3 mb-5">
