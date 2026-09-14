@@ -1,250 +1,810 @@
 /**
  * @file      MedicalRecordsPage.jsx
  * @component MedicalRecordsPage
- * @desc      Displays all medical records for a patient in a table.
- *            Clicking a row opens a modal with the full record details.
- *            Fetches from GET /api/patients/:id/medical-records via React Query.
+ * @desc      Displays all medical records for a patient.
+ *            Uses a desktop table and responsive mobile cards.
+ *            Clicking a record opens the full clinical details.
  * @author    Wasana Karunanayaka (S/21/081)
  */
 
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { FileText, Stethoscope, FlaskConical, Eye } from 'lucide-react';
+import {
+  useState,
+} from 'react';
 
-import { getMedicalRecords } from '../../services/patient.service';
+import {
+  useQuery,
+} from '@tanstack/react-query';
+
+import {
+  Eye,
+  FileText,
+  FlaskConical,
+  LockKeyhole,
+  Stethoscope,
+  UserRound,
+} from 'lucide-react';
+
+import {
+  getMedicalRecords,
+} from '../../services/patient.service';
+
+import useAuthStore from '../../store/authStore';
+
+import PageHeader from '../../components/common/PageHeader';
 import Card from '../../components/common/Card';
 import DataTable from '../../components/common/DataTable';
 import Modal from '../../components/common/Modal';
 import Spinner from '../../components/common/Spinner';
 import Alert from '../../components/common/Alert';
 import Badge from '../../components/common/Badge';
-import useAuthStore from '../../store/authStore';
+import Button from '../../components/common/Button';
 
-// ─── Format date helper ───────────────────────────────────────────────────────
-const formatDate = (dateStr) => {
-  if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
+/**
+ * Formats record dates for patient-facing display.
+ */
+const formatDate = (
+  dateStr
+) => {
+  if (!dateStr) {
+    return '—';
+  }
+
+  return new Date(
+    dateStr
+  ).toLocaleDateString(
+    'en-GB',
+    {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    }
+  );
 };
 
-// ─── Record type icon ─────────────────────────────────────────────────────────
-const RecordTypeIcon = ({ type }) => {
+/**
+ * Returns the appropriate visual icon for each
+ * medical record category.
+ */
+const RecordTypeIcon = ({
+  type,
+  size = 14,
+}) => {
   const icons = {
-    consultation: <Stethoscope size={14} />,
-    lab_result:   <FlaskConical size={14} />,
-    imaging:      <Eye size={14} />,
+    consultation: (
+      <Stethoscope
+        size={size}
+      />
+    ),
+
+    lab_result: (
+      <FlaskConical
+        size={size}
+      />
+    ),
+
+    imaging: (
+      <Eye
+        size={size}
+      />
+    ),
   };
-  return icons[type] || <FileText size={14} />;
+
+  return (
+    icons[type] || (
+      <FileText
+        size={size}
+      />
+    )
+  );
 };
 
-// ─── Record type label ────────────────────────────────────────────────────────
-const formatRecordType = (type) => {
+/**
+ * Converts backend record types into readable labels.
+ */
+const formatRecordType = (
+  type
+) => {
   const labels = {
-    consultation: 'Consultation',
-    lab_result:   'Lab Result',
-    imaging:      'Imaging',
+    consultation:
+      'Consultation',
+
+    lab_result:
+      'Lab Result',
+
+    imaging:
+      'Imaging',
   };
-  return labels[type] || type;
+
+  return (
+    labels[type] ||
+    type ||
+    'Medical Record'
+  );
 };
 
-// ─── Main Page Component ──────────────────────────────────────────────────────
-const MedicalRecordsPage = () => {
-  const user = useAuthStore((state) => state.user);
-  const TEST_PATIENT_ID = user?.profile_id || user?.id || '';
-  const [selectedRecord, setSelectedRecord] = useState(null);
+/**
+ * Small reusable clinical detail block used inside
+ * the record detail modal.
+ */
+const DetailBlock = ({
+  label,
+  children,
+  emphasis = false,
+}) => {
+  return (
+    <div>
 
-  // ── Fetch medical records ──────────────────────────────────────────────────
+      <p className="
+        text-[10px]
+        font-bold
+        text-muted-foreground
+        uppercase
+        tracking-[0.14em]
+        mb-2
+      ">
+        {label}
+      </p>
+
+      <div
+        className={`
+          rounded-xl
+          p-4
+          text-sm
+          text-foreground
+          leading-relaxed
+          ${
+            emphasis
+              ? 'bg-module-soft/70'
+              : 'bg-secondary/55'
+          }
+        `}
+      >
+        {children}
+      </div>
+
+    </div>
+  );
+};
+
+const MedicalRecordsPage = () => {
+  const user =
+    useAuthStore(
+      state =>
+        state.user
+    );
+
+  const patientId =
+    user?.profile_id ||
+    user?.id ||
+    '';
+
+  const [
+    selectedRecord,
+    setSelectedRecord,
+  ] = useState(
+    null
+  );
+
   const {
-    data: records = [],
+    data:
+      records = [],
     isLoading,
     isError,
     error,
   } = useQuery({
-    queryKey: ['medicalRecords', TEST_PATIENT_ID],
-    queryFn: () => getMedicalRecords(TEST_PATIENT_ID),
-    enabled: !!TEST_PATIENT_ID,
+    queryKey: [
+      'medicalRecords',
+      patientId,
+    ],
+
+    queryFn: () =>
+      getMedicalRecords(
+        patientId
+      ),
+
+    enabled:
+      !!patientId,
   });
 
-  // ── Table column definitions ───────────────────────────────────────────────
   const columns = [
     {
       key: 'created_at',
       label: 'Date',
-      render: (value) => formatDate(value),
+
+      render:
+        value => (
+          <span className="font-medium text-foreground whitespace-nowrap">
+            {
+              formatDate(
+                value
+              )
+            }
+          </span>
+        ),
     },
+
     {
       key: 'record_type',
       label: 'Type',
-      render: (value) => (
-        <span className="flex items-center gap-1.5 text-foreground">
-          <RecordTypeIcon type={value} />
-          {formatRecordType(value)}
-        </span>
-      ),
+
+      render:
+        value => (
+          <span className="flex items-center gap-2 text-foreground font-semibold">
+
+            <span className="text-primary">
+              <RecordTypeIcon
+                type={
+                  value
+                }
+              />
+            </span>
+
+            {
+              formatRecordType(
+                value
+              )
+            }
+
+          </span>
+        ),
     },
+
     {
       key: 'title',
       label: 'Title',
+
+      render:
+        value => (
+          <span className="font-medium text-foreground">
+            {value ||
+              'Untitled Record'}
+          </span>
+        ),
     },
+
     {
       key: 'doctor_name',
       label: 'Doctor',
-      render: (value) => value ? `Dr. ${value}` : '—',
+
+      render:
+        value => (
+          <span className="text-muted-foreground">
+            {value
+              ? `Dr. ${value}`
+              : '—'}
+          </span>
+        ),
     },
+
     {
       key: 'is_confidential',
-      label: 'Confidential',
-      render: (value) => (
-        <Badge status={value ? 'confidential' : 'normal'} />
-      ),
+      label: 'Privacy',
+
+      render:
+        value => (
+          <Badge
+            status={
+              value
+                ? 'confidential'
+                : 'normal'
+            }
+            label={
+              value
+                ? 'Confidential'
+                : 'Standard'
+            }
+          />
+        ),
+    },
+
+    {
+      key: 'action',
+      label: 'Action',
+
+      render:
+        (
+          value,
+          record
+        ) => (
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={
+              <Eye
+                size={15}
+              />
+            }
+            onClick={
+              event => {
+                event.stopPropagation();
+
+                setSelectedRecord(
+                  record
+                );
+              }
+            }
+          >
+            View
+          </Button>
+        ),
     },
   ];
 
-  // ── Loading state ──────────────────────────────────────────────────────────
-  if (isLoading) {
+  if (
+    isLoading
+  ) {
     return (
-      <div className="min-h-screen bg-secondary/40 flex items-center justify-center">
-        <div className="text-center">
-          <Spinner size="lg" />
-          <p className="mt-4 text-sm text-muted-foreground">Loading medical records...</p>
-        </div>
+      <div className="min-h-[55vh] flex flex-col items-center justify-center gap-3">
+
+        <Spinner
+          size="lg"
+        />
+
+        <p className="text-sm text-muted-foreground">
+          Loading medical records...
+        </p>
+
       </div>
     );
   }
 
-  // ── Error state ────────────────────────────────────────────────────────────
-  if (isError) {
+  if (
+    isError
+  ) {
     return (
-      <div className="min-h-screen bg-secondary/40 flex items-center justify-center p-4">
+      <div className="min-h-[55vh] flex items-center justify-center px-4">
+
         <div className="w-full max-w-md">
+
           <Alert
             type="error"
-            message={error?.message || 'Failed to load medical records.'}
+            message={
+              error?.message ||
+              'Failed to load medical records.'
+            }
           />
+
         </div>
+
       </div>
     );
   }
 
-  // ── Main render ────────────────────────────────────────────────────────────
+  const confidentialCount =
+    records.filter(
+      record =>
+        record.is_confidential
+    ).length;
+
   return (
-    <div className="min-h-screen bg-secondary/40">
+    <div className="space-y-7">
 
-      {/* ── Page Header ── */}
-      <div className="bg-brand-deep text-brand-deep-foreground px-6 py-8">
-        <div className="max-w-5xl mx-auto">
-          <h1 className="text-2xl font-bold">Medical Records</h1>
-          <p className="text-brand-deep-foreground/70 text-sm mt-1">
-            Your complete health history — click any record to view details
-          </p>
-        </div>
-      </div>
+      {/* =========================================
+          PAGE HERO
+      ========================================= */}
+      <PageHeader
+        eyebrow="Patient Portal"
+        icon={
+          FileText
+        }
+        title="Medical Records"
+        description="Review your consultation history, diagnoses, treatment information, laboratory results, and other clinical records."
+        meta={
+          <div className="flex items-center gap-3">
 
-      {/* ── Page Body ── */}
-      <div className="max-w-5xl mx-auto px-6 py-8">
+            <div className="w-10 h-10 rounded-xl bg-module-soft text-primary flex items-center justify-center shrink-0">
 
-        {/* Summary strip */}
-        <div className="flex items-center gap-2 mb-6">
-          <FileText size={16} className="text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">
-            {records.length === 0
-              ? 'No medical records found'
-              : `${records.length} record${records.length !== 1 ? 's' : ''} found`}
-          </p>
-        </div>
+              <FileText
+                size={19}
+              />
 
-        {/* Records Table */}
-        <Card>
-          <DataTable
-            columns={columns}
-            data={records}
-            onRowClick={(record) => setSelectedRecord(record)}
-            emptyMessage="No medical records found. Records will appear here after consultations."
-          />
-        </Card>
-      </div>
+            </div>
 
-      {/* ── Record Detail Modal ── */}
+            <div>
+
+              <p className="text-[10px] uppercase tracking-[0.12em] font-bold text-primary">
+                Health History
+              </p>
+
+              <p className="text-sm font-bold text-foreground mt-0.5">
+                {records.length ===
+                0
+                  ? 'No records yet'
+                  : `${records.length} record${
+                      records.length ===
+                      1
+                        ? ''
+                        : 's'
+                    }`}
+              </p>
+
+              {confidentialCount >
+                0 && (
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  {confidentialCount}{' '}
+                  confidential
+                </p>
+              )}
+
+            </div>
+
+          </div>
+        }
+      />
+
+      {/* =========================================
+          MEDICAL HISTORY
+      ========================================= */}
+      <Card
+        title="Health Record History"
+      >
+
+        {records.length ===
+        0 ? (
+
+          <div className="flex flex-col items-center justify-center text-center py-12 px-4">
+
+            <div className="w-16 h-16 rounded-2xl bg-module-soft text-primary flex items-center justify-center mb-4">
+
+              <FileText
+                className="w-7 h-7"
+                strokeWidth={
+                  1.8
+                }
+              />
+
+            </div>
+
+            <h3 className="text-lg font-bold text-foreground">
+              No medical records yet
+            </h3>
+
+            <p className="text-sm text-muted-foreground mt-2 max-w-md leading-relaxed">
+              Clinical records created during consultations and other
+              healthcare activities will appear here.
+            </p>
+
+          </div>
+
+        ) : (
+          <>
+
+            {/* =====================================
+                MOBILE RECORD LIST
+            ===================================== */}
+            <div className="md:hidden space-y-3">
+
+              {records.map(
+                record => (
+
+                  <button
+                    key={
+                      record.id
+                    }
+                    type="button"
+                    onClick={() =>
+                      setSelectedRecord(
+                        record
+                      )
+                    }
+                    className="
+                      group
+                      w-full
+                      text-left
+                      rounded-xl
+                      bg-secondary/45
+                      hover:bg-module-soft/65
+                      transition-colors
+                      p-4
+                    "
+                  >
+
+                    <div className="flex items-start justify-between gap-3">
+
+                      <div className="flex items-start gap-3 min-w-0">
+
+                        <div className="
+                          w-10 h-10
+                          rounded-xl
+                          bg-module-soft
+                          text-primary
+                          flex items-center justify-center
+                          shrink-0
+                        ">
+
+                          <RecordTypeIcon
+                            type={
+                              record.record_type
+                            }
+                            size={
+                              18
+                            }
+                          />
+
+                        </div>
+
+                        <div className="min-w-0">
+
+                          <p className="text-[10px] uppercase tracking-[0.12em] font-bold text-primary">
+                            {
+                              formatRecordType(
+                                record.record_type
+                              )
+                            }
+                          </p>
+
+                          <h3 className="text-sm font-bold text-foreground mt-1 leading-snug break-words">
+                            {record.title ||
+                              'Untitled Record'}
+                          </h3>
+
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {
+                              formatDate(
+                                record.created_at
+                              )
+                            }
+                          </p>
+
+                        </div>
+
+                      </div>
+
+                      {record.is_confidential && (
+                        <div
+                          className="
+                            w-8 h-8
+                            rounded-lg
+                            bg-urgent/10
+                            text-urgent-foreground
+                            flex items-center justify-center
+                            shrink-0
+                          "
+                          title="Confidential record"
+                        >
+
+                          <LockKeyhole
+                            size={15}
+                          />
+
+                        </div>
+                      )}
+
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-between gap-3">
+
+                      <div className="flex items-center gap-2 min-w-0">
+
+                        <UserRound
+                          size={15}
+                          className="text-muted-foreground shrink-0"
+                        />
+
+                        <p className="text-xs text-muted-foreground truncate">
+                          {record.doctor_name
+                            ? `Dr. ${record.doctor_name}`
+                            : 'Doctor not specified'}
+                        </p>
+
+                      </div>
+
+                      <span className="inline-flex items-center gap-1.5 text-xs font-bold text-primary shrink-0">
+
+                        <Eye
+                          size={14}
+                        />
+
+                        View
+
+                      </span>
+
+                    </div>
+
+                  </button>
+
+                )
+              )}
+
+            </div>
+
+            {/* =====================================
+                DESKTOP TABLE
+            ===================================== */}
+            <div className="hidden md:block">
+
+              <DataTable
+                columns={
+                  columns
+                }
+                data={
+                  records
+                }
+                onRowClick={
+                  record =>
+                    setSelectedRecord(
+                      record
+                    )
+                }
+                emptyMessage="No medical records found."
+              />
+
+            </div>
+
+          </>
+        )}
+
+      </Card>
+
+      {/* =========================================
+          RECORD DETAIL MODAL
+      ========================================= */}
       <Modal
-        isOpen={!!selectedRecord}
-        onClose={() => setSelectedRecord(null)}
-        title={selectedRecord?.title || 'Record Details'}
+        isOpen={
+          !!selectedRecord
+        }
+        onClose={() =>
+          setSelectedRecord(
+            null
+          )
+        }
+        title={
+          selectedRecord?.title ||
+          'Record Details'
+        }
         size="lg"
       >
-        {selectedRecord && (
-          <div className="space-y-4">
 
-            {/* Meta row */}
-            <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <RecordTypeIcon type={selectedRecord.record_type} />
-                {formatRecordType(selectedRecord.record_type)}
-              </span>
-              <span>•</span>
-              <span>{formatDate(selectedRecord.created_at)}</span>
-              {selectedRecord.doctor_name && (
-                <>
-                  <span>•</span>
-                  <span>Dr. {selectedRecord.doctor_name}</span>
-                </>
-              )}
-              {selectedRecord.doctor_specialization && (
-                <span className="text-primary">
-                  ({selectedRecord.doctor_specialization})
-                </span>
-              )}
+        {selectedRecord && (
+          <div className="space-y-6">
+
+            {/* Record summary */}
+            <div className="rounded-2xl bg-module-soft/60 p-4 sm:p-5">
+
+              <div className="flex items-start gap-4">
+
+                <div className="
+                  w-11 h-11
+                  rounded-xl
+                  bg-primary
+                  text-primary-foreground
+                  flex items-center justify-center
+                  shrink-0
+                ">
+
+                  <RecordTypeIcon
+                    type={
+                      selectedRecord.record_type
+                    }
+                    size={
+                      19
+                    }
+                  />
+
+                </div>
+
+                <div className="min-w-0 flex-1">
+
+                  <div className="flex flex-wrap items-center gap-2">
+
+                    <p className="text-sm font-bold text-foreground">
+                      {
+                        formatRecordType(
+                          selectedRecord.record_type
+                        )
+                      }
+                    </p>
+
+                    {selectedRecord.is_confidential && (
+                      <Badge
+                        status="confidential"
+                        label="Confidential"
+                      />
+                    )}
+
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
+
+                    <span>
+                      {
+                        formatDate(
+                          selectedRecord.created_at
+                        )
+                      }
+                    </span>
+
+                    {selectedRecord.doctor_name && (
+                      <span>
+                        Dr. {
+                          selectedRecord.doctor_name
+                        }
+                      </span>
+                    )}
+
+                    {selectedRecord.doctor_specialization && (
+                      <span className="font-semibold text-primary">
+                        {
+                          selectedRecord.doctor_specialization
+                        }
+                      </span>
+                    )}
+
+                  </div>
+
+                </div>
+
+              </div>
+
             </div>
 
             {/* Confidential warning */}
             {selectedRecord.is_confidential && (
               <Alert
                 type="warning"
-                message="This record is marked confidential."
+                message="This medical record is marked as confidential."
               />
             )}
 
-            {/* Structured Consultation Notes */}
-            {selectedRecord.record_type === 'consultation' && (
-              <>
+            {/* Consultation-specific details */}
+            {selectedRecord.record_type ===
+              'consultation' && (
+              <div className="space-y-5">
+
                 {selectedRecord.chief_complaint && (
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Chief Complaint</p>
-                    <p className="text-sm text-foreground leading-relaxed bg-secondary rounded-lg p-4">{selectedRecord.chief_complaint}</p>
-                  </div>
+                  <DetailBlock
+                    label="Chief Complaint"
+                  >
+                    {
+                      selectedRecord.chief_complaint
+                    }
+                  </DetailBlock>
                 )}
+
                 {selectedRecord.diagnosis && (
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Diagnosis</p>
-                    <p className="text-sm text-foreground leading-relaxed bg-secondary rounded-lg p-4">{selectedRecord.diagnosis}</p>
-                  </div>
+                  <DetailBlock
+                    label="Diagnosis"
+                    emphasis
+                  >
+                    {
+                      selectedRecord.diagnosis
+                    }
+                  </DetailBlock>
                 )}
+
                 {selectedRecord.treatment_plan && (
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Treatment Plan</p>
-                    <p className="text-sm text-foreground leading-relaxed bg-secondary rounded-lg p-4">{selectedRecord.treatment_plan}</p>
-                  </div>
+                  <DetailBlock
+                    label="Treatment Plan"
+                  >
+                    {
+                      selectedRecord.treatment_plan
+                    }
+                  </DetailBlock>
                 )}
+
                 {selectedRecord.follow_up_needed && (
-                  <Alert type="info" message="Follow-up recommended by doctor." />
+                  <Alert
+                    type="info"
+                    message="Follow-up recommended by the doctor."
+                  />
                 )}
-              </>
+
+              </div>
             )}
 
-            {/* Description */}
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                Notes
-              </p>
-              <p className="text-sm text-foreground leading-relaxed bg-secondary rounded-lg p-4">
-                {selectedRecord.description || 'No additional notes.'}
-              </p>
-            </div>
+            {/* General description */}
+            <DetailBlock
+              label="Notes"
+            >
+              {selectedRecord.description ||
+                'No additional notes.'}
+            </DetailBlock>
+
           </div>
         )}
+
       </Modal>
+
     </div>
   );
 };
