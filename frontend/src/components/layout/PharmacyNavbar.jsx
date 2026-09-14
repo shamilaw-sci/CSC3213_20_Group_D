@@ -1,35 +1,44 @@
 /**
  * @component PharmacyNavbar
- * @desc      Top navigation bar for the pharmacy portal, using TopNavbar
- *            with prescription lookup, dispensing history, and profile links.
+ * @desc      Persistent top navigation for the Pharmacy module.
+ *            Links only to active pharmacist workflows.
+ * @author    Wasana Karunanayaka (S/21/081)
  */
 
 import {
+  Building2,
+  History,
   LayoutDashboard,
-  QrCode,
-  CheckSquare,
-  UserRound,
+  UserSearch,
 } from 'lucide-react';
 
 import TopNavbar from './TopNavbar';
-
-const handleLogout = async () => {
-  try {
-    await fetch(
-      'http://localhost:5000/api/auth/logout',
-      {
-        method: 'POST',
-        credentials: 'include',
-      }
-    );
-  } catch {
-    /* ignore */
-  }
-
-  window.location.href = '/login';
-};
+import api from '../../services/api';
+import useAuthStore from '../../store/authStore';
 
 export default function PharmacyNavbar() {
+  const clearUser =
+    useAuthStore(
+      (state) => state.clearUser
+    );
+
+  const handleLogout = async () => {
+    try {
+      await api.post(
+        '/api/auth/logout'
+      );
+    } catch (error) {
+      console.error(
+        'Pharmacy logout error:',
+        error
+      );
+    } finally {
+      clearUser();
+      window.location.href =
+        '/login';
+    }
+  };
+
   const navItems = [
     {
       type: 'link',
@@ -40,20 +49,20 @@ export default function PharmacyNavbar() {
     {
       type: 'link',
       to: '/pharmacy/patient-lookup',
-      label: 'Dispense & QR Verification',
-      icon: QrCode,
+      label: 'Patient Lookup',
+      icon: UserSearch,
     },
     {
       type: 'link',
       to: '/pharmacy/history',
-      label: 'Dispensed History',
-      icon: CheckSquare,
+      label: 'Dispensing History',
+      icon: History,
     },
     {
       type: 'link',
       to: '/pharmacy/profile',
-      label: 'My Profile',
-      icon: UserRound,
+      label: 'Pharmacy Profile',
+      icon: Building2,
     },
   ];
 

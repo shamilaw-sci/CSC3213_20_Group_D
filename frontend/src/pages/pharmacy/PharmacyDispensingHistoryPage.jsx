@@ -10,7 +10,6 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
 import {
-  ArrowLeft,
   Search,
   History,
   ClipboardList,
@@ -19,7 +18,6 @@ import {
   CalendarDays,
   QrCode,
   ArrowRight,
-  LogOut,
 } from 'lucide-react';
 
 import api from '../../services/api';
@@ -29,6 +27,7 @@ import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Badge from '../../components/common/Badge';
+import PageHeader from '../../components/common/PageHeader';
 
 import useAuthStore from '../../store/authStore';
 
@@ -71,10 +70,6 @@ const PharmacyDispensingHistoryPage = () => {
     (state) => state.user
   );
 
-  const clearUser = useAuthStore(
-    (state) => state.clearUser
-  );
-
   const PHARMACY_ID =
     user?.profile_id ||
     user?.id ||
@@ -82,12 +77,6 @@ const PharmacyDispensingHistoryPage = () => {
 
   const [searchTerm, setSearchTerm] =
     useState('');
-
-  const [logoutLoading, setLogoutLoading] =
-    useState(false);
-
-  const [logoutError, setLogoutError] =
-    useState(null);
 
   /**
    * Loads dispensing history for the logged-in pharmacy.
@@ -154,42 +143,11 @@ const PharmacyDispensingHistoryPage = () => {
     searchTerm,
   ]);
 
-  /**
-   * Logs the pharmacist out.
-   */
-  const handleLogout = async () => {
-    setLogoutLoading(true);
-    setLogoutError(null);
-
-    try {
-      await api.post(
-        '/api/auth/logout'
-      );
-
-      clearUser();
-
-      navigate('/login');
-
-    } catch (error) {
-      console.error(
-        'Pharmacy history logout error:',
-        error
-      );
-
-      setLogoutError(
-        error.response?.data?.message ||
-        'Logout failed. Please try again.'
-      );
-
-    } finally {
-      setLogoutLoading(false);
-    }
-  };
 
   // ── Loading ──
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-[calc(100vh-5rem)] bg-muted/30 flex items-center justify-center">
 
         <div className="flex flex-col items-center gap-3">
 
@@ -208,7 +166,7 @@ const PharmacyDispensingHistoryPage = () => {
   // ── Error ──
   if (isError) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+      <div className="min-h-[calc(100vh-5rem)] bg-muted/30 flex items-center justify-center p-6">
 
         <div className="text-center">
 
@@ -230,87 +188,42 @@ const PharmacyDispensingHistoryPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-[calc(100vh-5rem)] bg-muted/30">
 
-      {/* ─────────────────────────────────────────────
-          Header
-      ───────────────────────────────────────────── */}
-      <div className="bg-brand-deep px-6 py-7 sm:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8">
 
-        <div className="max-w-6xl mx-auto">
+        <PageHeader
+          eyebrow="Pharmacy Operations"
+          title="Dispensing History"
+          description="Review prescriptions previously dispensed by this pharmacy and search historical dispensing activity."
+          icon={History}
+          meta={
+            <div className="flex items-center gap-3">
 
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
-
-            <div>
-
-              <div className="flex items-center gap-2 mb-2">
-
-                <History
-                  size={18}
-                  className="text-brand-deep-foreground/70"
-                />
-
-                <p className="text-xs font-semibold uppercase tracking-widest text-brand-deep-foreground/70">
-                  Pharmacy Portal
-                </p>
-
+              <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                <ClipboardList size={18} />
               </div>
 
-              <h1 className="text-2xl sm:text-3xl font-bold text-brand-deep-foreground">
-                Dispensing History
-              </h1>
+              <div>
+                <p className="text-[10px] uppercase tracking-wide font-bold text-primary">
+                  Records
+                </p>
 
-              <p className="text-sm mt-1 text-brand-deep-foreground/80">
-                Review prescriptions previously dispensed by this pharmacy
-              </p>
-
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-
-              <Button
-                variant="secondary"
-                icon={
-                  <ArrowLeft size={16} />
-                }
-                onClick={() =>
-                  navigate(
-                    '/pharmacy/dashboard'
-                  )
-                }
-              >
-                Dashboard
-              </Button>
-
-              <Button
-                variant="secondary"
-                icon={
-                  <LogOut size={16} />
-                }
-                loading={logoutLoading}
-                onClick={handleLogout}
-              >
-                Logout
-              </Button>
+                <p className="text-sm font-bold text-foreground">
+                  {history.length} total
+                </p>
+              </div>
 
             </div>
-
-          </div>
-
-          {logoutError && (
-            <p className="text-sm text-destructive-foreground mt-4">
-              {logoutError}
-            </p>
-          )}
-
-        </div>
+          }
+        />
 
       </div>
 
       {/* ─────────────────────────────────────────────
           Main Content
       ───────────────────────────────────────────── */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6">
 
         {/* Search */}
         <Card
@@ -577,7 +490,7 @@ const PharmacyDispensingHistoryPage = () => {
 
         </Card>
 
-      </div>
+      </main>
 
     </div>
   );

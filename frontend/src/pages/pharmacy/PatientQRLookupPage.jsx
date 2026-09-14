@@ -17,8 +17,6 @@ import {
   CheckCircle,
   QrCode,
   ArrowRight,
-  ArrowLeft,
-  History,
   UserRound,
   ShieldCheck,
   CalendarDays,
@@ -38,6 +36,7 @@ import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Alert from '../../components/common/Alert';
+import PageHeader from '../../components/common/PageHeader';
 import QRScanner from '../../components/common/QRScanner';
 
 const formatDate = (iso) => {
@@ -301,88 +300,42 @@ const PatientQRLookupPage = () => {
     );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-[calc(100vh-5rem)] bg-muted/30">
 
-      {/* ─────────────────────────────────────────────
-          Header
-      ───────────────────────────────────────────── */}
-      <div className="px-6 py-7 sm:px-8 bg-brand-deep">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-8">
 
-        <div className="max-w-4xl mx-auto">
+        <PageHeader
+          eyebrow="Pharmacy Operations"
+          title="Find Patient"
+          description="Scan the patient&apos;s identity QR card or search by NIC before accessing eligible prescriptions."
+          icon={UserRound}
+          meta={
+            <div className="flex items-center gap-3">
 
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
-
-            <div>
-
-              <div className="flex items-center gap-2 mb-2">
-
-                <UserRound
-                  size={18}
-                  className="text-brand-deep-foreground/70"
-                />
-
-                <p className="text-xs font-semibold uppercase tracking-widest text-brand-deep-foreground/70">
-                  Pharmacy Staff — Patient Lookup
-                </p>
-
+              <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                <ShieldCheck size={18} />
               </div>
 
-              <h1 className="text-2xl sm:text-3xl font-bold text-brand-deep-foreground">
-                Find Patient
-              </h1>
+              <div>
+                <p className="text-[10px] uppercase tracking-wide font-bold text-primary">
+                  Access Control
+                </p>
 
-              <p className="text-sm mt-1 text-brand-deep-foreground/80">
-                Scan the patient's identity QR card or search using their NIC.
-              </p>
-
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-
-              <Button
-                variant="secondary"
-                icon={
-                  <ArrowLeft
-                    size={16}
-                  />
-                }
-                onClick={() =>
-                  navigate(
-                    '/pharmacy/dashboard'
-                  )
-                }
-              >
-                Dashboard
-              </Button>
-
-              <Button
-                variant="secondary"
-                icon={
-                  <History
-                    size={16}
-                  />
-                }
-                onClick={() =>
-                  navigate(
-                    '/pharmacy/history'
-                  )
-                }
-              >
-                History
-              </Button>
+                <p className="text-sm font-bold text-foreground">
+                  Identity + consent required
+                </p>
+              </div>
 
             </div>
-
-          </div>
-
-        </div>
+          }
+        />
 
       </div>
 
       {/* ─────────────────────────────────────────────
           Main Content
       ───────────────────────────────────────────── */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6">
 
         {/* ─────────────────────────────────────────
             Lookup Method
@@ -1120,7 +1073,7 @@ const PatientQRLookupPage = () => {
           </>
         )}
 
-      </div>
+      </main>
 
     </div>
   );

@@ -6,11 +6,9 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
-  ArrowLeft,
   Building2,
   MapPin,
   Phone,
@@ -20,7 +18,6 @@ import {
   Save,
   Pencil,
   X,
-  LogOut,
 } from 'lucide-react';
 
 import api from '../../services/api';
@@ -30,19 +27,14 @@ import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Alert from '../../components/common/Alert';
+import PageHeader from '../../components/common/PageHeader';
 
 import useAuthStore from '../../store/authStore';
 
 const PharmacyProfilePage = () => {
-  const navigate = useNavigate();
-
   const queryClient = useQueryClient();
 
   const user = useAuthStore((state) => state.user);
-
-  const clearUser = useAuthStore(
-    (state) => state.clearUser
-  );
 
   const PHARMACY_ID =
     user?.profile_id ||
@@ -60,9 +52,6 @@ const PharmacyProfilePage = () => {
 
   const [saveError, setSaveError] =
     useState(null);
-
-  const [logoutLoading, setLogoutLoading] =
-    useState(false);
 
   const [formData, setFormData] =
     useState({
@@ -206,41 +195,11 @@ const PharmacyProfilePage = () => {
     }
   };
 
-  /**
-   * Logs the pharmacist out.
-   */
-  const handleLogout = async () => {
-    setLogoutLoading(true);
-
-    try {
-      await api.post(
-        '/api/auth/logout'
-      );
-
-      clearUser();
-
-      navigate('/login');
-
-    } catch (error) {
-      console.error(
-        'Pharmacy logout error:',
-        error
-      );
-
-      setSaveError(
-        error.response?.data?.message ||
-        'Logout failed. Please try again.'
-      );
-
-    } finally {
-      setLogoutLoading(false);
-    }
-  };
 
   // ── Loading ──
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-[calc(100vh-5rem)] bg-muted/30 flex items-center justify-center">
 
         <div className="flex flex-col items-center gap-3">
           <Spinner size="lg" />
@@ -257,7 +216,7 @@ const PharmacyProfilePage = () => {
   // ── Error ──
   if (isError || !pharmacy) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+      <div className="min-h-[calc(100vh-5rem)] bg-muted/30 flex items-center justify-center p-6">
 
         <div className="text-center">
 
@@ -279,81 +238,50 @@ const PharmacyProfilePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-[calc(100vh-5rem)] bg-muted/30">
 
-      {/* ─────────────────────────────────────────────
-          Header
-      ───────────────────────────────────────────── */}
-      <div className="bg-brand-deep px-6 py-7 sm:px-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-8">
 
-        <div className="max-w-5xl mx-auto">
+        <PageHeader
+          eyebrow="Pharmacy Operations"
+          title="Pharmacy Profile"
+          description="View and manage the pharmacy information linked to this pharmacist account."
+          icon={Building2}
+          meta={
+            <div className="flex items-center gap-3">
 
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
-
-            <div>
-
-              <div className="flex items-center gap-2 mb-2">
-
-                <Building2
-                  size={18}
-                  className="text-brand-deep-foreground/70"
-                />
-
-                <p className="text-xs font-semibold uppercase tracking-widest text-brand-deep-foreground/70">
-                  Pharmacy Portal
-                </p>
-
+              <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
+                pharmacy.is_verified
+                  ? 'bg-success/10 text-success'
+                  : 'bg-urgent/10 text-urgent-foreground'
+              }`}>
+                {pharmacy.is_verified
+                  ? <ShieldCheck size={18} />
+                  : <ShieldAlert size={18} />}
               </div>
 
-              <h1 className="text-2xl sm:text-3xl font-bold text-brand-deep-foreground">
-                Pharmacy Profile
-              </h1>
+              <div>
+                <p className="text-[10px] uppercase tracking-wide font-bold text-primary">
+                  Verification
+                </p>
 
-              <p className="text-sm mt-1 text-brand-deep-foreground/80">
-                View and manage pharmacy information
-              </p>
-
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-
-              <Button
-                variant="secondary"
-                icon={
-                  <ArrowLeft size={16} />
-                }
-                onClick={() =>
-                  navigate(
-                    '/pharmacy/dashboard'
-                  )
-                }
-              >
-                Dashboard
-              </Button>
-
-              <Button
-                variant="secondary"
-                icon={
-                  <LogOut size={16} />
-                }
-                loading={logoutLoading}
-                onClick={handleLogout}
-              >
-                Logout
-              </Button>
+                <p className="text-sm font-bold text-foreground">
+                  {pharmacy.is_verified
+                    ? 'Verified Pharmacy'
+                    : 'Pending Approval'}
+                </p>
+              </div>
 
             </div>
-
-          </div>
-
-        </div>
+          }
+        />
 
       </div>
 
       {/* ─────────────────────────────────────────────
           Main Content
       ───────────────────────────────────────────── */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6">
 
         {/* ─────────────────────────────────────────
             Status Card
@@ -696,7 +624,7 @@ const PharmacyProfilePage = () => {
 
         </Card>
 
-      </div>
+      </main>
 
     </div>
   );

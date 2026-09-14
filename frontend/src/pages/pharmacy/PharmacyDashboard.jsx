@@ -34,6 +34,7 @@ import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Badge from '../../components/common/Badge';
+import PageHeader from '../../components/common/PageHeader';
 import QRScanner from '../../components/common/QRScanner';
 
 import useAuthStore from '../../store/authStore';
@@ -278,7 +279,7 @@ const PharmacyDashboard = () => {
   // ── Loading ──
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-[calc(100vh-5rem)] bg-muted/30 flex items-center justify-center">
 
         <div className="flex flex-col items-center gap-3">
 
@@ -297,7 +298,7 @@ const PharmacyDashboard = () => {
   // ── Error ──
   if (isError) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+      <div className="min-h-[calc(100vh-5rem)] bg-muted/30 flex items-center justify-center p-6">
 
         <div className="text-center">
 
@@ -327,8 +328,39 @@ const PharmacyDashboard = () => {
     [];
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-7">
+    <div className="min-h-[calc(100vh-5rem)] bg-muted/30">
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8">
+
+        <PageHeader
+          eyebrow="Pharmacy Operations"
+          title="Pharmacy Dashboard"
+          description="Verify prescriptions, find patients, dispense medicines, and review recent pharmacy activity from one workspace."
+          icon={Pill}
+          meta={
+            <div className="flex items-center gap-3">
+
+              <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                <ClipboardList size={18} />
+              </div>
+
+              <div>
+                <p className="text-[10px] uppercase tracking-wide font-bold text-primary">
+                  Today
+                </p>
+
+                <p className="text-sm font-bold text-foreground">
+                  {stats?.todayDispensed ?? 0} dispensed
+                </p>
+              </div>
+
+            </div>
+          }
+        />
+
+      </div>
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-7">
 
         {/* ─────────────────────────────────────────
             Stats
@@ -768,7 +800,7 @@ const PharmacyDashboard = () => {
 
         </Card>
 
-      </div>
+      </main>
 
     </div>
   );

@@ -295,18 +295,6 @@ function App() {
           }
         />
 
-        <Route
-          path="/pharmacy/:qrValue"
-          element={
-            <ProtectedRoute
-              allowedRoles={[
-                'pharmacist'
-              ]}
-            >
-              <PharmacyLookupPage />
-            </ProtectedRoute>
-          }
-        />
 
         {/* Patient pages — restricted to 'patient' */}
         <Route
@@ -414,11 +402,50 @@ function App() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<PharmacyDashboard />} />
-          <Route path="patient-lookup" element={<PatientQRLookupPage />} />
-          <Route path="profile" element={<PharmacyProfilePage />} />
-          <Route path="history" element={<PharmacyDispensingHistoryPage />} />
+          <Route
+            index
+            element={
+              <Navigate
+                to="dashboard"
+                replace
+              />
+            }
+          />
+
+          <Route
+            path="dashboard"
+            element={
+              <PharmacyDashboard />
+            }
+          />
+
+          <Route
+            path="patient-lookup"
+            element={
+              <PatientQRLookupPage />
+            }
+          />
+
+          <Route
+            path="history"
+            element={
+              <PharmacyDispensingHistoryPage />
+            }
+          />
+
+          <Route
+            path="profile"
+            element={
+              <PharmacyProfilePage />
+            }
+          />
+
+          <Route
+            path=":qrValue"
+            element={
+              <PharmacyLookupPage />
+            }
+          />
         </Route>
 
         {/* Hospital pages — restricted to 'hospital_staff' */}

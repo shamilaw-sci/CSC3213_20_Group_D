@@ -14,8 +14,6 @@ import {
   ClipboardCheck,
   CheckCircle,
   XCircle,
-  ArrowLeft,
-  History,
   ShieldCheck,
   ShieldAlert,
   QrCode,
@@ -33,6 +31,7 @@ import Card from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
+import PageHeader from '../../components/common/PageHeader';
 
 const formatDate = (iso) => {
   if (!iso) return '-';
@@ -406,7 +405,7 @@ const PharmacyLookupPage = () => {
   // ── Loading ──
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-[calc(100vh-5rem)] bg-muted/30 flex items-center justify-center">
 
         <div className="flex flex-col items-center gap-3">
 
@@ -425,35 +424,46 @@ const PharmacyLookupPage = () => {
   // ── Invalid / Not Found ──
   if (error || !prescription) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-[calc(100vh-5rem)] bg-muted/30">
 
-        <div className="bg-brand-deep px-6 py-7">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-8">
 
-          <div className="max-w-3xl mx-auto">
+          <PageHeader
+            eyebrow="Pharmacy Operations"
+            title="Prescription Verification"
+            description="The requested prescription could not be verified."
+            icon={QrCode}
+            meta={
+              <div className="flex items-center gap-3">
 
-            <Button
-              variant="secondary"
-              icon={
-                <ArrowLeft size={16} />
-              }
-              onClick={() =>
-                navigate(
-                  '/pharmacy/dashboard'
-                )
-              }
-            >
-              Dashboard
-            </Button>
+                <div className="w-9 h-9 rounded-lg bg-destructive/10 text-destructive flex items-center justify-center">
+                  <ShieldAlert size={18} />
+                </div>
 
-          </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-wide font-bold text-destructive">
+                    Verification
+                  </p>
+
+                  <p className="text-sm font-bold text-foreground">
+                    Not available
+                  </p>
+                </div>
+
+              </div>
+            }
+          />
 
         </div>
 
-        <div className="max-w-md mx-auto px-4 py-12">
+        <div className="max-w-md mx-auto px-4 py-10">
 
           <Alert
             type="error"
-            message={`No prescription found for QR code: ${qrValue}`}
+            message={
+              error?.response?.data?.message ||
+              `No prescription found for QR code: ${qrValue}`
+            }
           />
 
         </div>
@@ -489,90 +499,42 @@ const PharmacyLookupPage = () => {
       'completed';
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-[calc(100vh-5rem)] bg-muted/30">
 
-      {/* ─────────────────────────────────────────────
-          Header
-      ───────────────────────────────────────────── */}
-      <div className="px-6 py-7 sm:px-8 bg-brand-deep">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-8">
 
-        <div className="max-w-4xl mx-auto">
+        <PageHeader
+          eyebrow="Pharmacy Operations"
+          title="Prescription Details"
+          description="Verify prescription validity and dispense medicines against the remaining prescribed quantities."
+          icon={QrCode}
+          meta={
+            <div className="flex items-center gap-3">
 
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
-
-            <div>
-
-              <div className="flex items-center gap-2 mb-2">
-
-                <QrCode
-                  size={18}
-                  className="text-brand-deep-foreground/70"
-                />
-
-                <p className="text-xs font-semibold uppercase tracking-widest text-brand-deep-foreground/70">
-                  Pharmacy Portal — Prescription Verification
-                </p>
-
+              <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                <QrCode size={18} />
               </div>
 
-              <h1 className="text-2xl sm:text-3xl font-bold text-brand-deep-foreground">
-                Prescription Details
-              </h1>
+              <div className="min-w-0">
+                <p className="text-[10px] uppercase tracking-wide font-bold text-primary">
+                  Prescription QR
+                </p>
 
-              <p className="text-sm mt-1 text-brand-deep-foreground/80 break-all">
-
-                QR Code:{' '}
-
-                <span className="font-mono font-semibold text-brand-deep-foreground">
+                <p className="text-sm font-mono font-bold text-foreground max-w-[220px] truncate">
                   {qrValue}
-                </span>
-
-              </p>
-
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-
-              <Button
-                variant="secondary"
-                icon={
-                  <ArrowLeft size={16} />
-                }
-                onClick={() =>
-                  navigate(
-                    '/pharmacy/dashboard'
-                  )
-                }
-              >
-                Dashboard
-              </Button>
-
-              <Button
-                variant="secondary"
-                icon={
-                  <History size={16} />
-                }
-                onClick={() =>
-                  navigate(
-                    '/pharmacy/history'
-                  )
-                }
-              >
-                History
-              </Button>
+                </p>
+              </div>
 
             </div>
-
-          </div>
-
-        </div>
+          }
+        />
 
       </div>
 
       {/* ─────────────────────────────────────────────
           Main Content
       ───────────────────────────────────────────── */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6">
 
         {/* Prescription validity */}
         {!expired &&
@@ -971,7 +933,7 @@ const PharmacyLookupPage = () => {
 
         </Card>
 
-      </div>
+      </main>
 
     </div>
   );
