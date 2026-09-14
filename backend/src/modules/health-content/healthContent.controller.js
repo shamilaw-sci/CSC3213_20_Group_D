@@ -19,7 +19,12 @@ const {
  */
 const createContentController = async (req, res) => {
     try {
-        const { title, body, category, source } = req.body;
+        const {
+            title,
+            body,
+            category,
+            source
+        } = req.body;
 
         if (!title || !body || !category) {
             return res.status(400).json({
@@ -28,7 +33,13 @@ const createContentController = async (req, res) => {
             });
         }
 
-        const content = await addContent(title, body, category, source);
+        const content = await addContent(
+            title,
+            body,
+            category,
+            source,
+            req.file || null
+        );
 
         return res.status(201).json({
             success: true,
@@ -37,13 +48,33 @@ const createContentController = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('createContentController error:', error);
+        console.error(
+            'createContentController error:',
+            error
+        );
 
-        if (error.message.startsWith('Category must be one of')) {
-            return res.status(400).json({ success: false, message: error.message });
+        if (
+            error.message.startsWith(
+                'Category must be one of'
+            )
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: error.message
+            });
         }
 
-        return res.status(500).json({ success: false, message: 'Internal server error' });
+        if (error.statusCode) {
+            return res.status(error.statusCode).json({
+                success: false,
+                message: error.message
+            });
+        }
+
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
     }
 };
 
@@ -55,8 +86,12 @@ const createContentController = async (req, res) => {
  */
 const getAllContentController = async (req, res) => {
     try {
-        const { status } = req.query;
-        const content = await getAllContent(status);
+        const {
+            status
+        } = req.query;
+
+        const content =
+            await getAllContent(status);
 
         return res.status(200).json({
             success: true,
@@ -65,8 +100,15 @@ const getAllContentController = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('getAllContentController error:', error);
-        return res.status(500).json({ success: false, message: 'Internal server error' });
+        console.error(
+            'getAllContentController error:',
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
     }
 };
 
@@ -77,8 +119,16 @@ const getAllContentController = async (req, res) => {
  */
 const updateContentController = async (req, res) => {
     try {
-        const { id } = req.params;
-        const { title, body, category, source } = req.body;
+        const {
+            id
+        } = req.params;
+
+        const {
+            title,
+            body,
+            category,
+            source
+        } = req.body;
 
         if (!title || !body || !category) {
             return res.status(400).json({
@@ -87,7 +137,14 @@ const updateContentController = async (req, res) => {
             });
         }
 
-        const content = await editContent(id, title, body, category, source);
+        const content = await editContent(
+            id,
+            title,
+            body,
+            category,
+            source,
+            req.file || null
+        );
 
         return res.status(200).json({
             success: true,
@@ -96,17 +153,43 @@ const updateContentController = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('updateContentController error:', error);
+        console.error(
+            'updateContentController error:',
+            error
+        );
 
-        if (error.message === 'Content not found') {
-            return res.status(404).json({ success: false, message: error.message });
+        if (
+            error.message ===
+            'Content not found'
+        ) {
+            return res.status(404).json({
+                success: false,
+                message: error.message
+            });
         }
 
-        if (error.message.startsWith('Category must be one of')) {
-            return res.status(400).json({ success: false, message: error.message });
+        if (
+            error.message.startsWith(
+                'Category must be one of'
+            )
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: error.message
+            });
         }
 
-        return res.status(500).json({ success: false, message: 'Internal server error' });
+        if (error.statusCode) {
+            return res.status(error.statusCode).json({
+                success: false,
+                message: error.message
+            });
+        }
+
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
     }
 };
 
@@ -117,8 +200,12 @@ const updateContentController = async (req, res) => {
  */
 const publishContentController = async (req, res) => {
     try {
-        const { id } = req.params;
-        const content = await publishDraftContent(id);
+        const {
+            id
+        } = req.params;
+
+        const content =
+            await publishDraftContent(id);
 
         return res.status(200).json({
             success: true,
@@ -127,17 +214,35 @@ const publishContentController = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('publishContentController error:', error);
+        console.error(
+            'publishContentController error:',
+            error
+        );
 
-        if (error.message === 'Content not found') {
-            return res.status(404).json({ success: false, message: error.message });
+        if (
+            error.message ===
+            'Content not found'
+        ) {
+            return res.status(404).json({
+                success: false,
+                message: error.message
+            });
         }
 
-        if (error.message === 'Content is already published') {
-            return res.status(400).json({ success: false, message: error.message });
+        if (
+            error.message ===
+            'Content is already published'
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: error.message
+            });
         }
 
-        return res.status(500).json({ success: false, message: 'Internal server error' });
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
     }
 };
 
@@ -148,7 +253,10 @@ const publishContentController = async (req, res) => {
  */
 const deleteContentController = async (req, res) => {
     try {
-        const { id } = req.params;
+        const {
+            id
+        } = req.params;
+
         await removeContent(id);
 
         return res.status(200).json({
@@ -157,13 +265,25 @@ const deleteContentController = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('deleteContentController error:', error);
+        console.error(
+            'deleteContentController error:',
+            error
+        );
 
-        if (error.message === 'Content not found') {
-            return res.status(404).json({ success: false, message: error.message });
+        if (
+            error.message ===
+            'Content not found'
+        ) {
+            return res.status(404).json({
+                success: false,
+                message: error.message
+            });
         }
 
-        return res.status(500).json({ success: false, message: 'Internal server error' });
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
     }
 };
 

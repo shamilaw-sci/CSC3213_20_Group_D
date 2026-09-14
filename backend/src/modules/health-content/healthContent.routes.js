@@ -9,7 +9,15 @@
 const express = require('express');
 const router = express.Router();
 
-const { isAuthenticated, authorize } = require('../../middleware/auth');
+const {
+    isAuthenticated,
+    authorize
+} = require('../../middleware/auth');
+
+const {
+    upload
+} = require('../../middleware/upload');
+
 const {
     createContentController,
     getAllContentController,
@@ -19,12 +27,40 @@ const {
 } = require('./healthContent.controller');
 
 // Admin-only modifying routes
-router.post('/', isAuthenticated, authorize('admin'), createContentController);
-router.put('/:id', isAuthenticated, authorize('admin'), updateContentController);
-router.post('/:id/publish', isAuthenticated, authorize('admin'), publishContentController);
-router.delete('/:id', isAuthenticated, authorize('admin'), deleteContentController);
+router.post(
+    '/',
+    isAuthenticated,
+    authorize('admin'),
+    upload.single('image'),
+    createContentController
+);
+
+router.put(
+    '/:id',
+    isAuthenticated,
+    authorize('admin'),
+    upload.single('image'),
+    updateContentController
+);
+
+router.post(
+    '/:id/publish',
+    isAuthenticated,
+    authorize('admin'),
+    publishContentController
+);
+
+router.delete(
+    '/:id',
+    isAuthenticated,
+    authorize('admin'),
+    deleteContentController
+);
 
 // Public route so the Patient Dashboard can fetch the articles
-router.get('/', getAllContentController);
+router.get(
+    '/',
+    getAllContentController
+);
 
 module.exports = router;

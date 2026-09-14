@@ -13,7 +13,90 @@ const {
     deleteContent
 } = require('./healthContent.repository');
 
-const VALID_CATEGORIES = ['first-aid', 'vaccine', 'nutrition', 'mental-health', 'dengue-alert'];
+const { supabase } = require('../../config/supabase');
+
+const VALID_CATEGORIES = [
+    'first-aid',
+    'vaccine',
+    'nutrition',
+    'mental-health',
+    'dengue-alert'
+];
+
+const CONTENT_IMAGE_BUCKET = 'health-content-images';
+
+const IMAGE_EXTENSIONS = {
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/webp': 'webp'
+};
+
+/**
+ * Uploads an optional health-content image to Supabase Storage.
+ * @param {object|null} file - Multer file object
+ * @returns {Promise<string|null>} Public image URL or null when no file is provided
+ */
+const uploadContentImage = async (file) => {
+    if (!file) {
+        return null;
+    }
+
+    const extension = IMAGE_EXTENSIONS[file.mimetype];
+
+    if (!extension) {
+        const error = new Error(
+            'Article image must be a JPEG, PNG, or WebP file'
+        );
+
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const storagePath =
+        `articles/${Date.now()}-${Math.random()
+            .toString(36)
+            .slice(2, 10)}.${extension}`;
+
+    const { error: uploadError } = await supabase.storage
+        .from(CONTENT_IMAGE_BUCKET)
+        .upload(
+            storagePath,
+            file.buffer,
+            {
+                contentType: file.mimetype,
+                upsert: false
+            }
+        );
+
+    if (uploadError) {
+        console.error(
+            'Health content image upload error:',
+            uploadError
+        );
+
+        const error = new Error(
+            'Failed to upload article image'
+        );
+
+        error.statusCode = 500;
+        throw error;
+    }
+
+    const { data: publicUrlData } = supabase.storage
+        .from(CONTENT_IMAGE_BUCKET)
+        .getPublicUrl(storagePath);
+
+    if (!publicUrlData?.publicUrl) {
+        const error = new Error(
+            'Failed to generate article image URL'
+        );
+
+        error.statusCode = 500;
+        throw error;
+    }
+
+    return publicUrlData.publicUrl;
+};
 
 /**
  * Creates a new draft health content item.
@@ -21,13 +104,32 @@ const VALID_CATEGORIES = ['first-aid', 'vaccine', 'nutrition', 'mental-health', 
  * @param {string} body
  * @param {string} category
  * @param {string} source
+ * @param {object|null} file - Optional Multer image file
  * @returns {Promise<object>} Created content
  */
-const addContent = async (title, body, category, source) => {
+const addContent = async (
+    title,
+    body,
+    category,
+    source,
+    file = null
+) => {
     if (!VALID_CATEGORIES.includes(category)) {
-        throw new Error(`Category must be one of: ${VALID_CATEGORIES.join(', ')}`);
+        throw new Error(
+            `Category must be one of: ${VALID_CATEGORIES.join(', ')}`
+        );
     }
-    return await createContent(title, body, category, source);
+
+    const imageUrl =
+        await uploadContentImage(file);
+
+    return await createContent(
+        title,
+        body,
+        category,
+        source,
+        imageUrl
+    );
 };
 
 /**
@@ -41,24 +143,49 @@ const getAllContent = async (status) => {
 
 /**
  * Edits an existing content item.
+ * If no new image file is supplied, the currently stored image is preserved.
  * @param {string} id
  * @param {string} title
  * @param {string} body
  * @param {string} category
  * @param {string} source
+ * @param {object|null} file - Optional replacement Multer image file
  * @returns {Promise<object>} Updated content
  */
-const editContent = async (id, title, body, category, source) => {
-    const existing = await findContentById(id);
+const editContent = async (
+    id,
+    title,
+    body,
+    category,
+    source,
+    file = null
+) => {
+    const existing =
+        await findContentById(id);
+
     if (!existing) {
-        throw new Error('Content not found');
+        throw new Error(
+            'Content not found'
+        );
     }
 
     if (!VALID_CATEGORIES.includes(category)) {
-        throw new Error(`Category must be one of: ${VALID_CATEGORIES.join(', ')}`);
+        throw new Error(
+            `Category must be one of: ${VALID_CATEGORIES.join(', ')}`
+        );
     }
 
-    return await updateContent(id, title, body, category, source);
+    const imageUrl =
+        await uploadContentImage(file);
+
+    return await updateContent(
+        id,
+        title,
+        body,
+        category,
+        source,
+        imageUrl
+    );
 };
 
 /**
@@ -67,13 +194,19 @@ const editContent = async (id, title, body, category, source) => {
  * @returns {Promise<object>} Updated content
  */
 const publishDraftContent = async (id) => {
-    const existing = await findContentById(id);
+    const existing =
+        await findContentById(id);
+
     if (!existing) {
-        throw new Error('Content not found');
+        throw new Error(
+            'Content not found'
+        );
     }
 
     if (existing.status === 'published') {
-        throw new Error('Content is already published');
+        throw new Error(
+            'Content is already published'
+        );
     }
 
     return await publishContent(id);
@@ -85,12 +218,22 @@ const publishDraftContent = async (id) => {
  * @returns {Promise<void>}
  */
 const removeContent = async (id) => {
-    const existing = await findContentById(id);
+    const existing =
+        await findContentById(id);
+
     if (!existing) {
-        throw new Error('Content not found');
+        throw new Error(
+            'Content not found'
+        );
     }
 
     await deleteContent(id);
 };
 
-module.exports = { addContent, getAllContent, editContent, publishDraftContent, removeContent };
+module.exports = {
+    addContent,
+    getAllContent,
+    editContent,
+    publishDraftContent,
+    removeContent
+};
