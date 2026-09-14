@@ -43,6 +43,10 @@ import {
   Users
 } from 'lucide-react';
 
+import {
+  QRCodeSVG,
+} from 'qrcode.react';
+
 import { 
   getPatientProfile, 
   updatePatientProfile, 
@@ -80,10 +84,11 @@ import Spinner from '../../components/common/Spinner';
 import Alert from '../../components/common/Alert';
 import Modal from '../../components/common/Modal'; 
 import HealthAwarenessFeed from '../../components/common/HealthAwarenessFeed';
+import PageHeader from '../../components/common/PageHeader';
 
 /**
  * Fetches the currently logged-in patient's real ID from the session,
- * replacing what used to be a hardcoded TEST_PATIENT_ID.
+ * replacing what used to be a hardcoded test patient ID.
  */
 const usePatientId = () => {
   const [patientId, setPatientId] = useState(null);
@@ -314,14 +319,14 @@ const SEVERITY_STYLES = {
     text: 'text-destructive',
     label: 'Severe'
   },
-  moderate: {
-    bg: 'bg-orange-100',
-    text: 'text-orange-700',
+    moderate: {
+    bg: 'bg-urgent/10',
+    text: 'text-urgent-foreground',
     label: 'Moderate'
   },
   mild: {
-    bg: 'bg-green-100',
-    text: 'text-green-700',
+    bg: 'bg-success/10',
+    text: 'text-success',
     label: 'Mild'
   },
 };
@@ -349,36 +354,35 @@ const ProfileField = ({
   icon: Icon,
   label,
   value
-}) => Icon ? (
-  <div className="flex items-start gap-3">
-    <div className="mt-0.5 p-2 bg-secondary rounded-lg">
-      <Icon
-        size={16}
-        className="text-primary"
-      />
+}) => (
+  <div className="rounded-xl bg-secondary/45 p-4">
+
+    <div className="flex items-start gap-3">
+
+      {Icon && (
+        <div className="w-9 h-9 rounded-xl bg-module-soft text-primary flex items-center justify-center shrink-0">
+
+          <Icon
+            size={16}
+          />
+
+        </div>
+      )}
+
+      <div className="min-w-0">
+
+        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+          {label}
+        </p>
+
+        <p className="text-sm font-semibold text-foreground mt-1 break-words">
+          {value || '—'}
+        </p>
+
+      </div>
+
     </div>
 
-    <div>
-      <p className="text-xs text-muted-foreground uppercase tracking-wide">
-        {label}
-      </p>
-
-      <p className="text-sm font-medium text-foreground mt-0.5">
-        {value || '—'}
-      </p>
-    </div>
-  </div>
-) : (
-  <div className="flex items-start gap-3">
-    <div>
-      <p className="text-xs text-muted-foreground uppercase tracking-wide">
-        {label}
-      </p>
-
-      <p className="text-sm font-medium text-foreground mt-0.5">
-        {value || '—'}
-      </p>
-    </div>
   </div>
 );
 
@@ -430,7 +434,7 @@ const BannerAnimationStyles = () => (
 // ─── Main Page Component ──────────────────────────────────────────────────────
 const PatientProfilePage = () => {
   const {
-    patientId: TEST_PATIENT_ID,
+    patientId,
     loading: patientIdLoading
   } = usePatientId();
 
@@ -829,14 +833,14 @@ const PatientProfilePage = () => {
   } = useQuery({
     queryKey: [
       'patient',
-      TEST_PATIENT_ID
+      patientId
     ],
     queryFn: () =>
       getPatientProfile(
-        TEST_PATIENT_ID
+        patientId
       ),
     enabled:
-      !!TEST_PATIENT_ID,
+      !!patientId,
   });
 
   const {
@@ -846,11 +850,11 @@ const PatientProfilePage = () => {
   } = useQuery({
     queryKey: [
       'allergies',
-      TEST_PATIENT_ID
+      patientId
     ],
     queryFn: () =>
       getAllergies(
-        TEST_PATIENT_ID
+        patientId
       ),
     enabled:
       !!patient,
@@ -863,11 +867,11 @@ const PatientProfilePage = () => {
   } = useQuery({
     queryKey: [
       'conditions',
-      TEST_PATIENT_ID
+      patientId
     ],
     queryFn: () =>
       getConditions(
-        TEST_PATIENT_ID
+        patientId
       ),
     enabled:
       !!patient,
@@ -880,11 +884,11 @@ const PatientProfilePage = () => {
   } = useQuery({
     queryKey: [
       'medical-devices',
-      TEST_PATIENT_ID
+      patientId
     ],
     queryFn: () =>
       getMedicalDevices(
-        TEST_PATIENT_ID
+        patientId
       ),
     enabled:
       !!patient,
@@ -897,11 +901,11 @@ const PatientProfilePage = () => {
   } = useQuery({
     queryKey: [
       'health-background',
-      TEST_PATIENT_ID
+      patientId
     ],
     queryFn: () =>
       getHealthBackground(
-        TEST_PATIENT_ID
+        patientId
       ),
     enabled:
       !!patient,
@@ -915,11 +919,11 @@ const PatientProfilePage = () => {
   } = useQuery({
     queryKey: [
       'family-history',
-      TEST_PATIENT_ID
+      patientId
     ],
     queryFn: () =>
       getFamilyHistory(
-        TEST_PATIENT_ID
+        patientId
       ),
     enabled:
       !!patient,
@@ -932,11 +936,11 @@ const PatientProfilePage = () => {
   } = useQuery({
     queryKey: [
       'vaccinations',
-      TEST_PATIENT_ID
+      patientId
     ],
     queryFn: () =>
       getVaccinations(
-        TEST_PATIENT_ID
+        patientId
       ),
     enabled:
       !!patient,
@@ -949,11 +953,11 @@ const PatientProfilePage = () => {
   } = useQuery({ 
     queryKey: [
       'consent',
-      TEST_PATIENT_ID
+      patientId
     ], 
     queryFn: () =>
       getConsentSettings(
-        TEST_PATIENT_ID
+        patientId
       ), 
     enabled:
       !!patient 
@@ -975,7 +979,7 @@ const PatientProfilePage = () => {
       mutationFn:
         (data) =>
           updatePatientProfile(
-            TEST_PATIENT_ID,
+            patientId,
             data
           ),
 
@@ -986,7 +990,7 @@ const PatientProfilePage = () => {
           queryClient.setQueryData(
             [
               'patient',
-              TEST_PATIENT_ID
+              patientId
             ],
             updatedPatient
           );
@@ -1012,7 +1016,7 @@ const PatientProfilePage = () => {
       mutationFn:
         (file) =>
           uploadPatientPhoto(
-            TEST_PATIENT_ID,
+            patientId,
             file
           ),
 
@@ -1023,7 +1027,7 @@ const PatientProfilePage = () => {
           queryClient.setQueryData(
             [
               'patient',
-              TEST_PATIENT_ID
+              patientId
             ],
             updatedPatient
           );
@@ -1046,7 +1050,7 @@ const PatientProfilePage = () => {
       mutationFn:
         (data) =>
           addAllergy(
-            TEST_PATIENT_ID,
+            patientId,
             data.allergen,
             data.severity,
             data.notes
@@ -1057,7 +1061,7 @@ const PatientProfilePage = () => {
           queryClient.invalidateQueries({
             queryKey: [
               'allergies',
-              TEST_PATIENT_ID
+              patientId
             ]
           });
 
@@ -1086,7 +1090,7 @@ const PatientProfilePage = () => {
       mutationFn:
         (allergyId) =>
           deleteAllergy(
-            TEST_PATIENT_ID,
+            patientId,
             allergyId
           ),
 
@@ -1095,7 +1099,7 @@ const PatientProfilePage = () => {
           queryClient.invalidateQueries({
             queryKey: [
               'allergies',
-              TEST_PATIENT_ID
+              patientId
             ]
           });
 
@@ -1124,7 +1128,7 @@ const PatientProfilePage = () => {
       mutationFn:
         (data) =>
           addCondition(
-            TEST_PATIENT_ID,
+            patientId,
             data.condition,
             data.diagnosedAt,
             data.notes,
@@ -1136,7 +1140,7 @@ const PatientProfilePage = () => {
           queryClient.invalidateQueries({
             queryKey: [
               'conditions',
-              TEST_PATIENT_ID
+              patientId
             ]
           });
 
@@ -1166,7 +1170,7 @@ const PatientProfilePage = () => {
       mutationFn:
         (conditionId) =>
           deleteCondition(
-            TEST_PATIENT_ID,
+            patientId,
             conditionId
           ),
 
@@ -1175,7 +1179,7 @@ const PatientProfilePage = () => {
           queryClient.invalidateQueries({
             queryKey: [
               'conditions',
-              TEST_PATIENT_ID
+              patientId
             ]
           });
 
@@ -1204,7 +1208,7 @@ const PatientProfilePage = () => {
       mutationFn:
         (deviceData) =>
           addMedicalDevice(
-            TEST_PATIENT_ID,
+            patientId,
             deviceData
           ),
 
@@ -1213,7 +1217,7 @@ const PatientProfilePage = () => {
           queryClient.invalidateQueries({
             queryKey: [
               'medical-devices',
-              TEST_PATIENT_ID
+              patientId
             ]
           });
 
@@ -1247,7 +1251,7 @@ const PatientProfilePage = () => {
       mutationFn:
         (deviceId) =>
           deleteMedicalDevice(
-            TEST_PATIENT_ID,
+            patientId,
             deviceId
           ),
 
@@ -1256,7 +1260,7 @@ const PatientProfilePage = () => {
           queryClient.invalidateQueries({
             queryKey: [
               'medical-devices',
-              TEST_PATIENT_ID
+              patientId
             ]
           });
 
@@ -1286,7 +1290,7 @@ const PatientProfilePage = () => {
       mutationFn:
         (backgroundData) =>
           addHealthBackground(
-            TEST_PATIENT_ID,
+            patientId,
             backgroundData
           ),
 
@@ -1295,7 +1299,7 @@ const PatientProfilePage = () => {
           queryClient.invalidateQueries({
             queryKey: [
               'health-background',
-              TEST_PATIENT_ID
+              patientId
             ]
           });
 
@@ -1331,7 +1335,7 @@ const PatientProfilePage = () => {
       mutationFn:
         (backgroundId) =>
           deleteHealthBackground(
-            TEST_PATIENT_ID,
+            patientId,
             backgroundId
           ),
 
@@ -1340,7 +1344,7 @@ const PatientProfilePage = () => {
           queryClient.invalidateQueries({
             queryKey: [
               'health-background',
-              TEST_PATIENT_ID
+              patientId
             ]
           });
 
@@ -1371,7 +1375,7 @@ const PatientProfilePage = () => {
       mutationFn:
         (familyHistoryData) =>
           addFamilyHistory(
-            TEST_PATIENT_ID,
+            patientId,
             familyHistoryData
           ),
 
@@ -1380,7 +1384,7 @@ const PatientProfilePage = () => {
           queryClient.invalidateQueries({
             queryKey: [
               'family-history',
-              TEST_PATIENT_ID
+              patientId
             ]
           });
 
@@ -1415,7 +1419,7 @@ const PatientProfilePage = () => {
       mutationFn:
         (familyHistoryId) =>
           deleteFamilyHistory(
-            TEST_PATIENT_ID,
+            patientId,
             familyHistoryId
           ),
 
@@ -1424,7 +1428,7 @@ const PatientProfilePage = () => {
           queryClient.invalidateQueries({
             queryKey: [
               'family-history',
-              TEST_PATIENT_ID
+              patientId
             ]
           });
 
@@ -1454,7 +1458,7 @@ const PatientProfilePage = () => {
       mutationFn:
         (data) =>
           addBulkVaccinations(
-            TEST_PATIENT_ID,
+            patientId,
             data.vaccinations
           ),
 
@@ -1463,7 +1467,7 @@ const PatientProfilePage = () => {
           queryClient.invalidateQueries({
             queryKey: [
               'vaccinations',
-              TEST_PATIENT_ID
+              patientId
             ]
           });
 
@@ -1500,7 +1504,7 @@ const PatientProfilePage = () => {
           vaccinationId
         ) =>
           deleteVaccination(
-            TEST_PATIENT_ID,
+            patientId,
             vaccinationId
           ),
 
@@ -1509,7 +1513,7 @@ const PatientProfilePage = () => {
           queryClient.invalidateQueries({
             queryKey: [
               'vaccinations',
-              TEST_PATIENT_ID
+              patientId
             ]
           });
 
@@ -1538,7 +1542,7 @@ const PatientProfilePage = () => {
       mutationFn:
         (file) =>
           scanVaccinationCard(
-            TEST_PATIENT_ID,
+            patientId,
             file
           ),
 
@@ -1600,7 +1604,7 @@ const PatientProfilePage = () => {
           newCategories
         ) =>
           updateConsentSettings(
-            TEST_PATIENT_ID,
+            patientId,
             newCategories
           ),
 
@@ -1609,7 +1613,7 @@ const PatientProfilePage = () => {
           queryClient.invalidateQueries({
             queryKey: [
               'consent',
-              TEST_PATIENT_ID
+              patientId
             ]
           });
 
@@ -2038,20 +2042,31 @@ const PatientProfilePage = () => {
   );
 
   // ── Render States ──
-  if (
-    patientIdLoading ||
-    isLoading
-  ) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Spinner size="lg" />
-      </div>
-    );
-  }
+if (
+  patientIdLoading ||
+  isLoading
+) {
+  return (
+    <div className="min-h-[55vh] flex flex-col items-center justify-center gap-3">
 
-  if (isError) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <Spinner
+        size="lg"
+      />
+
+      <p className="text-sm text-muted-foreground">
+        Loading your health profile...
+      </p>
+
+    </div>
+  );
+}
+
+if (isError) {
+  return (
+    <div className="min-h-[55vh] flex items-center justify-center px-4">
+
+      <div className="w-full max-w-md">
+
         <Alert
           type="error"
           message={
@@ -2059,131 +2074,242 @@ const PatientProfilePage = () => {
             'Failed to load profile.'
           }
         />
+
       </div>
-    );
-  }
+
+    </div>
+  );
+}
 
   return (
-    <div className="min-h-screen bg-background pb-12">
+    <div className="space-y-7 pb-10">
 
       <BannerAnimationStyles />
 
-      {/* ── Ultra-Clean Page Header ── */}
-      <div className="relative overflow-hidden bg-card border-b border-border px-6 py-8">
-        <div className="max-w-4xl mx-auto flex items-center justify-between relative z-10">
+<PageHeader
+  eyebrow="Patient Portal"
+  icon={User}
+  mobileSideBySide
+  title={
+    <>
+      Welcome back,{' '}
+      {getFirstName(
+        patient?.full_name
+      )}
+    </>
+  }
+  description="Manage your personal health information"
+  actions={
+    <div className="flex items-center gap-3">
 
-          <div className="flex items-center gap-5">
+      {/* Profile photo */}
+      <div className="relative w-12 h-12 sm:w-16 sm:h-16 shrink-0">
 
-            <div className="relative w-24 h-24 shrink-0">
+        <div className="cu-glow-ring absolute inset-0" />
 
-              <div className="cu-glow-ring absolute inset-0" />
+        <img
+          src={
+            getAvatarSrc(
+              patient
+            )
+          }
+          alt="Profile"
+          className="
+            cu-avatar-pop
+            w-12 h-12
+            sm:w-16 sm:h-16
+            rounded-full
+            border-2 border-white/25
+            shadow-lg
+            object-cover
+          "
+        />
 
-              <img
-                src={
-                  getAvatarSrc(
-                    patient
-                  )
-                }
-                alt="Profile"
-                className="cu-avatar-pop w-24 h-24 rounded-full border border-border shadow-sm object-cover"
-              />
+        {uploadPhotoMutation.isPending && (
+          <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center">
 
-              {uploadPhotoMutation.isPending && (
-                <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center">
-                  <Spinner
-                    size="sm"
-                    color="text-white"
-                  />
-                </div>
-              )}
-
-              {isEditing && (
-                <button
-                  type="button"
-                  onClick={
-                    handlePhotoButtonClick
-                  }
-                  disabled={
-                    uploadPhotoMutation.isPending
-                  }
-                  title="Change profile photo"
-                  className="absolute -bottom-0.5 -right-0.5 p-2 bg-card rounded-full shadow-sm border border-border hover:bg-secondary transition-colors disabled:opacity-50"
-                >
-                  <Camera
-                    size={14}
-                    className="text-primary"
-                  />
-                </button>
-              )}
-
-              <input
-                ref={
-                  photoInputRef
-                }
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="hidden"
-                onChange={
-                  handlePhotoFileChange
-                }
-              />
-
-            </div>
-
-            <div>
-
-              <p className="cu-fade-slide-up text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">
-                My Profile
-              </p>
-
-              <h1
-                className="cu-fade-slide-up text-2xl font-bold text-foreground"
-                style={{
-                  animationDelay:
-                    '80ms'
-                }}
-              >
-                Welcome back,{' '}
-                {getFirstName(
-                  patient?.full_name
-                )}
-              </h1>
-
-              <p
-                className="cu-fade-slide-up text-sm mt-1 text-muted-foreground"
-                style={{
-                  animationDelay:
-                    '150ms'
-                }}
-              >
-                Manage your personal health information
-              </p>
-
-            </div>
+            <Spinner
+              size="sm"
+            />
 
           </div>
+        )}
 
-          <div
-            className="cu-fade-slide-up hidden sm:block bg-secondary rounded-xl px-4 py-2 text-right"
-            style={{
-              animationDelay:
-                '250ms'
-            }}
+        {isEditing && (
+          <button
+            type="button"
+            onClick={
+              handlePhotoButtonClick
+            }
+            disabled={
+              uploadPhotoMutation.isPending
+            }
+            title="Change profile photo"
+            className="
+              absolute
+              -bottom-1 -right-1
+              w-7 h-7
+              rounded-full
+              bg-white
+              text-primary
+              shadow-md
+              flex items-center justify-center
+              hover:bg-white/90
+              transition-colors
+              disabled:opacity-50
+            "
           >
-            <p className="text-xs text-muted-foreground uppercase tracking-wide">
-              Patient ID
-            </p>
+            <Camera
+              size={13}
+            />
+          </button>
+        )}
 
-            <p className="text-sm font-mono font-semibold text-foreground">
-              {patient?.qr_code_id ||
-                '—'}
-            </p>
-          </div>
+        <input
+          ref={
+            photoInputRef
+          }
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={
+            handlePhotoFileChange
+          }
+        />
 
-        </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
+      {/* Edit action */}
+      {!isEditing ? (
+        <button
+          type="button"
+          onClick={
+            handleEditClick
+          }
+          className="
+            inline-flex
+            items-center
+            gap-2
+            px-3.5 py-2.5
+            rounded-xl
+            bg-white/10
+            border border-white/20
+            text-white
+            text-xs
+            sm:text-sm
+            font-semibold
+            backdrop-blur-sm
+            hover:bg-white/15
+            hover:border-white/30
+            transition-all
+            focus:outline-none
+            focus:ring-2
+            focus:ring-white/30
+          "
+        >
+          <Edit2
+            size={15}
+          />
+
+          Edit Profile
+        </button>
+      ) : (
+        <div
+          className="
+            inline-flex
+            items-center
+            gap-2
+            px-3.5 py-2.5
+            rounded-xl
+            bg-white/10
+            border border-white/20
+            text-white/90
+            text-xs
+            sm:text-sm
+            font-semibold
+            backdrop-blur-sm
+          "
+        >
+          <Edit2
+            size={15}
+          />
+
+          Editing
+        </div>
+      )}
+
+    </div>
+  }
+  meta={
+    patient?.qr_code_id ? (
+      <div className="flex items-center gap-3 sm:gap-4">
+
+        <div
+          className="
+            bg-white
+            rounded-xl
+            shrink-0
+          "
+        >
+          <QRCodeSVG
+            value={
+              patient.qr_code_id
+            }
+            size={92}
+            level="M"
+            bgColor="#FFFFFF"
+            fgColor="#0F172A"
+            className="
+              w-[76px] h-[76px]
+              sm:w-[92px] sm:h-[92px]
+            "
+          />
+        </div>
+
+        {/* Keep text on tablet / desktop.
+            Mobile only needs the QR itself. */}
+        <div className="hidden sm:block min-w-0">
+
+          <p
+            className="
+              text-[10px]
+              font-bold
+              uppercase
+              tracking-[0.12em]
+              text-primary
+            "
+          >
+            My Care4U QR
+          </p>
+
+          <p className="text-sm font-bold text-foreground mt-1">
+            Patient Identity
+          </p>
+
+          <p
+            className="
+              text-xs
+              text-muted-foreground
+              mt-1
+              leading-relaxed
+              max-w-[145px]
+            "
+          >
+            Show this QR to your doctor or pharmacist.
+          </p>
+
+        </div>
+
+      </div>
+    ) : (
+      <p className="text-xs text-muted-foreground">
+        QR unavailable
+      </p>
+    )
+  }
+/>
+
+      <div className="space-y-7">
         
         {!isEditing && (
           <HealthAwarenessFeed
@@ -2195,10 +2321,11 @@ const PatientProfilePage = () => {
 
         {/* ── View vs Edit Mode for Personal Info ── */}
         {!isEditing ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-6">
 
             <Card title="Personal Information">
-              <div className="pt-3 space-y-4">
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
                 <ProfileField
                   icon={User}
@@ -2245,10 +2372,12 @@ const PatientProfilePage = () => {
                 />
 
               </div>
+
             </Card>
 
             <Card title="Emergency Contact">
-              <div className="pt-3 space-y-4">
+
+              <div className="space-y-3">
 
                 <ProfileField
                   icon={User}
@@ -2267,7 +2396,7 @@ const PatientProfilePage = () => {
                 />
 
                 <ProfileField
-                  icon={User}
+                  icon={Users}
                   label="Relationship"
                   value={
                     capitalise(
@@ -2277,6 +2406,7 @@ const PatientProfilePage = () => {
                 />
 
               </div>
+
             </Card>
 
           </div>
@@ -2297,7 +2427,7 @@ const PatientProfilePage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
               <Card title="Personal Information">
-                <div className="pt-3 space-y-4">
+                <div className="space-y-4">
 
                   <Input
                     label="Full Name"
@@ -2367,7 +2497,7 @@ const PatientProfilePage = () => {
               </Card>
 
               <Card title="Emergency Contact">
-                <div className="pt-3 space-y-4">
+                <div className="space-y-4">
 
                   <Input
                     label="Contact Name"
@@ -2481,7 +2611,7 @@ const PatientProfilePage = () => {
 
           {/* ── Chronic Conditions ── */}
           <Card title="Chronic Conditions">
-            <div className="pt-3">
+            <div>
 
               {conditionsLoading ? (
                 <div className="py-4 flex justify-center">
@@ -2519,7 +2649,7 @@ const PatientProfilePage = () => {
                         key={
                           condition.id
                         }
-                        className="group flex items-start justify-between p-4 rounded-xl border border-border bg-card shadow-sm transition-all hover:border-slate-300"
+                        className="group flex items-start justify-between gap-4 p-4 rounded-xl bg-secondary/45 transition-colors hover:bg-secondary/65"
                       >
 
                         <div>
@@ -2586,7 +2716,7 @@ const PatientProfilePage = () => {
                 <div className="mt-5 flex justify-center">
 
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     onClick={() =>
                       setIsAddConditionModalOpen(
                         true
@@ -2609,7 +2739,7 @@ const PatientProfilePage = () => {
 
           {/* ── Known Allergies ── */}
           <Card title="Known Allergies">
-            <div className="pt-3">
+            <div>
 
               {allergiesLoading ? (
                 <div className="py-4 flex justify-center">
@@ -2647,7 +2777,7 @@ const PatientProfilePage = () => {
                         key={
                           allergy.id
                         } 
-                        className="group flex items-start justify-between p-4 rounded-xl border border-border bg-card shadow-sm transition-all hover:border-slate-300"
+                        className="group flex items-start justify-between gap-4 p-4 rounded-xl bg-secondary/45 transition-colors hover:bg-secondary/65"
                       >
 
                         <div>
@@ -2707,7 +2837,7 @@ const PatientProfilePage = () => {
                 <div className="mt-5 flex justify-center">
 
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     onClick={() => {
                       setAllergySuggestions(
                         searchAllergens('')
@@ -2735,7 +2865,7 @@ const PatientProfilePage = () => {
         </div>
 
         {/* ── Medical Devices & Implants ── */}
-        <div className="mb-6">
+        <div>
 
           <Card
             title={
@@ -2749,9 +2879,9 @@ const PatientProfilePage = () => {
             }
           >
 
-            <div className="pt-3">
+            <div>
 
-              <div className="mb-4 p-4 rounded-xl bg-primary/5 border border-primary/15">
+              <div className="mb-4 p-4 rounded-xl bg-module-soft/60">
 
                 <div className="flex items-start gap-3">
 
@@ -2820,7 +2950,7 @@ const PatientProfilePage = () => {
                         key={
                           device.id
                         }
-                        className="relative p-4 rounded-xl border border-border bg-card shadow-sm hover:border-primary/30 transition-all"
+                        className="relative p-4 rounded-xl bg-secondary/45 transition-colors hover:bg-secondary/65"
                       >
 
                         <div className="flex items-start gap-3 pr-8">
@@ -2910,7 +3040,7 @@ const PatientProfilePage = () => {
                 <div className="mt-5 flex justify-center">
 
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     onClick={() => {
                       setDeviceNameInput('');
                       setDeviceTypeInput('');
@@ -2943,7 +3073,7 @@ const PatientProfilePage = () => {
         </div>
 
         {/* ── Important Medical Background ── */}
-        <div className="mb-6">
+        <div>
 
           <Card
             title={
@@ -2957,9 +3087,9 @@ const PatientProfilePage = () => {
             }
           >
 
-            <div className="pt-3">
+            <div>
 
-              <div className="mb-4 p-4 rounded-xl bg-primary/5 border border-primary/15">
+              <div className="mb-4 p-4 rounded-xl bg-module-soft/60">
 
                 <div className="flex items-start gap-3">
 
@@ -3028,7 +3158,7 @@ const PatientProfilePage = () => {
                         key={
                           background.id
                         }
-                        className="relative p-4 rounded-xl border border-border bg-card shadow-sm hover:border-primary/30 transition-all"
+                        className="relative p-4 rounded-xl bg-secondary/45 transition-colors hover:bg-secondary/65"
                       >
 
                         <div className="flex items-start gap-3 pr-8">
@@ -3116,7 +3246,7 @@ const PatientProfilePage = () => {
                 <div className="mt-5 flex justify-center">
 
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     onClick={() => {
                       setBackgroundTypeInput(
                         'major_surgery'
@@ -3152,7 +3282,7 @@ const PatientProfilePage = () => {
 
 
         {/* ── Family Medical History ── */}
-        <div className="mb-6">
+        <div>
 
           <Card
             title={
@@ -3166,9 +3296,9 @@ const PatientProfilePage = () => {
             }
           >
 
-            <div className="pt-3">
+            <div>
 
-              <div className="mb-4 p-4 rounded-xl bg-primary/5 border border-primary/15">
+              <div className="mb-4 p-4 rounded-xl bg-module-soft/60">
 
                 <div className="flex items-start gap-3">
 
@@ -3237,7 +3367,7 @@ const PatientProfilePage = () => {
                         key={
                           history.id
                         }
-                        className="relative p-4 rounded-xl border border-border bg-card shadow-sm hover:border-primary/30 transition-all"
+                        className="relative p-4 rounded-xl bg-secondary/45 transition-colors hover:bg-secondary/65"
                       >
 
                         <div className="flex items-start gap-3 pr-8">
@@ -3316,7 +3446,7 @@ const PatientProfilePage = () => {
                 <div className="mt-5 flex justify-center">
 
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     onClick={() => {
                       setFamilyRelationInput(
                         'mother'
@@ -3350,7 +3480,7 @@ const PatientProfilePage = () => {
         </div>
 
         {/* ── Vaccination Records (CARE4U-148) ── */}
-        <div className="mb-6">
+        <div>
 
           <Card
             title={
@@ -3364,7 +3494,7 @@ const PatientProfilePage = () => {
             }
           >
 
-            <div className="pt-3">
+            <div>
 
               {vaccinationsLoading ? (
 
@@ -3403,7 +3533,7 @@ const PatientProfilePage = () => {
                         key={
                           vaccine.id
                         }
-                        className="group relative flex flex-col p-4 rounded-xl border border-border bg-card shadow-sm transition-all hover:border-slate-300"
+                        className="group relative flex flex-col p-4 rounded-xl bg-secondary/45 transition-colors hover:bg-secondary/65"
                       >
 
                         <div className="flex justify-between items-start pr-8">
@@ -3477,7 +3607,7 @@ const PatientProfilePage = () => {
                 <div className="mt-5 flex justify-center">
 
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     onClick={() => { 
                       setBulkVaccines([
                         {
@@ -3512,7 +3642,7 @@ const PatientProfilePage = () => {
         </div>
 
         {/* ── NEW: Privacy & Consent Controls (Epic 8.12) ── */}
-        <div className="mb-6">
+        <div>
 
           <Card
             title={
@@ -3526,7 +3656,7 @@ const PatientProfilePage = () => {
             }
           >
 
-            <div className="pt-3">
+            <div>
 
               <p className="text-sm text-muted-foreground mb-4">
                 Lock specific medical record categories. Doctors will require your explicit permission to view locked records.
@@ -3556,7 +3686,7 @@ const PatientProfilePage = () => {
                           key={
                             category
                           }
-                          className="flex items-center justify-between p-4 rounded-xl border border-border bg-card shadow-sm transition-all hover:border-slate-300"
+                          className="flex items-center justify-between gap-4 p-4 rounded-xl bg-secondary/45 transition-colors hover:bg-secondary/65"
                         >
 
                           <div className="flex items-center gap-3">
@@ -3649,22 +3779,6 @@ const PatientProfilePage = () => {
           </Card>
 
         </div>
-
-        {!isEditing && (
-          <div className="flex justify-end">
-
-            <Button
-              variant="primary"
-              onClick={
-                handleEditClick
-              }
-            >
-              <Edit2 size={16} />
-              Edit Profile
-            </Button>
-
-          </div>
-        )}
 
       </div>
 
@@ -4665,7 +4779,7 @@ const PatientProfilePage = () => {
 
               <Button
                 type="button"
-                variant="outline"
+                variant="secondary"
                 onClick={
                   handleScanVaccineClick
                 }
@@ -4931,7 +5045,7 @@ const PatientProfilePage = () => {
 
               <Button
                 type="button"
-                variant="outline"
+                variant="secondary"
                 onClick={
                   addVaccineRow
                 }
