@@ -65,9 +65,10 @@ const HospitalNavbar = () => {
 
   return (
     <TopNavbar
-      portalLabel="Hospital Portal"
-      navItems={navItems}
-      onLogout={handleLogout}
+    portalLabel="Hospital Portal"
+    theme="hospital"
+    navItems={navItems}
+    onLogout={handleLogout}
     />
   );
 };

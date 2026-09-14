@@ -2,12 +2,15 @@
  * @file    HospitalLayout.jsx
  * @module  Hospital
  * @desc    Shared layout for authenticated hospital portal pages.
- *          Provides the Hospital navigation bar and renders the
- *          currently selected hospital page.
+ *          Applies the Hospital module theme and provides navigation
+ *          for OPD and Emergency workflows.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
-import { Outlet } from 'react-router-dom';
+import {
+  Outlet,
+} from 'react-router-dom';
+
 import HospitalNavbar from './HospitalNavbar';
 
 /**
@@ -17,12 +20,17 @@ import HospitalNavbar from './HospitalNavbar';
  */
 const HospitalLayout = () => {
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div
+      data-module="hospital"
+      className="min-h-screen bg-muted/30"
+    >
+
       <HospitalNavbar />
 
       <main>
         <Outlet />
       </main>
+
     </div>
   );
 };
