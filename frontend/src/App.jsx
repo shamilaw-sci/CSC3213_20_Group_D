@@ -26,7 +26,6 @@ import ForgotPasswordPage     from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage      from './pages/auth/ResetPasswordPage';
 import OtpVerificationPage    from './pages/auth/OtpVerificationPage';
 
-import IssuePrescriptionPage  from './pages/doctor/IssuePrescriptionPage';
 import DoctorDashboard        from './pages/doctor/DoctorDashboard';
 import AppointmentQueuePage   from './pages/doctor/AppointmentQueuePage';
 import DoctorProfilePage      from './pages/doctor/DoctorProfilePage';
@@ -389,7 +388,7 @@ function App() {
           />
         </Route>
 
-{/* --- DOCTOR ROUTES --- */}
+        {/* --- DOCTOR ROUTES --- */}
         <Route
           path="/doctor"
           element={
@@ -404,7 +403,6 @@ function App() {
           <Route path="queue" element={<AppointmentQueuePage />} />
           <Route path="consultation/:appointmentId" element={<ConsultationPage />} />
           <Route path="profile" element={<DoctorProfilePage />} />
-          <Route path="issue-prescription" element={<IssuePrescriptionPage />} />
         </Route>
 
         {/* --- PHARMACY ROUTES --- */}

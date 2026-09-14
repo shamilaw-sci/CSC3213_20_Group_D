@@ -7,7 +7,6 @@
 import {
   LayoutDashboard,
   Users,
-  FilePlus,
   UserRound,
 } from 'lucide-react';
 
@@ -42,12 +41,6 @@ export default function DoctorNavbar() {
       to: '/doctor/queue',
       label: 'Patient Queue',
       icon: Users,
-    },
-    {
-      type: 'link',
-      to: '/doctor/issue-prescription',
-      label: 'Issue Prescription',
-      icon: FilePlus,
     },
     {
       type: 'link',
