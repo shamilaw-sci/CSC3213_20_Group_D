@@ -26,19 +26,28 @@ import {
   useNavigate,
 } from 'react-router-dom';
 
+import toast from 'react-hot-toast';
+
 import {
-  ArrowLeft,
   CheckCircle2,
   ClipboardCheck,
   ClipboardList,
   Clock,
   History,
+  LayoutDashboard,
   Play,
+  RefreshCw,
+  UserRound,
   XCircle,
 } from 'lucide-react';
 
 import Badge from '../../components/common/Badge';
 import Spinner from '../../components/common/Spinner';
+import Card from '../../components/common/Card';
+import Button from '../../components/common/Button';
+import Alert from '../../components/common/Alert';
+import Modal from '../../components/common/Modal';
+import PageHeader from '../../components/common/PageHeader';
 
 import useAuthStore from '../../store/authStore';
 
@@ -53,15 +62,6 @@ const API_URL =
  */
 const AUTO_REFRESH_INTERVAL_MS =
   20000;
-
-/**
- * Shared action button styling.
- *
- * Keeps all queue actions visually consistent while
- * allowing individual actions to apply their own colors.
- */
-const ACTION_BTN =
-  'flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-xl backdrop-blur-sm border shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-offset-2';
 
 /**
  * Converts a patient's full name into initials
@@ -168,6 +168,16 @@ const AppointmentQueuePage = () => {
     setQueueError,
   ] = useState('');
 
+  const [
+    refreshing,
+    setRefreshing,
+  ] = useState(false);
+
+  const [
+    appointmentToCancel,
+    setAppointmentToCancel,
+  ] = useState(null);
+
   /**
    * Loads today's doctor appointments.
    *
@@ -188,6 +198,10 @@ const AppointmentQueuePage = () => {
 
           if (!silent) {
             setLoading(
+              true
+            );
+          } else {
+            setRefreshing(
               true
             );
           }
@@ -245,6 +259,10 @@ const AppointmentQueuePage = () => {
 
           if (!silent) {
             setLoading(
+              false
+            );
+          } else {
+            setRefreshing(
               false
             );
           }
@@ -347,6 +365,15 @@ const AppointmentQueuePage = () => {
         await fetchAppointments({
           silent: true,
         });
+
+        if (
+          newStatus ===
+          'cancelled'
+        ) {
+          toast.success(
+            'Appointment cancelled successfully.'
+          );
+        }
 
       } catch (error) {
 
@@ -481,157 +508,84 @@ const AppointmentQueuePage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-muted/30">
+      <div className="min-h-[55vh] flex flex-col items-center justify-center gap-3">
 
-        <div className="flex flex-col items-center gap-3">
+        <Spinner
+          size="lg"
+        />
 
-          <Spinner
-            size="lg"
-          />
-
-          <p className="text-sm font-medium text-muted-foreground">
-            Loading today's queue...
-          </p>
-
-        </div>
+        <p className="text-sm font-medium text-muted-foreground">
+          Loading today&apos;s queue...
+        </p>
 
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="space-y-7 pb-10">
 
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
-
-        {/* =====================================================
-            PAGE HEADER
-        ====================================================== */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-7 bg-brand-deep rounded-2xl shadow-md p-5 sm:p-6">
-
-          <div className="flex items-center gap-3">
-
-            <div className="w-11 h-11 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center shrink-0">
-
-              <ClipboardList
-                className="text-brand-deep-foreground opacity-90"
-                size={22}
-              />
-
-            </div>
-
-            <div>
-
-              <p className="text-[10px] uppercase tracking-[0.18em] font-bold text-brand-deep-foreground/60">
-                Doctor Workflow
-              </p>
-
-              <h1 className="text-xl sm:text-2xl font-bold text-brand-deep-foreground mt-0.5">
-                Today's Appointment Queue
-              </h1>
-
-              <p className="text-sm font-medium text-brand-deep-foreground/75 mt-1">
-                {appointments.length}{' '}
-                appointment
-                {appointments.length ===
-                1
-                  ? ''
-                  : 's'}{' '}
-                today
-              </p>
-
-            </div>
-
-          </div>
-
-          <button
-            type="button"
-            onClick={() =>
-              navigate(
-                '/doctor/dashboard'
-              )
-            }
-            className="flex items-center justify-center gap-1.5 bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-sm font-semibold text-brand-deep-foreground hover:bg-white/20 transition-all duration-150"
-          >
-
-            <ArrowLeft
-              size={16}
-            />
-
-            Back to Dashboard
-
-          </button>
-
-        </div>
-
-        {/* =====================================================
-            QUEUE ERROR
-        ====================================================== */}
-        {queueError && (
-
-          <div className="mb-5 bg-destructive/5 border border-destructive/20 rounded-xl p-4 flex items-start justify-between gap-4">
-
-            <div className="flex items-start gap-2">
-
-              <XCircle
-                size={17}
-                className="text-destructive shrink-0 mt-0.5"
-              />
-
-              <div>
-
-                <p className="text-sm font-semibold text-destructive">
-                  Queue action failed
-                </p>
-
-                <p className="text-xs text-muted-foreground mt-1">
-                  {queueError}
-                </p>
-
-              </div>
-
-            </div>
+      {/* =====================================================
+          PAGE HEADER
+      ====================================================== */}
+      <PageHeader
+        eyebrow="Doctor Portal"
+        icon={ClipboardList}
+        title="Today's Appointment Queue"
+        description="Review today’s patient flow and move each visit through the consultation workflow."
+        actions={
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
 
             <button
               type="button"
               onClick={() =>
-                setQueueError(
-                  ''
-                )
+                fetchAppointments({
+                  silent: true,
+                })
               }
-              className="text-xs font-semibold text-muted-foreground hover:text-foreground"
+              disabled={
+                refreshing
+              }
+              className="
+                inline-flex
+                items-center
+                justify-center
+                gap-2
+                w-full
+                sm:w-auto
+                px-4
+                py-2.5
+                rounded-xl
+                bg-white/10
+                border
+                border-white/20
+                text-white
+                text-sm
+                font-semibold
+                backdrop-blur-sm
+                hover:bg-white/15
+                hover:border-white/30
+                transition-all
+                focus:outline-none
+                focus:ring-2
+                focus:ring-white/30
+                disabled:opacity-50
+                disabled:cursor-not-allowed
+              "
             >
-              Dismiss
-            </button>
-
-          </div>
-
-        )}
-
-        {/* =====================================================
-            APPOINTMENT LIST
-        ====================================================== */}
-        {appointments.length ===
-        0 ? (
-
-          <div className="bg-card rounded-2xl shadow-sm border border-border p-12 text-center flex flex-col items-center gap-3">
-
-            <div className="w-14 h-14 rounded-full bg-success/10 flex items-center justify-center">
-
-              <CheckCircle2
-                className="text-success"
-                size={28}
+              <RefreshCw
+                size={16}
+                className={
+                  refreshing
+                    ? 'animate-spin'
+                    : ''
+                }
               />
 
-            </div>
-
-            <p className="text-foreground font-bold text-lg mt-1">
-              You're all caught up!
-            </p>
-
-            <p className="text-muted-foreground text-sm font-medium">
-              No patients are in today's queue right now.
-            </p>
+              {refreshing
+                ? 'Refreshing...'
+                : 'Refresh'}
+            </button>
 
             <button
               type="button"
@@ -640,105 +594,247 @@ const AppointmentQueuePage = () => {
                   '/doctor/dashboard'
                 )
               }
-              className="mt-2 text-sm font-semibold text-primary hover:underline"
+              className="
+                inline-flex
+                items-center
+                justify-center
+                gap-2
+                w-full
+                sm:w-auto
+                px-4
+                py-2.5
+                rounded-xl
+                bg-white/10
+                border
+                border-white/20
+                text-white
+                text-sm
+                font-semibold
+                backdrop-blur-sm
+                hover:bg-white/15
+                hover:border-white/30
+                transition-all
+                focus:outline-none
+                focus:ring-2
+                focus:ring-white/30
+              "
             >
-              Return to Dashboard
+              <LayoutDashboard
+                size={16}
+              />
+
+              Dashboard
             </button>
 
           </div>
+        }
+        meta={
+          <div className="flex items-center gap-5">
 
-        ) : (
+            <div>
 
-          <div className="space-y-4">
+              <p className="text-[10px] uppercase tracking-[0.12em] font-bold text-primary">
+                Today
+              </p>
 
-            {appointments.map(
-              (appt) => {
+              <p className="text-xl font-extrabold text-foreground mt-0.5">
+                {
+                  appointments.length
+                }
+              </p>
 
-                const isUpdating =
-                  updatingId ===
-                  appt.id;
+              <p className="text-xs text-muted-foreground mt-0.5">
+                appointment
+                {
+                  appointments.length ===
+                  1
+                    ? ''
+                    : 's'
+                }
+              </p>
 
-                const isScheduled =
-                  appt.status ===
-                  'scheduled';
+            </div>
 
-                const isWaiting =
-                  appt.status ===
-                  'confirmed';
+            <div className="w-px h-10 bg-border" />
 
-                const canStartConsultation =
-                  isScheduled ||
-                  isWaiting;
+            <div>
 
-                const isInProgress =
-                  appt.status ===
-                  'in_progress';
+              <p className="text-[10px] uppercase tracking-[0.12em] font-bold text-muted-foreground">
+                Auto Refresh
+              </p>
 
-                const isCompleted =
-                  appt.status ===
-                  'completed';
+              <p className="text-sm font-bold text-foreground mt-0.5">
+                Every 20 sec
+              </p>
 
-                const isCancelled =
-                  appt.status ===
-                  'cancelled';
+            </div>
 
-                return (
+          </div>
+        }
+      />
+
+      {/* =====================================================
+          QUEUE ERROR
+      ====================================================== */}
+      {queueError && (
+
+        <Alert
+          type="error"
+          message={
+            queueError
+          }
+        />
+
+      )}
+
+      {/* =====================================================
+          APPOINTMENT LIST
+      ====================================================== */}
+      {appointments.length ===
+      0 ? (
+
+        <Card>
+
+          <div className="flex flex-col items-center justify-center text-center py-12 px-4">
+
+            <div className="w-16 h-16 rounded-2xl bg-success/10 text-success flex items-center justify-center mb-4">
+
+              <CheckCircle2
+                size={28}
+              />
+
+            </div>
+
+            <h2 className="text-lg font-bold text-foreground">
+              You&apos;re all caught up
+            </h2>
+
+            <p className="text-sm text-muted-foreground mt-2 max-w-md leading-relaxed">
+              No patients are in today&apos;s queue right now.
+            </p>
+
+            <Button
+              type="button"
+              variant="secondary"
+              className="mt-5"
+              onClick={() =>
+                navigate(
+                  '/doctor/dashboard'
+                )
+              }
+            >
+              Return to Dashboard
+            </Button>
+
+          </div>
+
+        </Card>
+
+      ) : (
+
+        <div className="space-y-4">
+
+          {appointments.map(
+            (appt) => {
+
+              const isUpdating =
+                updatingId ===
+                appt.id;
+
+              const isScheduled =
+                appt.status ===
+                'scheduled';
+
+              const isWaiting =
+                appt.status ===
+                'confirmed';
+
+              const canStartConsultation =
+                isScheduled ||
+                isWaiting;
+
+              const isInProgress =
+                appt.status ===
+                'in_progress';
+
+              const isCompleted =
+                appt.status ===
+                'completed';
+
+              const isCancelled =
+                appt.status ===
+                'cancelled';
+
+              return (
+                <Card
+                  key={
+                    appt.id
+                  }
+                  className={`relative overflow-hidden ${
+                    isInProgress
+                      ? 'border-primary/30 shadow-md'
+                      : ''
+                  }`}
+                >
+
+                  {/* Status accent */}
                   <div
-                    key={
-                      appt.id
-                    }
-                    className={`bg-card relative overflow-hidden rounded-2xl shadow-sm border p-5 sm:p-6 transition-all duration-150 ${
+                    className={`absolute top-0 left-0 w-full h-1.5 ${
                       isInProgress
-                        ? 'border-primary/30 shadow-md'
-                        : 'border-border hover:shadow-md'
+                        ? 'bg-primary'
+                        : isCompleted
+                          ? 'bg-success'
+                          : isCancelled
+                            ? 'bg-destructive/60'
+                            : isWaiting
+                              ? 'bg-urgent'
+                              : 'bg-primary/45'
                     }`}
-                  >
+                  />
 
-                    {/* Status accent */}
-                    <div
-                      className={`absolute top-0 left-0 w-full h-1.5 ${
-                        isInProgress
-                          ? 'bg-primary'
-                          : isCompleted
-                            ? 'bg-success'
-                            : isCancelled
-                              ? 'bg-destructive/60'
-                              : isWaiting
-                                ? 'bg-amber-500'
-                                : 'bg-gradient-to-r from-primary to-primary/30'
-                      }`}
-                    />
+                  <div className="pt-2">
 
                     {/* Patient summary */}
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 relative z-10">
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
 
-                      <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex items-center gap-4 min-w-0">
 
                         <div
-                          className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
+                          className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
                             isInProgress
                               ? 'bg-primary text-primary-foreground'
-                              : 'bg-primary/10 text-primary'
+                              : 'bg-module-soft text-primary'
                           }`}
                         >
-                          {getInitials(
-                            appt.patient_name
-                          )}
+                          <span className="text-sm font-bold">
+                            {getInitials(
+                              appt.patient_name
+                            )}
+                          </span>
                         </div>
 
                         <div className="min-w-0">
 
-                          <h3 className="text-lg font-bold text-foreground truncate">
-                            {appt.patient_name}
-                          </h3>
+                          <div className="flex flex-wrap items-center gap-2">
 
-                          <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                            <h3 className="text-base sm:text-lg font-bold text-foreground truncate">
+                              {appt.patient_name}
+                            </h3>
 
-                            <span className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium bg-secondary rounded-full px-2.5 py-1">
+                            <Badge
+                              status={
+                                appt.status
+                              }
+                            />
+
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-2 mt-2">
+
+                            <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground font-medium bg-secondary/60 rounded-full px-2.5 py-1">
 
                               <Clock
                                 size={12}
-                                className="text-muted-foreground"
                               />
 
                               {formatAppointmentTime(
@@ -747,10 +843,16 @@ const AppointmentQueuePage = () => {
 
                             </span>
 
-                            <span className="text-xs font-semibold text-muted-foreground bg-secondary rounded-full px-2.5 py-1">
+                            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground bg-secondary/60 rounded-full px-2.5 py-1">
+
+                              <UserRound
+                                size={12}
+                              />
+
                               {appt.type
                                 ?.toUpperCase() ||
                                 'VISIT'}
+
                             </span>
 
                           </div>
@@ -759,155 +861,305 @@ const AppointmentQueuePage = () => {
 
                       </div>
 
-                      <Badge
-                        status={
-                          appt.status
-                        }
-                      />
+                      <div className="flex flex-col sm:flex-row lg:justify-end gap-2 w-full lg:w-auto">
+
+                        {/* Scheduled / Waiting -> Start */}
+                        {canStartConsultation && (
+
+                          <Button
+                            type="button"
+                            variant="primary"
+                            className="w-full sm:w-auto"
+                            onClick={() =>
+                              startConsultation(
+                                appt.id
+                              )
+                            }
+                            disabled={
+                              isUpdating
+                            }
+                            loading={
+                              isUpdating
+                            }
+                          >
+                            <Play
+                              size={15}
+                              className="mr-2"
+                            />
+
+                            {isUpdating
+                              ? 'Starting...'
+                              : 'Start Consultation'}
+
+                          </Button>
+
+                        )}
+
+                        {/* In Progress -> Resume */}
+                        {isInProgress && (
+
+                          <Button
+                            type="button"
+                            variant="primary"
+                            className="w-full sm:w-auto"
+                            onClick={() =>
+                              openConsultation(
+                                appt.id
+                              )
+                            }
+                            disabled={
+                              isUpdating
+                            }
+                          >
+                            <ClipboardCheck
+                              size={15}
+                              className="mr-2"
+                            />
+
+                            Resume Consultation
+
+                          </Button>
+
+                        )}
+
+                        {/* Completed -> Review */}
+                        {isCompleted && (
+
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            className="w-full sm:w-auto"
+                            onClick={() =>
+                              openConsultation(
+                                appt.id
+                              )
+                            }
+                            disabled={
+                              isUpdating
+                            }
+                          >
+                            <History
+                              size={15}
+                              className="mr-2"
+                            />
+
+                            View Consultation
+
+                          </Button>
+
+                        )}
+
+                        {/* Cancel */}
+                        {(isScheduled ||
+                          isWaiting ||
+                          isInProgress) && (
+
+                          <Button
+                            type="button"
+                            variant="danger"
+                            className="w-full sm:w-auto"
+                            onClick={() =>
+                              setAppointmentToCancel(
+                                appt
+                              )
+                            }
+                            disabled={
+                              isUpdating
+                            }
+                          >
+                            <XCircle
+                              size={15}
+                              className="mr-2"
+                            />
+
+                            {isUpdating
+                              ? 'Updating...'
+                              : 'Cancel'}
+
+                          </Button>
+
+                        )}
+
+                      </div>
 
                     </div>
 
-                    {/* =================================================
-                        CONSULTATION WORKFLOW ACTIONS
-                    ================================================== */}
-                    <div className="flex flex-wrap gap-3 mt-5 pt-5 border-t border-border relative z-10">
+                    {/* Workflow summary */}
+                    <div className="mt-5 pt-4 border-t border-border">
 
-                      {/* Scheduled / Waiting -> Start */}
-                      {canStartConsultation && (
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            startConsultation(
-                              appt.id
-                            )
-                          }
-                          disabled={
-                            isUpdating
-                          }
-                          className={`${ACTION_BTN} bg-primary text-primary-foreground border-primary hover:opacity-90 focus:ring-primary`}
-                        >
-
-                          <Play
-                            size={15}
-                          />
-
-                          {isUpdating
-                            ? 'Starting...'
-                            : 'Start Consultation'}
-
-                        </button>
-
-                      )}
-
-                      {/* In Progress -> Resume */}
                       {isInProgress && (
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            openConsultation(
-                              appt.id
-                            )
-                          }
-                          disabled={
-                            isUpdating
-                          }
-                          className={`${ACTION_BTN} bg-primary text-primary-foreground border-primary hover:opacity-90 focus:ring-primary`}
-                        >
+                        <div className="flex items-start gap-2 text-xs text-primary">
 
                           <ClipboardCheck
-                            size={15}
+                            size={14}
+                            className="shrink-0 mt-0.5"
                           />
 
-                          Resume Consultation
+                          <p className="font-medium">
+                            Consultation is currently in progress. Resume the workspace to continue documentation or prescribing.
+                          </p>
 
-                        </button>
+                        </div>
 
                       )}
 
-                      {/* Completed -> Review */}
                       {isCompleted && (
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            openConsultation(
-                              appt.id
-                            )
-                          }
-                          disabled={
-                            isUpdating
-                          }
-                          className={`${ACTION_BTN} bg-secondary text-primary border-primary/30 hover:bg-primary/10 focus:ring-primary`}
-                        >
+                        <div className="flex items-start gap-2 text-xs text-success">
 
-                          <History
-                            size={15}
+                          <CheckCircle2
+                            size={14}
+                            className="shrink-0 mt-0.5"
                           />
 
-                          View Consultation
+                          <p className="font-medium">
+                            Consultation completed. The visit remains available for clinical review.
+                          </p>
 
-                        </button>
+                        </div>
 
                       )}
 
-                      {/* Cancel */}
-                      {(isScheduled ||
-                        isWaiting ||
-                        isInProgress) && (
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateStatus(
-                              appt.id,
-                              'cancelled'
-                            )
-                          }
-                          disabled={
-                            isUpdating
-                          }
-                          className={`${ACTION_BTN} bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive hover:text-destructive-foreground focus:ring-destructive`}
-                        >
-
-                          <XCircle
-                            size={15}
-                          />
-
-                          {isUpdating
-                            ? 'Updating...'
-                            : 'Cancel'}
-
-                        </button>
-
-                      )}
-
-                      {/* Cancelled appointments are retained for context */}
                       {isCancelled && (
 
-                        <span className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-muted-foreground">
+                        <div className="flex items-start gap-2 text-xs text-muted-foreground">
+
                           <XCircle
-                            size={15}
+                            size={14}
+                            className="shrink-0 mt-0.5"
                           />
 
-                          Appointment Cancelled
-                        </span>
+                          <p className="font-medium">
+                            Appointment cancelled. It remains visible here for context.
+                          </p>
+
+                        </div>
+
+                      )}
+
+                      {(isScheduled ||
+                        isWaiting) && (
+
+                        <div className="flex items-start gap-2 text-xs text-muted-foreground">
+
+                          <Clock
+                            size={14}
+                            className="shrink-0 mt-0.5"
+                          />
+
+                          <p className="font-medium">
+                            Patient is ready to move into the consultation workflow.
+                          </p>
+
+                        </div>
 
                       )}
 
                     </div>
 
                   </div>
-                );
-              }
-            )}
+
+                </Card>
+              );
+            }
+          )}
+
+        </div>
+
+      )}
+
+      {/* =====================================================
+          CANCELLATION CONFIRMATION
+      ====================================================== */}
+      <Modal
+        isOpen={
+          !!appointmentToCancel
+        }
+        onClose={() =>
+          setAppointmentToCancel(
+            null
+          )
+        }
+        title="Cancel Appointment"
+        size="sm"
+      >
+
+        <div className="space-y-5">
+
+          <div>
+
+            <p className="text-sm font-semibold text-foreground">
+              Are you sure you want to cancel this appointment?
+            </p>
+
+            <p className="text-sm text-muted-foreground mt-2">
+              {appointmentToCancel?.patient_name
+                ? `${appointmentToCancel.patient_name}'s appointment will be marked as cancelled.`
+                : 'This appointment will be marked as cancelled.'}
+            </p>
 
           </div>
 
-        )}
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
 
-      </div>
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={
+                updatingId ===
+                appointmentToCancel?.id
+              }
+              onClick={() =>
+                setAppointmentToCancel(
+                  null
+                )
+              }
+            >
+              Keep Appointment
+            </Button>
+
+            <Button
+              type="button"
+              variant="danger"
+              loading={
+                updatingId ===
+                appointmentToCancel?.id
+              }
+              onClick={
+                async () => {
+
+                  const appointmentId =
+                    appointmentToCancel?.id;
+
+                  if (!appointmentId) {
+                    return;
+                  }
+
+                  await updateStatus(
+                    appointmentId,
+                    'cancelled'
+                  );
+
+                  setAppointmentToCancel(
+                    null
+                  );
+                }
+              }
+            >
+              <XCircle
+                size={15}
+                className="mr-2"
+              />
+
+              Cancel Appointment
+            </Button>
+
+          </div>
+
+        </div>
+
+      </Modal>
 
     </div>
   );

@@ -59,6 +59,7 @@ import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
 import QRScanner from '../../components/common/QRScanner';
+import PageHeader from '../../components/common/PageHeader';
 
 import {
   bookAppointment,
@@ -1702,6 +1703,104 @@ const DoctorDashboard = () => {
     <div className="min-h-screen bg-muted/30">
 
       <main className="max-w-[1500px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
+
+        {/* =====================================================
+            SHARED DOCTOR PAGE HEADER
+        ====================================================== */}
+        <div className="mb-8">
+
+          <PageHeader
+            eyebrow="Doctor Portal"
+            icon={Stethoscope}
+            title="Clinical Dashboard"
+            description="Manage today's patient flow, active consultations, clinical reviews, and Care4U decision-support tools from one workspace."
+            actions={
+              <button
+                type="button"
+                onClick={() =>
+                  fetchDashboardData({
+                    silent: true,
+                  })
+                }
+                disabled={refreshing}
+                className="
+                  inline-flex
+                  items-center
+                  justify-center
+                  gap-2
+                  px-3.5
+                  py-2.5
+                  rounded-xl
+                  bg-white/10
+                  border
+                  border-white/20
+                  text-white
+                  text-xs
+                  sm:text-sm
+                  font-semibold
+                  backdrop-blur-sm
+                  hover:bg-white/15
+                  hover:border-white/30
+                  transition-all
+                  disabled:opacity-60
+                  disabled:cursor-not-allowed
+                  focus:outline-none
+                  focus:ring-2
+                  focus:ring-white/30
+                "
+              >
+                <RefreshCw
+                  size={15}
+                  className={
+                    refreshing
+                      ? 'animate-spin'
+                      : ''
+                  }
+                />
+
+                {refreshing
+                  ? 'Refreshing...'
+                  : 'Refresh'}
+              </button>
+            }
+            meta={
+              <div className="flex items-center gap-3">
+
+                <div className="w-10 h-10 rounded-xl bg-module-soft text-primary flex items-center justify-center shrink-0">
+
+                  <UserRound
+                    size={18}
+                  />
+
+                </div>
+
+                <div className="min-w-0">
+
+                  <p className="text-[10px] uppercase tracking-[0.12em] font-bold text-primary">
+                    Signed in as
+                  </p>
+
+                  <p className="text-sm font-bold text-foreground mt-0.5 truncate">
+                    {doctor?.full_name
+                      ? `Dr. ${doctor.full_name}`
+                      : 'Doctor'}
+                  </p>
+
+                  {doctor?.specialization && (
+                    <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                      {
+                        doctor.specialization
+                      }
+                    </p>
+                  )}
+
+                </div>
+
+              </div>
+            }
+          />
+
+        </div>
 
         {/* =====================================================
             PRIMARY CLINICAL ACTION

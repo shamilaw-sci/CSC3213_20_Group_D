@@ -4,7 +4,7 @@
  * @desc    Central doctor consultation workspace.
  *          Combines patient overview, clinical safety information,
  *          medical history, consultation documentation, AI-assisted
- *          note structuring, prescribing, and visit completion into
+ *          note structuring, lab-test ordering, prescribing, and visit completion into
  *          one refresh-safe appointment workspace.
  *
  *          This page reorganizes existing Care4U doctor functionality
@@ -43,6 +43,7 @@ import {
   ClipboardList,
   Clock,
   FileText,
+  FlaskConical,
   HeartPulse,
   History,
   LayoutDashboard,
@@ -581,6 +582,11 @@ const ConsultationPage = () => {
         state.user
     );
 
+  const DOCTOR_ID =
+    user?.profile_id ||
+    user?.id ||
+    '';
+
   /* =========================================================
      PRIMARY CONSULTATION CONTEXT
   ========================================================= */
@@ -818,6 +824,45 @@ const ConsultationPage = () => {
   );
 
   /* =========================================================
+     LAB TEST ORDERING
+  ========================================================= */
+
+  const [
+    laboratories,
+    setLaboratories,
+  ] = useState([]);
+
+  const [
+    laboratoriesLoading,
+    setLaboratoriesLoading,
+  ] = useState(false);
+
+  const [
+    labOrderForm,
+    setLabOrderForm,
+  ] = useState({
+    laboratoryId: '',
+    testTypes: [],
+    priority: 'routine',
+    notes: '',
+  });
+
+  const [
+    labOrderLoading,
+    setLabOrderLoading,
+  ] = useState(false);
+
+  const [
+    labOrderError,
+    setLabOrderError,
+  ] = useState('');
+
+  const [
+    labOrderSuccess,
+    setLabOrderSuccess,
+  ] = useState('');
+
+  /* =========================================================
      CONSULTATION COMPLETION
   ========================================================= */
 
@@ -931,9 +976,16 @@ const ConsultationPage = () => {
             )
           );
 
+        const hasUnsavedLabOrder =
+          labOrderForm.laboratoryId !== '' ||
+          labOrderForm.testTypes.length > 0 ||
+          labOrderForm.priority !== 'routine' ||
+          labOrderForm.notes.trim() !== '';
+
         return (
           hasUnsavedConsultationNotes ||
-          hasUnsavedPrescription
+          hasUnsavedPrescription ||
+          hasUnsavedLabOrder
         );
       },
       [
@@ -944,6 +996,7 @@ const ConsultationPage = () => {
         medicines,
         prescriptionNotes,
         prescriptionQrValue,
+        labOrderForm,
       ]
     );
 
@@ -1515,6 +1568,395 @@ const ConsultationPage = () => {
     };
 
   /* =========================================================
+     LAB TEST ORDERING
+  ========================================================= */
+
+  /**
+   * Loads active, verified laboratories that can receive
+   * diagnostic requests from the current consultation.
+   */
+  useEffect(() => {
+
+    let cancelled =
+      false;
+
+    const loadLaboratories =
+      async () => {
+
+        if (
+          !consultation
+            ?.patient_id ||
+          isCompleted
+        ) {
+          return;
+        }
+
+        try {
+
+          setLaboratoriesLoading(
+            true
+          );
+
+          setLabOrderError(
+            ''
+          );
+
+          const response =
+            await fetch(
+              `${API_URL}/api/doctors/laboratories`,
+              {
+                credentials:
+                  'include',
+              }
+            );
+
+          const result =
+            await response.json();
+
+          if (
+            !response.ok ||
+            !result.success
+          ) {
+            throw new Error(
+              result.message ||
+              'Failed to load laboratories.'
+            );
+          }
+
+          if (!cancelled) {
+            setLaboratories(
+              result.data ||
+              []
+            );
+          }
+
+        } catch (err) {
+
+          console.error(
+            'Laboratory load error:',
+            err
+          );
+
+          if (!cancelled) {
+            setLabOrderError(
+              err.message ||
+              'Unable to load laboratories.'
+            );
+          }
+
+        } finally {
+
+          if (!cancelled) {
+            setLaboratoriesLoading(
+              false
+            );
+          }
+        }
+      };
+
+    loadLaboratories();
+
+    return () => {
+      cancelled =
+        true;
+    };
+
+  }, [
+    consultation
+      ?.patient_id,
+    isCompleted,
+  ]);
+
+  const selectedLaboratory =
+    useMemo(
+      () =>
+        laboratories.find(
+          (laboratory) =>
+            laboratory.id ===
+            labOrderForm.laboratoryId
+        ) ||
+        null,
+      [
+        laboratories,
+        labOrderForm.laboratoryId,
+      ]
+    );
+
+  const availableLabTests =
+    useMemo(
+      () =>
+        Array.isArray(
+          selectedLaboratory
+            ?.available_tests
+        )
+          ? selectedLaboratory
+              .available_tests
+          : [],
+      [selectedLaboratory]
+    );
+
+  /**
+   * Updates one lab-order field.
+   * Changing the laboratory clears the selected test because
+   * each laboratory may expose a different test catalogue.
+   */
+  const updateLabOrderField =
+    (
+      field,
+      value
+    ) => {
+
+      setLabOrderSuccess(
+        ''
+      );
+
+      setLabOrderError(
+        ''
+      );
+
+      setLabOrderForm(
+        (previous) => {
+
+          if (
+            field ===
+            'laboratoryId'
+          ) {
+            return {
+              ...previous,
+              laboratoryId:
+                value,
+              testTypes:
+                [],
+            };
+          }
+
+          return {
+            ...previous,
+            [field]:
+              value,
+          };
+        }
+      );
+    };
+
+  /**
+   * Adds or removes one test from the current laboratory order.
+   *
+   * To finish this workflow quickly without changing the existing
+   * database schema, Care4U sends one existing lab-test request per
+   * selected test while the doctor selects them together in one UI.
+   */
+  const toggleLabTest =
+    (
+      testType
+    ) => {
+
+      setLabOrderSuccess(
+        ''
+      );
+
+      setLabOrderError(
+        ''
+      );
+
+      setLabOrderForm(
+        (previous) => {
+
+          const alreadySelected =
+            previous.testTypes.includes(
+              testType
+            );
+
+          return {
+            ...previous,
+
+            testTypes:
+              alreadySelected
+                ? previous.testTypes.filter(
+                    (item) =>
+                      item !==
+                      testType
+                  )
+                : [
+                    ...previous.testTypes,
+                    testType,
+                  ],
+          };
+        }
+      );
+    };
+
+  /**
+   * Sends all selected tests to the chosen laboratory.
+   *
+   * The current backend stores one test type per request, so each
+   * selected test is submitted through the existing endpoint with
+   * the same patient, appointment, laboratory, priority, and notes.
+   */
+  const handleOrderLabTest =
+    async () => {
+
+      if (isCompleted) {
+        return;
+      }
+
+      const laboratoryId =
+        labOrderForm
+          .laboratoryId;
+
+      const testTypes =
+        labOrderForm
+          .testTypes;
+
+      if (
+        !DOCTOR_ID ||
+        !consultation
+          ?.patient_id
+      ) {
+        setLabOrderError(
+          'Doctor or patient context is unavailable.'
+        );
+
+        return;
+      }
+
+      if (
+        !laboratoryId ||
+        testTypes.length ===
+          0
+      ) {
+        setLabOrderError(
+          'Please select a laboratory and at least one test.'
+        );
+
+        return;
+      }
+
+      try {
+
+        setLabOrderLoading(
+          true
+        );
+
+        setLabOrderError(
+          ''
+        );
+
+        setLabOrderSuccess(
+          ''
+        );
+
+        const results =
+          await Promise.all(
+            testTypes.map(
+              async (
+                testType
+              ) => {
+
+                const response =
+                  await fetch(
+                    `${API_URL}/api/doctors/${DOCTOR_ID}/lab-test-requests`,
+                    {
+                      method:
+                        'POST',
+
+                      credentials:
+                        'include',
+
+                      headers: {
+                        'Content-Type':
+                          'application/json',
+                      },
+
+                      body:
+                        JSON.stringify({
+                          patientId:
+                            consultation
+                              .patient_id,
+
+                          appointmentId,
+
+                          laboratoryId,
+
+                          testType,
+
+                          priority:
+                            labOrderForm
+                              .priority,
+
+                          notes:
+                            labOrderForm
+                              .notes
+                              .trim() ||
+                            null,
+                        }),
+                    }
+                  );
+
+                const result =
+                  await response.json();
+
+                if (
+                  !response.ok ||
+                  !result.success
+                ) {
+                  throw new Error(
+                    result.message ||
+                    `Failed to order ${testType}.`
+                  );
+                }
+
+                return result.data;
+              }
+            )
+          );
+
+        const successMessage =
+          `${results.length} test${results.length === 1 ? '' : 's'} ordered successfully from ${selectedLaboratory?.name || 'the selected laboratory'}.`;
+
+        setLabOrderSuccess(
+          successMessage
+        );
+
+        setLabOrderForm({
+          laboratoryId: '',
+          testTypes: [],
+          priority: 'routine',
+          notes: '',
+        });
+
+        toast.success(
+          `${results.length} lab test${results.length === 1 ? '' : 's'} ordered.`
+        );
+
+      } catch (err) {
+
+        console.error(
+          'Lab test order error:',
+          err
+        );
+
+        const message =
+          err.message ||
+          'Unable to order the selected lab tests.';
+
+        setLabOrderError(
+          message
+        );
+
+        toast.error(
+          message
+        );
+
+      } finally {
+
+        setLabOrderLoading(
+          false
+        );
+      }
+    };
+
+  /* =========================================================
      CONSULTATION NOTE HANDLERS
   ========================================================= */
 
@@ -1633,7 +2075,7 @@ const ConsultationPage = () => {
         );
 
         toast.success(
-          'AI draft generated. Please review it before saving.'
+          'AI draft generated. This is not a medical diagnosis — review it before saving.'
         );
 
       } catch (err) {
@@ -3139,7 +3581,7 @@ const ConsultationPage = () => {
 
         <div className="max-w-[1500px] mx-auto px-4 sm:px-6 py-5">
 
-          <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-5">
+          <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-5 sm:gap-6">
 
             {/* Patient identity */}
             <div className="flex items-center gap-4 min-w-0">
@@ -3249,14 +3691,14 @@ const ConsultationPage = () => {
             </div>
 
             {/* Visit information + navigation */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between xl:justify-end gap-3 xl:min-w-[470px]">
 
-              <div className="flex flex-wrap items-center gap-3 text-xs text-brand-deep-foreground/80">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-brand-deep-foreground/85">
 
-                <div className="flex items-center gap-1.5">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/15 px-3 py-1.5">
 
                   <Clock
-                    size={14}
+                    size={13}
                   />
 
                   {formatDate(
@@ -3267,10 +3709,10 @@ const ConsultationPage = () => {
 
                 </div>
 
-                <div className="flex items-center gap-1.5">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/15 px-3 py-1.5">
 
                   <Stethoscope
-                    size={14}
+                    size={13}
                   />
 
                   {
@@ -3284,39 +3726,39 @@ const ConsultationPage = () => {
 
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
 
-                <Button
-                  variant="secondary"
+                <button
+                  type="button"
                   onClick={() =>
                     requestNavigation(
                       '/doctor/queue'
                     )
                   }
+                  className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white/10 border border-white/20 text-brand-deep-foreground text-sm font-semibold backdrop-blur-sm hover:bg-white/15 hover:border-white/30 transition-all focus:outline-none focus:ring-2 focus:ring-white/30"
                 >
                   <ClipboardList
                     size={16}
-                    className="mr-2"
                   />
 
                   Queue
-                </Button>
+                </button>
 
-                <Button
-                  variant="secondary"
+                <button
+                  type="button"
                   onClick={() =>
                     requestNavigation(
                       '/doctor/dashboard'
                     )
                   }
+                  className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white/10 border border-white/20 text-brand-deep-foreground text-sm font-semibold backdrop-blur-sm hover:bg-white/15 hover:border-white/30 transition-all focus:outline-none focus:ring-2 focus:ring-white/30"
                 >
                   <LayoutDashboard
                     size={16}
-                    className="mr-2"
                   />
 
                   Dashboard
-                </Button>
+                </button>
 
               </div>
 
@@ -3341,7 +3783,7 @@ const ConsultationPage = () => {
 
         <div className="border-b border-destructive/20 bg-destructive/5">
 
-          <div className="max-w-[1500px] mx-auto px-4 sm:px-6 py-3 flex flex-wrap gap-3">
+          <div className="max-w-[1500px] mx-auto px-4 sm:px-6 py-3 flex flex-wrap gap-x-5 gap-y-2">
 
             {severeAllergies.map(
               (allergy) => (
@@ -3408,9 +3850,9 @@ const ConsultationPage = () => {
           <section className="min-w-0">
 
             {/* Tabs */}
-            <div className="bg-card border border-border rounded-xl p-2 shadow-sm mb-5 sticky top-2 z-30">
+            <div className="bg-card/95 backdrop-blur-md border border-border rounded-xl p-2 shadow-sm mb-5 sticky top-2 z-30">
 
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
 
                 <WorkspaceTab
                   label="Overview"
@@ -4509,7 +4951,7 @@ const ConsultationPage = () => {
                         </p>
 
                         <p className="text-xs text-muted-foreground mt-1">
-                          AI can organize the patient's available history for quick review. Always verify the source records.
+                          AI-generated clinical support only — not a medical diagnosis. Always verify the source records before making clinical decisions.
                         </p>
 
                       </div>
@@ -4555,7 +4997,7 @@ const ConsultationPage = () => {
                         </span>
 
                         <span className="ml-auto text-[10px] uppercase tracking-wide font-bold text-urgent-foreground bg-urgent/10 border border-urgent/20 rounded-full px-2 py-1">
-                          Verify manually
+                          Not a diagnosis
                         </span>
 
                       </div>
@@ -5147,6 +5589,371 @@ const ConsultationPage = () => {
                     )}
 
                   </div>
+
+                </Card>
+
+                <Card
+                  title={
+                    <span className="flex items-center gap-2">
+                      <FlaskConical
+                        size={18}
+                        className="text-primary"
+                      />
+
+                      Order Lab Test
+                    </span>
+                  }
+                >
+
+                  {isCompleted ? (
+
+                    <Alert
+                      type="info"
+                      message="This consultation is completed. New laboratory tests cannot be ordered from this visit."
+                    />
+
+                  ) : (
+
+                    <div className="space-y-5">
+
+                      <div className="rounded-xl bg-module-soft/45 border border-primary/15 p-4">
+
+                        <p className="text-sm font-semibold text-foreground">
+                          Send a diagnostic request directly to a Care4U laboratory
+                        </p>
+
+                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                          Select an active laboratory and one or more available tests. Care4U submits the selected tests together from this screen and links them automatically to this patient and consultation.
+                        </p>
+
+                      </div>
+
+                      {labOrderSuccess && (
+
+                        <Alert
+                          type="success"
+                          message={
+                            labOrderSuccess
+                          }
+                        />
+
+                      )}
+
+                      {labOrderError && (
+
+                        <Alert
+                          type="error"
+                          message={
+                            labOrderError
+                          }
+                        />
+
+                      )}
+
+                      {laboratoriesLoading ? (
+
+                        <div className="py-8 flex flex-col items-center justify-center gap-3">
+
+                          <Spinner
+                            size="sm"
+                          />
+
+                          <p className="text-xs text-muted-foreground">
+                            Loading active laboratories...
+                          </p>
+
+                        </div>
+
+                      ) : laboratories.length ===
+                        0 ? (
+
+                        <div className="rounded-xl border border-border bg-secondary/30 p-5 text-center">
+
+                          <FlaskConical
+                            size={26}
+                            className="text-muted-foreground/50 mx-auto"
+                          />
+
+                          <p className="text-sm font-semibold text-foreground mt-3">
+                            No active laboratories available
+                          </p>
+
+                          <p className="text-xs text-muted-foreground mt-1">
+                            A verified active laboratory is required before a diagnostic request can be created.
+                          </p>
+
+                        </div>
+
+                      ) : (
+
+                        <>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                            <div>
+
+                              <label className="block text-sm font-semibold text-foreground mb-2">
+                                Laboratory
+                                <span className="text-destructive ml-1">
+                                  *
+                                </span>
+                              </label>
+
+                              <select
+                                value={
+                                  labOrderForm
+                                    .laboratoryId
+                                }
+                                onChange={
+                                  (event) =>
+                                    updateLabOrderField(
+                                      'laboratoryId',
+                                      event.target.value
+                                    )
+                                }
+                                className="w-full border border-border rounded-xl bg-background px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                              >
+                                <option value="">
+                                  Select laboratory
+                                </option>
+
+                                {laboratories.map(
+                                  (laboratory) => (
+
+                                    <option
+                                      key={
+                                        laboratory.id
+                                      }
+                                      value={
+                                        laboratory.id
+                                      }
+                                    >
+                                      {
+                                        laboratory.name
+                                      }
+                                    </option>
+
+                                  )
+                                )}
+                              </select>
+
+                            </div>
+
+                            <div>
+
+                              <label className="block text-sm font-semibold text-foreground mb-2">
+                                Tests
+                                <span className="text-destructive ml-1">
+                                  *
+                                </span>
+                              </label>
+
+                              {!labOrderForm
+                                .laboratoryId ? (
+
+                                <div className="min-h-[48px] flex items-center rounded-xl border border-border bg-secondary/30 px-4 text-sm text-muted-foreground">
+                                  Select a laboratory first
+                                </div>
+
+                              ) : availableLabTests
+                                  .length ===
+                                  0 ? (
+
+                                <div className="min-h-[48px] flex items-center rounded-xl border border-border bg-secondary/30 px-4 text-sm text-muted-foreground">
+                                  No tests listed for this laboratory
+                                </div>
+
+                              ) : (
+
+                                <div className="rounded-xl border border-border bg-background p-3 max-h-48 overflow-y-auto">
+
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+
+                                    {availableLabTests.map(
+                                      (test) => {
+
+                                        const selected =
+                                          labOrderForm
+                                            .testTypes
+                                            .includes(
+                                              test
+                                            );
+
+                                        return (
+                                          <label
+                                            key={
+                                              test
+                                            }
+                                            className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 cursor-pointer transition-colors ${
+                                              selected
+                                                ? 'border-primary/30 bg-module-soft/60'
+                                                : 'border-border hover:bg-secondary/40'
+                                            }`}
+                                          >
+                                            <input
+                                              type="checkbox"
+                                              checked={
+                                                selected
+                                              }
+                                              onChange={() =>
+                                                toggleLabTest(
+                                                  test
+                                                )
+                                              }
+                                              className="w-4 h-4 accent-primary"
+                                            />
+
+                                            <span className="text-sm font-medium text-foreground">
+                                              {test}
+                                            </span>
+                                          </label>
+                                        );
+                                      }
+                                    )}
+
+                                  </div>
+
+                                </div>
+
+                              )}
+
+                              {labOrderForm
+                                .testTypes
+                                .length >
+                                0 && (
+
+                                <p className="text-xs text-primary font-semibold mt-2">
+                                  {
+                                    labOrderForm
+                                      .testTypes
+                                      .length
+                                  } test
+                                  {
+                                    labOrderForm
+                                      .testTypes
+                                      .length ===
+                                    1
+                                      ? ''
+                                      : 's'
+                                  } selected
+                                </p>
+
+                              )}
+
+                            </div>
+
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-[220px_minmax(0,1fr)] gap-4">
+
+                            <div>
+
+                              <label className="block text-sm font-semibold text-foreground mb-2">
+                                Priority
+                              </label>
+
+                              <select
+                                value={
+                                  labOrderForm
+                                    .priority
+                                }
+                                onChange={
+                                  (event) =>
+                                    updateLabOrderField(
+                                      'priority',
+                                      event.target.value
+                                    )
+                                }
+                                className="w-full border border-border rounded-xl bg-background px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                              >
+                                <option value="routine">
+                                  Routine
+                                </option>
+
+                                <option value="urgent">
+                                  Urgent
+                                </option>
+
+                                <option value="stat">
+                                  STAT — Immediate
+                                </option>
+                              </select>
+
+                            </div>
+
+                            <div>
+
+                              <label className="block text-sm font-semibold text-foreground mb-2">
+                                Notes for Laboratory
+                                <span className="text-xs font-normal text-muted-foreground ml-1">
+                                  (optional)
+                                </span>
+                              </label>
+
+                              <textarea
+                                rows={3}
+                                value={
+                                  labOrderForm
+                                    .notes
+                                }
+                                onChange={
+                                  (event) =>
+                                    updateLabOrderField(
+                                      'notes',
+                                      event.target.value
+                                    )
+                                }
+                                placeholder="Clinical context, specimen instructions, or other notes for the laboratory..."
+                                className="w-full border border-border rounded-xl bg-background px-4 py-3 text-sm text-foreground resize-y focus:outline-none focus:ring-2 focus:ring-primary"
+                              />
+
+                            </div>
+
+                          </div>
+
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-border pt-5">
+
+                            <p className="text-xs text-muted-foreground max-w-2xl">
+                              Routine, urgent, and STAT are the supported laboratory priority levels. The Laboratory module receives new requests with pending status.
+                            </p>
+
+                            <Button
+                              type="button"
+                              variant="primary"
+                              className="w-full sm:w-auto"
+                              loading={
+                                labOrderLoading
+                              }
+                              disabled={
+                                labOrderLoading ||
+                                !labOrderForm
+                                  .laboratoryId ||
+                                labOrderForm
+                                  .testTypes
+                                  .length ===
+                                  0
+                              }
+                              onClick={
+                                handleOrderLabTest
+                              }
+                            >
+                              <FlaskConical
+                                size={16}
+                                className="mr-2"
+                              />
+
+                              Order Selected Tests
+                            </Button>
+
+                          </div>
+
+                        </>
+
+                      )}
+
+                    </div>
+
+                  )}
 
                 </Card>
 
@@ -6378,7 +7185,7 @@ const ConsultationPage = () => {
       ====================================================== */}
       <div className="fixed bottom-0 inset-x-0 z-50 border-t border-border bg-card/95 backdrop-blur-md shadow-[0_-4px_16px_rgba(0,0,0,0.05)]">
 
-        <div className="max-w-[1500px] mx-auto px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="max-w-[1500px] mx-auto px-4 sm:px-6 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] flex flex-col sm:flex-row sm:items-center gap-3">
 
           <div className="flex-1">
 
@@ -6422,6 +7229,7 @@ const ConsultationPage = () => {
 
               <Button
                 variant="secondary"
+                className="w-full sm:w-auto"
                 loading={
                   isSavingNotes
                 }
@@ -6451,6 +7259,7 @@ const ConsultationPage = () => {
 
               <Button
                 variant="primary"
+                className="w-full sm:w-auto"
                 loading={
                   isCompleting
                 }
@@ -6473,6 +7282,7 @@ const ConsultationPage = () => {
 
             <Button
               variant="primary"
+              className="w-full sm:w-auto"
               onClick={() =>
                 requestNavigation(
                   '/doctor/dashboard'

@@ -16,9 +16,12 @@ import { useNavigate } from 'react-router-dom';
 
 import {
   ArrowLeft,
-  UserRound,
   CalendarClock,
-  Camera
+  Camera,
+  Clock3,
+  Save,
+  Stethoscope,
+  UserRound
 } from 'lucide-react';
 
 import toast from 'react-hot-toast';
@@ -28,6 +31,7 @@ import Alert from '../../components/common/Alert';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Card from '../../components/common/Card';
+import PageHeader from '../../components/common/PageHeader';
 import useAuthStore from '../../store/authStore';
 
 import {
@@ -63,7 +67,7 @@ const getAvatarSrc = (doctor) => {
 
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(
     doctor?.full_name || 'Doctor'
-  )}&background=0D9488&color=fff&size=120&bold=true&rounded=true`;
+  )}&background=2563EB&color=fff&size=120&bold=true&rounded=true`;
 };
 
 const DoctorProfilePage = () => {
@@ -96,7 +100,7 @@ const DoctorProfilePage = () => {
 
   // ── Photo Upload State ──
   const photoInputRef = useRef(null);
-  
+
   const [profileForm, setProfileForm] = useState({
     specialization: '',
     qualifications: '',
@@ -134,6 +138,26 @@ const DoctorProfilePage = () => {
       const availData =
         await availRes.json();
 
+      if (
+        !docRes.ok ||
+        !docData.success
+      ) {
+        throw new Error(
+          docData.message ||
+          'Failed to load doctor profile.'
+        );
+      }
+
+      if (
+        !availRes.ok ||
+        !availData.success
+      ) {
+        throw new Error(
+          availData.message ||
+          'Failed to load doctor availability.'
+        );
+      }
+
       setDoctor(docData.data);
 
       setProfileForm({
@@ -159,6 +183,13 @@ const DoctorProfilePage = () => {
         'Profile fetch error:',
         error
       );
+
+      setAlert({
+        type: 'error',
+        message:
+          error.message ||
+          'Unable to load doctor profile information.'
+      });
 
     } finally {
       setLoading(false);
@@ -385,107 +416,166 @@ const DoctorProfilePage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-muted/30">
+      <div className="min-h-[55vh] flex flex-col items-center justify-center gap-3">
+
         <Spinner size="lg" />
+
+        <p className="text-sm text-muted-foreground">
+          Loading doctor profile...
+        </p>
+
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-muted/30 p-6">
+    <div className="space-y-7 pb-10">
 
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8 bg-brand-deep rounded-xl shadow-md p-6">
+      <PageHeader
+        eyebrow="Doctor Portal"
+        icon={Stethoscope}
+        title="Doctor Profile"
+        description="Manage your professional information, profile photo, and weekly consultation availability."
+        actions={
+          <button
+            type="button"
+            onClick={() =>
+              navigate('/doctor/dashboard')
+            }
+            className="
+              inline-flex
+              items-center
+              justify-center
+              gap-2
+              w-full
+              sm:w-auto
+              px-4
+              py-2.5
+              rounded-xl
+              bg-white/10
+              border
+              border-white/20
+              text-white
+              text-sm
+              font-semibold
+              backdrop-blur-sm
+              hover:bg-white/15
+              hover:border-white/30
+              transition-all
+              focus:outline-none
+              focus:ring-2
+              focus:ring-white/30
+            "
+          >
+            <ArrowLeft size={16} />
+            Dashboard
+          </button>
+        }
+        meta={
+          <div className="flex items-center gap-4">
 
-        <div className="flex items-center gap-5">
+            <div className="relative w-16 h-16 shrink-0">
 
-          {/* Doctor Profile Photo */}
-          <div className="relative w-24 h-24 shrink-0">
-
-            <img
-              src={getAvatarSrc(doctor)}
-              alt="Doctor Profile"
-              className="w-24 h-24 rounded-full border-2 border-white/30 shadow-md object-cover"
-            />
-
-            {uploadingPhoto && (
-              <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center">
-                <Spinner
-                  size="sm"
-                  color="text-white"
-                />
-              </div>
-            )}
-
-            <button
-              type="button"
-              onClick={handlePhotoButtonClick}
-              disabled={uploadingPhoto}
-              title="Change profile photo"
-              className="absolute -bottom-0.5 -right-0.5 p-2 bg-white rounded-full shadow-sm border border-border hover:bg-secondary transition-colors disabled:opacity-50"
-            >
-              <Camera
-                size={15}
-                className="text-primary"
+              <img
+                src={getAvatarSrc(doctor)}
+                alt="Doctor Profile"
+                className="w-16 h-16 rounded-full border-2 border-border shadow-sm object-cover bg-card"
               />
-            </button>
 
-            <input
-              ref={photoInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              className="hidden"
-              onChange={handlePhotoFileChange}
-            />
+              {uploadingPhoto && (
+                <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center">
+                  <Spinner size="sm" />
+                </div>
+              )}
 
-          </div>
+              <button
+                type="button"
+                onClick={handlePhotoButtonClick}
+                disabled={uploadingPhoto}
+                title="Change profile photo"
+                className="
+                  absolute
+                  -bottom-1
+                  -right-1
+                  w-7
+                  h-7
+                  rounded-full
+                  bg-primary
+                  text-primary-foreground
+                  shadow-md
+                  flex
+                  items-center
+                  justify-center
+                  hover:opacity-90
+                  transition-opacity
+                  disabled:opacity-50
+                "
+              >
+                <Camera size={13} />
+              </button>
 
-          <div>
-            <h1 className="text-2xl font-bold text-brand-deep-foreground">
-              Doctor Profile
-            </h1>
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={handlePhotoFileChange}
+              />
 
-            {doctor?.full_name && (
-              <p className="text-base font-semibold text-brand-deep-foreground mt-1">
-                {doctor.full_name}
+            </div>
+
+            <div className="min-w-0">
+
+              <p className="text-base font-bold text-foreground truncate">
+                {doctor?.full_name || 'Doctor'}
               </p>
-            )}
 
-            <p className="text-sm font-medium text-brand-deep-foreground opacity-80 mt-1">
-              SLMC: {doctor?.slmc_reg_number} — {doctor?.email}
-            </p>
+              <p className="text-xs text-primary font-semibold mt-0.5">
+                {doctor?.specialization || 'Specialization not set'}
+              </p>
+
+              <p className="text-xs text-muted-foreground mt-1">
+                SLMC: {doctor?.slmc_reg_number || '—'}
+              </p>
+
+            </div>
+
           </div>
-
-        </div>
-
-        <button
-          onClick={() =>
-            navigate('/doctor/dashboard')
-          }
-          className="flex items-center gap-1.5 bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-sm font-semibold text-brand-deep-foreground hover:bg-white/20 transition-all duration-150 cursor-pointer"
-        >
-          <ArrowLeft size={16} />
-          Back to Dashboard
-        </button>
-
-      </div>
+        }
+      />
 
       {/* Alert */}
       {alert && (
-        <div className="mb-6">
-          <Alert
-            type={alert.type}
-            message={alert.message}
-          />
-        </div>
+        <Alert
+          type={alert.type}
+          message={alert.message}
+        />
       )}
 
       {/* Profile Form */}
       <Card
-        title="Profile Information"
-        icon={<UserRound size={20} />}
-        className="mb-6"
+        title={
+          <span className="flex items-center gap-2">
+            <UserRound
+              size={18}
+              className="text-primary"
+            />
+            Professional Information
+          </span>
+        }
       >
+
+        <div className="mb-5 rounded-xl bg-module-soft/60 px-4 py-3">
+
+          <p className="text-sm font-semibold text-foreground">
+            Keep your professional details current
+          </p>
+
+          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+            These details are used across the doctor portal and may be shown to patients when they search for doctors.
+          </p>
+
+        </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 
@@ -523,6 +613,7 @@ const DoctorProfilePage = () => {
             label="Years of Experience"
             name="years_experience"
             type="number"
+            min="0"
             value={
               profileForm.years_experience
             }
@@ -552,13 +643,18 @@ const DoctorProfilePage = () => {
 
         </div>
 
-        <div className="mt-6 flex justify-end border-t border-border pt-4">
+        <div className="mt-6 flex justify-end border-t border-border pt-5">
 
           <Button
             onClick={handleProfileSave}
             loading={savingProfile}
             variant="primary"
+            className="w-full sm:w-auto"
           >
+            <Save
+              size={16}
+              className="mr-2"
+            />
             Save Profile
           </Button>
 
@@ -568,9 +664,38 @@ const DoctorProfilePage = () => {
 
       {/* Availability */}
       <Card
-        title="Availability Schedule"
-        icon={<CalendarClock size={20} />}
+        title={
+          <span className="flex items-center gap-2">
+            <CalendarClock
+              size={18}
+              className="text-primary"
+            />
+            Availability Schedule
+          </span>
+        }
       >
+
+        <div className="mb-5 rounded-xl bg-secondary/45 px-4 py-3 flex items-start gap-3">
+
+          <div className="w-9 h-9 rounded-xl bg-module-soft text-primary flex items-center justify-center shrink-0">
+
+            <Clock3 size={17} />
+
+          </div>
+
+          <div>
+
+            <p className="text-sm font-semibold text-foreground">
+              Weekly consultation hours
+            </p>
+
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+              Enable the days you are available, then set the start time, end time, and appointment slot duration.
+            </p>
+
+          </div>
+
+        </div>
 
         <div className="space-y-3">
 
@@ -584,115 +709,151 @@ const DoctorProfilePage = () => {
             return (
               <div
                 key={day}
-                className={`flex items-center gap-4 rounded-lg px-4 py-3 border transition-colors duration-150 ${
+                className={`rounded-xl border p-4 transition-colors duration-150 ${
                   slot
-                    ? 'bg-primary/5 border-primary/20'
-                    : 'bg-transparent border-transparent hover:bg-secondary/50'
+                    ? 'bg-module-soft/45 border-primary/20'
+                    : 'bg-secondary/25 border-border'
                 }`}
               >
 
-                <div className="flex items-center gap-3 w-32">
+                <div className="flex flex-col lg:flex-row lg:items-center gap-4">
 
-                  <input
-                    type="checkbox"
-                    checked={!!slot}
-                    onChange={() =>
-                      toggleDay(day)
-                    }
-                    className="w-4 h-4 rounded border-input text-primary focus:ring-primary accent-primary"
-                  />
+                  <label className="flex items-center gap-3 min-w-[140px] cursor-pointer">
 
-                  <span className="text-sm font-bold text-foreground capitalize">
-                    {day}
-                  </span>
+                    <input
+                      type="checkbox"
+                      checked={!!slot}
+                      onChange={() =>
+                        toggleDay(day)
+                      }
+                      className="w-4 h-4 rounded border-input text-primary focus:ring-primary accent-primary"
+                    />
 
-                </div>
+                    <div>
 
-                {slot ? (
-                  <div className="flex flex-wrap items-center gap-3 flex-1">
-
-                    <div className="flex items-center gap-2">
-
-                      <Input
-                        label=""
-                        type="time"
-                        value={
-                          slot.start_time?.slice(
-                            0,
-                            5
-                          ) || '09:00'
-                        }
-                        onChange={(e) =>
-                          updateSlot(
-                            day,
-                            'start_time',
-                            e.target.value
-                          )
-                        }
-                        className="w-32"
-                      />
-
-                      <span className="text-sm font-semibold text-muted-foreground px-1">
-                        to
+                      <span className="text-sm font-bold text-foreground capitalize">
+                        {day}
                       </span>
 
-                      <Input
-                        label=""
-                        type="time"
-                        value={
-                          slot.end_time?.slice(
-                            0,
-                            5
-                          ) || '17:00'
-                        }
-                        onChange={(e) =>
-                          updateSlot(
-                            day,
-                            'end_time',
-                            e.target.value
-                          )
-                        }
-                        className="w-32"
-                      />
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        {slot
+                          ? 'Available'
+                          : 'Unavailable'}
+                      </p>
 
                     </div>
 
-                    <div className="flex items-center gap-2 ml-auto">
+                  </label>
 
-                      <Input
-                        label=""
-                        type="number"
-                        value={
-                          slot.slot_duration_minutes ||
-                          30
-                        }
-                        onChange={(e) =>
-                          updateSlot(
-                            day,
-                            'slot_duration_minutes',
-                            parseInt(
+                  {slot ? (
+                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
+
+                      <div>
+
+                        <p className="text-[10px] uppercase tracking-[0.12em] font-bold text-muted-foreground mb-1.5">
+                          Start Time
+                        </p>
+
+                        <Input
+                          label=""
+                          type="time"
+                          value={
+                            slot.start_time?.slice(
+                              0,
+                              5
+                            ) || '09:00'
+                          }
+                          onChange={(e) =>
+                            updateSlot(
+                              day,
+                              'start_time',
                               e.target.value
                             )
-                          )
-                        }
-                        className="w-24"
-                      />
+                          }
+                          className="w-full"
+                        />
 
-                      <span className="text-sm font-medium text-muted-foreground">
-                        min/slot
-                      </span>
+                      </div>
+
+                      <div>
+
+                        <p className="text-[10px] uppercase tracking-[0.12em] font-bold text-muted-foreground mb-1.5">
+                          End Time
+                        </p>
+
+                        <Input
+                          label=""
+                          type="time"
+                          value={
+                            slot.end_time?.slice(
+                              0,
+                              5
+                            ) || '17:00'
+                          }
+                          onChange={(e) =>
+                            updateSlot(
+                              day,
+                              'end_time',
+                              e.target.value
+                            )
+                          }
+                          className="w-full"
+                        />
+
+                      </div>
+
+                      <div>
+
+                        <p className="text-[10px] uppercase tracking-[0.12em] font-bold text-muted-foreground mb-1.5">
+                          Slot Duration
+                        </p>
+
+                        <div className="flex items-center gap-2">
+
+                          <Input
+                            label=""
+                            type="number"
+                            min="1"
+                            value={
+                              slot.slot_duration_minutes ||
+                              30
+                            }
+                            onChange={(e) =>
+                              updateSlot(
+                                day,
+                                'slot_duration_minutes',
+                                parseInt(
+                                  e.target.value,
+                                  10
+                                )
+                              )
+                            }
+                            className="w-full"
+                          />
+
+                          <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
+                            min
+                          </span>
+
+                        </div>
+
+                      </div>
 
                     </div>
 
-                  </div>
+                  ) : (
 
-                ) : (
+                    <div className="flex-1">
 
-                  <span className="text-sm font-medium text-muted-foreground">
-                    Unavailable
-                  </span>
+                      <p className="text-sm text-muted-foreground">
+                        Enable this day to configure consultation hours.
+                      </p>
 
-                )}
+                    </div>
+
+                  )}
+
+                </div>
 
               </div>
             );
@@ -700,7 +861,7 @@ const DoctorProfilePage = () => {
 
         </div>
 
-        <div className="mt-6 flex justify-end border-t border-border pt-4">
+        <div className="mt-6 flex justify-end border-t border-border pt-5">
 
           <Button
             onClick={
@@ -710,7 +871,12 @@ const DoctorProfilePage = () => {
               savingAvailability
             }
             variant="primary"
+            className="w-full sm:w-auto"
           >
+            <Save
+              size={16}
+              className="mr-2"
+            />
             Save Availability
           </Button>
 
