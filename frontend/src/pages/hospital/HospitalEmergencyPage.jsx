@@ -24,12 +24,15 @@ import {
   ExternalLink,
   MapPin,
   Phone,
-  ShieldAlert
+  RefreshCw,
+  ShieldAlert,
+  X
 } from 'lucide-react';
 
 import toast from 'react-hot-toast';
 
 import api from '../../services/api';
+import PageHeader from '../../components/common/PageHeader';
 
 /**
  * @component HospitalEmergencyPage
@@ -41,6 +44,10 @@ const HospitalEmergencyPage = () => {
   const [loading, setLoading] = useState(true);
   const [resolvingId, setResolvingId] = useState(null);
   const [accessingId, setAccessingId] = useState(null);
+  const [loadError, setLoadError] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+  const [snapshotPatientId, setSnapshotPatientId] = useState(null);
+  const [accessReason, setAccessReason] = useState('');
 
   const navigate = useNavigate();
 
@@ -52,14 +59,20 @@ const HospitalEmergencyPage = () => {
    */
   const fetchAlerts = async (isBackground = false) => {
     try {
+      if (!isBackground) {
+        setLoadError('');
+      }
+
       const response = await api.get(
         '/api/emergencies/alerts'
       );
 
       if (response.data.success) {
         setAlerts(
-          response.data.data
+          response.data.data || []
         );
+
+        setLoadError('');
       }
 
     } catch (error) {
@@ -69,13 +82,22 @@ const HospitalEmergencyPage = () => {
       );
 
       if (!isBackground) {
+        const message =
+          error.response?.data?.message ||
+          'Failed to load active emergencies';
+
+        setLoadError(
+          message
+        );
+
         toast.error(
-          'Failed to load active emergencies'
+          message
         );
       }
 
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -147,42 +169,70 @@ const HospitalEmergencyPage = () => {
   };
 
   /**
+   * Opens the audited Break-Glass reason form.
+   *
+   * @param {string} patientId - UUID of the patient
+   * @returns {void}
+   */
+  const openSnapshotAccess = (patientId) => {
+    setSnapshotPatientId(
+      patientId
+    );
+
+    setAccessReason(
+      ''
+    );
+  };
+
+  /**
    * Records the required Break-Glass reason before opening
    * the minimal emergency patient snapshot.
    *
-   * @param {string} patientId - UUID of the patient
    * @returns {Promise<void>}
    */
-  const handleAccessSnapshot = async (patientId) => {
-    const reason = window.prompt(
-      'SECURITY PROTOCOL: Enter medical reason for Break-Glass access (REQUIRED):'
-    );
+  const handleAccessSnapshot = async () => {
+    const reason =
+      accessReason.trim();
 
     if (
-      !reason ||
-      reason.trim() === ''
+      !snapshotPatientId ||
+      !reason
     ) {
       toast.error(
-        'Access denied: Reason is required for the audit log.'
+        'Medical reason is required for the audit log.'
       );
 
       return;
     }
 
-    setAccessingId(patientId);
+    setAccessingId(
+      snapshotPatientId
+    );
 
     try {
       const response = await api.post(
         '/api/emergencies/access-logs',
         {
-          patientId,
-          reason: reason.trim()
+          patientId:
+            snapshotPatientId,
+          reason
         }
       );
 
       if (response.data.success) {
         toast.success(
-          'Access logged securely. Navigating...'
+          'Access logged securely.'
+        );
+
+        const patientId =
+          snapshotPatientId;
+
+        setSnapshotPatientId(
+          null
+        );
+
+        setAccessReason(
+          ''
         );
 
         navigate(
@@ -201,7 +251,10 @@ const HospitalEmergencyPage = () => {
         'Failed to authorize access'
       );
 
-      setAccessingId(null);
+    } finally {
+      setAccessingId(
+        null
+      );
     }
   };
 
@@ -227,52 +280,106 @@ const HospitalEmergencyPage = () => {
   return (
     <div className="min-h-[calc(100vh-5rem)] bg-muted/30">
 
-      <section className="bg-card border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 pt-8">
 
-            <div>
-              <div className="flex items-center gap-2 text-destructive mb-2">
-                <Activity size={18} />
+        <PageHeader
+          eyebrow="Emergency Operations"
+          title="Emergency Central Dispatch"
+          description="Monitor active SOS alerts, review emergency locations, use audited Break-Glass access, and resolve handled emergencies."
+          icon={Activity}
+          meta={
+            <div className="flex items-center gap-3">
 
-                <p className="text-xs font-bold uppercase tracking-[0.18em]">
-                  Emergency Operations
-                </p>
-              </div>
-
-              <h1 className="text-3xl font-bold text-foreground">
-                Emergency Central Dispatch
-              </h1>
-
-              <p className="text-sm text-muted-foreground mt-2 max-w-2xl">
-                Monitor active SOS alerts, review emergency locations,
-                access audited patient snapshots, and resolve handled
-                emergencies.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3 bg-card border border-border rounded-xl px-4 py-3 shadow-sm">
               <div className="relative">
                 <div className="w-3 h-3 rounded-full bg-destructive" />
                 <div className="absolute inset-0 w-3 h-3 rounded-full bg-destructive animate-ping opacity-60" />
               </div>
 
               <div>
-                <p className="text-xs text-muted-foreground">
-                  Live Emergency Feed
+                <p className="text-[10px] uppercase tracking-wide font-bold text-destructive">
+                  Live Feed
                 </p>
 
                 <p className="text-sm font-bold text-foreground">
                   Polling every 10 seconds
                 </p>
               </div>
+
+            </div>
+          }
+        />
+
+        <div className="flex justify-end mt-4">
+
+          <button
+            type="button"
+            onClick={() => {
+              setRefreshing(true);
+              fetchAlerts(false);
+            }}
+            disabled={refreshing}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-secondary border border-border text-foreground hover:bg-secondary/80 font-semibold text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <RefreshCw
+              size={16}
+              className={
+                refreshing
+                  ? 'animate-spin'
+                  : ''
+              }
+            />
+
+            Refresh
+          </button>
+
+        </div>
+
+      </div>
+
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-8">
+
+        {loadError && (
+
+          <div className="mb-6 rounded-2xl border border-destructive/20 bg-destructive/5 p-5">
+
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+
+              <div className="flex items-start gap-3">
+
+                <ShieldAlert
+                  size={20}
+                  className="text-destructive mt-0.5 shrink-0"
+                />
+
+                <div>
+                  <p className="text-sm font-bold text-foreground">
+                    Emergency feed unavailable
+                  </p>
+
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {loadError}
+                  </p>
+                </div>
+
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setRefreshing(true);
+                  fetchAlerts(false);
+                }}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-background border border-border text-sm font-semibold text-foreground hover:bg-secondary transition-colors"
+              >
+                <RefreshCw size={15} />
+                Retry
+              </button>
+
             </div>
 
           </div>
-        </div>
-      </section>
 
-      <main className="max-w-7xl mx-auto px-4 md:px-6 py-8">
+        )}
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           <div>
@@ -458,7 +565,7 @@ const HospitalEmergencyPage = () => {
                     <button
                       type="button"
                       onClick={() =>
-                        handleAccessSnapshot(
+                        openSnapshotAccess(
                           alert.patient_id
                         )
                       }
@@ -505,6 +612,146 @@ const HospitalEmergencyPage = () => {
         )}
 
       </main>
+
+      {snapshotPatientId && (
+
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+
+          <button
+            type="button"
+            aria-label="Close Break-Glass access dialog"
+            className="absolute inset-0 bg-black/50"
+            onClick={() => {
+              if (!accessingId) {
+                setSnapshotPatientId(null);
+                setAccessReason('');
+              }
+            }}
+          />
+
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="break-glass-title"
+            className="relative z-10 w-full max-w-lg bg-background border border-border rounded-2xl shadow-2xl overflow-hidden"
+          >
+
+            <div className="border-b border-border px-5 sm:px-6 py-4 flex items-start justify-between gap-4">
+
+              <div className="flex items-start gap-3">
+
+                <div className="w-10 h-10 rounded-xl bg-destructive/10 text-destructive flex items-center justify-center shrink-0">
+                  <ShieldAlert size={20} />
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-destructive">
+                    Break-Glass Protocol
+                  </p>
+
+                  <h2
+                    id="break-glass-title"
+                    className="text-lg font-bold text-foreground mt-1"
+                  >
+                    Emergency Snapshot Access
+                  </h2>
+                </div>
+
+              </div>
+
+              <button
+                type="button"
+                aria-label="Close"
+                disabled={!!accessingId}
+                onClick={() => {
+                  setSnapshotPatientId(null);
+                  setAccessReason('');
+                }}
+                className="w-9 h-9 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors disabled:opacity-50"
+              >
+                <X size={19} />
+              </button>
+
+            </div>
+
+            <div className="p-5 sm:p-6">
+
+              <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 mb-5">
+                <p className="text-sm font-semibold text-foreground">
+                  Audited emergency access
+                </p>
+
+                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                  Enter the medical reason for accessing this patient&apos;s emergency snapshot. The access event will be securely logged.
+                </p>
+              </div>
+
+              <label
+                htmlFor="breakGlassReason"
+                className="block text-sm font-semibold text-foreground mb-2"
+              >
+                Medical Reason
+                <span className="text-destructive ml-1">
+                  *
+                </span>
+              </label>
+
+              <textarea
+                id="breakGlassReason"
+                rows={4}
+                autoFocus
+                value={accessReason}
+                disabled={!!accessingId}
+                onChange={(event) =>
+                  setAccessReason(
+                    event.target.value
+                  )
+                }
+                placeholder="e.g. Unconscious patient requiring immediate allergy and medication review"
+                className="w-full rounded-xl border border-border bg-background px-3 py-3 text-sm text-foreground outline-none resize-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+              />
+
+              <div className="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+
+                <button
+                  type="button"
+                  disabled={!!accessingId}
+                  onClick={() => {
+                    setSnapshotPatientId(null);
+                    setAccessReason('');
+                  }}
+                  className="px-4 py-2.5 rounded-xl bg-secondary border border-border text-foreground hover:bg-secondary/80 text-sm font-semibold transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  disabled={
+                    !!accessingId ||
+                    !accessReason.trim()
+                  }
+                  onClick={
+                    handleAccessSnapshot
+                  }
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ShieldAlert size={17} />
+
+                  {accessingId
+                    ? 'Authorizing...'
+                    : 'Authorize Emergency Access'}
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
 
     </div>
   );

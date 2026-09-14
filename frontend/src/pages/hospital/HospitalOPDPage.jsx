@@ -33,6 +33,7 @@ import api from '../../services/api';
 
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import PageHeader from '../../components/common/PageHeader';
 import Spinner from '../../components/common/Spinner';
 
 const formatTime = (
@@ -728,35 +729,37 @@ const HospitalOPDPage = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+    <div className="min-h-[calc(100vh-5rem)] bg-muted/30">
 
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8">
 
-        <div>
+        <PageHeader
+          eyebrow="Hospital Operations"
+          title="Today&apos;s OPD"
+          description="Hospital-wide view of today&apos;s patients across all doctors, with reception check-in and walk-in registration support."
+          icon={Stethoscope}
+          meta={
+            <div className="flex items-center gap-3">
 
-          <div className="flex items-center gap-2 text-primary mb-1">
+              <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                <Users size={18} />
+              </div>
 
-            <Stethoscope
-              size={20}
-            />
+              <div>
+                <p className="text-[10px] uppercase tracking-wide font-bold text-primary">
+                  Queue Today
+                </p>
 
-            <span className="text-xs uppercase tracking-wider font-bold">
-              Hospital Operations
-            </span>
+                <p className="text-sm font-bold text-foreground">
+                  {stats.total} {stats.total === 1 ? 'Patient' : 'Patients'}
+                </p>
+              </div>
 
-          </div>
+            </div>
+          }
+        />
 
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-            Today&apos;s OPD
-          </h1>
-
-          <p className="text-sm text-muted-foreground mt-1">
-            Hospital-wide view of today&apos;s patients across all doctors.
-          </p>
-
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 mt-4">
 
           <Button
             variant="primary"
@@ -798,6 +801,8 @@ const HospitalOPDPage = () => {
         </div>
 
       </div>
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
 
@@ -1169,6 +1174,8 @@ const HospitalOPDPage = () => {
       <p className="text-xs text-muted-foreground mt-4 text-center">
         Hospital staff manage patient arrival only. Consultation actions remain with the assigned doctor.
       </p>
+
+      </main>
 
       {showRegistrationModal && (
 
