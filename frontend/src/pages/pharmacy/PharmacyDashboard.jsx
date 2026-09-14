@@ -26,6 +26,7 @@ import {
   ScanLine,
 } from 'lucide-react';
 
+import toast from 'react-hot-toast';
 import api from '../../services/api';
 
 import Spinner from '../../components/common/Spinner';
@@ -89,6 +90,20 @@ const normalizePrescriptionQrValue = (value) => {
   } catch {
     return trimmedValue;
   }
+};
+
+/**
+ * Checks whether a normalized QR value is a Care4U prescription reference.
+ */
+const isValidPrescriptionQrValue = (value) => {
+  if (!value) {
+    return false;
+  }
+
+  return value
+    .trim()
+    .toUpperCase()
+    .startsWith('RX-');
 };
 
 /**
@@ -200,6 +215,22 @@ const PharmacyDashboard = () => {
       );
 
     if (!value) {
+      toast.error(
+        'Please enter a prescription QR value.'
+      );
+
+      return;
+    }
+
+    if (
+      !isValidPrescriptionQrValue(
+        value
+      )
+    ) {
+      toast.error(
+        'Invalid prescription QR. Please scan a Care4U prescription QR beginning with RX-.'
+      );
+
       return;
     }
 
@@ -222,7 +253,15 @@ const PharmacyDashboard = () => {
         scannedValue
       );
 
-    if (!value) {
+    if (
+      !isValidPrescriptionQrValue(
+        value
+      )
+    ) {
+      toast.error(
+        'This is not a valid Care4U prescription QR.'
+      );
+
       return;
     }
 
@@ -630,7 +669,9 @@ const PharmacyDashboard = () => {
                     key={rx.id}
                     onClick={() =>
                       navigate(
-                        `/pharmacy/${rx.qr_code_value}`
+                        `/pharmacy/${encodeURIComponent(
+                          rx.qr_code_value
+                        )}`
                       )
                     }
                     className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border border-border rounded-lg hover:border-primary/40 hover:shadow-sm cursor-pointer transition-all bg-card"
