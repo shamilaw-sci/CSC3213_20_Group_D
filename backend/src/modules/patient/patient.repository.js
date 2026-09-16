@@ -9,8 +9,11 @@
 const { pool } = require('../../config/db');
 
 /**
- * Fetches a patient record by their patient table ID,
- * joined with the users table for full profile data.
+ * Fetches a patient record by their patient table ID.
+ *
+ * Account information is optional because hospital-assisted
+ * patients may exist without a linked Care4U user account.
+ *
  * @param {string} id - UUID of the patient (patients.id)
  * @returns {Promise<Object|null>} Patient row or null if not found
  */
@@ -36,10 +39,12 @@ async function getPatientById(id) {
       u.is_verified,
       u.role
     FROM patients p
-    JOIN users u ON p.user_id = u.id
+    LEFT JOIN users u
+      ON p.user_id = u.id
     WHERE p.id = $1`,
     [id]
   );
+
   return result.rows[0] || null;
 }
 
@@ -74,6 +79,7 @@ async function getPatientByUserId(userId) {
     WHERE p.user_id = $1`,
     [userId]
   );
+
   return result.rows[0] || null;
 }
 
@@ -109,6 +115,7 @@ async function updatePatient(id, data) {
       id,
     ]
   );
+
   return result.rows[0] || null;
 }
 
@@ -129,6 +136,7 @@ async function updatePatientPhoto(patientId, photoUrl) {
     RETURNING *`,
     [photoUrl, patientId]
   );
+
   return result.rows[0] || null;
 }
 
@@ -162,6 +170,7 @@ async function getMedicalRecords(patientId) {
     ORDER BY mr.created_at DESC`,
     [patientId]
   );
+
   return result.rows;
 }
 
@@ -184,6 +193,7 @@ async function getAllergies(patientId) {
     ORDER BY created_at DESC`,
     [patientId]
   );
+
   return result.rows;
 }
 
@@ -208,6 +218,7 @@ async function getConditionsByPatientId(patientId) {
     ORDER BY is_priority DESC, created_at DESC`,
     [patientId]
   );
+
   return result.rows;
 }
 
@@ -220,13 +231,44 @@ async function getConditionsByPatientId(patientId) {
  * @param {boolean} isPriority - Whether this is a priority/severe condition
  * @returns {Promise<Object>} The newly created condition row
  */
-async function addCondition(patientId, condition, diagnosedAt, notes, isPriority) {
+async function addCondition(
+  patientId,
+  condition,
+  diagnosedAt,
+  notes,
+  isPriority
+) {
   const result = await pool.query(
-    `INSERT INTO patient_conditions (id, patient_id, condition, diagnosed_at, notes, is_priority, created_at)
-     VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, NOW())
+    `INSERT INTO patient_conditions
+      (
+        id,
+        patient_id,
+        condition,
+        diagnosed_at,
+        notes,
+        is_priority,
+        created_at
+      )
+     VALUES
+      (
+        gen_random_uuid(),
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        NOW()
+      )
      RETURNING *`,
-    [patientId, condition, diagnosedAt || null, notes || null, Boolean(isPriority)]
+    [
+      patientId,
+      condition,
+      diagnosedAt || null,
+      notes || null,
+      Boolean(isPriority)
+    ]
   );
+
   return result.rows[0];
 }
 
@@ -236,13 +278,141 @@ async function addCondition(patientId, condition, diagnosedAt, notes, isPriority
  * @param {string} conditionId - UUID of the condition (patient_conditions.id)
  * @returns {Promise<boolean>} True if a row was deleted, false otherwise
  */
-async function deleteCondition(patientId, conditionId) {
+async function deleteCondition(
+  patientId,
+  conditionId
+) {
   const result = await pool.query(
     `DELETE FROM patient_conditions 
-     WHERE id = $1 AND patient_id = $2
+     WHERE id = $1
+       AND patient_id = $2
      RETURNING id`,
-    [conditionId, patientId]
+    [
+      conditionId,
+      patientId
+    ]
   );
+
+  return result.rowCount > 0;
+}
+
+/**
+ * Fetches all active medical devices and implants for a patient.
+ * Emergency-relevant devices are ordered first.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @returns {Promise<Array>} Array of active medical device rows
+ */
+async function getMedicalDevicesByPatientId(
+  patientId
+) {
+  const result = await pool.query(
+    `SELECT
+      id,
+      patient_id,
+      device_name,
+      device_type,
+      notes,
+      is_active,
+      is_emergency_relevant,
+      implanted_at,
+      created_at,
+      updated_at
+    FROM patient_medical_devices
+    WHERE patient_id = $1
+      AND is_active = true
+    ORDER BY
+      is_emergency_relevant DESC,
+      implanted_at DESC NULLS LAST,
+      created_at DESC`,
+    [patientId]
+  );
+
+  return result.rows;
+}
+
+/**
+ * Inserts a medical device or implant record for a patient.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @param {string} deviceName - Name of the device or implant
+ * @param {string|null} deviceType - Device category/type
+ * @param {string|null} implantedAt - Implant/start date
+ * @param {string|null} notes - Optional device notes
+ * @param {boolean} isEmergencyRelevant - Whether emergency staff should see it
+ * @returns {Promise<Object>} Newly created medical device row
+ */
+async function addMedicalDevice(
+  patientId,
+  deviceName,
+  deviceType,
+  implantedAt,
+  notes,
+  isEmergencyRelevant
+) {
+  const result = await pool.query(
+    `INSERT INTO patient_medical_devices
+      (
+        patient_id,
+        device_name,
+        device_type,
+        implanted_at,
+        notes,
+        is_active,
+        is_emergency_relevant
+      )
+     VALUES
+      (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        true,
+        $6
+      )
+     RETURNING *`,
+    [
+      patientId,
+      deviceName,
+      deviceType || null,
+      implantedAt || null,
+      notes || null,
+      Boolean(isEmergencyRelevant)
+    ]
+  );
+
+  return result.rows[0];
+}
+
+/**
+ * Removes a medical device from the patient's active profile.
+ * The row is preserved for historical integrity by setting
+ * is_active to false instead of permanently deleting it.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @param {string} deviceId - UUID of the medical device
+ * @returns {Promise<boolean>} True if a device was deactivated
+ */
+async function deleteMedicalDevice(
+  patientId,
+  deviceId
+) {
+  const result = await pool.query(
+    `UPDATE patient_medical_devices
+     SET
+       is_active = false,
+       updated_at = NOW()
+     WHERE id = $1
+       AND patient_id = $2
+       AND is_active = true
+     RETURNING id`,
+    [
+      deviceId,
+      patientId
+    ]
+  );
+
   return result.rowCount > 0;
 }
 
@@ -254,13 +424,40 @@ async function deleteCondition(patientId, conditionId) {
  * @param {string|null} notes - Optional additional notes
  * @returns {Promise<Object>} The newly created allergy row
  */
-async function addAllergy(patientId, allergen, severity, notes) {
+async function addAllergy(
+  patientId,
+  allergen,
+  severity,
+  notes
+) {
   const result = await pool.query(
-    `INSERT INTO patient_allergies (id, patient_id, allergen, severity, notes, created_at)
-    VALUES (gen_random_uuid(), $1, $2, $3, $4, NOW())
-    RETURNING *`,
-    [patientId, allergen, severity, notes || null]
+    `INSERT INTO patient_allergies
+      (
+        id,
+        patient_id,
+        allergen,
+        severity,
+        notes,
+        created_at
+      )
+     VALUES
+      (
+        gen_random_uuid(),
+        $1,
+        $2,
+        $3,
+        $4,
+        NOW()
+      )
+     RETURNING *`,
+    [
+      patientId,
+      allergen,
+      severity,
+      notes || null
+    ]
   );
+
   return result.rows[0];
 }
 
@@ -270,13 +467,21 @@ async function addAllergy(patientId, allergen, severity, notes) {
  * @param {string} allergyId - UUID of the allergy (patient_allergies.id)
  * @returns {Promise<boolean>} True if a row was deleted, false otherwise
  */
-async function deleteAllergy(patientId, allergyId) {
+async function deleteAllergy(
+  patientId,
+  allergyId
+) {
   const result = await pool.query(
     `DELETE FROM patient_allergies 
-     WHERE id = $1 AND patient_id = $2
+     WHERE id = $1
+       AND patient_id = $2
      RETURNING id`,
-    [allergyId, patientId]
+    [
+      allergyId,
+      patientId
+    ]
   );
+
   return result.rowCount > 0;
 }
 
@@ -285,7 +490,9 @@ async function deleteAllergy(patientId, allergyId) {
  * @param {string} patientId - UUID of the patient (patients.id)
  * @returns {Promise<Array>} Array of vaccination rows (empty array if none)
  */
-async function getVaccinationsByPatientId(patientId) {
+async function getVaccinationsByPatientId(
+  patientId
+) {
   const result = await pool.query(
     `SELECT
       id,
@@ -297,9 +504,12 @@ async function getVaccinationsByPatientId(patientId) {
       created_at
     FROM vaccinations
     WHERE patient_id = $1
-    ORDER BY date_administered DESC, created_at DESC`,
+    ORDER BY
+      date_administered DESC,
+      created_at DESC`,
     [patientId]
   );
+
   return result.rows;
 }
 
@@ -312,13 +522,44 @@ async function getVaccinationsByPatientId(patientId) {
  * @param {string|null} notes - Optional additional notes
  * @returns {Promise<Object>} The newly created vaccination row
  */
-async function addVaccination(patientId, vaccineName, dateAdministered, doseNumber, notes) {
+async function addVaccination(
+  patientId,
+  vaccineName,
+  dateAdministered,
+  doseNumber,
+  notes
+) {
   const result = await pool.query(
-    `INSERT INTO vaccinations (id, patient_id, vaccine_name, date_administered, dose_number, notes, created_at)
-     VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, NOW())
+    `INSERT INTO vaccinations
+      (
+        id,
+        patient_id,
+        vaccine_name,
+        date_administered,
+        dose_number,
+        notes,
+        created_at
+      )
+     VALUES
+      (
+        gen_random_uuid(),
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        NOW()
+      )
      RETURNING *`,
-    [patientId, vaccineName, dateAdministered, doseNumber || null, notes || null]
+    [
+      patientId,
+      vaccineName,
+      dateAdministered,
+      doseNumber || null,
+      notes || null
+    ]
   );
+
   return result.rows[0];
 }
 
@@ -328,13 +569,21 @@ async function addVaccination(patientId, vaccineName, dateAdministered, doseNumb
  * @param {string} vaccinationId - UUID of the vaccination (vaccinations.id)
  * @returns {Promise<boolean>} True if a row was deleted, false otherwise
  */
-async function deleteVaccination(patientId, vaccinationId) {
+async function deleteVaccination(
+  patientId,
+  vaccinationId
+) {
   const result = await pool.query(
     `DELETE FROM vaccinations 
-     WHERE id = $1 AND patient_id = $2
+     WHERE id = $1
+       AND patient_id = $2
      RETURNING id`,
-    [vaccinationId, patientId]
+    [
+      vaccinationId,
+      patientId
+    ]
   );
+
   return result.rowCount > 0;
 }
 
@@ -345,7 +594,9 @@ async function deleteVaccination(patientId, vaccinationId) {
  * @param {string} patientId - UUID of the patient (patients.id)
  * @returns {Promise<Array>} Array of prescription objects (empty array if none)
  */
-async function getPatientPrescriptions(patientId) {
+async function getPatientPrescriptions(
+  patientId
+) {
   const result = await pool.query(
     `SELECT
       pr.id,
@@ -373,8 +624,10 @@ async function getPatientPrescriptions(patientId) {
         ) ORDER BY pi.medicine_name
       ) AS items
     FROM prescriptions pr
-    LEFT JOIN doctors d  ON pr.doctor_id = d.id
-    LEFT JOIN prescription_items pi ON pi.prescription_id = pr.id
+    LEFT JOIN doctors d
+      ON pr.doctor_id = d.id
+    LEFT JOIN prescription_items pi
+      ON pi.prescription_id = pr.id
     WHERE pr.patient_id = $1
     GROUP BY
       pr.id,
@@ -392,16 +645,23 @@ async function getPatientPrescriptions(patientId) {
     ORDER BY pr.created_at DESC`,
     [patientId]
   );
+
   return result.rows;
 }
 
 /**
  * Fetches a patient record by their QR code ID.
  * Used by the doctor-facing QR lookup endpoint.
- * @param {string} qrCodeId - The qr_code_id value (e.g. "QR-TEST-001")
+ *
+ * Account information is optional because hospital-assisted
+ * patients may not have a linked user account.
+ *
+ * @param {string} qrCodeId - Patient QR identity
  * @returns {Promise<Object|null>} Patient row or null if not found
  */
-async function getPatientByQrCodeId(qrCodeId) {
+async function getPatientByQrCodeId(
+  qrCodeId
+) {
   const result = await pool.query(
     `SELECT 
       p.id,
@@ -423,10 +683,12 @@ async function getPatientByQrCodeId(qrCodeId) {
       u.is_verified,
       u.role
     FROM patients p
-    JOIN users u ON p.user_id = u.id
+    LEFT JOIN users u
+      ON p.user_id = u.id
     WHERE p.qr_code_id = $1`,
     [qrCodeId]
   );
+
   return result.rows[0] || null;
 }
 
@@ -436,7 +698,9 @@ async function getPatientByQrCodeId(qrCodeId) {
  * @param {string} patientId - UUID of the patient
  * @returns {Promise<Array>} Array of lab report rows (empty array if none)
  */
-async function getLabReports(patientId) {
+async function getLabReports(
+  patientId
+) {
   const result = await pool.query(
     `SELECT 
       lr.id,
@@ -449,13 +713,17 @@ async function getLabReports(patientId) {
       l.name AS lab_name,
       d.full_name AS doctor_name
     FROM lab_reports lr
-    JOIN lab_test_requests ltr ON lr.lab_request_id = ltr.id
-    JOIN laboratories l ON lr.laboratory_id = l.id
-    LEFT JOIN doctors d ON ltr.doctor_id = d.id
+    JOIN lab_test_requests ltr
+      ON lr.lab_request_id = ltr.id
+    JOIN laboratories l
+      ON lr.laboratory_id = l.id
+    LEFT JOIN doctors d
+      ON ltr.doctor_id = d.id
     WHERE lr.patient_id = $1
     ORDER BY lr.created_at DESC`,
     [patientId]
   );
+
   return result.rows;
 }
 
@@ -465,14 +733,24 @@ async function getLabReports(patientId) {
  * @param {string} reportId - UUID of the lab report
  * @returns {Promise<Object|null>} The updated report row or null
  */
-async function markLabReportAsRead(patientId, reportId) {
+async function markLabReportAsRead(
+  patientId,
+  reportId
+) {
   const result = await pool.query(
     `UPDATE lab_reports
-     SET is_read = true, viewed_at = NOW()
-     WHERE id = $1 AND patient_id = $2
+     SET
+       is_read = true,
+       viewed_at = NOW()
+     WHERE id = $1
+       AND patient_id = $2
      RETURNING *`,
-    [reportId, patientId]
+    [
+      reportId,
+      patientId
+    ]
   );
+
   return result.rows[0] || null;
 }
 
@@ -481,7 +759,9 @@ async function markLabReportAsRead(patientId, reportId) {
  * @param {string} patientId - UUID of the patient
  * @returns {Promise<Array>} Array of appointment rows
  */
-async function getPatientAppointments(patientId) {
+async function getPatientAppointments(
+  patientId
+) {
   const result = await pool.query(
     `SELECT 
       a.id,
@@ -495,12 +775,291 @@ async function getPatientAppointments(patientId) {
       d.full_name AS doctor_name,
       d.specialization AS doctor_specialization
     FROM appointments a
-    JOIN doctors d ON a.doctor_id = d.id
+    JOIN doctors d
+      ON a.doctor_id = d.id
     WHERE a.patient_id = $1
     ORDER BY a.scheduled_at DESC`,
     [patientId]
   );
+
   return result.rows;
+}
+
+/**
+ * Fetches a patient record by their NIC.
+ *
+ * Account information is optional because hospital-assisted
+ * patients may not have a linked user account.
+ *
+ * @param {string} nic - Patient NIC number
+ * @returns {Promise<Object|null>} Patient row or null if not found
+ */
+async function getPatientByNic(
+  nic
+) {
+  const result = await pool.query(
+    `SELECT
+      p.id,
+      p.user_id,
+      p.nic,
+      p.uhi,
+      p.date_of_birth,
+      p.gender,
+      p.blood_group,
+      p.emergency_contact_name,
+      p.emergency_contact_phone,
+      p.emergency_contact_relationship,
+      p.qr_code_id,
+      p.photo_url,
+      p.created_at,
+      p.full_name,
+      u.email,
+      u.phone,
+      u.is_verified,
+      u.role
+    FROM patients p
+    LEFT JOIN users u
+      ON p.user_id = u.id
+    WHERE UPPER(TRIM(p.nic)) =
+          UPPER(TRIM($1))
+    LIMIT 1`,
+    [nic]
+  );
+
+  return result.rows[0] || null;
+}
+
+/**
+ * Fetches all active important medical background records for a patient.
+ * Emergency-relevant records are ordered first.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @returns {Promise<Array>} Array of active health background rows
+ */
+async function getHealthBackgroundByPatientId(
+  patientId
+) {
+  const result = await pool.query(
+    `SELECT
+      id,
+      patient_id,
+      background_type,
+      title,
+      event_date,
+      notes,
+      is_emergency_relevant,
+      is_active,
+      created_at,
+      updated_at
+    FROM patient_health_background
+    WHERE patient_id = $1
+      AND is_active = true
+    ORDER BY
+      is_emergency_relevant DESC,
+      event_date DESC NULLS LAST,
+      created_at DESC`,
+    [patientId]
+  );
+
+  return result.rows;
+}
+
+/**
+ * Inserts an important medical background record for a patient.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @param {string} backgroundType - Category of the medical background
+ * @param {string} title - Short description/title
+ * @param {string|null} eventDate - Optional date of event
+ * @param {string|null} notes - Optional additional notes
+ * @param {boolean} isEmergencyRelevant - Whether emergency staff should see it
+ * @returns {Promise<Object>} Newly created health background row
+ */
+async function addHealthBackground(
+  patientId,
+  backgroundType,
+  title,
+  eventDate,
+  notes,
+  isEmergencyRelevant
+) {
+  const result = await pool.query(
+    `INSERT INTO patient_health_background
+      (
+        patient_id,
+        background_type,
+        title,
+        event_date,
+        notes,
+        is_emergency_relevant,
+        is_active
+      )
+     VALUES
+      (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        true
+      )
+     RETURNING *`,
+    [
+      patientId,
+      backgroundType,
+      title,
+      eventDate || null,
+      notes || null,
+      Boolean(isEmergencyRelevant)
+    ]
+  );
+
+  return result.rows[0];
+}
+
+/**
+ * Removes an important medical background record from the
+ * patient's active profile while preserving historical data.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @param {string} backgroundId - UUID of the background record
+ * @returns {Promise<boolean>} True if a row was deactivated
+ */
+async function deleteHealthBackground(
+  patientId,
+  backgroundId
+) {
+  const result = await pool.query(
+    `UPDATE patient_health_background
+     SET
+       is_active = false,
+       updated_at = NOW()
+     WHERE id = $1
+       AND patient_id = $2
+       AND is_active = true
+     RETURNING id`,
+    [
+      backgroundId,
+      patientId
+    ]
+  );
+
+  return result.rowCount > 0;
+}
+
+/**
+ * Fetches all active family medical history records for a patient.
+ * Emergency-relevant records are ordered first.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @returns {Promise<Array>} Array of active family history rows
+ */
+async function getFamilyHistoryByPatientId(
+  patientId
+) {
+  const result = await pool.query(
+    `SELECT
+      id,
+      patient_id,
+      relation,
+      condition,
+      notes,
+      is_emergency_relevant,
+      is_active,
+      created_at,
+      updated_at
+    FROM patient_family_history
+    WHERE patient_id = $1
+      AND is_active = true
+    ORDER BY
+      is_emergency_relevant DESC,
+      created_at DESC`,
+    [patientId]
+  );
+
+  return result.rows;
+}
+
+/**
+ * Inserts a family medical history record for a patient.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @param {string} relation - Relationship of the affected family member
+ * @param {string} condition - Medical condition or relevant family history
+ * @param {string|null} notes - Optional additional notes
+ * @param {boolean} isEmergencyRelevant - Whether emergency staff should see it
+ * @returns {Promise<Object>} Newly created family history row
+ */
+async function addFamilyHistory(
+  patientId,
+  relation,
+  condition,
+  notes,
+  isEmergencyRelevant
+) {
+  const result = await pool.query(
+    `INSERT INTO patient_family_history
+      (
+        patient_id,
+        relation,
+        condition,
+        notes,
+        is_emergency_relevant,
+        is_active
+      )
+     VALUES
+      (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        true
+      )
+     RETURNING *`,
+    [
+      patientId,
+      relation,
+      condition,
+      notes || null,
+      Boolean(
+        isEmergencyRelevant
+      )
+    ]
+  );
+
+  return result.rows[0];
+}
+
+/**
+ * Removes a family medical history record from the patient's
+ * active profile while preserving historical data.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @param {string} familyHistoryId - UUID of the family history record
+ * @returns {Promise<boolean>} True if a row was deactivated
+ */
+async function deleteFamilyHistory(
+  patientId,
+  familyHistoryId
+) {
+  const result = await pool.query(
+    `UPDATE patient_family_history
+     SET
+       is_active = false,
+       updated_at = NOW()
+     WHERE id = $1
+       AND patient_id = $2
+       AND is_active = true
+     RETURNING id`,
+    [
+      familyHistoryId,
+      patientId
+    ]
+  );
+
+  return result.rowCount > 0;
 }
 
 
@@ -514,6 +1073,9 @@ module.exports = {
   getConditionsByPatientId,
   addCondition,
   deleteCondition,
+  getMedicalDevicesByPatientId,
+  addMedicalDevice,
+  deleteMedicalDevice,
   addAllergy,
   deleteAllergy,
   getVaccinationsByPatientId,
@@ -524,4 +1086,11 @@ module.exports = {
   getLabReports,
   markLabReportAsRead,
   getPatientAppointments,
+  getPatientByNic,
+  getHealthBackgroundByPatientId,
+  addHealthBackground,
+  deleteHealthBackground,
+  getFamilyHistoryByPatientId,
+  addFamilyHistory,
+  deleteFamilyHistory,
 };

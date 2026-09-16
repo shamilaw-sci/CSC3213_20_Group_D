@@ -1,11 +1,12 @@
 /**
  * @file    ForgotPasswordScreen.js
  * @module  Auth
- * @desc    Mobile screen for requesting a password reset link.
+ * @desc    Premium mobile screen for requesting a Care4U password reset.
  * @author  I.M.L.S. Idirisinghe (S/21/389)
  */
 
 import React, { useState } from 'react';
+
 import {
   View,
   Text,
@@ -16,35 +17,79 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
 } from 'react-native';
-import { forgotPassword } from '../services/auth.service';
 
-export default function ForgotPasswordScreen({ onBackToLogin, onResetPassword }) {
-  const [email, setEmail]         = useState('');
-  const [loading, setLoading]     = useState(false);
-  const [error, setError]         = useState('');
+import {
+  AlertCircle,
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  LockKeyhole,
+  Mail,
+  ShieldCheck,
+} from 'lucide-react-native';
+
+import {
+  forgotPassword,
+} from '../services/auth.service';
+
+const COLORS = {
+  background: '#F6F8FA',
+  surface: '#FFFFFF',
+  navy: '#12344D',
+  teal: '#0F8B83',
+  tealDark: '#0B6F69',
+  tealSoft: '#E7F7F5',
+  text: '#102331',
+  muted: '#718096',
+  subtle: '#9AA8B6',
+  border: '#E3E9ED',
+  danger: '#C94C4C',
+  dangerSoft: '#FFF1F1',
+  green: '#2F855A',
+  greenSoft: '#EDF9F2',
+};
+
+export default function ForgotPasswordScreen({
+  onBackToLogin,
+  onResetPassword,
+}) {
+  const [email, setEmail] = useState('');
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
-  // Validate input
   const validate = () => {
-    if (!email) { setError('Email is required'); return false; }
+    if (!email.trim()) {
+      setError('Email is required');
+      return false;
+    }
+
     return true;
   };
 
-  // Handle submit
   const handleSubmit = async () => {
-    if (!validate()) return;
+    if (!validate()) {
+      return;
+    }
 
     setLoading(true);
     setError('');
 
     try {
-      await forgotPassword(email);
-      // Always show the same generic message, whether or not the
-      // email exists, to preserve the backend's enumeration protection.
+      await forgotPassword(
+        email.trim()
+      );
+
       setSubmitted(true);
+
     } catch {
-      setError('Something went wrong. Please try again.');
+      setError(
+        'Something went wrong. Please try again.'
+      );
+
     } finally {
       setLoading(false);
     }
@@ -53,84 +98,217 @@ export default function ForgotPasswordScreen({ onBackToLogin, onResetPassword })
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={
+        Platform.OS === 'ios'
+          ? 'padding'
+          : 'height'
+      }
     >
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
 
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.logo}>Care4U</Text>
-          <Text style={styles.tagline}>Centralized Healthcare Ecosystem</Text>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+
+        <View style={styles.hero}>
+
+          <View style={styles.heroCircleOne} />
+
+          <View style={styles.logoTile}>
+            <Image
+              source={require('../../assets/logo.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+          </View>
+
+          <Text style={styles.brandName}>
+            Care4U
+          </Text>
+
+          <Text style={styles.heroText}>
+            Secure account recovery
+          </Text>
+
         </View>
 
-        {/* Card */}
         <View style={styles.card}>
-          <Text style={styles.title}>Forgot your password?</Text>
+
+          <View style={styles.iconTile}>
+            <LockKeyhole
+              size={23}
+              color={COLORS.teal}
+            />
+          </View>
+
+          <Text style={styles.eyebrow}>
+            ACCOUNT RECOVERY
+          </Text>
+
+          <Text style={styles.title}>
+            Forgot your password?
+          </Text>
+
           <Text style={styles.subtitle}>
-            Enter your email address to request a password reset.
+            Enter the email address linked to your Care4U account to request a password reset.
           </Text>
 
           {submitted ? (
             <>
-                <View style={styles.successBox}>
-                    <Text style={styles.successText}>
-                         If an account exists for this email, the password reset request has been processed.
-                    </Text>
+
+              <View style={styles.successBox}>
+
+                <CheckCircle2
+                  size={20}
+                  color={COLORS.green}
+                />
+
+                <View style={styles.messageContent}>
+
+                  <Text style={styles.successTitle}>
+                    Request processed
+                  </Text>
+
+                  <Text style={styles.successText}>
+                    If an account exists for this email, the password reset request has been processed.
+                  </Text>
+
                 </View>
 
-                <TouchableOpacity
-                    style={styles.button}
-                    onPress={onResetPassword}
-                >
-                <Text style={styles.buttonText}>Continue to Reset Password</Text>
-            </TouchableOpacity>
-    </>
-) : (
+              </View>
+
+              <TouchableOpacity
+                style={styles.primaryButton}
+                activeOpacity={0.85}
+                onPress={onResetPassword}
+              >
+
+                <Text style={styles.primaryButtonText}>
+                  Continue to Reset Password
+                </Text>
+
+                <ArrowRight
+                  size={17}
+                  color="#FFFFFF"
+                />
+
+              </TouchableOpacity>
+
+            </>
+          ) : (
             <>
+
               {error !== '' && (
                 <View style={styles.errorBox}>
-                  <Text style={styles.errorText}>{error}</Text>
+
+                  <AlertCircle
+                    size={17}
+                    color={COLORS.danger}
+                  />
+
+                  <Text style={styles.errorText}>
+                    {error}
+                  </Text>
+
                 </View>
               )}
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>EMAIL ADDRESS</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="you@example.com"
-                  placeholderTextColor="#94A3B8"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  value={email}
-                  onChangeText={(text) => { setEmail(text); setError(''); }}
-                />
+
+                <Text style={styles.label}>
+                  EMAIL ADDRESS
+                </Text>
+
+                <View style={styles.inputWrapper}>
+
+                  <Mail
+                    size={18}
+                    color={COLORS.subtle}
+                  />
+
+                  <TextInput
+                    style={styles.input}
+                    placeholder="you@example.com"
+                    placeholderTextColor={COLORS.subtle}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    value={email}
+                    onChangeText={(text) => {
+                      setEmail(text);
+                      setError('');
+                    }}
+                  />
+
+                </View>
+
               </View>
 
               <TouchableOpacity
-                style={[styles.button, loading && styles.buttonDisabled]}
+                style={[
+                  styles.primaryButton,
+                  loading && styles.buttonDisabled,
+                ]}
+                activeOpacity={0.85}
                 onPress={handleSubmit}
                 disabled={loading}
               >
-                {loading
-                  ? <ActivityIndicator color="#FFFFFF" />
-                  : <Text style={styles.buttonText}>Request Password Reset</Text>}
+
+                {loading ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <>
+                    <Text style={styles.primaryButtonText}>
+                      Request Password Reset
+                    </Text>
+
+                    <ArrowRight
+                      size={17}
+                      color="#FFFFFF"
+                    />
+                  </>
+                )}
+
               </TouchableOpacity>
+
             </>
           )}
 
-          {/* Back to login link */}
-          <TouchableOpacity onPress={onBackToLogin}>
+          <TouchableOpacity
+            style={styles.backButton}
+            activeOpacity={0.75}
+            onPress={onBackToLogin}
+          >
+
+            <ArrowLeft
+              size={15}
+              color={COLORS.teal}
+            />
+
             <Text style={styles.backText}>
-              Remember your password? <Text style={styles.backLink}>Back to Login</Text>
+              Back to Login
             </Text>
+
           </TouchableOpacity>
 
         </View>
 
-        {/* Footer */}
-        <Text style={styles.footer}>© 2026 Care4U — Group D | CSC3213</Text>
+        <View style={styles.securityFooter}>
+
+          <ShieldCheck
+            size={14}
+            color={COLORS.subtle}
+          />
+
+          <Text style={styles.securityFooterText}>
+            Secure Care4U account recovery
+          </Text>
+
+        </View>
 
       </ScrollView>
+
     </KeyboardAvoidingView>
   );
 }
@@ -138,120 +316,231 @@ export default function ForgotPasswordScreen({ onBackToLogin, onResetPassword })
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: COLORS.background,
   },
+
   scroll: {
     flexGrow: 1,
-    justifyContent: 'center',
-    padding: 24,
+    paddingBottom: 30,
   },
-  header: {
+
+  hero: {
+    height: 230,
+    backgroundColor: COLORS.navy,
+    overflow: 'hidden',
     alignItems: 'center',
-    marginBottom: 32,
+    paddingTop: 48,
+    position: 'relative',
   },
-  logo: {
-    fontSize: 36,
-    fontWeight: '700',
-    color: '#1E3A5F',
+
+  heroCircleOne: {
+    position: 'absolute',
+    width: 210,
+    height: 210,
+    borderRadius: 105,
+    right: -75,
+    top: -85,
+    backgroundColor: 'rgba(15,139,131,0.38)',
   },
-  tagline: {
-    fontSize: 14,
-    color: '#64748B',
+
+  logoTile: {
+    width: 63,
+    height: 63,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  logoImage: {
+    width: 50,
+    height: 50,
+  },
+
+  brandName: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: '800',
+    marginTop: 10,
+  },
+
+  heroText: {
+    color: 'rgba(255,255,255,0.65)',
+    fontSize: 10,
     marginTop: 4,
   },
+
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
+    marginHorizontal: 18,
+    marginTop: -38,
+    padding: 21,
+    borderRadius: 25,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    shadowColor: '#0F172A',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    elevation: 4,
   },
+
+  iconTile: {
+    width: 46,
+    height: 46,
+    borderRadius: 15,
+    backgroundColor: COLORS.tealSoft,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+
+  eyebrow: {
+    color: COLORS.teal,
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+
   title: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1E293B',
-    marginBottom: 8,
+    color: COLORS.text,
+    fontSize: 22,
+    fontWeight: '800',
+    marginTop: 4,
   },
+
   subtitle: {
-    fontSize: 13,
-    color: '#64748B',
-    marginBottom: 20,
+    color: COLORS.muted,
+    fontSize: 10,
+    lineHeight: 16,
+    marginTop: 6,
+    marginBottom: 19,
   },
-  successBox: {
-    backgroundColor: '#F0FDF4',
-    borderWidth: 1,
-    borderColor: '#BBF7D0',
-    borderRadius: 8,
-    padding: 12,
-  },
-  successText: {
-    fontSize: 13,
-    color: '#15803D',
-  },
-  errorBox: {
-    backgroundColor: '#FEF2F2',
-    borderWidth: 1,
-    borderColor: '#FECACA',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-  },
-  errorText: {
-    fontSize: 13,
-    color: '#DC2626',
-  },
+
   inputGroup: {
     marginBottom: 16,
   },
+
   label: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#64748B',
-    letterSpacing: 0.8,
-    marginBottom: 6,
+    color: COLORS.muted,
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 0.7,
+    marginBottom: 7,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: '#1E293B',
-    backgroundColor: '#FFFFFF',
-  },
-  button: {
-    backgroundColor: '#1E3A5F',
-    borderRadius: 8,
-    paddingVertical: 14,
+
+  inputWrapper: {
+    minHeight: 50,
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
+    gap: 10,
+    paddingHorizontal: 13,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: '#FBFCFD',
   },
+
+  input: {
+    flex: 1,
+    color: COLORS.text,
+    fontSize: 12,
+  },
+
+  errorBox: {
+    flexDirection: 'row',
+    gap: 8,
+    padding: 11,
+    borderRadius: 13,
+    borderWidth: 1,
+    borderColor: '#F1CCCC',
+    backgroundColor: COLORS.dangerSoft,
+    marginBottom: 16,
+  },
+
+  errorText: {
+    flex: 1,
+    color: COLORS.danger,
+    fontSize: 10,
+    lineHeight: 15,
+  },
+
+  successBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 9,
+    padding: 13,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#CDE9D7',
+    backgroundColor: COLORS.greenSoft,
+    marginBottom: 17,
+  },
+
+  messageContent: {
+    flex: 1,
+  },
+
+  successTitle: {
+    color: COLORS.green,
+    fontSize: 10,
+    fontWeight: '800',
+  },
+
+  successText: {
+    color: COLORS.green,
+    fontSize: 9,
+    lineHeight: 14,
+    marginTop: 3,
+  },
+
+  primaryButton: {
+    minHeight: 51,
+    borderRadius: 15,
+    backgroundColor: COLORS.teal,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+
+  primaryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+
   buttonDisabled: {
     opacity: 0.6,
   },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '600',
+
+  backButton: {
+    flexDirection: 'row',
+    gap: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 19,
   },
+
   backText: {
-    textAlign: 'center',
-    fontSize: 13,
-    color: '#64748B',
+    color: COLORS.teal,
+    fontSize: 10,
+    fontWeight: '800',
+  },
+
+  securityFooter: {
+    flexDirection: 'row',
+    gap: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginTop: 20,
   },
-  backLink: {
-    color: '#1E3A5F',
-    fontWeight: '600',
-  },
-  footer: {
-    textAlign: 'center',
-    fontSize: 11,
-    color: '#94A3B8',
-    marginTop: 24,
+
+  securityFooterText: {
+    color: COLORS.subtle,
+    fontSize: 8,
   },
 });

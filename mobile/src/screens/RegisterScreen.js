@@ -1,14 +1,14 @@
 /**
  * @file    RegisterScreen.js
  * @module  Auth
- * @desc    Mobile registration screen for Care4U patients and doctors.
- *          On success, navigates to OtpVerificationScreen (account is
- *          not created until OTP is verified).
+ * @desc    Premium mobile registration screen for Care4U patients and doctors.
+ *          On success, navigates to OTP verification. The account is not
+ *          created until OTP verification is completed.
  * @author  I.M.L.S. Idirisinghe (S/21/389)
  */
 
 import React, { useState } from 'react';
-import { register } from '../services/auth.service';
+
 import {
   View,
   Text,
@@ -19,76 +19,179 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
 } from 'react-native';
 
-export default function RegisterScreen({ onRegisterSuccess, onBackToLogin }) {
-  const [role, setRole]                 = useState('patient');
-  const [email, setEmail]               = useState('');
-  const [phone, setPhone]               = useState('');
-  const [password, setPassword]         = useState('');
+import {
+  AlertCircle,
+  BadgeCheck,
+  CalendarDays,
+  Eye,
+  EyeOff,
+  LockKeyhole,
+  Mail,
+  Phone,
+  ShieldCheck,
+  Stethoscope,
+  UserRound,
+} from 'lucide-react-native';
+
+import {
+  register,
+} from '../services/auth.service';
+
+const COLORS = {
+  background: '#F6F8FA',
+  surface: '#FFFFFF',
+  navy: '#12344D',
+  teal: '#0F8B83',
+  tealDark: '#0B6F69',
+  tealSoft: '#E7F7F5',
+  text: '#102331',
+  muted: '#718096',
+  subtle: '#9AA8B6',
+  border: '#E3E9ED',
+  danger: '#C94C4C',
+  dangerSoft: '#FFF1F1',
+};
+
+export default function RegisterScreen({
+  onRegisterSuccess,
+  onBackToLogin,
+}) {
+  const [role, setRole] = useState('patient');
+
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+
+  const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [fullName, setFullName]         = useState('');
-  const [nic, setNic]                   = useState('');
-  const [dateOfBirth, setDateOfBirth]   = useState('');
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const [fullName, setFullName] = useState('');
+
+  const [nic, setNic] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
+
   const [slmcRegNumber, setSlmcRegNumber] = useState('');
   const [specialization, setSpecialization] = useState('');
-  const [loading, setLoading]           = useState(false);
-  const [error, setError]               = useState('');
 
-  // Validate inputs
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
   const validate = () => {
-    if (!email)    { setError('Email is required');    return false; }
-    if (!phone)    { setError('Phone number is required'); return false; }
-    if (!password) { setError('Password is required'); return false; }
+    if (!email.trim()) {
+      setError('Email is required');
+      return false;
+    }
+
+    if (!phone.trim()) {
+      setError('Phone number is required');
+      return false;
+    }
+
+    if (!password) {
+      setError('Password is required');
+      return false;
+    }
+
     if (password.length < 8) {
       setError('Password must be at least 8 characters');
       return false;
     }
+
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return false;
     }
-    if (!fullName) { setError('Full name is required'); return false; }
 
-    if (role === 'patient' && !nic) {
-      setError('NIC is required'); return false;
-    }
-    if (role === 'patient' && !dateOfBirth) {
-      setError('Date of birth is required'); return false;
-    }
-    if (role === 'doctor' && (!slmcRegNumber || !specialization)) {
-      setError('SLMC registration number and specialization are required');
+    if (!fullName.trim()) {
+      setError('Full name is required');
       return false;
     }
+
+    if (
+      role === 'patient' &&
+      !nic.trim()
+    ) {
+      setError('NIC is required');
+      return false;
+    }
+
+    if (
+      role === 'patient' &&
+      !dateOfBirth.trim()
+    ) {
+      setError('Date of birth is required');
+      return false;
+    }
+
+    if (
+      role === 'doctor' &&
+      (
+        !slmcRegNumber.trim() ||
+        !specialization.trim()
+      )
+    ) {
+      setError(
+        'SLMC registration number and specialization are required'
+      );
+
+      return false;
+    }
+
     return true;
   };
 
-  // Handle registration - sends form to backend, which issues an OTP
-  // instead of creating the account immediately
   const handleRegister = async () => {
-    if (!validate()) return;
+    if (!validate()) {
+      return;
+    }
 
     setLoading(true);
     setError('');
 
-const profileData = role === 'patient'
-      ? { fullName, nic, dateOfBirth }
-      : { fullName, slmcRegNumber, specialization };
+    const profileData =
+      role === 'patient'
+        ? {
+            fullName: fullName.trim(),
+            nic: nic.trim(),
+            dateOfBirth: dateOfBirth.trim(),
+          }
+        : {
+            fullName: fullName.trim(),
+            slmcRegNumber: slmcRegNumber.trim(),
+            specialization: specialization.trim(),
+          };
 
     try {
-      const data = await register(email, phone, password, role, profileData);
+      const data = await register(
+        email.trim(),
+        phone.trim(),
+        password,
+        role,
+        profileData
+      );
 
       if (data.success) {
-        onRegisterSuccess({ email: data.data.email });
+        onRegisterSuccess({
+          email: data.data.email,
+        });
       } else {
-        setError(data.message || 'Registration failed. Please try again.');
+        setError(
+          data.message ||
+          'Registration failed. Please try again.'
+        );
       }
 
-    } catch (error) {
+    } catch (err) {
       setError(
-        error.response?.data?.message ||
+        err.response?.data?.message ||
         'Cannot connect to server. Please check your connection.'
       );
+
     } finally {
       setLoading(false);
     }
@@ -97,192 +200,551 @@ const profileData = role === 'patient'
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={
+        Platform.OS === 'ios'
+          ? 'padding'
+          : 'height'
+      }
     >
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
 
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.logo}>Care4U</Text>
-          <Text style={styles.tagline}>Centralized Healthcare Ecosystem</Text>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+
+        <View style={styles.hero}>
+
+          <View style={styles.heroCircleOne} />
+
+          <View style={styles.brandRow}>
+
+            <View style={styles.logoTile}>
+
+              <Image
+                source={require('../../assets/logo.png')}
+                style={styles.logoImage}
+                resizeMode="contain"
+              />
+
+            </View>
+
+            <View>
+
+              <Text style={styles.brandName}>
+                Care4U
+              </Text>
+
+              <Text style={styles.heroText}>
+                Create your secure healthcare account
+              </Text>
+
+            </View>
+
+          </View>
+
         </View>
 
-        {/* Card */}
         <View style={styles.card}>
-          <Text style={styles.title}>Create your account</Text>
 
-          {/* Error message */}
+          <Text style={styles.eyebrow}>
+            GET STARTED
+          </Text>
+
+          <Text style={styles.title}>
+            Create your account
+          </Text>
+
+          <Text style={styles.subtitle}>
+            Choose your account type and complete the information below.
+          </Text>
+
           {error !== '' && (
             <View style={styles.errorBox}>
-              <Text style={styles.errorText}>{error}</Text>
+
+              <AlertCircle
+                size={17}
+                color={COLORS.danger}
+              />
+
+              <Text style={styles.errorText}>
+                {error}
+              </Text>
+
             </View>
           )}
 
-          {/* Role selector */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>I AM A</Text>
+          <View style={styles.sectionBlock}>
+
+            <Text style={styles.sectionLabel}>
+              ACCOUNT TYPE
+            </Text>
+
             <View style={styles.roleRow}>
+
               <TouchableOpacity
-                style={[styles.roleButton, role === 'patient' && styles.roleButtonActive]}
-                onPress={() => { setRole('patient'); setError(''); }}
+                style={[
+                  styles.roleButton,
+                  role === 'patient' &&
+                    styles.roleButtonActive,
+                ]}
+                activeOpacity={0.8}
+                onPress={() => {
+                  setRole('patient');
+                  setError('');
+                }}
               >
-                <Text style={[styles.roleButtonText, role === 'patient' && styles.roleButtonTextActive]}>
+
+                <UserRound
+                  size={18}
+                  color={
+                    role === 'patient'
+                      ? '#FFFFFF'
+                      : COLORS.teal
+                  }
+                />
+
+                <Text
+                  style={[
+                    styles.roleButtonText,
+                    role === 'patient' &&
+                      styles.roleButtonTextActive,
+                  ]}
+                >
                   Patient
                 </Text>
+
               </TouchableOpacity>
+
               <TouchableOpacity
-                style={[styles.roleButton, role === 'doctor' && styles.roleButtonActive]}
-                onPress={() => { setRole('doctor'); setError(''); }}
+                style={[
+                  styles.roleButton,
+                  role === 'doctor' &&
+                    styles.roleButtonActive,
+                ]}
+                activeOpacity={0.8}
+                onPress={() => {
+                  setRole('doctor');
+                  setError('');
+                }}
               >
-                <Text style={[styles.roleButtonText, role === 'doctor' && styles.roleButtonTextActive]}>
+
+                <Stethoscope
+                  size={18}
+                  color={
+                    role === 'doctor'
+                      ? '#FFFFFF'
+                      : COLORS.teal
+                  }
+                />
+
+                <Text
+                  style={[
+                    styles.roleButtonText,
+                    role === 'doctor' &&
+                      styles.roleButtonTextActive,
+                  ]}
+                >
                   Doctor
                 </Text>
+
               </TouchableOpacity>
+
             </View>
+
           </View>
 
-          {/* Full name */}
+          <View style={styles.sectionDivider}>
+
+            <Text style={styles.sectionDividerText}>
+              BASIC INFORMATION
+            </Text>
+
+          </View>
+
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>FULL NAME</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Full name"
-              placeholderTextColor="#94A3B8"
-              value={fullName}
-              onChangeText={(text) => { setFullName(text); setError(''); }}
-            />
+
+            <Text style={styles.label}>
+              FULL NAME
+            </Text>
+
+            <View style={styles.inputWrapper}>
+
+              <UserRound
+                size={18}
+                color={COLORS.subtle}
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your full name"
+                placeholderTextColor={COLORS.subtle}
+                value={fullName}
+                onChangeText={(text) => {
+                  setFullName(text);
+                  setError('');
+                }}
+              />
+
+            </View>
+
           </View>
 
-          {/* Email */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>EMAIL ADDRESS</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="you@example.com"
-              placeholderTextColor="#94A3B8"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={(text) => { setEmail(text); setError(''); }}
-            />
+
+            <Text style={styles.label}>
+              EMAIL ADDRESS
+            </Text>
+
+            <View style={styles.inputWrapper}>
+
+              <Mail
+                size={18}
+                color={COLORS.subtle}
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="you@example.com"
+                placeholderTextColor={COLORS.subtle}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                value={email}
+                onChangeText={(text) => {
+                  setEmail(text);
+                  setError('');
+                }}
+              />
+
+            </View>
+
           </View>
 
-          {/* Phone */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>PHONE NUMBER</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="07XXXXXXXX"
-              placeholderTextColor="#94A3B8"
-              keyboardType="phone-pad"
-              value={phone}
-              onChangeText={(text) => { setPhone(text); setError(''); }}
-            />
+
+            <Text style={styles.label}>
+              PHONE NUMBER
+            </Text>
+
+            <View style={styles.inputWrapper}>
+
+              <Phone
+                size={18}
+                color={COLORS.subtle}
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="07XXXXXXXX"
+                placeholderTextColor={COLORS.subtle}
+                keyboardType="phone-pad"
+                value={phone}
+                onChangeText={(text) => {
+                  setPhone(text);
+                  setError('');
+                }}
+              />
+
+            </View>
+
           </View>
 
-          {/* Role-specific fields */}
-          {role === 'patient' && (
+          {role === 'patient' ? (
             <>
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>NIC NUMBER</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="200012345678"
-                  placeholderTextColor="#94A3B8"
-                  autoCapitalize="none"
-                  value={nic}
-                  onChangeText={(text) => { setNic(text); setError(''); }}
-                />
+
+              <View style={styles.sectionDivider}>
+
+                <Text style={styles.sectionDividerText}>
+                  PATIENT DETAILS
+                </Text>
+
               </View>
+
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>DATE OF BIRTH</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="YYYY-MM-DD"
-                  placeholderTextColor="#94A3B8"
-                  value={dateOfBirth}
-                  onChangeText={(text) => { setDateOfBirth(text); setError(''); }}
-                />
+
+                <Text style={styles.label}>
+                  NIC NUMBER
+                </Text>
+
+                <View style={styles.inputWrapper}>
+
+                  <BadgeCheck
+                    size={18}
+                    color={COLORS.subtle}
+                  />
+
+                  <TextInput
+                    style={styles.input}
+                    placeholder="200012345678"
+                    placeholderTextColor={COLORS.subtle}
+                    autoCapitalize="none"
+                    value={nic}
+                    onChangeText={(text) => {
+                      setNic(text);
+                      setError('');
+                    }}
+                  />
+
+                </View>
+
               </View>
+
+              <View style={styles.inputGroup}>
+
+                <Text style={styles.label}>
+                  DATE OF BIRTH
+                </Text>
+
+                <View style={styles.inputWrapper}>
+
+                  <CalendarDays
+                    size={18}
+                    color={COLORS.subtle}
+                  />
+
+                  <TextInput
+                    style={styles.input}
+                    placeholder="YYYY-MM-DD"
+                    placeholderTextColor={COLORS.subtle}
+                    value={dateOfBirth}
+                    onChangeText={(text) => {
+                      setDateOfBirth(text);
+                      setError('');
+                    }}
+                  />
+
+                </View>
+
+              </View>
+
+            </>
+          ) : (
+            <>
+
+              <View style={styles.sectionDivider}>
+
+                <Text style={styles.sectionDividerText}>
+                  PROFESSIONAL DETAILS
+                </Text>
+
+              </View>
+
+              <View style={styles.inputGroup}>
+
+                <Text style={styles.label}>
+                  SLMC REGISTRATION NUMBER
+                </Text>
+
+                <View style={styles.inputWrapper}>
+
+                  <BadgeCheck
+                    size={18}
+                    color={COLORS.subtle}
+                  />
+
+                  <TextInput
+                    style={styles.input}
+                    placeholder="SLMC12345"
+                    placeholderTextColor={COLORS.subtle}
+                    autoCapitalize="characters"
+                    value={slmcRegNumber}
+                    onChangeText={(text) => {
+                      setSlmcRegNumber(text);
+                      setError('');
+                    }}
+                  />
+
+                </View>
+
+              </View>
+
+              <View style={styles.inputGroup}>
+
+                <Text style={styles.label}>
+                  SPECIALIZATION
+                </Text>
+
+                <View style={styles.inputWrapper}>
+
+                  <Stethoscope
+                    size={18}
+                    color={COLORS.subtle}
+                  />
+
+                  <TextInput
+                    style={styles.input}
+                    placeholder="e.g. Cardiology"
+                    placeholderTextColor={COLORS.subtle}
+                    value={specialization}
+                    onChangeText={(text) => {
+                      setSpecialization(text);
+                      setError('');
+                    }}
+                  />
+
+                </View>
+
+              </View>
+
             </>
           )}
 
-          {role === 'doctor' && (
-            <>
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>SLMC REGISTRATION NUMBER</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="SLMC12345"
-                  placeholderTextColor="#94A3B8"
-                  autoCapitalize="characters"
-                  value={slmcRegNumber}
-                  onChangeText={(text) => { setSlmcRegNumber(text); setError(''); }}
-                />
-              </View>
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>SPECIALIZATION</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="e.g. Cardiology"
-                  placeholderTextColor="#94A3B8"
-                  value={specialization}
-                  onChangeText={(text) => { setSpecialization(text); setError(''); }}
-                />
-              </View>
-            </>
-          )}
+          <View style={styles.sectionDivider}>
 
-          {/* Password */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>PASSWORD</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="At least 8 characters"
-              placeholderTextColor="#94A3B8"
-              secureTextEntry
-              value={password}
-              onChangeText={(text) => { setPassword(text); setError(''); }}
-            />
+            <Text style={styles.sectionDividerText}>
+              SECURITY
+            </Text>
+
           </View>
 
-          {/* Confirm password */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>CONFIRM PASSWORD</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Re-enter your password"
-              placeholderTextColor="#94A3B8"
-              secureTextEntry
-              value={confirmPassword}
-              onChangeText={(text) => { setConfirmPassword(text); setError(''); }}
-            />
+
+            <Text style={styles.label}>
+              PASSWORD
+            </Text>
+
+            <View style={styles.inputWrapper}>
+
+              <LockKeyhole
+                size={18}
+                color={COLORS.subtle}
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="At least 8 characters"
+                placeholderTextColor={COLORS.subtle}
+                secureTextEntry={!showPassword}
+                value={password}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  setError('');
+                }}
+              />
+
+              <TouchableOpacity
+                style={styles.eyeButton}
+                onPress={() =>
+                  setShowPassword(
+                    previous => !previous
+                  )
+                }
+              >
+                {showPassword ? (
+                  <EyeOff
+                    size={18}
+                    color={COLORS.muted}
+                  />
+                ) : (
+                  <Eye
+                    size={18}
+                    color={COLORS.muted}
+                  />
+                )}
+              </TouchableOpacity>
+
+            </View>
+
           </View>
 
-          {/* Register button */}
+          <View style={styles.inputGroup}>
+
+            <Text style={styles.label}>
+              CONFIRM PASSWORD
+            </Text>
+
+            <View style={styles.inputWrapper}>
+
+              <ShieldCheck
+                size={18}
+                color={COLORS.subtle}
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="Re-enter your password"
+                placeholderTextColor={COLORS.subtle}
+                secureTextEntry={!showConfirmPassword}
+                value={confirmPassword}
+                onChangeText={(text) => {
+                  setConfirmPassword(text);
+                  setError('');
+                }}
+              />
+
+              <TouchableOpacity
+                style={styles.eyeButton}
+                onPress={() =>
+                  setShowConfirmPassword(
+                    previous => !previous
+                  )
+                }
+              >
+                {showConfirmPassword ? (
+                  <EyeOff
+                    size={18}
+                    color={COLORS.muted}
+                  />
+                ) : (
+                  <Eye
+                    size={18}
+                    color={COLORS.muted}
+                  />
+                )}
+              </TouchableOpacity>
+
+            </View>
+
+          </View>
+
           <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
+            style={[
+              styles.primaryButton,
+              loading && styles.buttonDisabled,
+            ]}
+            activeOpacity={0.85}
             onPress={handleRegister}
             disabled={loading}
           >
-            {loading
-              ? <ActivityIndicator color="#FFFFFF" />
-              : <Text style={styles.buttonText}>Create Account</Text>
-            }
+
+            {loading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.primaryButtonText}>
+                Create Account
+              </Text>
+            )}
+
           </TouchableOpacity>
 
-          {/* Back to login link */}
-          <Text style={styles.registerText}>
+          <Text style={styles.signInText}>
             Already have an account?{' '}
-            <Text style={styles.registerLink} onPress={onBackToLogin}>Sign in here</Text>
+            <Text
+              style={styles.signInLink}
+              onPress={onBackToLogin}
+            >
+              Sign in
+            </Text>
           </Text>
 
         </View>
 
-        {/* Footer */}
-        <Text style={styles.footer}>© 2026 Care4U — Group D | CSC3213</Text>
+        <View style={styles.securityFooter}>
+
+          <ShieldCheck
+            size={14}
+            color={COLORS.subtle}
+          />
+
+          <Text style={styles.securityFooterText}>
+            Account activation requires OTP verification
+          </Text>
+
+        </View>
 
       </ScrollView>
+
     </KeyboardAvoidingView>
   );
 }
@@ -290,129 +752,265 @@ const profileData = role === 'patient'
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: COLORS.background,
   },
+
   scroll: {
     flexGrow: 1,
+    paddingBottom: 30,
+  },
+
+  hero: {
+    height: 175,
+    backgroundColor: COLORS.navy,
     justifyContent: 'center',
-    padding: 24,
+    overflow: 'hidden',
+    position: 'relative',
+    paddingHorizontal: 22,
   },
-  header: {
+
+  heroCircleOne: {
+    position: 'absolute',
+    width: 190,
+    height: 190,
+    borderRadius: 95,
+    right: -65,
+    top: -75,
+    backgroundColor: 'rgba(15,139,131,0.38)',
+  },
+
+  brandRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 32,
+    gap: 12,
   },
-  logo: {
-    fontSize: 36,
-    fontWeight: '700',
-    color: '#1E3A5F',
-  },
-  tagline: {
-    fontSize: 14,
-    color: '#64748B',
-    marginTop: 4,
-  },
-  card: {
+
+  logoTile: {
+    width: 58,
+    height: 58,
+    borderRadius: 18,
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  logoImage: {
+    width: 47,
+    height: 47,
+  },
+
+  brandName: {
+    color: '#FFFFFF',
+    fontSize: 23,
+    fontWeight: '800',
+  },
+
+  heroText: {
+    color: 'rgba(255,255,255,0.65)',
+    fontSize: 9,
+    marginTop: 3,
+  },
+
+  card: {
+    marginHorizontal: 18,
+    marginTop: -22,
+    padding: 20,
+    borderRadius: 25,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    shadowColor: '#0F172A',
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    shadowOpacity: 0.07,
+    shadowRadius: 16,
     elevation: 3,
   },
+
+  eyebrow: {
+    color: COLORS.teal,
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+
   title: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1E293B',
-    marginBottom: 20,
+    color: COLORS.text,
+    fontSize: 22,
+    fontWeight: '800',
+    marginTop: 4,
   },
+
+  subtitle: {
+    color: COLORS.muted,
+    fontSize: 10,
+    lineHeight: 16,
+    marginTop: 5,
+    marginBottom: 19,
+  },
+
   errorBox: {
-    backgroundColor: '#FEF2F2',
+    flexDirection: 'row',
+    gap: 8,
+    padding: 11,
+    borderRadius: 13,
     borderWidth: 1,
-    borderColor: '#FECACA',
-    borderRadius: 8,
-    padding: 12,
+    borderColor: '#F1CCCC',
+    backgroundColor: COLORS.dangerSoft,
     marginBottom: 16,
   },
+
   errorText: {
-    fontSize: 13,
-    color: '#DC2626',
+    flex: 1,
+    color: COLORS.danger,
+    fontSize: 10,
+    lineHeight: 15,
   },
-  inputGroup: {
-    marginBottom: 16,
+
+  sectionBlock: {
+    marginBottom: 17,
   },
-  label: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#64748B',
-    letterSpacing: 0.8,
-    marginBottom: 6,
+
+  sectionLabel: {
+    color: COLORS.muted,
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 0.7,
+    marginBottom: 8,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: '#1E293B',
-    backgroundColor: '#FFFFFF',
-  },
+
   roleRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 9,
   },
+
   roleButton: {
     flex: 1,
+    minHeight: 48,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#CBD5E1',
-    borderRadius: 8,
-    paddingVertical: 10,
+    borderColor: '#BCDCD8',
+    backgroundColor: COLORS.tealSoft,
+    flexDirection: 'row',
+    gap: 7,
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
   },
+
   roleButtonActive: {
-    backgroundColor: '#1E3A5F',
-    borderColor: '#1E3A5F',
+    backgroundColor: COLORS.teal,
+    borderColor: COLORS.teal,
   },
+
   roleButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#64748B',
+    color: COLORS.tealDark,
+    fontSize: 11,
+    fontWeight: '800',
   },
+
   roleButtonTextActive: {
     color: '#FFFFFF',
   },
-  button: {
-    backgroundColor: '#1E3A5F',
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 8,
+
+  sectionDivider: {
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    marginTop: 7,
+    marginBottom: 17,
   },
+
+  sectionDividerText: {
+    alignSelf: 'flex-start',
+    backgroundColor: COLORS.surface,
+    paddingRight: 8,
+    marginBottom: -5,
+    color: COLORS.subtle,
+    fontSize: 7,
+    fontWeight: '800',
+    letterSpacing: 0.75,
+  },
+
+  inputGroup: {
+    marginBottom: 14,
+  },
+
+  label: {
+    color: COLORS.muted,
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 0.7,
+    marginBottom: 7,
+  },
+
+  inputWrapper: {
+    minHeight: 49,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 13,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: '#FBFCFD',
+  },
+
+  input: {
+    flex: 1,
+    color: COLORS.text,
+    fontSize: 12,
+  },
+
+  eyeButton: {
+    width: 34,
+    height: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  primaryButton: {
+    minHeight: 52,
+    borderRadius: 15,
+    backgroundColor: COLORS.teal,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 5,
+  },
+
+  primaryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+
   buttonDisabled: {
     opacity: 0.6,
   },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  registerText: {
+
+  signInText: {
     textAlign: 'center',
-    fontSize: 13,
-    color: '#64748B',
-    marginTop: 20,
+    color: COLORS.muted,
+    fontSize: 10,
+    marginTop: 18,
   },
-  registerLink: {
-    color: '#1E3A5F',
-    fontWeight: '600',
+
+  signInLink: {
+    color: COLORS.teal,
+    fontWeight: '800',
   },
-  footer: {
-    textAlign: 'center',
-    fontSize: 11,
-    color: '#94A3B8',
-    marginTop: 24,
+
+  securityFooter: {
+    flexDirection: 'row',
+    gap: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 19,
+    paddingHorizontal: 20,
+  },
+
+  securityFooterText: {
+    color: COLORS.subtle,
+    fontSize: 8,
   },
 });

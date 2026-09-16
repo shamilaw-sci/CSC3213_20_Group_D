@@ -59,25 +59,40 @@ const logEmergencyAccess = async (patientId, accessedBy, userRole, reason, docto
   // 1. Log the access in the database for the Admin Audit Trail
   const accessLog = await emergencyRepository.logEmergencyAccess(patientId, accessedBy, userRole, reason);
 
-  // 2. Fetch patient details to send the automated security alert
-  try {
-    const snapshot = await emergencyRepository.getEmergencySnapshot(patientId);
-    
-    if (snapshot && snapshot.patient) {
-      // Use the patient's email if available, otherwise fallback for the demo
-      const targetEmail = 'wasanakarunanayaka2002@gmail.com'; 
-      
-      await sendEmergencyAccessAlert(
-        targetEmail,
-        snapshot.patient.full_name,
-        doctorName || 'Authorized Medical Staff',
-        reason
+// 2. Fetch the patient's own contact details
+// for the automated Break-Glass security alert.
+try {
+  const patientDetails =
+    await emergencyRepository
+      .getPatientEmergencyNotificationDetails(
+        patientId
       );
-    }
-  } catch (err) {
-    console.error('[Email] Failed to dispatch emergency access alert:', err.message);
-    // Don't crash the emergency access if the email API fails
+
+  if (
+    patientDetails?.email
+  ) {
+    await sendEmergencyAccessAlert(
+      patientDetails.email,
+      patientDetails.full_name ||
+        'Patient',
+      doctorName ||
+        'Authorized Medical Staff',
+      reason
+    );
+  } else {
+    console.warn(
+      `[Email] Emergency access alert not sent: no email found for patient ${patientId}`
+    );
   }
+} catch (err) {
+  console.error(
+    '[Email] Failed to dispatch emergency access alert:',
+    err.message
+  );
+
+  // Emergency access must still succeed even
+  // if the notification service is unavailable.
+}
 
   return accessLog;
 };

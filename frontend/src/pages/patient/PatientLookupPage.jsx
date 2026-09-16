@@ -357,18 +357,36 @@ const PatientLookupPage = () => {
   // CARE4U-72: Start Visit Handler
   const handleStartVisit = async () => {
     if (!patient?.id || !user?.id) return;
+
     setIsStartingVisit(true);
+
     try {
-      await bookAppointment({
+      const appointment = await bookAppointment({
         patientId: patient.id,
         doctorId: user.id,
         scheduledAt: new Date().toISOString(),
-        type: 'opd' // Fix: Updated to match DB check constraint!
+        type: 'opd'
       });
-      toast.success("Visit started! Added to your queue.");
-      navigate('/doctor/dashboard'); // Route doctor back to their hub
+
+      if (!appointment?.id) {
+        throw new Error('Appointment was created but no appointment ID was returned.');
+      }
+
+      toast.success('Visit started! Opening consultation.');
+
+      navigate(
+        `/doctor/consultation/${appointment.id}`
+      );
+
     } catch (err) {
-      toast.error(err.message || "Failed to start visit");
+      console.error('Start visit error:', err);
+
+      toast.error(
+        err.response?.data?.message ||
+        err.message ||
+        'Failed to start visit'
+      );
+
     } finally {
       setIsStartingVisit(false);
     }

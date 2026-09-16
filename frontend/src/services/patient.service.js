@@ -13,285 +13,723 @@ import api from './api';
  * @param {string} patientId - UUID of the patient
  * @returns {Promise<Object>} The patient data object
  */
-export const getPatientProfile = async (patientId) => {
-  const response = await api.get(`/api/patients/${patientId}`);
-  return response.data.data;   // unwrap { success, message, data }
+export const getPatientProfile = async (
+  patientId
+) => {
+  const response =
+    await api.get(
+      `/api/patients/${patientId}`
+    );
+
+  return response.data.data;
 };
 
 /**
  * Updates editable fields on a patient profile.
  * @param {string} patientId - UUID of the patient
- * @param {Object} data      - Fields to update (full_name, blood_group, etc.)
+ * @param {Object} data - Fields to update
  * @returns {Promise<Object>} The updated patient data object
  */
-export const updatePatientProfile = async (patientId, data) => {
-  const response = await api.put(`/api/patients/${patientId}`, data);
-  return response.data.data;   // unwrap { success, message, data }
+export const updatePatientProfile = async (
+  patientId,
+  data
+) => {
+  const response =
+    await api.put(
+      `/api/patients/${patientId}`,
+      data
+    );
+
+  return response.data.data;
 };
 
 /**
  * Uploads a new profile photo for a patient.
- * Sends the file as multipart/form-data under field name "photo",
- * overriding the default JSON Content-Type set on the shared `api` instance.
  * @param {string} patientId - UUID of the patient
- * @param {File}   file      - The image file selected by the user (from an <input type="file">)
- * @returns {Promise<Object>} The updated patient data object (includes new photo_url)
+ * @param {File} file - Image file selected by the user
+ * @returns {Promise<Object>} Updated patient data
  */
-export const uploadPatientPhoto = async (patientId, file) => {
-  const formData = new FormData();
-  formData.append('photo', file);
+export const uploadPatientPhoto = async (
+  patientId,
+  file
+) => {
+  const formData =
+    new FormData();
 
-  const response = await api.post(`/api/patients/${patientId}/photo`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
-  return response.data.data;   // unwrap { success, message, data }
+  formData.append(
+    'photo',
+    file
+  );
+
+  const response =
+    await api.post(
+      `/api/patients/${patientId}/photo`,
+      formData,
+      {
+        headers: {
+          'Content-Type':
+            'multipart/form-data'
+        },
+      }
+    );
+
+  return response.data.data;
 };
 
 /**
- * Fetches all medical records for a patient.
+ * Fetches medical records for a patient.
+ *
+ * During a doctor consultation, appointmentId is supplied
+ * so temporary patient-consent access can be evaluated.
+ *
  * @param {string} patientId - UUID of the patient
- * @param {string} role - (Optional) The role of the user requesting the data
+ * @param {string|null} role - Existing caller compatibility
+ * @param {string|null} appointmentId - Current appointment UUID
+ * @returns {Promise<Array>} Medical records
  */
-export const getMedicalRecords = async (patientId, role) => {
-  const url = role ? `/api/patients/${patientId}/medical-records?role=${role}` : `/api/patients/${patientId}/medical-records`;
-  const response = await api.get(url);
-  return response.data.data;  
+export const getMedicalRecords = async (
+  patientId,
+  role,
+  appointmentId = null
+) => {
+  const response =
+    await api.get(
+      `/api/patients/${patientId}/medical-records`,
+      {
+        params:
+          appointmentId
+            ? {
+                appointmentId
+              }
+            : {}
+      }
+    );
+
+  return response.data.data;
 };
 
 /**
  * Fetches all prescriptions with medicine items for a patient.
- * @param {string} patientId - UUID of the patient
- * @returns {Promise<Array>} Array of prescription objects, each with an items array
  */
-export const getPatientPrescriptions = async (patientId) => {
-  const response = await api.get(`/api/patients/${patientId}/prescriptions`);
-  return response.data.data;   // unwrap { success, message, data }
+export const getPatientPrescriptions = async (
+  patientId
+) => {
+  const response =
+    await api.get(
+      `/api/patients/${patientId}/prescriptions`
+    );
+
+  return response.data.data;
 };
 
 /**
  * Fetches a patient profile by their QR code ID.
- * Used by the doctor-facing QR lookup page.
- * @param {string} qrCodeId - The qr_code_id value (e.g. "QR-TEST-001")
- * @returns {Promise<Object>} The patient data object
  */
-export const getPatientByQrCode = async (qrCodeId) => {
-  const response = await api.get(`/api/patients/qr/${qrCodeId}`);
-  return response.data.data;   // unwrap { success, message, data }
+export const getPatientByQrCode = async (
+  qrCodeId
+) => {
+  const response =
+    await api.get(
+      `/api/patients/qr/${qrCodeId}`
+    );
+
+  return response.data.data;
 };
 
 /**
  * Fetches all allergy records for a patient.
- * @param {string} patientId - UUID of the patient
- * @returns {Promise<Array>} Array of allergy objects
  */
-export const getAllergies = async (patientId) => {
-  const response = await api.get(`/api/patients/${patientId}/allergies`);
-  return response.data.data;   // unwrap { success, message, data }
+export const getAllergies = async (
+  patientId
+) => {
+  const response =
+    await api.get(
+      `/api/patients/${patientId}/allergies`
+    );
+
+  return response.data.data;
 };
 
 /**
  * Adds a new allergy for a patient.
- * @param {string} patientId - UUID of the patient
- * @param {string} allergen - Name of the allergen
- * @param {string} severity - mild, moderate, or severe
- * @param {string} notes - Optional notes
- * @returns {Promise<Object>} The created allergy object
  */
-export const addAllergy = async (patientId, allergen, severity, notes) => {
-  const response = await api.post(`/api/patients/${patientId}/allergies`, {
-    allergen,
-    severity,
-    notes
-  });
+export const addAllergy = async (
+  patientId,
+  allergen,
+  severity,
+  notes
+) => {
+  const response =
+    await api.post(
+      `/api/patients/${patientId}/allergies`,
+      {
+        allergen,
+        severity,
+        notes
+      }
+    );
+
   return response.data.data;
 };
 
 /**
  * Deletes an allergy record for a patient.
- * @param {string} patientId - UUID of the patient
- * @param {string} allergyId - UUID of the allergy
- * @returns {Promise<Object>} The success response object
  */
-export const deleteAllergy = async (patientId, allergyId) => {
-  const response = await api.delete(`/api/patients/${patientId}/allergies/${allergyId}`);
-  return response.data; 
+export const deleteAllergy = async (
+  patientId,
+  allergyId
+) => {
+  const response =
+    await api.delete(
+      `/api/patients/${patientId}/allergies/${allergyId}`
+    );
+
+  return response.data;
 };
 
 /**
- * Fetches all chronic condition records for a patient.
- * @param {string} patientId - UUID of the patient
- * @returns {Promise<Array>} Array of condition objects
+ * Fetches all chronic conditions for a patient.
  */
-export const getConditions = async (patientId) => {
-  const response = await api.get(`/api/patients/${patientId}/conditions`);
+export const getConditions = async (
+  patientId
+) => {
+  const response =
+    await api.get(
+      `/api/patients/${patientId}/conditions`
+    );
+
   return response.data.data;
 };
 
 /**
- * Adds a new chronic condition for a patient.
- * @param {string} patientId - UUID of the patient
- * @param {string} condition - Name of the condition
- * @param {string} diagnosedAt - Date diagnosed (ISO string)
- * @param {string} notes - Optional notes
- * @param {boolean} isPriority - Whether this is a priority condition
- * @returns {Promise<Object>} The created condition object
+ * Adds a chronic condition for a patient.
  */
-export const addCondition = async (patientId, condition, diagnosedAt, notes, isPriority) => {
-  const response = await api.post(`/api/patients/${patientId}/conditions`, {
-    condition,
-    diagnosedAt,
-    notes,
-    isPriority
-  });
+export const addCondition = async (
+  patientId,
+  condition,
+  diagnosedAt,
+  notes,
+  isPriority
+) => {
+  const response =
+    await api.post(
+      `/api/patients/${patientId}/conditions`,
+      {
+        condition,
+        diagnosedAt,
+        notes,
+        isPriority
+      }
+    );
+
   return response.data.data;
 };
 
 /**
- * Deletes a chronic condition record for a patient.
- * @param {string} patientId - UUID of the patient
- * @param {string} conditionId - UUID of the condition
- * @returns {Promise<Object>} The success response object
+ * Deletes a chronic condition.
  */
-export const deleteCondition = async (patientId, conditionId) => {
-  const response = await api.delete(`/api/patients/${patientId}/conditions/${conditionId}`);
+export const deleteCondition = async (
+  patientId,
+  conditionId
+) => {
+  const response =
+    await api.delete(
+      `/api/patients/${patientId}/conditions/${conditionId}`
+    );
+
+  return response.data;
+};
+
+/**
+ * Fetches all active medical devices and implants
+ * belonging to the authenticated patient.
+ */
+export const getMedicalDevices = async (
+  patientId
+) => {
+  const response =
+    await api.get(
+      `/api/patients/${patientId}/medical-devices`
+    );
+
+  return response.data.data;
+};
+
+/**
+ * Adds a medical device or implant.
+ */
+export const addMedicalDevice = async (
+  patientId,
+  deviceData
+) => {
+  const response =
+    await api.post(
+      `/api/patients/${patientId}/medical-devices`,
+      deviceData
+    );
+
+  return response.data.data;
+};
+
+/**
+ * Removes a medical device from the patient's
+ * active profile.
+ */
+export const deleteMedicalDevice = async (
+  patientId,
+  deviceId
+) => {
+  const response =
+    await api.delete(
+      `/api/patients/${patientId}/medical-devices/${deviceId}`
+    );
+
+  return response.data;
+};
+
+/**
+ * Fetches all active important medical background
+ * records belonging to the authenticated patient.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @returns {Promise<Array>} Array of background records
+ */
+export const getHealthBackground = async (
+  patientId
+) => {
+  const response =
+    await api.get(
+      `/api/patients/${patientId}/health-background`
+    );
+
+  return response.data.data;
+};
+
+/**
+ * Adds an important medical background record
+ * to the patient's profile.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @param {Object} backgroundData - Background information
+ * @returns {Promise<Object>} Created background record
+ */
+export const addHealthBackground = async (
+  patientId,
+  backgroundData
+) => {
+  const response =
+    await api.post(
+      `/api/patients/${patientId}/health-background`,
+      backgroundData
+    );
+
+  return response.data.data;
+};
+
+/**
+ * Removes an important medical background record
+ * from the patient's active profile.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @param {string} backgroundId - UUID of the record
+ * @returns {Promise<Object>} Success response
+ */
+export const deleteHealthBackground = async (
+  patientId,
+  backgroundId
+) => {
+  const response =
+    await api.delete(
+      `/api/patients/${patientId}/health-background/${backgroundId}`
+    );
+
+  return response.data;
+};
+
+/**
+ * Fetches all active family medical history records.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @returns {Promise<Array>} Array of family history records
+ */
+export const getFamilyHistory = async (
+  patientId
+) => {
+  const response =
+    await api.get(
+      `/api/patients/${patientId}/family-history`
+    );
+
+  return response.data.data;
+};
+
+/**
+ * Adds a family medical history record
+ * to the patient's profile.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @param {Object} familyHistoryData - Family history information
+ * @returns {Promise<Object>} Created family history record
+ */
+export const addFamilyHistory = async (
+  patientId,
+  familyHistoryData
+) => {
+  const response =
+    await api.post(
+      `/api/patients/${patientId}/family-history`,
+      familyHistoryData
+    );
+
+  return response.data.data;
+};
+
+/**
+ * Removes a family medical history record
+ * from the patient's active profile.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @param {string} familyHistoryId - UUID of the family history record
+ * @returns {Promise<Object>} Success response
+ */
+export const deleteFamilyHistory = async (
+  patientId,
+  familyHistoryId
+) => {
+  const response =
+    await api.delete(
+      `/api/patients/${patientId}/family-history/${familyHistoryId}`
+    );
+
   return response.data;
 };
 
 /**
  * Fetches all vaccination records for a patient.
- * @param {string} patientId - UUID of the patient
- * @returns {Promise<Array>} Array of vaccination objects
  */
-export const getVaccinations = async (patientId) => {
-  const response = await api.get(`/api/patients/${patientId}/vaccinations`);
+export const getVaccinations = async (
+  patientId
+) => {
+  const response =
+    await api.get(
+      `/api/patients/${patientId}/vaccinations`
+    );
+
   return response.data.data;
 };
 
 /**
- * Adds a new vaccination record for a patient.
- * @param {string} patientId - UUID of the patient
- * @param {string} vaccineName - Name of the vaccine
- * @param {string} dateAdministered - Date administered (ISO string)
- * @param {string} doseNumber - Optional dose number
- * @param {string} notes - Optional notes
- * @returns {Promise<Object>} The created vaccination object
+ * Adds a vaccination record.
  */
-export const addVaccination = async (patientId, vaccineName, dateAdministered, doseNumber, notes) => {
-  const response = await api.post(`/api/patients/${patientId}/vaccinations`, {
-    vaccineName,
-    dateAdministered,
-    doseNumber,
-    notes
-  });
+export const addVaccination = async (
+  patientId,
+  vaccineName,
+  dateAdministered,
+  doseNumber,
+  notes
+) => {
+  const response =
+    await api.post(
+      `/api/patients/${patientId}/vaccinations`,
+      {
+        vaccineName,
+        dateAdministered,
+        doseNumber,
+        notes
+      }
+    );
+
   return response.data.data;
 };
 
 /**
- * Adds an array of multiple vaccination records for a patient.
- * @param {string} patientId - UUID of the patient
- * @param {Array} vaccinations - Array of objects { vaccineName, dateAdministered, doseNumber, notes }
- * @returns {Promise<Array>} The created vaccination objects
+ * Adds multiple vaccination records.
  */
-export const addBulkVaccinations = async (patientId, vaccinations) => {
-  const response = await api.post(`/api/patients/${patientId}/vaccinations/bulk`, {
-    vaccinations
-  });
+export const addBulkVaccinations = async (
+  patientId,
+  vaccinations
+) => {
+  const response =
+    await api.post(
+      `/api/patients/${patientId}/vaccinations/bulk`,
+      {
+        vaccinations
+      }
+    );
+
   return response.data.data;
 };
 
 /**
- * Deletes a vaccination record for a patient.
- * @param {string} patientId - UUID of the patient
- * @param {string} vaccinationId - UUID of the vaccination
- * @returns {Promise<Object>} The success response object
+ * Deletes a vaccination record.
  */
-export const deleteVaccination = async (patientId, vaccinationId) => {
-  const response = await api.delete(`/api/patients/${patientId}/vaccinations/${vaccinationId}`);
+export const deleteVaccination = async (
+  patientId,
+  vaccinationId
+) => {
+  const response =
+    await api.delete(
+      `/api/patients/${patientId}/vaccinations/${vaccinationId}`
+    );
+
   return response.data;
 };
 
 /**
- * Uploads an image of a vaccination card and returns AI-extracted details.
- * Does not write to the database.
+ * Uploads an image of a vaccination card and
+ * returns AI-extracted details.
+ */
+export const scanVaccinationCard = async (
+  patientId,
+  file
+) => {
+  const formData =
+    new FormData();
+
+  formData.append(
+    'image',
+    file
+  );
+
+  const response =
+    await api.post(
+      `/api/patients/${patientId}/vaccinations/scan`,
+      formData,
+      {
+        headers: {
+          'Content-Type':
+            'multipart/form-data'
+        },
+      }
+    );
+
+  return response.data.data;
+};
+
+/**
+ * Fetches an AI-generated clinical summary.
+ *
+ * During a consultation, appointmentId allows the
+ * summary to respect any active temporary consent grant.
+ *
  * @param {string} patientId - UUID of the patient
- * @param {File} file - The image file selected by the user
- * @returns {Promise<Array>} The extracted JSON array of objects
+ * @param {string|null} role - Existing caller compatibility
+ * @param {string|null} appointmentId - Current appointment UUID
+ * @returns {Promise<Object>} AI summary response
  */
-export const scanVaccinationCard = async (patientId, file) => {
-  const formData = new FormData();
-  formData.append('image', file);
+export const getPatientHistorySummary = async (
+  patientId,
+  role,
+  appointmentId = null
+) => {
+  const response =
+    await api.get(
+      `/api/patients/${patientId}/summary`,
+      {
+        params:
+          appointmentId
+            ? {
+                appointmentId
+              }
+            : {}
+      }
+    );
 
-  const response = await api.post(`/api/patients/${patientId}/vaccinations/scan`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
-  return response.data.data; 
-};
-
-/**
- * Fetches an AI-generated clinical summary of a patient's medical history.
- */
-export const getPatientHistorySummary = async (patientId, role) => {
-  const url = role ? `/api/patients/${patientId}/summary?role=${role}` : `/api/patients/${patientId}/summary`;
-  const response = await api.get(url);
   return response.data.data;
 };
 
 /**
- * Fetches all completed lab reports for a patient.
- * @param {string} patientId
- * @returns {Promise<Array>}
+ * Fetches completed laboratory reports.
  */
-export const getLabReports = async (patientId) => {
-  const response = await api.get(`/api/patients/${patientId}/lab-reports`);
-  
-  if (!response.data.success) {
-    throw new Error(response.data.message || 'Failed to fetch lab reports');
+export const getLabReports = async (
+  patientId
+) => {
+  const response =
+    await api.get(
+      `/api/patients/${patientId}/lab-reports`
+    );
+
+  if (
+    !response.data.success
+  ) {
+    throw new Error(
+      response.data.message ||
+      'Failed to fetch lab reports'
+    );
   }
+
   return response.data.data;
 };
 
 /**
- * Marks a lab report as read.
- * @param {string} patientId
- * @param {string} reportId
- * @returns {Promise<Object>}
+ * Marks a laboratory report as read.
  */
-export const markLabReportAsRead = async (patientId, reportId) => {
+export const markLabReportAsRead = async (
+  patientId,
+  reportId
+) => {
   try {
-    const response = await api.put(`/api/patients/${patientId}/lab-reports/${reportId}/read`);
-    if (!response.data.success) {
-      throw new Error(response.data.message || 'Failed to mark report as read');
+    const response =
+      await api.put(
+        `/api/patients/${patientId}/lab-reports/${reportId}/read`
+      );
+
+    if (
+      !response.data.success
+    ) {
+      throw new Error(
+        response.data.message ||
+        'Failed to mark report as read'
+      );
     }
+
     return response.data.data;
+
   } catch (error) {
-    throw error.response?.data || error;
+    throw (
+      error.response?.data ||
+      error
+    );
   }
 };
 
-export const getPatientAppointments = async (patientId) => {
-  const response = await api.get(`/api/patients/${patientId}/appointments`);
+/**
+ * Fetches all appointments for a patient.
+ */
+export const getPatientAppointments = async (
+  patientId
+) => {
+  const response =
+    await api.get(
+      `/api/patients/${patientId}/appointments`
+    );
+
   return response.data.data;
 };
 
+/* =========================================================
+   PRIVACY & CONSENT SETTINGS
+========================================================= */
+
 /**
- * Retrieves privacy and consent settings for a patient.
- * @param {string} patientId 
- * @returns {Promise<Array>} Array of locked category names
+ * Retrieves privacy and consent settings.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @returns {Promise<Array>} Locked category names
  */
-export const getConsentSettings = async (patientId) => {
-    const response = await api.get(`/api/patients/${patientId}/consent`);
-    return response.data?.data?.locked_categories || [];
+export const getConsentSettings = async (
+  patientId
+) => {
+  const response =
+    await api.get(
+      `/api/patients/${patientId}/consent`
+    );
+
+  return (
+    response.data?.data
+      ?.locked_categories ||
+    []
+  );
 };
 
 /**
  * Updates privacy and consent settings.
- * @param {string} patientId 
- * @param {Array<string>} lockedCategories 
- * @returns {Promise<Array>}
+ *
+ * @param {string} patientId - UUID of the patient
+ * @param {Array<string>} lockedCategories - Protected categories
+ * @returns {Promise<Object>} Updated consent settings
  */
-export const updateConsentSettings = async (patientId, lockedCategories) => {
-    const response = await api.put(`/api/patients/${patientId}/consent`, {
+export const updateConsentSettings = async (
+  patientId,
+  lockedCategories
+) => {
+  const response =
+    await api.put(
+      `/api/patients/${patientId}/consent`,
+      {
         lockedCategories
-    });
-    return response.data?.data;
+      }
+    );
+
+  return response.data?.data;
+};
+
+/* =========================================================
+   TEMPORARY DOCTOR CONSENT ACCESS
+========================================================= */
+
+/**
+ * Retrieves temporary consent-access status for
+ * the current doctor consultation.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @param {string} appointmentId - UUID of the appointment
+ * @returns {Promise<Object>} Current temporary-access status
+ */
+export const getConsentAccessStatus = async (
+  patientId,
+  appointmentId
+) => {
+  const response =
+    await api.get(
+      `/api/patients/${patientId}/consent/access/status`,
+      {
+        params: {
+          appointmentId
+        }
+      }
+    );
+
+  return response.data.data;
+};
+
+/**
+ * Requests a 6-digit patient consent OTP.
+ *
+ * The OTP is sent by the backend to the patient's
+ * registered Care4U email address.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @param {string} appointmentId - UUID of the appointment
+ * @returns {Promise<Object>} OTP request information
+ */
+export const requestConsentAccess = async (
+  patientId,
+  appointmentId
+) => {
+  const response =
+    await api.post(
+      `/api/patients/${patientId}/consent/access/request`,
+      {
+        appointmentId
+      }
+    );
+
+  return response.data.data;
+};
+
+/**
+ * Verifies the patient-provided OTP and creates
+ * a temporary doctor access grant.
+ *
+ * @param {string} patientId - UUID of the patient
+ * @param {string} appointmentId - UUID of the appointment
+ * @param {string} otpCode - 6-digit OTP
+ * @returns {Promise<Object>} Temporary grant information
+ */
+export const verifyConsentAccess = async (
+  patientId,
+  appointmentId,
+  otpCode
+) => {
+  const response =
+    await api.post(
+      `/api/patients/${patientId}/consent/access/verify`,
+      {
+        appointmentId,
+        otpCode
+      }
+    );
+
+  return response.data.data;
 };

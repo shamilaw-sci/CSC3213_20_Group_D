@@ -41,6 +41,14 @@ const RegisterPage = () => {
     licenseNumber: '',
     pharmacyAddress: '',
     pharmacyPhone: '',
+    laboratoryName: '',
+    laboratoryLicenseNumber: '',
+    laboratoryAddress: '',
+    laboratoryPhone: '',
+    hospitalName: '',
+    hospitalType: '',
+    hospitalLocation: '',
+    hospitalDepartments: '',
   });
 
   const [errors, setErrors]       = useState({});
@@ -57,59 +65,173 @@ const RegisterPage = () => {
   // Validate Step 1
   const validateStep1 = () => {
     const newErrors = {};
-    if (!formData.email)    newErrors.email    = 'Email is required';
-    if (!formData.phone)    newErrors.phone    = 'Phone number is required';
-    if (!formData.password) newErrors.password = 'Password is required';
-    if (formData.password && formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
+
+    if (!formData.email) {
+      newErrors.email = 'Email is required';
     }
+
+    if (!formData.phone) {
+      newErrors.phone = 'Phone number is required';
+    }
+
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    }
+
+    if (
+      formData.password &&
+      formData.password.length < 8
+    ) {
+      newErrors.password =
+        'Password must be at least 8 characters';
+    }
+
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password';
+      newErrors.confirmPassword =
+        'Please confirm your password';
     }
-    if (formData.password && formData.confirmPassword &&
-        formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+
+    if (
+      formData.password &&
+      formData.confirmPassword &&
+      formData.password !== formData.confirmPassword
+    ) {
+      newErrors.confirmPassword =
+        'Passwords do not match';
     }
+
     return newErrors;
   };
 
   // Validate Step 2
   const validateStep2 = () => {
     const newErrors = {};
-    if (!formData.fullName) newErrors.fullName = 'Full name is required';
-    if (formData.role === 'patient' && !formData.nic) {
-      newErrors.nic = 'NIC is required for patients';
+
+    if (
+      ['patient', 'doctor'].includes(formData.role) &&
+      !formData.fullName
+    ) {
+      newErrors.fullName = 'Full name is required';
     }
-    if (formData.role === 'patient' && !formData.dateOfBirth) {
-      newErrors.dateOfBirth = 'Date of birth is required for patients';
+
+    if (
+      formData.role === 'patient' &&
+      !formData.nic
+    ) {
+      newErrors.nic =
+        'NIC is required for patients';
     }
+
+    if (
+      formData.role === 'patient' &&
+      !formData.dateOfBirth
+    ) {
+      newErrors.dateOfBirth =
+        'Date of birth is required for patients';
+    }
+
     if (formData.role === 'doctor') {
-      if (!formData.slmcRegNumber)  newErrors.slmcRegNumber  = 'SLMC number is required';
-      if (!formData.specialization) newErrors.specialization = 'Specialization is required';
+      if (!formData.slmcRegNumber) {
+        newErrors.slmcRegNumber =
+          'SLMC number is required';
+      }
+
+      if (!formData.specialization) {
+        newErrors.specialization =
+          'Specialization is required';
+      }
     }
+
     if (formData.role === 'pharmacist') {
-      if (!formData.pharmacyName)    newErrors.pharmacyName    = 'Pharmacy name is required';
-      if (!formData.licenseNumber)   newErrors.licenseNumber   = 'License number is required';
-      if (!formData.pharmacyAddress) newErrors.pharmacyAddress = 'Address is required';
-      if (!formData.pharmacyPhone)   newErrors.pharmacyPhone   = 'Pharmacy phone is required';
+      if (!formData.pharmacyName) {
+        newErrors.pharmacyName =
+          'Pharmacy name is required';
+      }
+
+      if (!formData.licenseNumber) {
+        newErrors.licenseNumber =
+          'License number is required';
+      }
+
+      if (!formData.pharmacyAddress) {
+        newErrors.pharmacyAddress =
+          'Address is required';
+      }
+
+      if (!formData.pharmacyPhone) {
+        newErrors.pharmacyPhone =
+          'Pharmacy phone is required';
+      }
     }
+
+    if (formData.role === 'lab_technician') {
+      if (!formData.laboratoryName) {
+        newErrors.laboratoryName =
+          'Laboratory name is required';
+      }
+
+      if (!formData.laboratoryLicenseNumber) {
+        newErrors.laboratoryLicenseNumber =
+          'License number is required';
+      }
+
+      if (!formData.laboratoryAddress) {
+        newErrors.laboratoryAddress =
+          'Laboratory address is required';
+      }
+
+      if (!formData.laboratoryPhone) {
+        newErrors.laboratoryPhone =
+          'Laboratory phone is required';
+      }
+    }
+
+    if (formData.role === 'hospital_staff') {
+      if (!formData.hospitalName) {
+        newErrors.hospitalName =
+          'Hospital name is required';
+      }
+
+      if (!formData.hospitalType) {
+        newErrors.hospitalType =
+          'Hospital type is required';
+      }
+
+      if (!formData.hospitalLocation) {
+        newErrors.hospitalLocation =
+          'Hospital location is required';
+      }
+
+      if (!formData.hospitalDepartments) {
+        newErrors.hospitalDepartments =
+          'At least one department is required';
+      }
+    }
+
     return newErrors;
   };
 
   // Go to step 2
   const handleNext = () => {
     const validationErrors = validateStep1();
-    if (Object.keys(validationErrors).length > 0) {
+
+    if (
+      Object.keys(validationErrors).length > 0
+    ) {
       setErrors(validationErrors);
       return;
     }
+
     setStep(2);
   };
 
   // Submit registration
   const handleSubmit = async () => {
     const validationErrors = validateStep2();
-    if (Object.keys(validationErrors).length > 0) {
+
+    if (
+      Object.keys(validationErrors).length > 0
+    ) {
       setErrors(validationErrors);
       return;
     }
@@ -119,10 +241,21 @@ const RegisterPage = () => {
 
     try {
       let profileData;
+
       if (formData.role === 'patient') {
-        profileData = { fullName: formData.fullName, nic: formData.nic, dateOfBirth: formData.dateOfBirth };
+        profileData = {
+          fullName: formData.fullName,
+          nic: formData.nic,
+          dateOfBirth: formData.dateOfBirth
+        };
+
       } else if (formData.role === 'doctor') {
-        profileData = { fullName: formData.fullName, slmcRegNumber: formData.slmcRegNumber, specialization: formData.specialization };
+        profileData = {
+          fullName: formData.fullName,
+          slmcRegNumber: formData.slmcRegNumber,
+          specialization: formData.specialization
+        };
+
       } else if (formData.role === 'pharmacist') {
         // Pharmacy business profile - creates a matching row in the
         // pharmacies table during OTP verification, so the pharmacy
@@ -133,42 +266,83 @@ const RegisterPage = () => {
           address: formData.pharmacyAddress,
           phone: formData.pharmacyPhone,
         };
+
+      } else if (formData.role === 'lab_technician') {
+        profileData = {
+          name: formData.laboratoryName,
+          licenseNumber: formData.laboratoryLicenseNumber,
+          address: formData.laboratoryAddress,
+          phone: formData.laboratoryPhone,
+        };
+
+      } else if (formData.role === 'hospital_staff') {
+        profileData = {
+          name: formData.hospitalName,
+          type: formData.hospitalType,
+          location: formData.hospitalLocation,
+          departments: formData.hospitalDepartments,
+        };
+
       } else {
         // lab_technician, hospital_staff — only fullName is collected
         // here; these roles have no dedicated business profile table
         // yet (no dashboard exists either - see mobile App.js placeholder).
-        profileData = { fullName: formData.fullName };
+        profileData = {
+          fullName: formData.fullName
+        };
       }
 
-      const response = await fetch('http://localhost:5000/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          email: formData.email,
-          phone: formData.phone,
-          password: formData.password,
-          role: formData.role,
-          profileData,
-        }),
-      });
+      const response = await fetch(
+        'http://localhost:5000/api/auth/register',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            email: formData.email,
+            phone: formData.phone,
+            password: formData.password,
+            role: formData.role,
+            profileData,
+          }),
+        }
+      );
 
       const data = await response.json();
 
       if (data.success) {
-        navigate('/verify-otp', { state: { email: formData.email } });
-      }else {
-        setServerError(data.message || 'Registration failed. Please try again.');
+        navigate(
+          '/verify-otp',
+          {
+            state: {
+              email: formData.email
+            }
+          }
+        );
+
+      } else {
+        setServerError(
+          data.message ||
+          'Registration failed. Please try again.'
+        );
       }
 
     } catch {
-      setServerError('Cannot connect to server. Please try again.');
+      setServerError(
+        'Cannot connect to server. Please try again.'
+      );
+
     } finally {
       setLoading(false);
     }
   };
 
-  const roleLabel = ROLE_OPTIONS.find((r) => r.value === formData.role)?.label ?? '';
+  const roleLabel =
+    ROLE_OPTIONS.find(
+      (r) => r.value === formData.role
+    )?.label ?? '';
 
   return (
     <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
@@ -176,24 +350,47 @@ const RegisterPage = () => {
 
         {/* Logo & Title */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-brand-deep">Care4U</h1>
-          <p className="text-muted-foreground mt-1 font-medium">Centralized Healthcare Ecosystem</p>
+          <h1 className="text-3xl font-bold text-brand-deep">
+            Care4U
+          </h1>
+
+          <p className="text-muted-foreground mt-1 font-medium">
+            Centralized Healthcare Ecosystem
+          </p>
         </div>
 
         {/* Register Card */}
         <Card>
-          <h2 className="text-xl font-bold text-foreground mb-2">Create your account</h2>
+          <h2 className="text-xl font-bold text-foreground mb-2">
+            Create your account
+          </h2>
 
           {/* Step indicator */}
           <div className="flex items-center gap-2 mb-6">
-            <div className={`h-2 flex-1 rounded-full ${step >= 1 ? 'bg-primary' : 'bg-secondary'}`} />
-            <div className={`h-2 flex-1 rounded-full ${step >= 2 ? 'bg-primary' : 'bg-secondary'}`} />
+            <div
+              className={`h-2 flex-1 rounded-full ${
+                step >= 1
+                  ? 'bg-primary'
+                  : 'bg-secondary'
+              }`}
+            />
+
+            <div
+              className={`h-2 flex-1 rounded-full ${
+                step >= 2
+                  ? 'bg-primary'
+                  : 'bg-secondary'
+              }`}
+            />
           </div>
 
           {/* Server Error */}
           {serverError && (
             <div className="mb-4">
-              <Alert type="error" message={serverError} />
+              <Alert
+                type="error"
+                message={serverError}
+              />
             </div>
           )}
 
@@ -209,11 +406,19 @@ const RegisterPage = () => {
                 {ROLE_OPTIONS.map((r) => (
                   <button
                     key={r.value}
-                    onClick={() => setFormData({ ...formData, role: r.value })}
+                    type="button"
+                    onClick={() =>
+                      setFormData({
+                        ...formData,
+                        role: r.value
+                      })
+                    }
                     className={`py-2.5 px-2 rounded-lg text-xs font-semibold border transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1
-                      ${formData.role === r.value
-                        ? 'bg-primary text-primary-foreground border-primary'
-                        : 'bg-white text-muted-foreground border-input hover:bg-secondary'}`}
+                      ${
+                        formData.role === r.value
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-white text-muted-foreground border-input hover:bg-secondary'
+                      }`}
                   >
                     {r.label}
                   </button>
@@ -230,6 +435,7 @@ const RegisterPage = () => {
                 error={errors.email}
                 required
               />
+
               <Input
                 label="Phone Number"
                 name="phone"
@@ -240,6 +446,7 @@ const RegisterPage = () => {
                 error={errors.phone}
                 required
               />
+
               <Input
                 label="Password"
                 name="password"
@@ -250,6 +457,7 @@ const RegisterPage = () => {
                 error={errors.password}
                 required
               />
+
               <Input
                 label="Confirm Password"
                 name="confirmPassword"
@@ -279,16 +487,18 @@ const RegisterPage = () => {
                 Step 2 of 2 — {roleLabel} Details
               </p>
 
-              <Input
-                label="Full Name"
-                name="fullName"
-                type="text"
-                value={formData.fullName}
-                onChange={handleChange}
-                placeholder="Your full name"
-                error={errors.fullName}
-                required
-              />
+              {['patient', 'doctor'].includes(formData.role) && (
+                <Input
+                  label="Full Name"
+                  name="fullName"
+                  type="text"
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  placeholder="Your full name"
+                  error={errors.fullName}
+                  required
+                />
+              )}
 
               {formData.role === 'patient' && (
                 <>
@@ -302,6 +512,7 @@ const RegisterPage = () => {
                     error={errors.nic}
                     required
                   />
+
                   <Input
                     label="Date of Birth"
                     name="dateOfBirth"
@@ -326,6 +537,7 @@ const RegisterPage = () => {
                     error={errors.slmcRegNumber}
                     required
                   />
+
                   <Input
                     label="Specialization"
                     name="specialization"
@@ -351,6 +563,7 @@ const RegisterPage = () => {
                     error={errors.pharmacyName}
                     required
                   />
+
                   <Input
                     label="License Number"
                     name="licenseNumber"
@@ -361,6 +574,7 @@ const RegisterPage = () => {
                     error={errors.licenseNumber}
                     required
                   />
+
                   <Input
                     label="Pharmacy Address"
                     name="pharmacyAddress"
@@ -371,6 +585,7 @@ const RegisterPage = () => {
                     error={errors.pharmacyAddress}
                     required
                   />
+
                   <Input
                     label="Pharmacy Phone"
                     name="pharmacyPhone"
@@ -379,6 +594,102 @@ const RegisterPage = () => {
                     onChange={handleChange}
                     placeholder="07XXXXXXXX"
                     error={errors.pharmacyPhone}
+                    required
+                  />
+                </>
+              )}
+
+              {formData.role === 'lab_technician' && (
+                <>
+                  <Input
+                    label="Laboratory Name"
+                    name="laboratoryName"
+                    type="text"
+                    value={formData.laboratoryName}
+                    onChange={handleChange}
+                    placeholder="e.g. CareLab Diagnostics"
+                    error={errors.laboratoryName}
+                    required
+                  />
+
+                  <Input
+                    label="License Number"
+                    name="laboratoryLicenseNumber"
+                    type="text"
+                    value={formData.laboratoryLicenseNumber}
+                    onChange={handleChange}
+                    placeholder="e.g. LAB/2026/1234"
+                    error={errors.laboratoryLicenseNumber}
+                    required
+                  />
+
+                  <Input
+                    label="Laboratory Address"
+                    name="laboratoryAddress"
+                    type="text"
+                    value={formData.laboratoryAddress}
+                    onChange={handleChange}
+                    placeholder="Street, City"
+                    error={errors.laboratoryAddress}
+                    required
+                  />
+
+                  <Input
+                    label="Laboratory Phone"
+                    name="laboratoryPhone"
+                    type="text"
+                    value={formData.laboratoryPhone}
+                    onChange={handleChange}
+                    placeholder="07XXXXXXXX"
+                    error={errors.laboratoryPhone}
+                    required
+                  />
+                </>
+              )}
+
+              {formData.role === 'hospital_staff' && (
+                <>
+                  <Input
+                    label="Hospital Name"
+                    name="hospitalName"
+                    type="text"
+                    value={formData.hospitalName}
+                    onChange={handleChange}
+                    placeholder="e.g. Teaching Hospital Peradeniya"
+                    error={errors.hospitalName}
+                    required
+                  />
+
+                  <Input
+                    label="Hospital Type"
+                    name="hospitalType"
+                    type="text"
+                    value={formData.hospitalType}
+                    onChange={handleChange}
+                    placeholder="e.g. Teaching Hospital"
+                    error={errors.hospitalType}
+                    required
+                  />
+
+                  <Input
+                    label="Hospital Location"
+                    name="hospitalLocation"
+                    type="text"
+                    value={formData.hospitalLocation}
+                    onChange={handleChange}
+                    placeholder="Street, City"
+                    error={errors.hospitalLocation}
+                    required
+                  />
+
+                  <Input
+                    label="Departments"
+                    name="hospitalDepartments"
+                    type="text"
+                    value={formData.hospitalDepartments}
+                    onChange={handleChange}
+                    placeholder="e.g. OPD, Emergency"
+                    error={errors.hospitalDepartments}
                     required
                   />
                 </>
@@ -393,6 +704,7 @@ const RegisterPage = () => {
                 >
                   ← Back
                 </Button>
+
                 <Button
                   variant="primary"
                   size="lg"
@@ -400,7 +712,9 @@ const RegisterPage = () => {
                   onClick={handleSubmit}
                   className="flex-1"
                 >
-                  {loading ? 'Registering...' : 'Register'}
+                  {loading
+                    ? 'Registering...'
+                    : 'Register'}
                 </Button>
               </div>
             </div>
@@ -409,7 +723,10 @@ const RegisterPage = () => {
           {/* Login Link */}
           <p className="text-center text-sm text-muted-foreground mt-6">
             Already have an account?{' '}
-            <a href="/login" className="text-primary font-semibold hover:underline">
+            <a
+              href="/login"
+              className="text-primary font-semibold hover:underline"
+            >
               Sign in here
             </a>
           </p>

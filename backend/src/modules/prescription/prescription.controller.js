@@ -6,6 +6,7 @@
  */
 
 const prescriptionService = require('./prescription.service');
+const pharmacyRepository = require('../pharmacy/pharmacy.repository');
 
 /**
  * Handles POST /api/prescriptions
@@ -42,6 +43,7 @@ const createPrescriptionController = async (req, res) => {
 
   } catch (error) {
     console.error('createPrescriptionController error:', error);
+
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -59,7 +61,8 @@ const getPrescriptionController = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const prescription = await prescriptionService.getPrescriptionById(id);
+    const prescription =
+      await prescriptionService.getPrescriptionById(id);
 
     if (!prescription) {
       return res.status(404).json({
@@ -76,6 +79,7 @@ const getPrescriptionController = async (req, res) => {
 
   } catch (error) {
     console.error('getPrescriptionController error:', error);
+
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -93,7 +97,10 @@ const verifyPrescriptionController = async (req, res) => {
   try {
     const { qrValue } = req.params;
 
-    const prescription = await prescriptionService.verifyPrescriptionByQR(qrValue);
+    const prescription =
+      await prescriptionService.verifyPrescriptionByQR(
+        qrValue
+      );
 
     if (!prescription) {
       return res.status(404).json({
@@ -110,6 +117,7 @@ const verifyPrescriptionController = async (req, res) => {
 
   } catch (error) {
     console.error('verifyPrescriptionController error:', error);
+
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -120,6 +128,11 @@ const verifyPrescriptionController = async (req, res) => {
 /**
  * Handles POST /api/prescriptions/:id/dispense
  * Records medicine dispensing by a pharmacist.
+ *
+ * The pharmacy ID is resolved from the logged-in pharmacist's
+ * user account instead of trusting a pharmacy ID sent from
+ * the frontend.
+ *
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
@@ -128,17 +141,58 @@ const dispenseMedicineController = async (req, res) => {
     const { id } = req.params;
     const { dispenseItems } = req.body;
 
-    if (!dispenseItems || dispenseItems.length === 0) {
+    const currentUserId = req.session?.user?.id;
+
+    if (
+      !dispenseItems ||
+      !Array.isArray(dispenseItems) ||
+      dispenseItems.length === 0
+    ) {
       return res.status(400).json({
         success: false,
         message: 'Validation failed: dispenseItems array is required'
       });
     }
 
-    const updatedPrescription = await prescriptionService.dispenseMedicine(
-      id,
-      dispenseItems
-    );
+    if (!currentUserId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+
+    const pharmacy =
+      await pharmacyRepository.getPharmacyByUserId(
+        currentUserId
+      );
+
+    if (!pharmacy) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pharmacy profile not found for this account'
+      });
+    }
+
+    if (!pharmacy.is_verified) {
+      return res.status(403).json({
+        success: false,
+        message: 'Pharmacy is not verified'
+      });
+    }
+
+    if (!pharmacy.is_active) {
+      return res.status(403).json({
+        success: false,
+        message: 'Pharmacy account is inactive'
+      });
+    }
+
+    const updatedPrescription =
+      await prescriptionService.dispenseMedicine(
+        id,
+        dispenseItems,
+        pharmacy.id
+      );
 
     if (!updatedPrescription) {
       return res.status(404).json({
@@ -154,16 +208,22 @@ const dispenseMedicineController = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('dispenseMedicineController error:', error);
-    res.status(400).json({
+    console.error(
+      'dispenseMedicineController error:',
+      error
+    );
+
+    res.status(error.statusCode || 400).json({
       success: false,
-      message: error.message || 'Internal server error'
+      message:
+        error.message ||
+        'Internal server error'
     });
   }
 };
 
-module.exports = { 
-  createPrescriptionController, 
+module.exports = {
+  createPrescriptionController,
   getPrescriptionController,
   verifyPrescriptionController,
   dispenseMedicineController

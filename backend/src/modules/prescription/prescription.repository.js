@@ -2,7 +2,7 @@
  * @file    prescription.repository.js
  * @module  Prescription
  * @desc    Database queries for prescription creation, retrieval,
- *          QR verification, and status updates.
+ *          QR verification, status updates, and dispensing records.
  * @author  S/21/001
  */
 
@@ -18,14 +18,46 @@ const { pool } = require('../../config/db');
  * @param {string} notes          - Optional notes from doctor
  * @returns {Promise<Object>} The newly created prescription row
  */
-const createPrescription = async (patientId, doctorId, appointmentId, qrCodeValue, expiresAt, notes) => {
+const createPrescription = async (
+  patientId,
+  doctorId,
+  appointmentId,
+  qrCodeValue,
+  expiresAt,
+  notes
+) => {
   const result = await pool.query(
     `INSERT INTO prescriptions 
-      (patient_id, doctor_id, appointment_id, qr_code_value, status, expires_at, notes)
-     VALUES ($1, $2, $3, $4, 'active', $5, $6)
+      (
+        patient_id,
+        doctor_id,
+        appointment_id,
+        qr_code_value,
+        status,
+        expires_at,
+        notes
+      )
+     VALUES
+      (
+        $1,
+        $2,
+        $3,
+        $4,
+        'active',
+        $5,
+        $6
+      )
      RETURNING *`,
-    [patientId, doctorId, appointmentId, qrCodeValue, expiresAt, notes]
+    [
+      patientId,
+      doctorId,
+      appointmentId,
+      qrCodeValue,
+      expiresAt,
+      notes
+    ]
   );
+
   return result.rows[0];
 };
 
@@ -35,15 +67,36 @@ const createPrescription = async (patientId, doctorId, appointmentId, qrCodeValu
  * @param {Array}  items          - Array of medicine objects
  * @returns {Promise<Array>} All inserted prescription item rows
  */
-const createPrescriptionItems = async (prescriptionId, items) => {
+const createPrescriptionItems = async (
+  prescriptionId,
+  items
+) => {
   const insertedItems = [];
 
   for (const item of items) {
     const result = await pool.query(
       `INSERT INTO prescription_items
-        (prescription_id, medicine_name, dosage, frequency, duration_days, 
-         quantity_prescribed, quantity_dispensed, special_notes)
-       VALUES ($1, $2, $3, $4, $5, $6, 0, $7)
+        (
+          prescription_id,
+          medicine_name,
+          dosage,
+          frequency,
+          duration_days,
+          quantity_prescribed,
+          quantity_dispensed,
+          special_notes
+        )
+       VALUES
+        (
+          $1,
+          $2,
+          $3,
+          $4,
+          $5,
+          $6,
+          0,
+          $7
+        )
        RETURNING *`,
       [
         prescriptionId,
@@ -55,7 +108,10 @@ const createPrescriptionItems = async (prescriptionId, items) => {
         item.special_notes || null
       ]
     );
-    insertedItems.push(result.rows[0]);
+
+    insertedItems.push(
+      result.rows[0]
+    );
   }
 
   return insertedItems;
@@ -68,20 +124,31 @@ const createPrescriptionItems = async (prescriptionId, items) => {
  */
 const getPrescriptionById = async (id) => {
   const prescriptionResult = await pool.query(
-    `SELECT * FROM prescriptions WHERE id = $1`,
+    `SELECT *
+     FROM prescriptions
+     WHERE id = $1`,
     [id]
   );
 
-  if (prescriptionResult.rows.length === 0) return null;
+  if (
+    prescriptionResult.rows.length === 0
+  ) {
+    return null;
+  }
 
-  const prescription = prescriptionResult.rows[0];
+  const prescription =
+    prescriptionResult.rows[0];
 
-  const itemsResult = await pool.query(
-    `SELECT * FROM prescription_items WHERE prescription_id = $1`,
-    [id]
-  );
+  const itemsResult =
+    await pool.query(
+      `SELECT *
+       FROM prescription_items
+       WHERE prescription_id = $1`,
+      [id]
+    );
 
-  prescription.items = itemsResult.rows;
+  prescription.items =
+    itemsResult.rows;
 
   return prescription;
 };
@@ -92,22 +159,36 @@ const getPrescriptionById = async (id) => {
  * @param {string} qrValue - The QR code string (e.g. "RX-uuid")
  * @returns {Promise<Object|null>} Prescription object with items array, or null if not found
  */
-const getPrescriptionByQrCode = async (qrValue) => {
-  const prescriptionResult = await pool.query(
-    `SELECT * FROM prescriptions WHERE qr_code_value = $1`,
-    [qrValue]
-  );
+const getPrescriptionByQrCode = async (
+  qrValue
+) => {
+  const prescriptionResult =
+    await pool.query(
+      `SELECT *
+       FROM prescriptions
+       WHERE qr_code_value = $1`,
+      [qrValue]
+    );
 
-  if (prescriptionResult.rows.length === 0) return null;
+  if (
+    prescriptionResult.rows.length === 0
+  ) {
+    return null;
+  }
 
-  const prescription = prescriptionResult.rows[0];
+  const prescription =
+    prescriptionResult.rows[0];
 
-  const itemsResult = await pool.query(
-    `SELECT * FROM prescription_items WHERE prescription_id = $1`,
-    [prescription.id]
-  );
+  const itemsResult =
+    await pool.query(
+      `SELECT *
+       FROM prescription_items
+       WHERE prescription_id = $1`,
+      [prescription.id]
+    );
 
-  prescription.items = itemsResult.rows;
+  prescription.items =
+    itemsResult.rows;
 
   return prescription;
 };
@@ -118,36 +199,95 @@ const getPrescriptionByQrCode = async (qrValue) => {
  * @param {string} status - New status: 'active', 'expired', 'completed', 'partially_filled'
  * @returns {Promise<Object|null>} Updated prescription row, or null if not found
  */
-const updatePrescriptionStatus = async (id, status) => {
+const updatePrescriptionStatus = async (
+  id,
+  status
+) => {
   const result = await pool.query(
-    `UPDATE prescriptions 
-     SET status = $1, updated_at = NOW()
+    `UPDATE prescriptions
+     SET status = $1,
+         updated_at = NOW()
      WHERE id = $2
      RETURNING *`,
-    [status, id]
+    [
+      status,
+      id
+    ]
   );
 
-  if (result.rows.length === 0) return null;
+  if (
+    result.rows.length === 0
+  ) {
+    return null;
+  }
 
   return result.rows[0];
 };
 
 /**
  * Updates the quantity dispensed for a prescription item.
- * @param {string} prescriptionItemId  - UUID of the prescription item
- * @param {number} quantityDispensed   - Amount being dispensed
+ * @param {string} prescriptionItemId - UUID of the prescription item
+ * @param {number} quantityDispensed  - Amount being dispensed
  * @returns {Promise<Object|null>} Updated prescription item row
  */
-const updateQuantityDispensed = async (prescriptionItemId, quantityDispensed) => {
+const updateQuantityDispensed = async (
+  prescriptionItemId,
+  quantityDispensed
+) => {
   const result = await pool.query(
     `UPDATE prescription_items
-     SET quantity_dispensed = quantity_dispensed + $1
+     SET quantity_dispensed =
+         quantity_dispensed + $1
      WHERE id = $2
      RETURNING *`,
-    [quantityDispensed, prescriptionItemId]
+    [
+      quantityDispensed,
+      prescriptionItemId
+    ]
   );
 
-  if (result.rows.length === 0) return null;
+  if (
+    result.rows.length === 0
+  ) {
+    return null;
+  }
+
+  return result.rows[0];
+};
+
+/**
+ * Records a dispensing action performed by a pharmacy.
+ *
+ * This does not replace quantity_dispensed in prescription_items.
+ * It creates a history record linking the prescription to the
+ * pharmacy that performed the dispensing action.
+ *
+ * @param {string} prescriptionId - UUID of the prescription
+ * @param {string} pharmacyId     - UUID of the pharmacy
+ * @returns {Promise<Object>} Newly created dispensing record
+ */
+const recordDispensing = async (
+  prescriptionId,
+  pharmacyId
+) => {
+  const result = await pool.query(
+    `INSERT INTO prescription_dispensing
+      (
+        prescription_id,
+        pharmacy_id
+      )
+     VALUES
+      (
+        $1,
+        $2
+      )
+     RETURNING *`,
+    [
+      prescriptionId,
+      pharmacyId
+    ]
+  );
+
   return result.rows[0];
 };
 
@@ -157,5 +297,6 @@ module.exports = {
   getPrescriptionById,
   getPrescriptionByQrCode,
   updatePrescriptionStatus,
-  updateQuantityDispensed
+  updateQuantityDispensed,
+  recordDispensing
 };

@@ -1,11 +1,15 @@
 /**
  * @component PatientNavbar
  * @desc      Top navigation bar for the patient portal, using TopNavbar
- *            with patient-specific nav items and the lab-report "New" badge.
+ *            with patient-specific nav items grouped cleanly to avoid clutter.
+ *            Includes the lab-report "New" badge.
  * @author    Wasana Karunanayaka (S/21/081)
  */
 import { useQuery } from '@tanstack/react-query';
-import { User, CalendarCheck, Stethoscope, FileText, Pill, FlaskConical } from 'lucide-react';
+import { 
+  User, CalendarCheck, Stethoscope, FileText, Pill, 
+  FlaskConical, Package, CreditCard 
+} from 'lucide-react';
 import { getLabReports } from '../../services/patient.service';
 import useAuthStore from '../../store/authStore';
 import TopNavbar from './TopNavbar';
@@ -30,14 +34,38 @@ export default function PatientNavbar() {
 
   const hasNewReports = reports.filter((r) => r.status === 'completed' && !r.is_read).length > 0;
 
+  // We use dropdown groups to keep the navbar clean while restoring the missing pages
   const navItems = [
-    { type: 'link', to: '/patient/profile', label: 'My Profile', icon: User },
     { type: 'link', to: '/patient/appointments', label: 'My Appointments', icon: CalendarCheck },
     { type: 'link', to: '/patient/doctors', label: 'Find a Doctor', icon: Stethoscope },
-    { type: 'link', to: '/patient/medical-records', label: 'Medical Records', icon: FileText },
-    { type: 'link', to: '/patient/prescriptions', label: 'Prescriptions', icon: Pill },
-    { type: 'link', to: '/patient/lab-reports', label: 'Lab Reports', icon: FlaskConical, badge: hasNewReports },
+    {
+      type: 'group',
+      label: 'My Health',
+      icon: FileText,
+      items: [
+        { to: '/patient/medical-records', label: 'Medical Records', icon: FileText, description: 'View your visit history' },
+        { to: '/patient/lab-reports', label: 'Lab Reports', icon: FlaskConical, description: 'View test results', badge: hasNewReports },
+      ],
+    },
+    {
+      type: 'group',
+      label: 'Pharmacy',
+      icon: Pill,
+      items: [
+        { to: '/patient/prescriptions', label: 'Prescriptions', icon: Pill, description: 'Digital prescriptions' },
+        { to: '/patient/orders', label: 'Medicine Orders', icon: Package, description: 'Track home deliveries' },
+      ],
+    },
+    {
+      type: 'group',
+      label: 'Account',
+      icon: User,
+      items: [
+        { to: '/patient/profile', label: 'My Profile', icon: User, description: 'Manage personal details' },
+        { to: '/patient/payments', label: 'Payment History', icon: CreditCard, description: 'View receipts & billing' },
+      ],
+    },
   ];
 
-  return <TopNavbar portalLabel="Patient Portal" navItems={navItems} onLogout={handleLogout} />;
+  return <TopNavbar portalLabel="Patient Portal" theme="patient" navItems={navItems} onLogout={handleLogout} />;
 }

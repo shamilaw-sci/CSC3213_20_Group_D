@@ -69,6 +69,10 @@ const LoginPage = () => {
           window.location.href = '/doctor/dashboard';
         } else if (data.data.role === 'admin') {
           window.location.href = '/admin';
+        } else if (data.data.role === 'pharmacist') {
+          window.location.href = '/pharmacy/dashboard';
+        } else if (data.data.role === 'hospital_staff') {
+          window.location.href = '/hospital/dashboard';
         } else {
           window.location.href = '/';
         }
