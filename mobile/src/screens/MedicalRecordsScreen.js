@@ -1,11 +1,19 @@
 /**
  * @file      MedicalRecordsScreen.js
  * @module    Patient
- * @desc      Mobile screen showing a patient's medical records list.
- *            Tap any record to see full details in a modal.
+ * @desc      Premium mobile patient medical-record timeline.
+ *            Supports filtering, pull-to-refresh, record summaries,
+ *            confidential indicators, and detailed record viewing.
  * @author    Wasana Karunanayaka (S/21/081)
  */
-import React, { useEffect, useState } from 'react';
+
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+
 import {
   View,
   Text,
@@ -15,436 +23,2772 @@ import {
   Modal,
   StyleSheet,
   SafeAreaView,
+  RefreshControl,
 } from 'react-native';
-import { getMedicalRecords } from '../services/patient.service';
+
+import {
+  AlertCircle,
+  AlertTriangle,
+  CalendarCheck2,
+  CalendarDays,
+  ChevronRight,
+  FileHeart,
+  FileText,
+  FlaskConical,
+  History,
+  Image as ImagingIcon,
+  LockKeyhole,
+  Pill,
+  RefreshCw,
+  ScanLine,
+  ShieldCheck,
+  Stethoscope,
+  UserRound,
+  X,
+} from 'lucide-react-native';
+
+import {
+  getMedicalRecords,
+} from '../services/patient.service';
+
 import useAuthStore from '../store/authStore';
 
+/* =========================================================
+   DESIGN TOKENS
+========================================================= */
+
+const COLORS = {
+  background: '#F6F8FA',
+  surface: '#FFFFFF',
+
+  text: '#102331',
+  textSoft: '#334155',
+  muted: '#718096',
+  subtle: '#9AA8B6',
+
+  border: '#E8EDF1',
+
+  navy: '#12344D',
+  navySoft: '#EAF1F5',
+
+  teal: '#0F8B83',
+  tealDark: '#0B6F69',
+  tealSoft: '#E7F7F5',
+
+  blue: '#3973A7',
+  blueSoft: '#EEF5FB',
+
+  violet: '#7656A8',
+  violetSoft: '#F4F0FA',
+
+  green: '#2F855A',
+  greenSoft: '#EDF9F2',
+
+  amber: '#B7791F',
+  amberSoft: '#FFF8E7',
+
+  danger: '#C94C4C',
+  dangerSoft: '#FFF1F1',
+};
+
+/* =========================================================
+   RECORD TYPES
+========================================================= */
+
+const RECORD_TYPES = {
+  consultation: {
+    label: 'Consultation',
+    icon: Stethoscope,
+    color: COLORS.teal,
+    background: COLORS.tealSoft,
+  },
+
+  lab_result: {
+    label: 'Lab Result',
+    icon: FlaskConical,
+    color: COLORS.blue,
+    background: COLORS.blueSoft,
+  },
+
+  imaging: {
+    label: 'Imaging',
+    icon: ScanLine,
+    color: COLORS.violet,
+    background: COLORS.violetSoft,
+  },
+
+  prescription: {
+    label: 'Prescription',
+    icon: Pill,
+    color: COLORS.green,
+    background: COLORS.greenSoft,
+  },
+
+  other: {
+    label: 'Record',
+    icon: FileText,
+    color: COLORS.navy,
+    background: COLORS.navySoft,
+  },
+};
+
+const FILTERS = [
+  {
+    key: 'all',
+    label: 'All',
+  },
+  {
+    key: 'consultation',
+    label: 'Consultations',
+  },
+  {
+    key: 'lab_result',
+    label: 'Lab',
+  },
+  {
+    key: 'imaging',
+    label: 'Imaging',
+  },
+  {
+    key: 'prescription',
+    label: 'Prescriptions',
+  },
+];
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
 /**
- * Returns a label and colour for each record type.
- * @param {string} type - consultation | lab_result | imaging | prescription | other
+ * Returns presentation metadata for a record type.
+ *
+ * @param {string} type
+ * @returns {Object}
  */
-const recordTypeMeta = (type) => {
-  switch (type) {
-    case 'consultation': return { label: 'Consultation',  color: '#2E75B6' };
-    case 'lab_result':   return { label: 'Lab Result',    color: '#006B6B' };
-    case 'imaging':      return { label: 'Imaging',       color: '#7C3AED' };
-    case 'prescription': return { label: 'Prescription',  color: '#1F7A1F' };
-    default:             return { label: 'Record',        color: '#64748B' };
-  }
+const recordTypeMeta = (
+  type
+) => {
+  return (
+    RECORD_TYPES[
+      type
+    ] ||
+    RECORD_TYPES.other
+  );
 };
 
 /**
- * Formats an ISO date string to a readable short date.
+ * Formats an ISO date into a readable date.
+ *
  * @param {string} dateStr
  * @returns {string}
  */
-const formatDate = (dateStr) => {
-  if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
+const formatDate = (
+  dateStr
+) => {
+  if (!dateStr) {
+    return 'Date unavailable';
+  }
+
+  const date =
+    new Date(
+      dateStr
+    );
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+    return 'Date unavailable';
+  }
+
+  return date.toLocaleDateString(
+    'en-US',
+    {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }
+  );
 };
 
-const MedicalRecordsScreen = () => {
-  const user = useAuthStore((state) => state.user);
-  const TEST_PATIENT_ID = user?.profile_id || user?.id || '';
+/**
+ * Formats a record date with weekday for detail view.
+ *
+ * @param {string} dateStr
+ * @returns {string}
+ */
+const formatLongDate = (
+  dateStr
+) => {
+  if (!dateStr) {
+    return 'Date unavailable';
+  }
 
-  const [records,        setRecords]        = useState([]);
-  const [loading,        setLoading]        = useState(true);
-  const [error,          setError]          = useState(null);
-  const [selectedRecord, setSelectedRecord] = useState(null);
+  const date =
+    new Date(
+      dateStr
+    );
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+    return 'Date unavailable';
+  }
+
+  return date.toLocaleDateString(
+    'en-US',
+    {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    }
+  );
+};
+
+/* =========================================================
+   SUMMARY CARD
+========================================================= */
+
+/**
+ * @component SummaryCard
+ * @desc      Compact medical-record summary statistic.
+ */
+const SummaryCard = ({
+  icon: Icon,
+  value,
+  label,
+  color,
+  background,
+}) => {
+  return (
+    <View style={styles.summaryCard}>
+
+      <View
+        style={[
+          styles.summaryIcon,
+          {
+            backgroundColor:
+              background,
+          },
+        ]}
+      >
+        <Icon
+          size={17}
+          color={color}
+          strokeWidth={2.2}
+        />
+      </View>
+
+      <Text style={styles.summaryValue}>
+        {value}
+      </Text>
+
+      <Text style={styles.summaryLabel}>
+        {label}
+      </Text>
+
+    </View>
+  );
+};
+
+/* =========================================================
+   RECORD CARD
+========================================================= */
+
+/**
+ * @component RecordCard
+ * @desc      Premium medical-record timeline card.
+ */
+const RecordCard = ({
+  record,
+  onPress,
+}) => {
+  const meta =
+    recordTypeMeta(
+      record.record_type
+    );
+
+  const Icon =
+    meta.icon;
+
+  return (
+    <TouchableOpacity
+      style={styles.recordCard}
+      activeOpacity={0.78}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`Open ${record.title || meta.label}`}
+    >
+
+      <View
+        style={[
+          styles.recordIcon,
+          {
+            backgroundColor:
+              meta.background,
+          },
+        ]}
+      >
+
+        <Icon
+          size={21}
+          color={meta.color}
+          strokeWidth={2}
+        />
+
+      </View>
+
+      <View style={styles.recordContent}>
+
+        <View style={styles.recordTopRow}>
+
+          <View
+            style={[
+              styles.typeBadge,
+              {
+                backgroundColor:
+                  meta.background,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.typeBadgeText,
+                {
+                  color:
+                    meta.color,
+                },
+              ]}
+            >
+              {meta.label}
+            </Text>
+          </View>
+
+          {record.is_confidential ? (
+            <View style={styles.confidentialBadge}>
+
+              <LockKeyhole
+                size={10}
+                color={COLORS.amber}
+              />
+
+              <Text style={styles.confidentialBadgeText}>
+                Confidential
+              </Text>
+
+            </View>
+          ) : null}
+
+        </View>
+
+        <Text
+          style={styles.recordTitle}
+          numberOfLines={2}
+        >
+          {record.title ||
+            meta.label}
+        </Text>
+
+        <View style={styles.recordMetaRow}>
+
+          <CalendarDays
+            size={13}
+            color={COLORS.subtle}
+          />
+
+          <Text style={styles.recordMeta}>
+            {formatDate(
+              record.created_at
+            )}
+          </Text>
+
+        </View>
+
+        {record.doctor_name ? (
+          <View style={styles.recordMetaRow}>
+
+            <UserRound
+              size={13}
+              color={COLORS.subtle}
+            />
+
+            <Text
+              style={styles.recordMeta}
+              numberOfLines={1}
+            >
+              Dr. {
+                record.doctor_name
+              }
+              {record
+                .doctor_specialization
+                ? ` · ${record.doctor_specialization}`
+                : ''}
+            </Text>
+
+          </View>
+        ) : null}
+
+        {record.follow_up_needed ? (
+          <View style={styles.followUpInline}>
+
+            <CalendarCheck2
+              size={12}
+              color={COLORS.blue}
+            />
+
+            <Text style={styles.followUpInlineText}>
+              Follow-up required
+            </Text>
+
+          </View>
+        ) : null}
+
+      </View>
+
+      <View style={styles.chevronShell}>
+
+        <ChevronRight
+          size={18}
+          color={COLORS.subtle}
+        />
+
+      </View>
+
+    </TouchableOpacity>
+  );
+};
+
+/* =========================================================
+   DETAIL SECTION
+========================================================= */
+
+/**
+ * @component DetailSection
+ * @desc      Structured content block inside record detail modal.
+ */
+const DetailSection = ({
+  label,
+  value,
+}) => {
+  if (!value) {
+    return null;
+  }
+
+  return (
+    <View style={styles.detailSection}>
+
+      <Text style={styles.detailLabel}>
+        {label}
+      </Text>
+
+      <View style={styles.detailValueCard}>
+
+        <Text style={styles.detailValue}>
+          {value}
+        </Text>
+
+      </View>
+
+    </View>
+  );
+};
+
+/* =========================================================
+   RECORD DETAIL MODAL
+========================================================= */
+
+/**
+ * @component RecordDetailModal
+ * @desc      Full record detail experience.
+ */
+const RecordDetailModal = ({
+  record,
+  onClose,
+}) => {
+  if (!record) {
+    return null;
+  }
+
+  const meta =
+    recordTypeMeta(
+      record.record_type
+    );
+
+  const Icon =
+    meta.icon;
+
+  const isConsultation =
+    record.record_type ===
+    'consultation';
+
+  return (
+    <Modal
+      visible={
+        Boolean(record)
+      }
+      animationType="slide"
+      onRequestClose={
+        onClose
+      }
+      presentationStyle="fullScreen"
+    >
+
+      <SafeAreaView style={styles.modalSafeArea}>
+
+        {/* =================================================
+            MODAL TOP BAR
+        ================================================== */}
+
+        <View style={styles.modalTopBar}>
+
+          <View style={styles.modalBrandArea}>
+
+            <View
+              style={[
+                styles.modalSmallIcon,
+                {
+                  backgroundColor:
+                    meta.background,
+                },
+              ]}
+            >
+              <Icon
+                size={18}
+                color={meta.color}
+              />
+            </View>
+
+            <View>
+
+              <Text style={styles.modalBrandEyebrow}>
+                MEDICAL RECORD
+              </Text>
+
+              <Text style={styles.modalBrandTitle}>
+                Record Details
+              </Text>
+
+            </View>
+
+          </View>
+
+          <TouchableOpacity
+            style={styles.modalCloseIcon}
+            activeOpacity={0.75}
+            onPress={
+              onClose
+            }
+            accessibilityRole="button"
+            accessibilityLabel="Close medical record"
+          >
+
+            <X
+              size={19}
+              color={COLORS.text}
+            />
+
+          </TouchableOpacity>
+
+        </View>
+
+        <ScrollView
+          style={styles.modalScrollView}
+          contentContainerStyle={
+            styles.modalScroll
+          }
+          showsVerticalScrollIndicator={
+            false
+          }
+        >
+
+          {/* =================================================
+              RECORD HERO
+          ================================================== */}
+
+          <View style={styles.modalHero}>
+
+            <View style={styles.modalHeroCircleLarge} />
+            <View style={styles.modalHeroCircleSmall} />
+
+            <View
+              style={[
+                styles.modalTypeIcon,
+                {
+                  backgroundColor:
+                    meta.background,
+                },
+              ]}
+            >
+
+              <Icon
+                size={24}
+                color={meta.color}
+              />
+
+            </View>
+
+            <View
+              style={[
+                styles.modalTypeBadge,
+                {
+                  backgroundColor:
+                    meta.background,
+                },
+              ]}
+            >
+
+              <Text
+                style={[
+                  styles.modalTypeBadgeText,
+                  {
+                    color:
+                      meta.color,
+                  },
+                ]}
+              >
+                {meta.label}
+              </Text>
+
+            </View>
+
+            <Text style={styles.modalTitle}>
+              {record.title ||
+                meta.label}
+            </Text>
+
+            <View style={styles.modalDateRow}>
+
+              <CalendarDays
+                size={14}
+                color="#C8D8E3"
+              />
+
+              <Text style={styles.modalDate}>
+                {formatLongDate(
+                  record.created_at
+                )}
+              </Text>
+
+            </View>
+
+            {record.doctor_name ? (
+              <View style={styles.modalDoctorRow}>
+
+                <Stethoscope
+                  size={14}
+                  color="#C8D8E3"
+                />
+
+                <Text style={styles.modalDoctor}>
+                  Dr. {
+                    record.doctor_name
+                  }
+                  {record
+                    .doctor_specialization
+                    ? ` · ${record.doctor_specialization}`
+                    : ''}
+                </Text>
+
+              </View>
+            ) : null}
+
+          </View>
+
+          {/* =================================================
+              CONFIDENTIAL WARNING
+          ================================================== */}
+
+          {record.is_confidential ? (
+            <View style={styles.confidentialBanner}>
+
+              <View style={styles.confidentialBannerIcon}>
+
+                <LockKeyhole
+                  size={17}
+                  color={COLORS.amber}
+                />
+
+              </View>
+
+              <View style={styles.confidentialBannerContent}>
+
+                <Text style={styles.confidentialBannerTitle}>
+                  Confidential medical record
+                </Text>
+
+                <Text style={styles.confidentialBannerText}>
+                  This record has been marked confidential in your Care4U medical history.
+                </Text>
+
+              </View>
+
+            </View>
+          ) : null}
+
+          {/* =================================================
+              STRUCTURED DETAILS
+          ================================================== */}
+
+          <View style={styles.modalBody}>
+
+            <View style={styles.detailHeadingRow}>
+
+              <FileHeart
+                size={18}
+                color={COLORS.teal}
+              />
+
+              <Text style={styles.detailHeading}>
+                Clinical information
+              </Text>
+
+            </View>
+
+            {isConsultation &&
+            record.chief_complaint ? (
+              <>
+
+                <DetailSection
+                  label="Chief Complaint"
+                  value={
+                    record
+                      .chief_complaint
+                  }
+                />
+
+                <DetailSection
+                  label="Diagnosis"
+                  value={
+                    record
+                      .diagnosis ||
+                    'No diagnosis recorded.'
+                  }
+                />
+
+                <DetailSection
+                  label="Treatment Plan"
+                  value={
+                    record
+                      .treatment_plan ||
+                    'No treatment plan recorded.'
+                  }
+                />
+
+                <DetailSection
+                  label="Additional Notes"
+                  value={
+                    record
+                      .description
+                  }
+                />
+
+              </>
+            ) : (
+              <DetailSection
+                label="Details"
+                value={
+                  record.description ||
+                  'No additional details recorded.'
+                }
+              />
+            )}
+
+            {record.follow_up_needed ? (
+              <View style={styles.followUpBanner}>
+
+                <View style={styles.followUpIcon}>
+
+                  <CalendarCheck2
+                    size={20}
+                    color={COLORS.blue}
+                  />
+
+                </View>
+
+                <View style={styles.followUpContent}>
+
+                  <Text style={styles.followUpTitle}>
+                    Follow-up required
+                  </Text>
+
+                  <Text style={styles.followUpText}>
+                    Your healthcare provider has indicated that this record requires follow-up care.
+                  </Text>
+
+                </View>
+
+              </View>
+            ) : null}
+
+          </View>
+
+          {/* =================================================
+              PRIVACY NOTE
+          ================================================== */}
+
+          <View style={styles.privacyNote}>
+
+            <ShieldCheck
+              size={15}
+              color={COLORS.subtle}
+            />
+
+            <Text style={styles.privacyNoteText}>
+              This information is part of your protected Care4U medical record.
+            </Text>
+
+          </View>
+
+        </ScrollView>
+
+        <View style={styles.modalFooter}>
+
+          <TouchableOpacity
+            style={styles.closeButton}
+            activeOpacity={0.8}
+            onPress={
+              onClose
+            }
+          >
+            <Text style={styles.closeButtonText}>
+              Close Record
+            </Text>
+          </TouchableOpacity>
+
+        </View>
+
+      </SafeAreaView>
+
+    </Modal>
+  );
+};
+
+/* =========================================================
+   MAIN SCREEN
+========================================================= */
+
+const MedicalRecordsScreen = () => {
+  const user =
+    useAuthStore(
+      (state) =>
+        state.user
+    );
+
+  const patientId =
+    user?.profile_id ||
+    user?.id ||
+    '';
+
+  const [
+    records,
+    setRecords,
+  ] = useState([]);
+
+  const [
+    loading,
+    setLoading,
+  ] = useState(true);
+
+  const [
+    refreshing,
+    setRefreshing,
+  ] = useState(false);
+
+  const [
+    error,
+    setError,
+  ] = useState(null);
+
+  const [
+    selectedRecord,
+    setSelectedRecord,
+  ] = useState(null);
+
+  const [
+    selectedFilter,
+    setSelectedFilter,
+  ] = useState('all');
+
+  /* =======================================================
+     LOAD RECORDS
+  ======================================================= */
+
+  const fetchRecords =
+    useCallback(
+      async (
+        background = false
+      ) => {
+        if (!patientId) {
+          setLoading(
+            false
+          );
+
+          setError(
+            'Patient information is unavailable. Please sign in again.'
+          );
+
+          return;
+        }
+
+        if (background) {
+          setRefreshing(
+            true
+          );
+        } else {
+          setLoading(
+            true
+          );
+        }
+
+        setError(
+          null
+        );
+
+        try {
+          const data =
+            await getMedicalRecords(
+              patientId
+            );
+
+          setRecords(
+            data ||
+            []
+          );
+
+        } catch (
+          err
+        ) {
+          console.error(
+            'Medical records load error:',
+            err
+          );
+
+          setError(
+            'Failed to load medical records. Please try again.'
+          );
+
+        } finally {
+          setLoading(
+            false
+          );
+
+          setRefreshing(
+            false
+          );
+        }
+      },
+      [
+        patientId,
+      ]
+    );
 
   useEffect(() => {
-    if (!TEST_PATIENT_ID) return;
-    
-    const fetchRecords = async () => {
-      try {
-        const data = await getMedicalRecords(TEST_PATIENT_ID);
-        setRecords(data || []);
-      } catch (err) {
-        setError('Failed to load medical records. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchRecords();
-  }, [TEST_PATIENT_ID]);
+  }, [
+    fetchRecords,
+  ]);
+
+  /* =======================================================
+     DERIVED DATA
+  ======================================================= */
+
+  const sortedRecords =
+    useMemo(
+      () =>
+        [
+          ...records,
+        ].sort(
+          (
+            first,
+            second
+          ) =>
+            new Date(
+              second.created_at
+            ) -
+            new Date(
+              first.created_at
+            )
+        ),
+      [
+        records,
+      ]
+    );
+
+  const filteredRecords =
+    useMemo(
+      () => {
+        if (
+          selectedFilter ===
+          'all'
+        ) {
+          return sortedRecords;
+        }
+
+        return sortedRecords.filter(
+          (
+            record
+          ) =>
+            record.record_type ===
+            selectedFilter
+        );
+      },
+      [
+        sortedRecords,
+        selectedFilter,
+      ]
+    );
+
+  const consultationCount =
+    useMemo(
+      () =>
+        records.filter(
+          (
+            record
+          ) =>
+            record.record_type ===
+            'consultation'
+        ).length,
+      [
+        records,
+      ]
+    );
+
+  const followUpCount =
+    useMemo(
+      () =>
+        records.filter(
+          (
+            record
+          ) =>
+            Boolean(
+              record.follow_up_needed
+            )
+        ).length,
+      [
+        records,
+      ]
+    );
+
+  /* =======================================================
+     LOADING
+  ======================================================= */
 
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#1E3A5F" />
-        <Text style={styles.loadingText}>Loading records...</Text>
+      <View style={styles.loadingScreen}>
+
+        <View style={styles.loadingIcon}>
+
+          <FileHeart
+            size={27}
+            color={COLORS.teal}
+          />
+
+        </View>
+
+        <ActivityIndicator
+          size="small"
+          color={COLORS.teal}
+        />
+
+        <Text style={styles.loadingTitle}>
+          Loading your records
+        </Text>
+
+        <Text style={styles.loadingText}>
+          Preparing your Care4U medical history
+        </Text>
+
       </View>
     );
   }
 
-  if (error) {
+  /* =======================================================
+     ERROR
+  ======================================================= */
+
+  if (
+    error &&
+    records.length ===
+      0
+  ) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.errorText}>{error}</Text>
+      <View style={styles.errorScreen}>
+
+        <View style={styles.errorIcon}>
+
+          <AlertCircle
+            size={27}
+            color={COLORS.danger}
+          />
+
+        </View>
+
+        <Text style={styles.errorTitle}>
+          Records unavailable
+        </Text>
+
+        <Text style={styles.errorText}>
+          {error}
+        </Text>
+
+        <TouchableOpacity
+          style={styles.retryButton}
+          activeOpacity={0.78}
+          onPress={() =>
+            fetchRecords()
+          }
+        >
+
+          <RefreshCw
+            size={16}
+            color="#FFFFFF"
+          />
+
+          <Text style={styles.retryText}>
+            Try again
+          </Text>
+
+        </TouchableOpacity>
+
       </View>
     );
   }
+
+  /* =======================================================
+     PAGE
+  ======================================================= */
 
   return (
     <SafeAreaView style={styles.safeArea}>
 
-      {/* ── Record Detail Modal ── */}
-      <Modal
-        visible={!!selectedRecord}
-        animationType="slide"
-        onRequestClose={() => setSelectedRecord(null)}
+      <RecordDetailModal
+        record={
+          selectedRecord
+        }
+        onClose={() =>
+          setSelectedRecord(
+            null
+          )
+        }
+      />
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={
+          styles.scroll
+        }
+        showsVerticalScrollIndicator={
+          false
+        }
+        refreshControl={
+          <RefreshControl
+            refreshing={
+              refreshing
+            }
+            onRefresh={() =>
+              fetchRecords(
+                true
+              )
+            }
+            tintColor={
+              COLORS.teal
+            }
+            colors={[
+              COLORS.teal,
+            ]}
+          />
+        }
       >
-        {selectedRecord && (
-          <SafeAreaView style={styles.modalSafeArea}>
-            <ScrollView contentContainerStyle={styles.modalScroll}>
 
-              {/* Modal Header */}
-              <View style={styles.modalHeader}>
-                <View style={[
-                  styles.modalTypeBadge,
-                  { backgroundColor: recordTypeMeta(selectedRecord.record_type).color },
-                ]}>
-                  <Text style={styles.modalTypeBadgeText}>
-                    {recordTypeMeta(selectedRecord.record_type).label}
-                  </Text>
-                </View>
-                <Text style={styles.modalTitle}>{selectedRecord.title}</Text>
-                <Text style={styles.modalDate}>{formatDate(selectedRecord.created_at)}</Text>
+        {/* =================================================
+            INTRO
+        ================================================== */}
 
-                {/* Doctor info */}
-                {selectedRecord.doctor_name && (
-                  <Text style={styles.modalDoctor}>
-                    Dr. {selectedRecord.doctor_name}
-                    {selectedRecord.doctor_specialization
-                      ? ` · ${selectedRecord.doctor_specialization}`
-                      : ''}
-                  </Text>
-                )}
+        <View style={styles.introSection}>
 
-                {/* Confidential warning */}
-                {selectedRecord.is_confidential && (
-                  <View style={styles.confidentialBanner}>
-                    <Text style={styles.confidentialText}>
-                      ⚠ This record is marked confidential
-                    </Text>
-                  </View>
-                )}
-              </View>
+          <View style={styles.introIcon}>
 
-              {/* Description / Structured Notes */}
-              <View style={styles.modalBody}>
-                {selectedRecord.record_type === 'consultation' && selectedRecord.chief_complaint ? (
-                  <>
-                    <Text style={styles.modalDescLabel}>CHIEF COMPLAINT</Text>
-                    <Text style={styles.modalDesc}>{selectedRecord.chief_complaint}</Text>
+            <History
+              size={22}
+              color={COLORS.teal}
+            />
 
-                    <Text style={[styles.modalDescLabel, { marginTop: 16 }]}>DIAGNOSIS</Text>
-                    <Text style={styles.modalDesc}>{selectedRecord.diagnosis}</Text>
-
-                    <Text style={[styles.modalDescLabel, { marginTop: 16 }]}>TREATMENT PLAN</Text>
-                    <Text style={styles.modalDesc}>{selectedRecord.treatment_plan}</Text>
-                    
-                    {/* Fallback to standard description if doctor also added free text */}
-                    {selectedRecord.description && (
-                       <>
-                         <Text style={[styles.modalDescLabel, { marginTop: 16 }]}>ADDITIONAL NOTES</Text>
-                         <Text style={styles.modalDesc}>{selectedRecord.description}</Text>
-                       </>
-                    )}
-
-                    {selectedRecord.follow_up_needed && (
-                      <View style={styles.followUpBanner}>
-                        <Text style={styles.followUpText}>📅 Follow-up Required</Text>
-                      </View>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <Text style={styles.modalDescLabel}>DETAILS</Text>
-                    <Text style={styles.modalDesc}>
-                      {selectedRecord.description || 'No additional details recorded.'}
-                    </Text>
-                  </>
-                )}
-              </View>
-
-            </ScrollView>
-
-            {/* Close Button */}
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setSelectedRecord(null)}
-            >
-              <Text style={styles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
-          </SafeAreaView>
-        )}
-      </Modal>
-
-      {/* ── Page Header ── */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Medical Records</Text>
-        <Text style={styles.headerSubtitle}>
-          {records.length} {records.length === 1 ? 'record' : 'records'} found
-        </Text>
-      </View>
-
-      {/* ── Records List ── */}
-      <ScrollView contentContainerStyle={styles.scroll}>
-
-        {records.length === 0 && (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>
-              No records found. Your medical records will appear here after consultations.
-            </Text>
           </View>
+
+          <View style={styles.introContent}>
+
+            <Text style={styles.introEyebrow}>
+              YOUR HEALTH HISTORY
+            </Text>
+
+            <Text style={styles.introTitle}>
+              Care timeline
+            </Text>
+
+            <Text style={styles.introDescription}>
+              Review consultations, test results, imaging and other clinical records saved in Care4U.
+            </Text>
+
+          </View>
+
+        </View>
+
+        {/* =================================================
+            SUMMARY
+        ================================================== */}
+
+        <View style={styles.summaryRow}>
+
+          <SummaryCard
+            icon={FileText}
+            value={
+              records.length
+            }
+            label="Total records"
+            color={
+              COLORS.teal
+            }
+            background={
+              COLORS.tealSoft
+            }
+          />
+
+          <SummaryCard
+            icon={Stethoscope}
+            value={
+              consultationCount
+            }
+            label="Consultations"
+            color={
+              COLORS.blue
+            }
+            background={
+              COLORS.blueSoft
+            }
+          />
+
+          <SummaryCard
+            icon={CalendarCheck2}
+            value={
+              followUpCount
+            }
+            label="Follow-ups"
+            color={
+              followUpCount >
+              0
+                ? COLORS.amber
+                : COLORS.green
+            }
+            background={
+              followUpCount >
+              0
+                ? COLORS.amberSoft
+                : COLORS.greenSoft
+            }
+          />
+
+        </View>
+
+        {/* =================================================
+            FILTERS
+        ================================================== */}
+
+        <View style={styles.filterSection}>
+
+          <View style={styles.filterHeadingRow}>
+
+            <Text style={styles.filterHeading}>
+              Records
+            </Text>
+
+            <Text style={styles.filterCount}>
+              {
+                filteredRecords.length
+              }{' '}
+              {filteredRecords.length ===
+              1
+                ? 'record'
+                : 'records'}
+            </Text>
+
+          </View>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={
+              false
+            }
+            contentContainerStyle={
+              styles.filterList
+            }
+          >
+
+            {FILTERS.map(
+              (
+                filter
+              ) => {
+                const active =
+                  selectedFilter ===
+                  filter.key;
+
+                return (
+                  <TouchableOpacity
+                    key={
+                      filter.key
+                    }
+                    style={[
+                      styles.filterChip,
+
+                      active &&
+                        styles.filterChipActive,
+                    ]}
+                    activeOpacity={0.75}
+                    onPress={() =>
+                      setSelectedFilter(
+                        filter.key
+                      )
+                    }
+                  >
+
+                    <Text
+                      style={[
+                        styles.filterChipText,
+
+                        active &&
+                          styles.filterChipTextActive,
+                      ]}
+                    >
+                      {filter.label}
+                    </Text>
+
+                  </TouchableOpacity>
+                );
+              }
+            )}
+
+          </ScrollView>
+
+        </View>
+
+        {/* =================================================
+            INLINE REFRESH ERROR
+        ================================================== */}
+
+        {error ? (
+          <View style={styles.inlineWarning}>
+
+            <AlertTriangle
+              size={16}
+              color={COLORS.amber}
+            />
+
+            <Text style={styles.inlineWarningText}>
+              {error}
+            </Text>
+
+          </View>
+        ) : null}
+
+        {/* =================================================
+            EMPTY
+        ================================================== */}
+
+        {filteredRecords.length ===
+        0 ? (
+
+          <View style={styles.emptyCard}>
+
+            <View style={styles.emptyIcon}>
+
+              <FileHeart
+                size={28}
+                color={COLORS.teal}
+              />
+
+            </View>
+
+            <Text style={styles.emptyTitle}>
+              {records.length ===
+              0
+                ? 'No medical records yet'
+                : 'No matching records'}
+            </Text>
+
+            <Text style={styles.emptyText}>
+              {records.length ===
+              0
+                ? 'Your medical history will appear here after consultations and other Care4U clinical activity.'
+                : 'There are no records in this category yet. Try another filter.'}
+            </Text>
+
+            {records.length >
+              0 && (
+              <TouchableOpacity
+                style={styles.clearFilterButton}
+                activeOpacity={0.75}
+                onPress={() =>
+                  setSelectedFilter(
+                    'all'
+                  )
+                }
+              >
+                <Text style={styles.clearFilterText}>
+                  View all records
+                </Text>
+              </TouchableOpacity>
+            )}
+
+          </View>
+
+        ) : (
+
+          <View style={styles.recordsList}>
+
+            {filteredRecords.map(
+              (
+                record
+              ) => (
+                <RecordCard
+                  key={
+                    record.id
+                  }
+                  record={
+                    record
+                  }
+                  onPress={() =>
+                    setSelectedRecord(
+                      record
+                    )
+                  }
+                />
+              )
+            )}
+
+          </View>
+
         )}
 
-        {records.map((record) => {
-          const meta = recordTypeMeta(record.record_type);
-          return (
-            <TouchableOpacity
-              key={record.id}
-              style={styles.card}
-              onPress={() => setSelectedRecord(record)}
-              activeOpacity={0.7}
-            >
-              <View style={styles.cardLeft}>
-                {/* Type badge */}
-                <View style={[styles.typeBadge, { backgroundColor: meta.color }]}>
-                  <Text style={styles.typeBadgeText}>{meta.label}</Text>
-                </View>
-                {/* Title */}
-                <Text style={styles.cardTitle}>{record.title}</Text>
-                {/* Date + Doctor */}
-                <Text style={styles.cardMeta}>
-                  {formatDate(record.created_at)}
-                  {record.doctor_name ? `  ·  Dr. ${record.doctor_name}` : ''}
-                </Text>
-                {/* Confidential indicator */}
-                {record.is_confidential && (
-                  <Text style={styles.confidentialTag}>Confidential</Text>
-                )}
-              </View>
-              <Text style={styles.chevron}>›</Text>
-            </TouchableOpacity>
-          );
-        })}
+        {/* =================================================
+            PRIVACY FOOTER
+        ================================================== */}
+
+        <View style={styles.securityFooter}>
+
+          <ShieldCheck
+            size={15}
+            color={COLORS.subtle}
+          />
+
+          <Text style={styles.securityFooterText}>
+            Your medical records are protected by Care4U role-based access controls.
+          </Text>
+
+        </View>
+
+        <View style={styles.bottomSpace} />
 
       </ScrollView>
+
     </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-  },
-  loadingText: {
-    marginTop: 12,
-    color: '#64748B',
-    fontSize: 14,
-  },
-  errorText: {
-    color: '#C00000',
-    fontSize: 14,
-    textAlign: 'center',
-    padding: 20,
-  },
+/* =========================================================
+   STYLES
+========================================================= */
 
-  // Header
-  header: {
-    backgroundColor: '#1E3A5F',
-    paddingTop: 50,
-    paddingBottom: 24,
-    paddingHorizontal: 20,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 13,
-    color: '#93C5FD',
-  },
+const styles =
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
 
-  // List
-  scroll: {
-    padding: 16,
-    paddingBottom: 40,
-  },
-  emptyContainer: {
-    padding: 24,
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: 14,
-    color: '#64748B',
-    textAlign: 'center',
-    lineHeight: 22,
-  },
+      backgroundColor:
+        COLORS.background,
+    },
 
-  // Record card
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  cardLeft: {
-    flex: 1,
-  },
-  typeBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-    marginBottom: 6,
-  },
-  typeBadgeText: {
-    fontSize: 10,
-    color: '#FFFFFF',
-    fontWeight: '700',
-    letterSpacing: 0.3,
-  },
-  cardTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#1E293B',
-    marginBottom: 4,
-  },
-  cardMeta: {
-    fontSize: 12,
-    color: '#64748B',
-  },
-  confidentialTag: {
-    fontSize: 11,
-    color: '#E67E22',
-    fontWeight: '500',
-    marginTop: 4,
-  },
-  chevron: {
-    fontSize: 22,
-    color: '#CBD5E1',
-    marginLeft: 8,
-  },
+    scrollView: {
+      flex: 1,
+    },
 
-  // Modal
-  modalSafeArea: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-  },
-  modalScroll: {
-    paddingBottom: 24,
-  },
-  modalHeader: {
-    backgroundColor: '#1E3A5F',
-    padding: 24,
-    paddingTop: 48,
-  },
-  modalTypeBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 8,
-    marginBottom: 10,
-  },
-  modalTypeBadgeText: {
-    fontSize: 11,
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 6,
-  },
-  modalDate: {
-    fontSize: 13,
-    color: '#93C5FD',
-    marginBottom: 4,
-  },
-  modalDoctor: {
-    fontSize: 13,
-    color: '#93C5FD',
-    marginBottom: 8,
-  },
-  confidentialBanner: {
-    backgroundColor: '#E67E22',
-    borderRadius: 8,
-    padding: 8,
-    marginTop: 8,
-  },
-  confidentialText: {
-    fontSize: 12,
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
-  modalBody: {
-    padding: 20,
-  },
-  modalDescLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#64748B',
-    letterSpacing: 0.5,
-    marginBottom: 8,
-  },
-  modalDesc: {
-    fontSize: 14,
-    color: '#1E293B',
-    lineHeight: 22,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    padding: 14,
-  },
-  followUpBanner: {
-    marginTop: 16,
-    backgroundColor: '#EFF6FF',
-    borderWidth: 1,
-    borderColor: '#BFDBFE',
-    borderRadius: 10,
-    padding: 14,
-    alignItems: 'center',
-  },
-  followUpText: {
-    color: '#1E3A5F',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  closeButton: {
-    margin: 16,
-    backgroundColor: '#1E3A5F',
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  closeButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
+    scroll: {
+      paddingHorizontal: 18,
+
+      paddingTop: 20,
+
+      paddingBottom: 26,
+    },
+
+    /* =====================================================
+       INTRO
+    ====================================================== */
+
+    introSection: {
+      flexDirection: 'row',
+
+      alignItems:
+        'flex-start',
+
+      marginBottom: 20,
+    },
+
+    introIcon: {
+      width: 48,
+      height: 48,
+
+      borderRadius: 16,
+
+      backgroundColor:
+        COLORS.tealSoft,
+
+      alignItems: 'center',
+
+      justifyContent:
+        'center',
+
+      marginRight: 12,
+    },
+
+    introContent: {
+      flex: 1,
+    },
+
+    introEyebrow: {
+      color:
+        COLORS.teal,
+
+      fontSize: 8,
+
+      fontWeight: '800',
+
+      letterSpacing: 1,
+    },
+
+    introTitle: {
+      color:
+        COLORS.text,
+
+      fontSize: 25,
+
+      lineHeight: 31,
+
+      fontWeight: '800',
+
+      letterSpacing: -0.5,
+
+      marginTop: 3,
+    },
+
+    introDescription: {
+      color:
+        COLORS.muted,
+
+      fontSize: 10,
+
+      lineHeight: 16,
+
+      marginTop: 5,
+
+      maxWidth: 295,
+    },
+
+    /* =====================================================
+       SUMMARY
+    ====================================================== */
+
+    summaryRow: {
+      flexDirection: 'row',
+
+      gap: 9,
+
+      marginBottom: 23,
+    },
+
+    summaryCard: {
+      flex: 1,
+
+      minHeight: 112,
+
+      backgroundColor:
+        COLORS.surface,
+
+      borderWidth: 1,
+
+      borderColor:
+        COLORS.border,
+
+      borderRadius: 18,
+
+      padding: 12,
+
+      shadowColor:
+        '#0F172A',
+
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+
+      shadowOpacity: 0.035,
+
+      shadowRadius: 7,
+
+      elevation: 1,
+    },
+
+    summaryIcon: {
+      width: 34,
+      height: 34,
+
+      borderRadius: 11,
+
+      alignItems: 'center',
+
+      justifyContent:
+        'center',
+
+      marginBottom: 10,
+    },
+
+    summaryValue: {
+      color:
+        COLORS.text,
+
+      fontSize: 20,
+
+      fontWeight: '800',
+    },
+
+    summaryLabel: {
+      color:
+        COLORS.muted,
+
+      fontSize: 8,
+
+      lineHeight: 12,
+
+      fontWeight: '600',
+
+      marginTop: 2,
+    },
+
+    /* =====================================================
+       FILTER
+    ====================================================== */
+
+    filterSection: {
+      marginBottom: 15,
+    },
+
+    filterHeadingRow: {
+      flexDirection: 'row',
+
+      alignItems: 'center',
+
+      justifyContent:
+        'space-between',
+
+      marginBottom: 10,
+    },
+
+    filterHeading: {
+      color:
+        COLORS.text,
+
+      fontSize: 17,
+
+      fontWeight: '800',
+    },
+
+    filterCount: {
+      color:
+        COLORS.muted,
+
+      fontSize: 9,
+
+      fontWeight: '600',
+    },
+
+    filterList: {
+      gap: 7,
+
+      paddingRight: 10,
+    },
+
+    filterChip: {
+      minHeight: 36,
+
+      paddingHorizontal: 13,
+
+      borderRadius: 12,
+
+      borderWidth: 1,
+
+      borderColor:
+        COLORS.border,
+
+      backgroundColor:
+        COLORS.surface,
+
+      alignItems: 'center',
+
+      justifyContent:
+        'center',
+    },
+
+    filterChipActive: {
+      backgroundColor:
+        COLORS.navy,
+
+      borderColor:
+        COLORS.navy,
+    },
+
+    filterChipText: {
+      color:
+        COLORS.muted,
+
+      fontSize: 9,
+
+      fontWeight: '700',
+    },
+
+    filterChipTextActive: {
+      color:
+        '#FFFFFF',
+    },
+
+    /* =====================================================
+       RECORD CARD
+    ====================================================== */
+
+    recordsList: {
+      gap: 10,
+    },
+
+    recordCard: {
+      minHeight: 124,
+
+      flexDirection: 'row',
+
+      alignItems: 'center',
+
+      backgroundColor:
+        COLORS.surface,
+
+      borderWidth: 1,
+
+      borderColor:
+        COLORS.border,
+
+      borderRadius: 20,
+
+      padding: 14,
+
+      shadowColor:
+        '#0F172A',
+
+      shadowOffset: {
+        width: 0,
+        height: 3,
+      },
+
+      shadowOpacity: 0.04,
+
+      shadowRadius: 9,
+
+      elevation: 1,
+    },
+
+    recordIcon: {
+      width: 48,
+      height: 48,
+
+      borderRadius: 15,
+
+      alignItems: 'center',
+
+      justifyContent:
+        'center',
+
+      marginRight: 12,
+
+      alignSelf:
+        'flex-start',
+    },
+
+    recordContent: {
+      flex: 1,
+
+      minWidth: 0,
+    },
+
+    recordTopRow: {
+      flexDirection: 'row',
+
+      flexWrap: 'wrap',
+
+      alignItems: 'center',
+
+      gap: 6,
+
+      marginBottom: 7,
+    },
+
+    typeBadge: {
+      alignSelf:
+        'flex-start',
+
+      borderRadius: 99,
+
+      paddingHorizontal: 8,
+
+      paddingVertical: 4,
+    },
+
+    typeBadgeText: {
+      fontSize: 7,
+
+      fontWeight: '800',
+
+      textTransform:
+        'uppercase',
+
+      letterSpacing: 0.5,
+    },
+
+    confidentialBadge: {
+      flexDirection: 'row',
+
+      alignItems: 'center',
+
+      gap: 3,
+
+      backgroundColor:
+        COLORS.amberSoft,
+
+      borderRadius: 99,
+
+      paddingHorizontal: 7,
+
+      paddingVertical: 4,
+    },
+
+    confidentialBadgeText: {
+      color:
+        COLORS.amber,
+
+      fontSize: 7,
+
+      fontWeight: '800',
+    },
+
+    recordTitle: {
+      color:
+        COLORS.text,
+
+      fontSize: 13,
+
+      lineHeight: 18,
+
+      fontWeight: '800',
+
+      marginBottom: 6,
+    },
+
+    recordMetaRow: {
+      flexDirection: 'row',
+
+      alignItems: 'center',
+
+      gap: 5,
+
+      marginTop: 3,
+    },
+
+    recordMeta: {
+      flex: 1,
+
+      color:
+        COLORS.muted,
+
+      fontSize: 9,
+
+      lineHeight: 13,
+
+      fontWeight: '600',
+    },
+
+    followUpInline: {
+      alignSelf:
+        'flex-start',
+
+      flexDirection: 'row',
+
+      alignItems: 'center',
+
+      gap: 4,
+
+      backgroundColor:
+        COLORS.blueSoft,
+
+      borderRadius: 99,
+
+      paddingHorizontal: 7,
+
+      paddingVertical: 4,
+
+      marginTop: 7,
+    },
+
+    followUpInlineText: {
+      color:
+        COLORS.blue,
+
+      fontSize: 7,
+
+      fontWeight: '800',
+    },
+
+    chevronShell: {
+      width: 30,
+      height: 30,
+
+      borderRadius: 10,
+
+      alignItems: 'center',
+
+      justifyContent:
+        'center',
+
+      backgroundColor:
+        COLORS.background,
+
+      marginLeft: 7,
+    },
+
+    /* =====================================================
+       EMPTY
+    ====================================================== */
+
+    emptyCard: {
+      alignItems: 'center',
+
+      backgroundColor:
+        COLORS.surface,
+
+      borderWidth: 1,
+
+      borderColor:
+        COLORS.border,
+
+      borderRadius: 22,
+
+      paddingHorizontal: 26,
+
+      paddingVertical: 35,
+    },
+
+    emptyIcon: {
+      width: 58,
+      height: 58,
+
+      borderRadius: 18,
+
+      backgroundColor:
+        COLORS.tealSoft,
+
+      alignItems: 'center',
+
+      justifyContent:
+        'center',
+
+      marginBottom: 14,
+    },
+
+    emptyTitle: {
+      color:
+        COLORS.text,
+
+      fontSize: 15,
+
+      fontWeight: '800',
+
+      textAlign: 'center',
+    },
+
+    emptyText: {
+      color:
+        COLORS.muted,
+
+      fontSize: 10,
+
+      lineHeight: 16,
+
+      textAlign: 'center',
+
+      maxWidth: 275,
+
+      marginTop: 6,
+    },
+
+    clearFilterButton: {
+      backgroundColor:
+        COLORS.tealSoft,
+
+      borderRadius: 12,
+
+      paddingHorizontal: 13,
+
+      paddingVertical: 9,
+
+      marginTop: 15,
+    },
+
+    clearFilterText: {
+      color:
+        COLORS.tealDark,
+
+      fontSize: 9,
+
+      fontWeight: '800',
+    },
+
+    /* =====================================================
+       INLINE WARNING
+    ====================================================== */
+
+    inlineWarning: {
+      flexDirection: 'row',
+
+      alignItems:
+        'flex-start',
+
+      gap: 7,
+
+      backgroundColor:
+        COLORS.amberSoft,
+
+      borderRadius: 13,
+
+      padding: 11,
+
+      marginBottom: 12,
+    },
+
+    inlineWarningText: {
+      flex: 1,
+
+      color:
+        '#815719',
+
+      fontSize: 9,
+
+      lineHeight: 14,
+
+      fontWeight: '600',
+    },
+
+    /* =====================================================
+       LOADING / ERROR
+    ====================================================== */
+
+    loadingScreen: {
+      flex: 1,
+
+      backgroundColor:
+        COLORS.background,
+
+      alignItems: 'center',
+
+      justifyContent:
+        'center',
+
+      paddingHorizontal: 28,
+    },
+
+    loadingIcon: {
+      width: 58,
+      height: 58,
+
+      borderRadius: 18,
+
+      backgroundColor:
+        COLORS.tealSoft,
+
+      alignItems: 'center',
+
+      justifyContent:
+        'center',
+
+      marginBottom: 16,
+    },
+
+    loadingTitle: {
+      color:
+        COLORS.text,
+
+      fontSize: 16,
+
+      fontWeight: '800',
+
+      marginTop: 13,
+    },
+
+    loadingText: {
+      color:
+        COLORS.muted,
+
+      fontSize: 10,
+
+      textAlign: 'center',
+
+      marginTop: 5,
+    },
+
+    errorScreen: {
+      flex: 1,
+
+      backgroundColor:
+        COLORS.background,
+
+      alignItems: 'center',
+
+      justifyContent:
+        'center',
+
+      paddingHorizontal: 28,
+    },
+
+    errorIcon: {
+      width: 58,
+      height: 58,
+
+      borderRadius: 18,
+
+      backgroundColor:
+        COLORS.dangerSoft,
+
+      alignItems: 'center',
+
+      justifyContent:
+        'center',
+
+      marginBottom: 15,
+    },
+
+    errorTitle: {
+      color:
+        COLORS.text,
+
+      fontSize: 16,
+
+      fontWeight: '800',
+
+      textAlign: 'center',
+    },
+
+    errorText: {
+      color:
+        COLORS.muted,
+
+      fontSize: 10,
+
+      lineHeight: 16,
+
+      textAlign: 'center',
+
+      maxWidth: 280,
+
+      marginTop: 6,
+    },
+
+    retryButton: {
+      flexDirection: 'row',
+
+      alignItems: 'center',
+
+      gap: 6,
+
+      minHeight: 42,
+
+      backgroundColor:
+        COLORS.teal,
+
+      borderRadius: 13,
+
+      paddingHorizontal: 15,
+
+      marginTop: 17,
+    },
+
+    retryText: {
+      color:
+        '#FFFFFF',
+
+      fontSize: 10,
+
+      fontWeight: '800',
+    },
+
+    /* =====================================================
+       MODAL TOP BAR
+    ====================================================== */
+
+    modalSafeArea: {
+      flex: 1,
+
+      backgroundColor:
+        COLORS.background,
+    },
+
+    modalTopBar: {
+      minHeight: 70,
+
+      flexDirection: 'row',
+
+      alignItems: 'center',
+
+      justifyContent:
+        'space-between',
+
+      paddingHorizontal: 18,
+
+      backgroundColor:
+        COLORS.surface,
+
+      borderBottomWidth: 1,
+
+      borderBottomColor:
+        COLORS.border,
+    },
+
+    modalBrandArea: {
+      flexDirection: 'row',
+
+      alignItems: 'center',
+    },
+
+    modalSmallIcon: {
+      width: 39,
+      height: 39,
+
+      borderRadius: 13,
+
+      alignItems: 'center',
+
+      justifyContent:
+        'center',
+
+      marginRight: 10,
+    },
+
+    modalBrandEyebrow: {
+      color:
+        COLORS.teal,
+
+      fontSize: 7,
+
+      fontWeight: '800',
+
+      letterSpacing: 0.9,
+    },
+
+    modalBrandTitle: {
+      color:
+        COLORS.text,
+
+      fontSize: 14,
+
+      fontWeight: '800',
+
+      marginTop: 2,
+    },
+
+    modalCloseIcon: {
+      width: 39,
+      height: 39,
+
+      borderRadius: 13,
+
+      alignItems: 'center',
+
+      justifyContent:
+        'center',
+
+      backgroundColor:
+        COLORS.background,
+
+      borderWidth: 1,
+
+      borderColor:
+        COLORS.border,
+    },
+
+    modalScrollView: {
+      flex: 1,
+    },
+
+    modalScroll: {
+      paddingBottom: 25,
+    },
+
+    /* =====================================================
+       MODAL HERO
+    ====================================================== */
+
+    modalHero: {
+      position: 'relative',
+
+      overflow: 'hidden',
+
+      backgroundColor:
+        COLORS.navy,
+
+      paddingHorizontal: 20,
+
+      paddingTop: 25,
+
+      paddingBottom: 25,
+    },
+
+    modalHeroCircleLarge: {
+      position: 'absolute',
+
+      width: 180,
+      height: 180,
+
+      borderRadius: 90,
+
+      right: -70,
+      top: -95,
+
+      backgroundColor:
+        'rgba(15,139,131,0.32)',
+    },
+
+    modalHeroCircleSmall: {
+      position: 'absolute',
+
+      width: 75,
+      height: 75,
+
+      borderRadius: 38,
+
+      right: 35,
+      bottom: -40,
+
+      backgroundColor:
+        'rgba(255,255,255,0.05)',
+    },
+
+    modalTypeIcon: {
+      width: 46,
+      height: 46,
+
+      borderRadius: 15,
+
+      alignItems: 'center',
+
+      justifyContent:
+        'center',
+
+      marginBottom: 12,
+    },
+
+    modalTypeBadge: {
+      alignSelf:
+        'flex-start',
+
+      borderRadius: 99,
+
+      paddingHorizontal: 9,
+
+      paddingVertical: 5,
+
+      marginBottom: 9,
+    },
+
+    modalTypeBadgeText: {
+      fontSize: 8,
+
+      fontWeight: '800',
+
+      textTransform:
+        'uppercase',
+
+      letterSpacing: 0.6,
+    },
+
+    modalTitle: {
+      color:
+        '#FFFFFF',
+
+      fontSize: 22,
+
+      lineHeight: 28,
+
+      fontWeight: '800',
+
+      maxWidth: '90%',
+    },
+
+    modalDateRow: {
+      flexDirection: 'row',
+
+      alignItems: 'center',
+
+      gap: 6,
+
+      marginTop: 12,
+    },
+
+    modalDate: {
+      color:
+        '#C8D8E3',
+
+      fontSize: 10,
+
+      fontWeight: '600',
+    },
+
+    modalDoctorRow: {
+      flexDirection: 'row',
+
+      alignItems:
+        'flex-start',
+
+      gap: 6,
+
+      marginTop: 7,
+    },
+
+    modalDoctor: {
+      flex: 1,
+
+      color:
+        '#C8D8E3',
+
+      fontSize: 10,
+
+      lineHeight: 15,
+
+      fontWeight: '600',
+    },
+
+    /* =====================================================
+       CONFIDENTIAL MODAL
+    ====================================================== */
+
+    confidentialBanner: {
+      flexDirection: 'row',
+
+      alignItems:
+        'flex-start',
+
+      backgroundColor:
+        COLORS.amberSoft,
+
+      borderWidth: 1,
+
+      borderColor:
+        '#F1E0B1',
+
+      borderRadius: 16,
+
+      padding: 13,
+
+      marginHorizontal: 18,
+
+      marginTop: 16,
+    },
+
+    confidentialBannerIcon: {
+      width: 36,
+      height: 36,
+
+      borderRadius: 12,
+
+      backgroundColor:
+        COLORS.surface,
+
+      alignItems: 'center',
+
+      justifyContent:
+        'center',
+
+      marginRight: 10,
+    },
+
+    confidentialBannerContent: {
+      flex: 1,
+    },
+
+    confidentialBannerTitle: {
+      color:
+        '#815719',
+
+      fontSize: 10,
+
+      fontWeight: '800',
+    },
+
+    confidentialBannerText: {
+      color:
+        '#956C2B',
+
+      fontSize: 9,
+
+      lineHeight: 14,
+
+      marginTop: 2,
+    },
+
+    /* =====================================================
+       MODAL DETAILS
+    ====================================================== */
+
+    modalBody: {
+      paddingHorizontal: 18,
+
+      paddingTop: 21,
+    },
+
+    detailHeadingRow: {
+      flexDirection: 'row',
+
+      alignItems: 'center',
+
+      gap: 7,
+
+      marginBottom: 16,
+    },
+
+    detailHeading: {
+      color:
+        COLORS.text,
+
+      fontSize: 15,
+
+      fontWeight: '800',
+    },
+
+    detailSection: {
+      marginBottom: 17,
+    },
+
+    detailLabel: {
+      color:
+        COLORS.subtle,
+
+      fontSize: 8,
+
+      fontWeight: '800',
+
+      letterSpacing: 0.7,
+
+      textTransform:
+        'uppercase',
+
+      marginBottom: 7,
+    },
+
+    detailValueCard: {
+      backgroundColor:
+        COLORS.surface,
+
+      borderWidth: 1,
+
+      borderColor:
+        COLORS.border,
+
+      borderRadius: 16,
+
+      padding: 14,
+    },
+
+    detailValue: {
+      color:
+        COLORS.textSoft,
+
+      fontSize: 12,
+
+      lineHeight: 19,
+    },
+
+    /* =====================================================
+       FOLLOW-UP
+    ====================================================== */
+
+    followUpBanner: {
+      flexDirection: 'row',
+
+      alignItems: 'center',
+
+      backgroundColor:
+        COLORS.blueSoft,
+
+      borderWidth: 1,
+
+      borderColor:
+        '#D5E7F5',
+
+      borderRadius: 16,
+
+      padding: 13,
+
+      marginTop: 3,
+    },
+
+    followUpIcon: {
+      width: 38,
+      height: 38,
+
+      borderRadius: 12,
+
+      backgroundColor:
+        COLORS.surface,
+
+      alignItems: 'center',
+
+      justifyContent:
+        'center',
+
+      marginRight: 10,
+    },
+
+    followUpContent: {
+      flex: 1,
+    },
+
+    followUpTitle: {
+      color:
+        COLORS.blue,
+
+      fontSize: 10,
+
+      fontWeight: '800',
+    },
+
+    followUpText: {
+      color:
+        '#567A99',
+
+      fontSize: 9,
+
+      lineHeight: 14,
+
+      marginTop: 2,
+    },
+
+    /* =====================================================
+       PRIVACY
+    ====================================================== */
+
+    privacyNote: {
+      flexDirection: 'row',
+
+      alignItems: 'center',
+
+      justifyContent:
+        'center',
+
+      gap: 6,
+
+      marginHorizontal: 25,
+
+      marginTop: 19,
+    },
+
+    privacyNoteText: {
+      flexShrink: 1,
+
+      color:
+        COLORS.subtle,
+
+      fontSize: 8,
+
+      lineHeight: 13,
+
+      textAlign: 'center',
+    },
+
+    modalFooter: {
+      backgroundColor:
+        COLORS.surface,
+
+      borderTopWidth: 1,
+
+      borderTopColor:
+        COLORS.border,
+
+      paddingHorizontal: 16,
+
+      paddingVertical: 12,
+    },
+
+    closeButton: {
+      minHeight: 49,
+
+      borderRadius: 15,
+
+      alignItems: 'center',
+
+      justifyContent:
+        'center',
+
+      backgroundColor:
+        COLORS.teal,
+    },
+
+    closeButtonText: {
+      color:
+        '#FFFFFF',
+
+      fontSize: 12,
+
+      fontWeight: '800',
+    },
+
+    /* =====================================================
+       FOOTER
+    ====================================================== */
+
+    securityFooter: {
+      flexDirection: 'row',
+
+      alignItems: 'center',
+
+      justifyContent:
+        'center',
+
+      gap: 6,
+
+      paddingHorizontal: 18,
+
+      marginTop: 19,
+    },
+
+    securityFooterText: {
+      flexShrink: 1,
+
+      color:
+        COLORS.subtle,
+
+      fontSize: 8,
+
+      lineHeight: 13,
+
+      textAlign: 'center',
+    },
+
+    bottomSpace: {
+      height: 10,
+    },
+  });
 
 export default MedicalRecordsScreen;
