@@ -503,663 +503,663 @@ const AppointmentQueuePage = () => {
     };
 
   /* =========================================================
+     DERIVED QUEUE SUMMARY
+  ========================================================= */
+
+  const scheduledCount =
+    appointments.filter(
+      (appointment) =>
+        appointment.status ===
+        'scheduled'
+    ).length;
+
+  const waitingCount =
+    appointments.filter(
+      (appointment) =>
+        appointment.status ===
+        'confirmed'
+    ).length;
+
+  const inProgressCount =
+    appointments.filter(
+      (appointment) =>
+        appointment.status ===
+        'in_progress'
+    ).length;
+
+  const completedCount =
+    appointments.filter(
+      (appointment) =>
+        appointment.status ===
+        'completed'
+    ).length;
+
+  /* =========================================================
      LOADING STATE
   ========================================================= */
 
   if (loading) {
     return (
-      <div className="min-h-[55vh] flex flex-col items-center justify-center gap-3">
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 bg-[#F6F8FA]">
 
         <Spinner
           size="lg"
         />
 
-        <p className="text-sm font-medium text-muted-foreground">
-          Loading today&apos;s queue...
-        </p>
+        <div className="text-center">
+
+          <p className="text-sm font-bold text-foreground">
+            Loading today&apos;s patient queue
+          </p>
+
+          <p className="text-xs text-muted-foreground mt-1">
+            Preparing the latest appointment and consultation status.
+          </p>
+
+        </div>
 
       </div>
     );
   }
 
   return (
-    <div className="space-y-7 pb-10">
+    <div className="min-h-screen bg-[#F6F8FA]">
 
-      {/* =====================================================
-          PAGE HEADER
-      ====================================================== */}
-      <PageHeader
-        eyebrow="Doctor Portal"
-        icon={ClipboardList}
-        title="Today's Appointment Queue"
-        description="Review today’s patient flow and move each visit through the consultation workflow."
-        actions={
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 space-y-6 pb-10">
 
-            <button
-              type="button"
-              onClick={() =>
-                fetchAppointments({
-                  silent: true,
-                })
-              }
-              disabled={
-                refreshing
-              }
-              className="
-                inline-flex
-                items-center
-                justify-center
-                gap-2
-                w-full
-                sm:w-auto
-                px-4
-                py-2.5
-                rounded-xl
-                bg-white/10
-                border
-                border-white/20
-                text-white
-                text-sm
-                font-semibold
-                backdrop-blur-sm
-                hover:bg-white/15
-                hover:border-white/30
-                transition-all
-                focus:outline-none
-                focus:ring-2
-                focus:ring-white/30
-                disabled:opacity-50
-                disabled:cursor-not-allowed
-              "
-            >
-              <RefreshCw
-                size={16}
-                className={
+        {/* =====================================================
+            PAGE HEADER
+        ====================================================== */}
+        <PageHeader
+          eyebrow="Doctor Portal"
+          icon={ClipboardList}
+          title="Today's Appointment Queue"
+          description="Move each patient smoothly from waiting to consultation, completion, or clinical review."
+          actions={
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+
+              <button
+                type="button"
+                onClick={() =>
+                  fetchAppointments({
+                    silent: true,
+                  })
+                }
+                disabled={
                   refreshing
-                    ? 'animate-spin'
-                    : ''
                 }
-              />
+                className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white text-sm font-semibold backdrop-blur-sm hover:bg-white/15 hover:border-white/30 transition-all focus:outline-none focus:ring-2 focus:ring-white/30 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <RefreshCw
+                  size={16}
+                  className={
+                    refreshing
+                      ? 'animate-spin'
+                      : ''
+                  }
+                />
 
-              {refreshing
-                ? 'Refreshing...'
-                : 'Refresh'}
-            </button>
+                {refreshing
+                  ? 'Refreshing...'
+                  : 'Refresh Queue'}
+              </button>
 
-            <button
-              type="button"
-              onClick={() =>
-                navigate(
-                  '/doctor/dashboard'
-                )
-              }
-              className="
-                inline-flex
-                items-center
-                justify-center
-                gap-2
-                w-full
-                sm:w-auto
-                px-4
-                py-2.5
-                rounded-xl
-                bg-white/10
-                border
-                border-white/20
-                text-white
-                text-sm
-                font-semibold
-                backdrop-blur-sm
-                hover:bg-white/15
-                hover:border-white/30
-                transition-all
-                focus:outline-none
-                focus:ring-2
-                focus:ring-white/30
-              "
-            >
-              <LayoutDashboard
-                size={16}
-              />
-
-              Dashboard
-            </button>
-
-          </div>
-        }
-        meta={
-          <div className="flex items-center gap-5">
-
-            <div>
-
-              <p className="text-[10px] uppercase tracking-[0.12em] font-bold text-primary">
-                Today
-              </p>
-
-              <p className="text-xl font-extrabold text-foreground mt-0.5">
-                {
-                  appointments.length
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(
+                    '/doctor/dashboard'
+                  )
                 }
-              </p>
+                className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white text-sm font-semibold backdrop-blur-sm hover:bg-white/15 hover:border-white/30 transition-all focus:outline-none focus:ring-2 focus:ring-white/30"
+              >
+                <LayoutDashboard
+                  size={16}
+                />
 
-              <p className="text-xs text-muted-foreground mt-0.5">
-                appointment
-                {
-                  appointments.length ===
-                  1
-                    ? ''
-                    : 's'
-                }
-              </p>
+                Dashboard
+              </button>
 
             </div>
+          }
+          meta={
+            <div className="flex items-center gap-5">
 
-            <div className="w-px h-10 bg-border" />
+              <div>
 
-            <div>
+                <p className="text-[10px] uppercase tracking-[0.14em] font-bold text-primary">
+                  Today&apos;s Queue
+                </p>
 
-              <p className="text-[10px] uppercase tracking-[0.12em] font-bold text-muted-foreground">
-                Auto Refresh
-              </p>
+                <p className="text-2xl font-extrabold text-foreground mt-0.5 leading-none">
+                  {appointments.length}
+                </p>
 
-              <p className="text-sm font-bold text-foreground mt-0.5">
-                Every 20 sec
-              </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  total appointments
+                </p>
+
+              </div>
+
+              <div className="w-px h-11 bg-border" />
+
+              <div>
+
+                <p className="text-[10px] uppercase tracking-[0.14em] font-bold text-muted-foreground">
+                  Live Updates
+                </p>
+
+                <p className="text-sm font-bold text-foreground mt-1">
+                  Every 20 sec
+                </p>
+
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Automatic refresh
+                </p>
+
+              </div>
 
             </div>
-
-          </div>
-        }
-      />
-
-      {/* =====================================================
-          QUEUE ERROR
-      ====================================================== */}
-      {queueError && (
-
-        <Alert
-          type="error"
-          message={
-            queueError
           }
         />
 
-      )}
+        {/* =====================================================
+            QUEUE SUMMARY
+        ====================================================== */}
+        <section className="bg-white border border-slate-200/80 rounded-2xl shadow-[0_10px_30px_rgba(15,23,42,0.045)] overflow-hidden">
 
-      {/* =====================================================
-          APPOINTMENT LIST
-      ====================================================== */}
-      {appointments.length ===
-      0 ? (
+          <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-slate-200/80">
 
-        <Card>
+            <div className="p-4 sm:p-5">
+              <p className="text-[10px] uppercase tracking-[0.14em] font-bold text-slate-400">
+                Scheduled
+              </p>
+              <div className="flex items-end gap-2 mt-2">
+                <p className="text-2xl font-extrabold text-slate-900">
+                  {scheduledCount}
+                </p>
+                <span className="mb-1.5 w-2 h-2 rounded-full bg-blue-400" />
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                Upcoming visits
+              </p>
+            </div>
 
-          <div className="flex flex-col items-center justify-center text-center py-12 px-4">
+            <div className="p-4 sm:p-5">
+              <p className="text-[10px] uppercase tracking-[0.14em] font-bold text-slate-400">
+                Waiting
+              </p>
+              <div className="flex items-end gap-2 mt-2">
+                <p className="text-2xl font-extrabold text-slate-900">
+                  {waitingCount}
+                </p>
+                <span className="mb-1.5 w-2 h-2 rounded-full bg-amber-400" />
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                Ready to be seen
+              </p>
+            </div>
 
-            <div className="w-16 h-16 rounded-2xl bg-success/10 text-success flex items-center justify-center mb-4">
+            <div className="p-4 sm:p-5">
+              <p className="text-[10px] uppercase tracking-[0.14em] font-bold text-slate-400">
+                In Progress
+              </p>
+              <div className="flex items-end gap-2 mt-2">
+                <p className="text-2xl font-extrabold text-primary">
+                  {inProgressCount}
+                </p>
+                <span className="mb-1.5 w-2 h-2 rounded-full bg-primary" />
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                Active consultations
+              </p>
+            </div>
 
-              <CheckCircle2
-                size={28}
-              />
+            <div className="p-4 sm:p-5">
+              <p className="text-[10px] uppercase tracking-[0.14em] font-bold text-slate-400">
+                Completed
+              </p>
+              <div className="flex items-end gap-2 mt-2">
+                <p className="text-2xl font-extrabold text-emerald-600">
+                  {completedCount}
+                </p>
+                <span className="mb-1.5 w-2 h-2 rounded-full bg-emerald-500" />
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                Finished today
+              </p>
+            </div>
+
+          </div>
+
+        </section>
+
+        {/* =====================================================
+            QUEUE ERROR
+        ====================================================== */}
+        {queueError && (
+
+          <Alert
+            type="error"
+            message={
+              queueError
+            }
+          />
+
+        )}
+
+        {/* =====================================================
+            QUEUE LIST
+        ====================================================== */}
+        <section>
+
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-4">
+
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.16em] font-bold text-primary">
+                Patient Flow
+              </p>
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900 mt-1">
+                Today&apos;s Visits
+              </h2>
+              <p className="text-sm text-slate-500 mt-1">
+                Patient identity, visit time, current status, and the next available action in one place.
+              </p>
+            </div>
+
+            {refreshing && (
+              <div className="inline-flex items-center gap-2 text-xs font-semibold text-primary">
+                <RefreshCw size={13} className="animate-spin" />
+                Updating queue
+              </div>
+            )}
+
+          </div>
+
+          {appointments.length ===
+          0 ? (
+
+            <Card className="border-slate-200/80 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
+
+              <div className="flex flex-col items-center justify-center text-center py-14 px-4">
+
+                <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
+                  <CheckCircle2 size={29} />
+                </div>
+
+                <h2 className="text-lg font-bold text-slate-900">
+                  You&apos;re all caught up
+                </h2>
+
+                <p className="text-sm text-slate-500 mt-2 max-w-md leading-relaxed">
+                  There are no patients in today&apos;s appointment queue right now.
+                </p>
+
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="mt-5"
+                  onClick={() =>
+                    navigate(
+                      '/doctor/dashboard'
+                    )
+                  }
+                >
+                  Return to Dashboard
+                </Button>
+
+              </div>
+
+            </Card>
+
+          ) : (
+
+            <div className="space-y-3">
+
+              {appointments.map(
+                (appt) => {
+
+                  const isUpdating =
+                    updatingId ===
+                    appt.id;
+
+                  const isScheduled =
+                    appt.status ===
+                    'scheduled';
+
+                  const isWaiting =
+                    appt.status ===
+                    'confirmed';
+
+                  const canStartConsultation =
+                    isScheduled ||
+                    isWaiting;
+
+                  const isInProgress =
+                    appt.status ===
+                    'in_progress';
+
+                  const isCompleted =
+                    appt.status ===
+                    'completed';
+
+                  const isCancelled =
+                    appt.status ===
+                    'cancelled';
+
+                  const accentClass =
+                    isInProgress
+                      ? 'bg-primary'
+                      : isCompleted
+                        ? 'bg-emerald-500'
+                        : isCancelled
+                          ? 'bg-rose-400'
+                          : isWaiting
+                            ? 'bg-amber-400'
+                            : 'bg-blue-400';
+
+                  const workflowText =
+                    isInProgress
+                      ? 'Consultation is currently in progress. Resume the workspace to continue clinical documentation.'
+                      : isCompleted
+                        ? 'Consultation completed. The visit remains available for clinical review.'
+                        : isCancelled
+                          ? 'Appointment cancelled. It remains visible for today’s clinical context.'
+                          : isWaiting
+                            ? 'Patient is checked in and ready to move into the consultation workflow.'
+                            : 'Patient is scheduled and ready to begin when appropriate.';
+
+                  return (
+                    <article
+                      key={appt.id}
+                      className={`relative overflow-hidden rounded-2xl border bg-white shadow-[0_8px_28px_rgba(15,23,42,0.045)] transition-all hover:shadow-[0_12px_34px_rgba(15,23,42,0.07)] ${
+                        isInProgress
+                          ? 'border-primary/30 ring-1 ring-primary/5'
+                          : 'border-slate-200/80'
+                      }`}
+                    >
+
+                      <div className={`absolute inset-y-0 left-0 w-1 ${accentClass}`} />
+
+                      <div className="p-4 sm:p-5 lg:p-6 pl-5 sm:pl-6 lg:pl-7">
+
+                        <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-5">
+
+                          <div className="flex items-start sm:items-center gap-4 min-w-0 flex-1">
+
+                            <div className="w-[74px] shrink-0 text-center">
+                              <div className="rounded-xl border border-slate-200 bg-slate-50 px-2 py-2.5">
+                                <Clock size={13} className="text-primary mx-auto" />
+                                <p className="text-sm font-extrabold text-slate-900 mt-1">
+                                  {formatAppointmentTime(
+                                    appt.scheduled_at
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+
+                            {appt.patient_photo_url ? (
+                              <img
+                                src={appt.patient_photo_url}
+                                alt={appt.patient_name || 'Patient'}
+                                className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border-2 border-white shadow-md ring-1 ring-slate-200 shrink-0"
+                              />
+                            ) : (
+                              <div
+                                className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shrink-0 font-bold text-sm ring-4 ring-white shadow-sm ${
+                                  isInProgress
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'bg-blue-50 text-primary'
+                                }`}
+                              >
+                                {getInitials(
+                                  appt.patient_name
+                                )}
+                              </div>
+                            )}
+
+                            <div className="min-w-0 flex-1">
+
+                              <div className="flex flex-wrap items-center gap-2">
+                                <h3 className="text-base sm:text-lg font-extrabold text-slate-900 truncate">
+                                  {appt.patient_name}
+                                </h3>
+                                <Badge status={appt.status} />
+                              </div>
+
+                              <div className="flex flex-wrap items-center gap-2 mt-2">
+                                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 bg-slate-100 rounded-full px-2.5 py-1">
+                                  <UserRound size={11} />
+                                  {appt.type?.toUpperCase() || 'VISIT'}
+                                </span>
+
+                                {isInProgress && (
+                                  <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-primary bg-primary/8 border border-primary/15 rounded-full px-2.5 py-1">
+                                    <ClipboardCheck size={11} />
+                                    Active consultation
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="flex items-start gap-2 mt-3 max-w-2xl">
+                                {isCompleted ? (
+                                  <CheckCircle2 size={14} className="text-emerald-600 shrink-0 mt-0.5" />
+                                ) : isCancelled ? (
+                                  <XCircle size={14} className="text-slate-400 shrink-0 mt-0.5" />
+                                ) : isInProgress ? (
+                                  <ClipboardCheck size={14} className="text-primary shrink-0 mt-0.5" />
+                                ) : (
+                                  <Clock size={14} className="text-slate-400 shrink-0 mt-0.5" />
+                                )}
+
+                                <p className={`text-xs leading-relaxed ${
+                                  isCompleted
+                                    ? 'text-emerald-700'
+                                    : isInProgress
+                                      ? 'text-primary'
+                                      : 'text-slate-500'
+                                }`}>
+                                  {workflowText}
+                                </p>
+                              </div>
+
+                            </div>
+
+                          </div>
+
+                          <div className="flex flex-col sm:flex-row xl:justify-end gap-2 w-full xl:w-auto shrink-0">
+
+                            {canStartConsultation && (
+                              <Button
+                                type="button"
+                                variant="primary"
+                                className="w-full sm:w-auto"
+                                onClick={() =>
+                                  startConsultation(
+                                    appt.id
+                                  )
+                                }
+                                disabled={isUpdating}
+                                loading={isUpdating}
+                              >
+                                <Play size={15} className="mr-2" />
+                                {isUpdating
+                                  ? 'Starting...'
+                                  : 'Start Consultation'}
+                              </Button>
+                            )}
+
+                            {isInProgress && (
+                              <Button
+                                type="button"
+                                variant="primary"
+                                className="w-full sm:w-auto"
+                                onClick={() =>
+                                  openConsultation(
+                                    appt.id
+                                  )
+                                }
+                                disabled={isUpdating}
+                              >
+                                <ClipboardCheck size={15} className="mr-2" />
+                                Resume Consultation
+                              </Button>
+                            )}
+
+                            {isCompleted && (
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                className="w-full sm:w-auto"
+                                onClick={() =>
+                                  openConsultation(
+                                    appt.id
+                                  )
+                                }
+                                disabled={isUpdating}
+                              >
+                                <History size={15} className="mr-2" />
+                                View Consultation
+                              </Button>
+                            )}
+
+                            {(isScheduled ||
+                              isWaiting ||
+                              isInProgress) && (
+                              <Button
+                                type="button"
+                                variant="danger"
+                                className="w-full sm:w-auto"
+                                onClick={() =>
+                                  setAppointmentToCancel(
+                                    appt
+                                  )
+                                }
+                                disabled={isUpdating}
+                              >
+                                <XCircle size={15} className="mr-2" />
+                                {isUpdating
+                                  ? 'Updating...'
+                                  : 'Cancel'}
+                              </Button>
+                            )}
+
+                          </div>
+
+                        </div>
+
+                      </div>
+
+                    </article>
+                  );
+                }
+              )}
 
             </div>
 
-            <h2 className="text-lg font-bold text-foreground">
-              You&apos;re all caught up
-            </h2>
-
-            <p className="text-sm text-muted-foreground mt-2 max-w-md leading-relaxed">
-              No patients are in today&apos;s queue right now.
-            </p>
-
-            <Button
-              type="button"
-              variant="secondary"
-              className="mt-5"
-              onClick={() =>
-                navigate(
-                  '/doctor/dashboard'
-                )
-              }
-            >
-              Return to Dashboard
-            </Button>
-
-          </div>
-
-        </Card>
-
-      ) : (
-
-        <div className="space-y-4">
-
-          {appointments.map(
-            (appt) => {
-
-              const isUpdating =
-                updatingId ===
-                appt.id;
-
-              const isScheduled =
-                appt.status ===
-                'scheduled';
-
-              const isWaiting =
-                appt.status ===
-                'confirmed';
-
-              const canStartConsultation =
-                isScheduled ||
-                isWaiting;
-
-              const isInProgress =
-                appt.status ===
-                'in_progress';
-
-              const isCompleted =
-                appt.status ===
-                'completed';
-
-              const isCancelled =
-                appt.status ===
-                'cancelled';
-
-              return (
-                <Card
-                  key={
-                    appt.id
-                  }
-                  className={`relative overflow-hidden ${
-                    isInProgress
-                      ? 'border-primary/30 shadow-md'
-                      : ''
-                  }`}
-                >
-
-                  {/* Status accent */}
-                  <div
-                    className={`absolute top-0 left-0 w-full h-1.5 ${
-                      isInProgress
-                        ? 'bg-primary'
-                        : isCompleted
-                          ? 'bg-success'
-                          : isCancelled
-                            ? 'bg-destructive/60'
-                            : isWaiting
-                              ? 'bg-urgent'
-                              : 'bg-primary/45'
-                    }`}
-                  />
-
-                  <div className="pt-2">
-
-                    {/* Patient summary */}
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-
-                      <div className="flex items-center gap-4 min-w-0">
-
-                        <div
-                          className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
-                            isInProgress
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-module-soft text-primary'
-                          }`}
-                        >
-                          <span className="text-sm font-bold">
-                            {getInitials(
-                              appt.patient_name
-                            )}
-                          </span>
-                        </div>
-
-                        <div className="min-w-0">
-
-                          <div className="flex flex-wrap items-center gap-2">
-
-                            <h3 className="text-base sm:text-lg font-bold text-foreground truncate">
-                              {appt.patient_name}
-                            </h3>
-
-                            <Badge
-                              status={
-                                appt.status
-                              }
-                            />
-
-                          </div>
-
-                          <div className="flex flex-wrap items-center gap-2 mt-2">
-
-                            <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground font-medium bg-secondary/60 rounded-full px-2.5 py-1">
-
-                              <Clock
-                                size={12}
-                              />
-
-                              {formatAppointmentTime(
-                                appt.scheduled_at
-                              )}
-
-                            </span>
-
-                            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground bg-secondary/60 rounded-full px-2.5 py-1">
-
-                              <UserRound
-                                size={12}
-                              />
-
-                              {appt.type
-                                ?.toUpperCase() ||
-                                'VISIT'}
-
-                            </span>
-
-                          </div>
-
-                        </div>
-
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row lg:justify-end gap-2 w-full lg:w-auto">
-
-                        {/* Scheduled / Waiting -> Start */}
-                        {canStartConsultation && (
-
-                          <Button
-                            type="button"
-                            variant="primary"
-                            className="w-full sm:w-auto"
-                            onClick={() =>
-                              startConsultation(
-                                appt.id
-                              )
-                            }
-                            disabled={
-                              isUpdating
-                            }
-                            loading={
-                              isUpdating
-                            }
-                          >
-                            <Play
-                              size={15}
-                              className="mr-2"
-                            />
-
-                            {isUpdating
-                              ? 'Starting...'
-                              : 'Start Consultation'}
-
-                          </Button>
-
-                        )}
-
-                        {/* In Progress -> Resume */}
-                        {isInProgress && (
-
-                          <Button
-                            type="button"
-                            variant="primary"
-                            className="w-full sm:w-auto"
-                            onClick={() =>
-                              openConsultation(
-                                appt.id
-                              )
-                            }
-                            disabled={
-                              isUpdating
-                            }
-                          >
-                            <ClipboardCheck
-                              size={15}
-                              className="mr-2"
-                            />
-
-                            Resume Consultation
-
-                          </Button>
-
-                        )}
-
-                        {/* Completed -> Review */}
-                        {isCompleted && (
-
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            className="w-full sm:w-auto"
-                            onClick={() =>
-                              openConsultation(
-                                appt.id
-                              )
-                            }
-                            disabled={
-                              isUpdating
-                            }
-                          >
-                            <History
-                              size={15}
-                              className="mr-2"
-                            />
-
-                            View Consultation
-
-                          </Button>
-
-                        )}
-
-                        {/* Cancel */}
-                        {(isScheduled ||
-                          isWaiting ||
-                          isInProgress) && (
-
-                          <Button
-                            type="button"
-                            variant="danger"
-                            className="w-full sm:w-auto"
-                            onClick={() =>
-                              setAppointmentToCancel(
-                                appt
-                              )
-                            }
-                            disabled={
-                              isUpdating
-                            }
-                          >
-                            <XCircle
-                              size={15}
-                              className="mr-2"
-                            />
-
-                            {isUpdating
-                              ? 'Updating...'
-                              : 'Cancel'}
-
-                          </Button>
-
-                        )}
-
-                      </div>
-
-                    </div>
-
-                    {/* Workflow summary */}
-                    <div className="mt-5 pt-4 border-t border-border">
-
-                      {isInProgress && (
-
-                        <div className="flex items-start gap-2 text-xs text-primary">
-
-                          <ClipboardCheck
-                            size={14}
-                            className="shrink-0 mt-0.5"
-                          />
-
-                          <p className="font-medium">
-                            Consultation is currently in progress. Resume the workspace to continue documentation or prescribing.
-                          </p>
-
-                        </div>
-
-                      )}
-
-                      {isCompleted && (
-
-                        <div className="flex items-start gap-2 text-xs text-success">
-
-                          <CheckCircle2
-                            size={14}
-                            className="shrink-0 mt-0.5"
-                          />
-
-                          <p className="font-medium">
-                            Consultation completed. The visit remains available for clinical review.
-                          </p>
-
-                        </div>
-
-                      )}
-
-                      {isCancelled && (
-
-                        <div className="flex items-start gap-2 text-xs text-muted-foreground">
-
-                          <XCircle
-                            size={14}
-                            className="shrink-0 mt-0.5"
-                          />
-
-                          <p className="font-medium">
-                            Appointment cancelled. It remains visible here for context.
-                          </p>
-
-                        </div>
-
-                      )}
-
-                      {(isScheduled ||
-                        isWaiting) && (
-
-                        <div className="flex items-start gap-2 text-xs text-muted-foreground">
-
-                          <Clock
-                            size={14}
-                            className="shrink-0 mt-0.5"
-                          />
-
-                          <p className="font-medium">
-                            Patient is ready to move into the consultation workflow.
-                          </p>
-
-                        </div>
-
-                      )}
-
-                    </div>
-
-                  </div>
-
-                </Card>
-              );
-            }
           )}
 
-        </div>
+        </section>
 
-      )}
+        {/* =====================================================
+            CANCELLATION CONFIRMATION
+        ====================================================== */}
+        <Modal
+          isOpen={
+            !!appointmentToCancel
+          }
+          onClose={() =>
+            setAppointmentToCancel(
+              null
+            )
+          }
+          title="Cancel Appointment"
+          size="sm"
+        >
 
-      {/* =====================================================
-          CANCELLATION CONFIRMATION
-      ====================================================== */}
-      <Modal
-        isOpen={
-          !!appointmentToCancel
-        }
-        onClose={() =>
-          setAppointmentToCancel(
-            null
-          )
-        }
-        title="Cancel Appointment"
-        size="sm"
-      >
+          <div className="space-y-5">
 
-        <div className="space-y-5">
+            <div className="flex items-start gap-3">
 
-          <div>
+              <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                <XCircle size={19} />
+              </div>
 
-            <p className="text-sm font-semibold text-foreground">
-              Are you sure you want to cancel this appointment?
-            </p>
+              <div>
+                <p className="text-sm font-bold text-foreground">
+                  Cancel this appointment?
+                </p>
 
-            <p className="text-sm text-muted-foreground mt-2">
-              {appointmentToCancel?.patient_name
-                ? `${appointmentToCancel.patient_name}'s appointment will be marked as cancelled.`
-                : 'This appointment will be marked as cancelled.'}
-            </p>
+                <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
+                  {appointmentToCancel?.patient_name
+                    ? `${appointmentToCancel.patient_name}'s appointment will be marked as cancelled and remain visible in today's queue for context.`
+                    : 'This appointment will be marked as cancelled and remain visible in today’s queue for context.'}
+                </p>
+              </div>
 
-          </div>
+            </div>
 
-          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-1">
 
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={
-                updatingId ===
-                appointmentToCancel?.id
-              }
-              onClick={() =>
-                setAppointmentToCancel(
-                  null
-                )
-              }
-            >
-              Keep Appointment
-            </Button>
-
-            <Button
-              type="button"
-              variant="danger"
-              loading={
-                updatingId ===
-                appointmentToCancel?.id
-              }
-              onClick={
-                async () => {
-
-                  const appointmentId =
-                    appointmentToCancel?.id;
-
-                  if (!appointmentId) {
-                    return;
-                  }
-
-                  await updateStatus(
-                    appointmentId,
-                    'cancelled'
-                  );
-
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={
+                  updatingId ===
+                    appointmentToCancel?.id
+                }
+                onClick={() =>
                   setAppointmentToCancel(
                     null
-                  );
+                  )
                 }
-              }
-            >
-              <XCircle
-                size={15}
-                className="mr-2"
-              />
+              >
+                Keep Appointment
+              </Button>
 
-              Cancel Appointment
-            </Button>
+              <Button
+                type="button"
+                variant="danger"
+                loading={
+                  updatingId ===
+                    appointmentToCancel?.id
+                }
+                onClick={
+                  async () => {
+
+                    const appointmentId =
+                      appointmentToCancel?.id;
+
+                    if (!appointmentId) {
+                      return;
+                    }
+
+                    await updateStatus(
+                      appointmentId,
+                      'cancelled'
+                    );
+
+                    setAppointmentToCancel(
+                      null
+                    );
+                  }
+                }
+              >
+                <XCircle
+                  size={15}
+                  className="mr-2"
+                />
+
+                Cancel Appointment
+              </Button>
+
+            </div>
 
           </div>
 
-        </div>
+        </Modal>
 
-      </Modal>
+      </main>
 
     </div>
   );

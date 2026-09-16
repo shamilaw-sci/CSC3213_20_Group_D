@@ -1700,9 +1700,9 @@ const DoctorDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-[#F6F8FA]">
 
-      <main className="max-w-[1500px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <main className="max-w-[1400px] mx-auto px-4 md:px-6 xl:px-8 py-6 sm:py-8">
 
         {/* =====================================================
             SHARED DOCTOR PAGE HEADER
@@ -1764,35 +1764,53 @@ const DoctorDashboard = () => {
               </button>
             }
             meta={
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3.5 min-w-0">
 
-                <div className="w-10 h-10 rounded-xl bg-module-soft text-primary flex items-center justify-center shrink-0">
-
-                  <UserRound
-                    size={18}
+                {doctor?.photo_url ? (
+                  <img
+                    src={doctor.photo_url}
+                    alt={doctor?.full_name ? `Dr. ${doctor.full_name}` : 'Doctor'}
+                    className="w-12 h-12 rounded-full object-cover border-2 border-primary/15 shadow-sm bg-card shrink-0"
                   />
-
-                </div>
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-extrabold shadow-sm shrink-0">
+                    {getInitials(
+                      doctor?.full_name ||
+                      'Doctor'
+                    )}
+                  </div>
+                )}
 
                 <div className="min-w-0">
 
-                  <p className="text-[10px] uppercase tracking-[0.12em] font-bold text-primary">
-                    Signed in as
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-[10px] uppercase tracking-[0.12em] font-bold text-primary">
+                      Signed in as
+                    </p>
 
-                  <p className="text-sm font-bold text-foreground mt-0.5 truncate">
+                    {doctor?.is_verified && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-success/20 bg-success/10 px-2 py-0.5 text-[9px] font-bold text-success">
+                        <CheckCircle2 size={10} />
+                        Verified
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="text-sm font-extrabold text-foreground mt-0.5 truncate">
                     {doctor?.full_name
                       ? `Dr. ${doctor.full_name}`
                       : 'Doctor'}
                   </p>
 
-                  {doctor?.specialization && (
-                    <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                      {
-                        doctor.specialization
-                      }
-                    </p>
-                  )}
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                    {[
+                      doctor?.specialization,
+                      doctor?.hospital_name,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ') ||
+                      'Clinical workspace'}
+                  </p>
 
                 </div>
 
@@ -1807,7 +1825,7 @@ const DoctorDashboard = () => {
         ====================================================== */}
         <section className="mb-8">
 
-          <div className="relative overflow-hidden bg-card border border-primary/20 rounded-2xl shadow-sm">
+          <div className="relative overflow-hidden bg-white border border-primary/15 rounded-[22px] shadow-[0_12px_35px_rgba(15,23,42,0.06)]">
 
             {/* Accent */}
             <div className="absolute inset-y-0 left-0 w-1.5 bg-primary" />
@@ -1948,7 +1966,7 @@ const DoctorDashboard = () => {
 
                 <div
                   key={key}
-                  className="group bg-card rounded-xl shadow-sm border border-border p-4 sm:p-5 flex items-center justify-between hover:shadow-md transition-shadow"
+                  className="group bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 flex items-center justify-between shadow-[0_8px_24px_rgba(15,23,42,0.045)] hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(15,23,42,0.07)] transition-all"
                 >
 
                   <div>
@@ -2003,8 +2021,8 @@ const DoctorDashboard = () => {
             <div
               className={`relative overflow-hidden rounded-2xl border shadow-sm ${
                 activeConsultation
-                  ? 'bg-primary/5 border-primary/25'
-                  : 'bg-card border-border'
+                  ? 'bg-white border-primary/25 shadow-[0_12px_30px_rgba(37,99,235,0.08)]'
+                  : 'bg-white border-slate-200/80 shadow-[0_8px_24px_rgba(15,23,42,0.045)]'
               }`}
             >
 
@@ -2125,7 +2143,7 @@ const DoctorDashboard = () => {
             </div>
 
             {/* Next patient */}
-            <div className="relative overflow-hidden rounded-2xl bg-card border border-border shadow-sm">
+            <div className="relative overflow-hidden rounded-2xl bg-white border border-slate-200/80 shadow-[0_8px_24px_rgba(15,23,42,0.045)]">
 
               <div className="p-5 sm:p-6">
 
@@ -2310,7 +2328,7 @@ const DoctorDashboard = () => {
                     '/doctor/queue'
                   )
                 }
-                className="group w-full bg-card rounded-xl shadow-sm border border-border p-4 text-left hover:border-primary/40 hover:shadow-md transition-all flex items-center gap-4"
+                className="group w-full bg-white rounded-2xl border border-slate-200/80 p-4 text-left shadow-[0_8px_24px_rgba(15,23,42,0.04)] hover:border-primary/30 hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(15,23,42,0.065)] transition-all flex items-center gap-4"
               >
 
                 <div className="w-11 h-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
@@ -2347,7 +2365,7 @@ const DoctorDashboard = () => {
                     '/doctor/profile'
                   )
                 }
-                className="group w-full bg-card rounded-xl shadow-sm border border-border p-4 text-left hover:border-primary/40 hover:shadow-md transition-all flex items-center gap-4"
+                className="group w-full bg-white rounded-2xl border border-slate-200/80 p-4 text-left shadow-[0_8px_24px_rgba(15,23,42,0.04)] hover:border-primary/30 hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(15,23,42,0.065)] transition-all flex items-center gap-4"
               >
 
                 <div className="w-11 h-11 rounded-xl bg-secondary text-primary flex items-center justify-center shrink-0">
@@ -2384,7 +2402,7 @@ const DoctorDashboard = () => {
                     true
                   )
                 }
-                className="group w-full bg-card rounded-xl shadow-sm border border-border p-4 text-left hover:border-primary/40 hover:shadow-md transition-all flex items-center gap-4"
+                className="group w-full bg-white rounded-2xl border border-slate-200/80 p-4 text-left shadow-[0_8px_24px_rgba(15,23,42,0.04)] hover:border-primary/30 hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(15,23,42,0.065)] transition-all flex items-center gap-4"
               >
 
                 <div
@@ -2449,7 +2467,7 @@ const DoctorDashboard = () => {
               description="Automatically surfaced patterns from today's available clinical information."
             />
 
-            <div className="bg-card relative overflow-hidden rounded-2xl shadow-sm border border-border p-5 sm:p-6 min-h-[220px]">
+            <div className="bg-white relative overflow-hidden rounded-[22px] border border-slate-200/80 p-5 sm:p-6 min-h-[220px] shadow-[0_10px_28px_rgba(15,23,42,0.05)]">
 
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-primary/20" />
 
