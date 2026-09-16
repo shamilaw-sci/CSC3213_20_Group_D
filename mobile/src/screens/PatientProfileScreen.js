@@ -1,13 +1,21 @@
 /**
  * @file    PatientProfileScreen.js
  * @module  Patient
- * @desc    Mobile screen showing patient profile information, known allergies,
- * chronic conditions, and an inline edit form for updatable fields.
- * Now includes AI Camera Scanning for bulk vaccination records.
- * Privacy & Consent Controls added in CARE4U-284 (Epic 8.12).
+ * @desc    Premium patient profile and clinical-safety workspace.
+ *          Supports unified Edit Mode, profile photo updates,
+ *          allergies, chronic conditions, medical devices,
+ *          important medical background, family history,
+ *          vaccinations, AI vaccination-card scanning,
+ *          and privacy/consent controls.
  * @author  Wasana Karunanayaka (S/21/081)
  */
-import React, { useEffect, useState } from 'react';
+
+import React, {
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
+
 import {
   View,
   Text,
@@ -22,1086 +30,6299 @@ import {
   Image,
   Alert,
   Modal,
-  Switch
+  Switch,
+  RefreshControl,
 } from 'react-native';
+
 import * as ImagePicker from 'expo-image-picker';
 
 import {
+  AlertCircle,
+  AlertTriangle,
+  BriefcaseMedical,
+  CalendarDays,
+  Camera,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  Droplets,
+  HeartPulse,
+  History,
+  Image as ImageIcon,
+  LockKeyhole,
+  Pencil,
+  Phone,
+  Plus,
+  Save,
+  ScanLine,
+  Shield,
+  ShieldCheck,
+  Syringe,
+  Trash2,
+  Unlock,
+  UserRound,
+  Users,
+  X,
+} from 'lucide-react-native';
+
+import {
   getPatientProfile,
-  getAllergies,
   updatePatientProfile,
+  uploadPatientPhoto,
+
+  getAllergies,
   addAllergy,
   deleteAllergy,
+
   getConditions,
   addCondition,
   deleteCondition,
+
+  getMedicalDevices,
+  addMedicalDevice,
+  deleteMedicalDevice,
+
+  getHealthBackground,
+  addHealthBackground,
+  deleteHealthBackground,
+
+  getFamilyHistory,
+  addFamilyHistory,
+  deleteFamilyHistory,
+
   getVaccinations,
   addBulkVaccinations,
   deleteVaccination,
   scanVaccinationCard,
+
   getConsentSettings,
-  updateConsentSettings
+  updateConsentSettings,
 } from '../services/patient.service';
-import { searchAllergens } from '../utils/allergenSearch';
-import { searchVaccines } from '../utils/vaccineSearch';
+
+import {
+  searchAllergens,
+} from '../utils/allergenSearch';
+
+import {
+  searchVaccines,
+} from '../utils/vaccineSearch';
+
 import useAuthStore from '../store/authStore';
 
-const BLOOD_GROUP_OPTIONS   = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
-const RELATIONSHIP_OPTIONS  = ['spouse', 'parent', 'sibling', 'child', 'friend', 'other'];
-const SEVERITY_OPTIONS      = ['mild', 'moderate', 'severe'];
-const SENSITIVE_CATEGORIES  = ['Mental Health', 'Reproductive Health', 'Substance Abuse', 'STD/STI Records'];
+/* =========================================================
+   DESIGN TOKENS
+========================================================= */
 
-const severityColor = (severity) => {
-  if (severity === 'severe')   return '#C00000';
-  if (severity === 'moderate') return '#E67E22';
-  return '#1F7A1F';
+const COLORS = {
+  background: '#F6F8FA',
+  surface: '#FFFFFF',
+
+  text: '#102331',
+  textSoft: '#334155',
+  muted: '#718096',
+  subtle: '#9AA8B6',
+
+  border: '#E8EDF1',
+
+  navy: '#12344D',
+  navySoft: '#EAF1F5',
+
+  teal: '#0F8B83',
+  tealDark: '#0B6F69',
+  tealSoft: '#E7F7F5',
+
+  blue: '#3973A7',
+  blueSoft: '#EEF5FB',
+
+  green: '#2F855A',
+  greenSoft: '#EDF9F2',
+
+  amber: '#B7791F',
+  amberSoft: '#FFF8E7',
+
+  danger: '#C94C4C',
+  dangerSoft: '#FFF1F1',
+
+  violet: '#7656A8',
+  violetSoft: '#F4F0FA',
 };
 
-const getInitials = (name) => {
-  if (!name) return '?';
-  const parts = name.trim().split(' ').filter(Boolean);
-  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
-};
+/* =========================================================
+   OPTIONS
+========================================================= */
+
+const BLOOD_GROUP_OPTIONS = [
+  'A+',
+  'A-',
+  'B+',
+  'B-',
+  'O+',
+  'O-',
+  'AB+',
+  'AB-',
+];
+
+const RELATIONSHIP_OPTIONS = [
+  'spouse',
+  'parent',
+  'sibling',
+  'child',
+  'friend',
+  'other',
+];
+
+const SEVERITY_OPTIONS = [
+  'mild',
+  'moderate',
+  'severe',
+];
+
+const SENSITIVE_CATEGORIES = [
+  'Mental Health',
+  'Reproductive Health',
+  'Substance Abuse',
+  'STD/STI Records',
+];
+
+const HEALTH_BACKGROUND_TYPES = [
+  {
+    value: 'major_surgery',
+    label: 'Major Surgery',
+  },
+  {
+    value: 'major_procedure',
+    label: 'Major Procedure',
+  },
+  {
+    value: 'organ_transplant',
+    label: 'Organ Transplant',
+  },
+  {
+    value: 'major_hospitalization',
+    label: 'Major Hospitalization',
+  },
+  {
+    value: 'serious_past_condition',
+    label: 'Serious Past Condition',
+  },
+  {
+    value: 'other',
+    label: 'Other',
+  },
+];
+
+const FAMILY_RELATIONS = [
+  {
+    value: 'mother',
+    label: 'Mother',
+  },
+  {
+    value: 'father',
+    label: 'Father',
+  },
+  {
+    value: 'sister',
+    label: 'Sister',
+  },
+  {
+    value: 'brother',
+    label: 'Brother',
+  },
+  {
+    value: 'daughter',
+    label: 'Daughter',
+  },
+  {
+    value: 'son',
+    label: 'Son',
+  },
+  {
+    value: 'maternal_grandmother',
+    label: 'Maternal Grandmother',
+  },
+  {
+    value: 'maternal_grandfather',
+    label: 'Maternal Grandfather',
+  },
+  {
+    value: 'paternal_grandmother',
+    label: 'Paternal Grandmother',
+  },
+  {
+    value: 'paternal_grandfather',
+    label: 'Paternal Grandfather',
+  },
+  {
+    value: 'other',
+    label: 'Other',
+  },
+];
+
+const MAX_PHOTO_SIZE_BYTES = 2 * 1024 * 1024;
+
+/* =========================================================
+   HELPERS
+========================================================= */
 
 const formatDate = (dateStr) => {
-  if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  if (!dateStr) {
+    return '—';
+  }
+
+  const date = new Date(dateStr);
+
+  if (Number.isNaN(date.getTime())) {
+    return '—';
+  }
+
+  return date.toLocaleDateString(
+    'en-US',
+    {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }
+  );
 };
 
 const formatAge = (dob) => {
-  if (!dob) return '—';
+  if (!dob) {
+    return '—';
+  }
+
   const birthDate = new Date(dob);
+
+  if (Number.isNaN(birthDate.getTime())) {
+    return '—';
+  }
+
   const today = new Date();
+
   let age = today.getFullYear() - birthDate.getFullYear();
-  const m = today.getMonth() - birthDate.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+
+  const monthDifference = today.getMonth() - birthDate.getMonth();
+
+  if (
+    monthDifference < 0 ||
+    (
+      monthDifference === 0 &&
+      today.getDate() < birthDate.getDate()
+    )
+  ) {
+    age -= 1;
+  }
+
   return `${age} yrs`;
 };
 
-const OptionSelector = ({ label, value, options, onSelect }) => {
-  const [open, setOpen] = useState(false);
+const capitalise = (value) => {
+  if (!value) {
+    return '—';
+  }
+
   return (
-    <View style={styles.editFieldWrapper}>
-      <Text style={styles.editLabel}>{label}</Text>
+    value.charAt(0).toUpperCase() +
+    value.slice(1)
+  );
+};
+
+const getInitials = (name) => {
+  if (!name) {
+    return 'PT';
+  }
+
+  const parts = name
+    .trim()
+    .split(' ')
+    .filter(Boolean);
+
+  if (parts.length === 1) {
+    return parts[0]
+      .charAt(0)
+      .toUpperCase();
+  }
+
+  return (
+    parts[0].charAt(0) +
+    parts[parts.length - 1].charAt(0)
+  ).toUpperCase();
+};
+
+const getBackgroundTypeLabel = (type) => {
+  const match = HEALTH_BACKGROUND_TYPES.find(
+    item => item.value === type
+  );
+
+  return (
+    match?.label ||
+    capitalise(
+      type?.replaceAll(
+        '_',
+        ' '
+      )
+    )
+  );
+};
+
+const getFamilyRelationLabel = (relation) => {
+  const match = FAMILY_RELATIONS.find(
+    item => item.value === relation
+  );
+
+  return (
+    match?.label ||
+    capitalise(
+      relation?.replaceAll(
+        '_',
+        ' '
+      )
+    )
+  );
+};
+
+const severityMeta = (severity) => {
+  switch (severity?.toLowerCase()) {
+    case 'severe':
+      return {
+        color: COLORS.danger,
+        background: COLORS.dangerSoft,
+      };
+
+    case 'moderate':
+      return {
+        color: COLORS.amber,
+        background: COLORS.amberSoft,
+      };
+
+    default:
+      return {
+        color: COLORS.green,
+        background: COLORS.greenSoft,
+      };
+  }
+};
+
+/* =========================================================
+   OPTION SELECTOR
+========================================================= */
+
+const OptionSelector = ({
+  label,
+  value,
+  options,
+  onSelect,
+}) => {
+  const [open, setOpen] = useState(false);
+
+  const getOptionLabel = (option) => {
+    if (typeof option === 'object') {
+      return option.label;
+    }
+
+    return capitalise(option);
+  };
+
+  const getOptionValue = (option) => {
+    if (typeof option === 'object') {
+      return option.value;
+    }
+
+    return option;
+  };
+
+  const selectedOption = options.find(
+    option =>
+      getOptionValue(option) === value
+  );
+
+  return (
+    <View style={styles.formField}>
+
+      <Text style={styles.formLabel}>
+        {label}
+      </Text>
+
       <TouchableOpacity
-        style={[styles.selectorButton, open && styles.selectorButtonOpen]}
-        onPress={() => setOpen((prev) => !prev)}
-        activeOpacity={0.7}
+        style={[
+          styles.selectorButton,
+          open && styles.selectorButtonOpen,
+        ]}
+        activeOpacity={0.75}
+        onPress={() =>
+          setOpen(
+            previous => !previous
+          )
+        }
       >
-        <Text style={value ? styles.selectorValue : styles.selectorPlaceholder}>
-          {value ? value.charAt(0).toUpperCase() + value.slice(1) : `Select ${label}`}
+
+        <Text
+          style={
+            value
+              ? styles.selectorValue
+              : styles.selectorPlaceholder
+          }
+        >
+          {selectedOption
+            ? getOptionLabel(
+                selectedOption
+              )
+            : `Select ${label}`}
         </Text>
-        <Text style={styles.selectorChevron}>{open ? '▲' : '▼'}</Text>
+
+        {open ? (
+          <ChevronUp
+            size={17}
+            color={COLORS.muted}
+          />
+        ) : (
+          <ChevronDown
+            size={17}
+            color={COLORS.muted}
+          />
+        )}
+
       </TouchableOpacity>
-      {open && (
+
+      {open ? (
         <View style={styles.optionsList}>
-          {options.map((opt) => (
-            <TouchableOpacity
-              key={opt}
-              style={[styles.optionItem, value === opt && styles.optionItemSelected]}
-              onPress={() => { onSelect(opt); setOpen(false); }}
-            >
-              <Text style={[styles.optionText, value === opt && styles.optionTextSelected]}>
-                {opt.charAt(0).toUpperCase() + opt.slice(1)}
-              </Text>
-            </TouchableOpacity>
-          ))}
+
+          {options.map(
+            option => {
+              const optionValue = getOptionValue(option);
+              const optionLabel = getOptionLabel(option);
+              const selected = optionValue === value;
+
+              return (
+                <TouchableOpacity
+                  key={optionValue}
+                  style={[
+                    styles.optionItem,
+                    selected &&
+                      styles.optionItemSelected,
+                  ]}
+                  activeOpacity={0.72}
+                  onPress={() => {
+                    onSelect(optionValue);
+                    setOpen(false);
+                  }}
+                >
+
+                  <Text
+                    style={[
+                      styles.optionText,
+                      selected &&
+                        styles.optionTextSelected,
+                    ]}
+                  >
+                    {optionLabel}
+                  </Text>
+
+                  {selected ? (
+                    <CheckCircle2
+                      size={15}
+                      color={COLORS.teal}
+                    />
+                  ) : null}
+
+                </TouchableOpacity>
+              );
+            }
+          )}
+
         </View>
-      )}
+      ) : null}
+
     </View>
   );
 };
 
-const ProfileField = ({ label, value }) => (
-  <View style={styles.fieldRow}>
-    <Text style={styles.fieldLabel}>{label}</Text>
-    <Text style={styles.fieldValue}>{value || '—'}</Text>
-  </View>
-);
+/* =========================================================
+   MODAL SHELL
+========================================================= */
 
-export default function PatientProfileScreen({ patientId }) {
-  const user = useAuthStore((state) => state.user);
-  const activePatientId = patientId || user?.profile_id || user?.id || '';
+const ModalShell = ({
+  visible,
+  title,
+  icon: Icon,
+  onClose,
+  children,
+  maxHeight = '88%',
+}) => {
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent
+      onRequestClose={onClose}
+    >
+
+      <View style={styles.modalOverlay}>
+
+        <KeyboardAvoidingView
+          behavior={
+            Platform.OS === 'ios'
+              ? 'padding'
+              : undefined
+          }
+          style={[
+            styles.modalContent,
+            {
+              maxHeight,
+            },
+          ]}
+        >
+
+          <View style={styles.modalHandle} />
+
+          <View style={styles.modalHeader}>
+
+            <View style={styles.modalHeaderLeft}>
+
+              <View style={styles.modalHeaderIcon}>
+
+                <Icon
+                  size={18}
+                  color={COLORS.teal}
+                />
+
+              </View>
+
+              <Text style={styles.modalTitle}>
+                {title}
+              </Text>
+
+            </View>
+
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              activeOpacity={0.75}
+              onPress={onClose}
+            >
+
+              <X
+                size={18}
+                color={COLORS.text}
+              />
+
+            </TouchableOpacity>
+
+          </View>
+
+          {children}
+
+        </KeyboardAvoidingView>
+
+      </View>
+
+    </Modal>
+  );
+};
+
+/* =========================================================
+   SECTION CARD
+========================================================= */
+
+const SectionCard = ({
+  title,
+  description,
+  editing = false,
+  actionLabel,
+  onAction,
+  children,
+}) => {
+  return (
+    <View style={styles.sectionCard}>
+
+      <View style={styles.sectionHeader}>
+
+        <View style={styles.sectionHeadingText}>
+
+          <Text style={styles.sectionTitle}>
+            {title}
+          </Text>
+
+          {description ? (
+            <Text style={styles.sectionDescription}>
+              {description}
+            </Text>
+          ) : null}
+
+        </View>
+
+        {editing && onAction ? (
+          <TouchableOpacity
+            style={styles.sectionAddButton}
+            activeOpacity={0.75}
+            onPress={onAction}
+          >
+
+            <Plus
+              size={14}
+              color={COLORS.teal}
+            />
+
+            <Text style={styles.sectionAddText}>
+              {actionLabel || 'Add'}
+            </Text>
+
+          </TouchableOpacity>
+        ) : null}
+
+      </View>
+
+      <View style={styles.sectionBody}>
+        {children}
+      </View>
+
+    </View>
+  );
+};
+
+/* =========================================================
+   INFORMATION ROW
+========================================================= */
+
+const InformationRow = ({
+  icon: Icon,
+  label,
+  value,
+}) => {
+  return (
+    <View style={styles.infoRow}>
+
+      <View style={styles.infoIcon}>
+
+        <Icon
+          size={15}
+          color={COLORS.teal}
+        />
+
+      </View>
+
+      <View style={styles.infoText}>
+
+        <Text style={styles.infoLabel}>
+          {label}
+        </Text>
+
+        <Text style={styles.infoValue}>
+          {value || '—'}
+        </Text>
+
+      </View>
+
+    </View>
+  );
+};
+
+/* =========================================================
+   EMPTY SECTION
+========================================================= */
+
+const EmptySection = ({
+  icon: Icon,
+  text,
+}) => {
+  return (
+    <View style={styles.emptySection}>
+
+      <Icon
+        size={18}
+        color={COLORS.subtle}
+      />
+
+      <Text style={styles.emptySectionText}>
+        {text}
+      </Text>
+
+    </View>
+  );
+};
+
+/* =========================================================
+   MAIN SCREEN
+========================================================= */
+
+const PatientProfileScreen = ({
+  patientId,
+}) => {
+  const user = useAuthStore(
+    state => state.user
+  );
+
+  const activePatientId =
+    patientId ||
+    user?.profile_id ||
+    user?.id ||
+    '';
+
+  /* =======================================================
+     MAIN DATA
+  ======================================================= */
 
   const [patient, setPatient] = useState(null);
+
   const [allergies, setAllergies] = useState([]);
+
   const [conditions, setConditions] = useState([]);
+
+  const [medicalDevices, setMedicalDevices] = useState([]);
+
+  const [healthBackground, setHealthBackground] = useState([]);
+
+  const [familyHistory, setFamilyHistory] = useState([]);
+
   const [vaccinations, setVaccinations] = useState([]);
-  const [lockedCategories, setLockedCategories] = useState([]); // Privacy Settings
+
+  const [lockedCategories, setLockedCategories] = useState([]);
+
   const [loading, setLoading] = useState(true);
+
+  const [refreshing, setRefreshing] = useState(false);
+
   const [error, setError] = useState(null);
 
-  // Edit Profile State
+  /* =======================================================
+     EDIT MODE
+  ======================================================= */
+
   const [isEditing, setIsEditing] = useState(false);
+
   const [formData, setFormData] = useState({});
+
   const [saving, setSaving] = useState(false);
+
   const [saveError, setSaveError] = useState(null);
+
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // Add Allergy State
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
+
+  /* =======================================================
+     ALLERGY STATE
+  ======================================================= */
+
+  const [isAddAllergyModalOpen, setIsAddAllergyModalOpen] = useState(false);
+
   const [allergenInput, setAllergenInput] = useState('');
-  const [suggestions, setSuggestions] = useState([]);
+
+  const [allergySuggestions, setAllergySuggestions] = useState([]);
+
   const [selectedSeverity, setSelectedSeverity] = useState('mild');
+
   const [allergyNotes, setAllergyNotes] = useState('');
+
   const [addingAllergy, setAddingAllergy] = useState(false);
 
-  // Add Condition State
+  /* =======================================================
+     CONDITION STATE
+  ======================================================= */
+
   const [isAddConditionModalOpen, setIsAddConditionModalOpen] = useState(false);
+
   const [conditionInput, setConditionInput] = useState('');
+
   const [diagnosedAtInput, setDiagnosedAtInput] = useState('');
+
   const [conditionNotes, setConditionNotes] = useState('');
+
   const [isPriorityInput, setIsPriorityInput] = useState(false);
+
   const [addingCondition, setAddingCondition] = useState(false);
 
-  // Dynamic Bulk Vaccination State
-  const [isAddVaccinationModalOpen, setIsAddVaccinationModalOpen] = useState(false);
-  const [bulkVaccines, setBulkVaccines] = useState([{ id: 'initial-row', vaccineName: '', dateAdministered: '', doseNumber: '', notes: '' }]);
-  const [activeVaccineRowId, setActiveVaccineRowId] = useState(null);
+  /* =======================================================
+     MEDICAL DEVICE STATE
+  ======================================================= */
+
+  const [isAddDeviceModalOpen, setIsAddDeviceModalOpen] = useState(false);
+
+  const [deviceNameInput, setDeviceNameInput] = useState('');
+
+  const [deviceTypeInput, setDeviceTypeInput] = useState('');
+
+  const [implantedAtInput, setImplantedAtInput] = useState('');
+
+  const [deviceNotesInput, setDeviceNotesInput] = useState('');
+
+  const [isEmergencyRelevantInput, setIsEmergencyRelevantInput] = useState(true);
+
+  const [addingDevice, setAddingDevice] = useState(false);
+
+  /* =======================================================
+     MEDICAL BACKGROUND STATE
+  ======================================================= */
+
+  const [isAddBackgroundModalOpen, setIsAddBackgroundModalOpen] = useState(false);
+
+  const [backgroundTypeInput, setBackgroundTypeInput] = useState('major_surgery');
+
+  const [backgroundTitleInput, setBackgroundTitleInput] = useState('');
+
+  const [backgroundDateInput, setBackgroundDateInput] = useState('');
+
+  const [backgroundNotesInput, setBackgroundNotesInput] = useState('');
+
+  const [backgroundEmergencyInput, setBackgroundEmergencyInput] = useState(false);
+
+  const [addingBackground, setAddingBackground] = useState(false);
+
+  /* =======================================================
+     FAMILY HISTORY STATE
+  ======================================================= */
+
+  const [isAddFamilyModalOpen, setIsAddFamilyModalOpen] = useState(false);
+
+  const [familyRelationInput, setFamilyRelationInput] = useState('mother');
+
+  const [familyConditionInput, setFamilyConditionInput] = useState('');
+
+  const [familyNotesInput, setFamilyNotesInput] = useState('');
+
+  const [familyEmergencyInput, setFamilyEmergencyInput] = useState(false);
+
+  const [addingFamily, setAddingFamily] = useState(false);
+
+  /* =======================================================
+     VACCINATION STATE
+  ======================================================= */
+
+  const [isVaccinationModalOpen, setIsVaccinationModalOpen] = useState(false);
+
+  const [bulkVaccines, setBulkVaccines] = useState([
+    {
+      id: 'initial',
+      vaccineName: '',
+      dateAdministered: '',
+      doseNumber: '',
+      notes: '',
+    },
+  ]);
+
+  const [activeVaccineRow, setActiveVaccineRow] = useState(null);
+
   const [vaccineSuggestions, setVaccineSuggestions] = useState([]);
-  const [addingVaccination, setAddingVaccination] = useState(false);
+
+  const [addingVaccinations, setAddingVaccinations] = useState(false);
+
   const [scanningCard, setScanningCard] = useState(false);
 
+  /* =======================================================
+     FETCH ALL PROFILE DATA
+  ======================================================= */
+
+  const fetchData = useCallback(
+    async (
+      background = false
+    ) => {
+      if (!activePatientId) {
+        setLoading(false);
+
+        setError(
+          'Patient account information is unavailable. Please sign in again.'
+        );
+
+        return;
+      }
+
+      if (background) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+
+      setError(null);
+
+      try {
+        const [
+          profileData,
+          allergyData,
+          conditionData,
+          deviceData,
+          backgroundData,
+          familyData,
+          vaccinationData,
+          consentData,
+        ] = await Promise.all([
+          getPatientProfile(
+            activePatientId
+          ),
+
+          getAllergies(
+            activePatientId
+          ),
+
+          getConditions(
+            activePatientId
+          ),
+
+          getMedicalDevices(
+            activePatientId
+          ),
+
+          getHealthBackground(
+            activePatientId
+          ),
+
+          getFamilyHistory(
+            activePatientId
+          ),
+
+          getVaccinations(
+            activePatientId
+          ),
+
+          getConsentSettings(
+            activePatientId
+          ),
+        ]);
+
+        setPatient(
+          profileData
+        );
+
+        setAllergies(
+          allergyData || []
+        );
+
+        setConditions(
+          conditionData || []
+        );
+
+        setMedicalDevices(
+          deviceData || []
+        );
+
+        setHealthBackground(
+          backgroundData || []
+        );
+
+        setFamilyHistory(
+          familyData || []
+        );
+
+        setVaccinations(
+          vaccinationData || []
+        );
+
+        setLockedCategories(
+          consentData || []
+        );
+
+      } catch (err) {
+        console.error(
+          'Profile load error:',
+          err
+        );
+
+        setError(
+          'Failed to load your profile. Please try again.'
+        );
+
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [
+      activePatientId,
+    ]
+  );
+
   useEffect(() => {
-    if (activePatientId) fetchData();
-  }, [activePatientId]);
+    fetchData();
+  }, [
+    fetchData,
+  ]);
 
-  const fetchData = async () => {
-    try {
-      const profileData = await getPatientProfile(activePatientId);
-      const allergyData = await  getAllergies(activePatientId);
-      const conditionData = await getConditions(activePatientId);
-      const vaccinationData = await getVaccinations(activePatientId);
-      const consentData = await getConsentSettings(activePatientId);
-      
-      setPatient(profileData);
-      setAllergies(allergyData);
-      setConditions(conditionData);
-      setVaccinations(vaccinationData);
-      setLockedCategories(consentData);
-    } catch (err) {
-      console.error('Profile fetch error:', err);
-      setError('Failed to load profile. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  /* =======================================================
+     GLOBAL EDIT MODE
+  ======================================================= */
 
-  const handleEditPress = () => {
+  const startEditing = () => {
     setFormData({
-      full_name: patient?.full_name || '',
-      blood_group: patient?.blood_group || '',
-      emergency_contact_name: patient?.emergency_contact_name || '',
-      emergency_contact_phone: patient?.emergency_contact_phone || '',
-      emergency_contact_relationship: patient?.emergency_contact_relationship || '',
+      full_name:
+        patient?.full_name ||
+        '',
+
+      blood_group:
+        patient?.blood_group ||
+        '',
+
+      emergency_contact_name:
+        patient?.emergency_contact_name ||
+        '',
+
+      emergency_contact_phone:
+        patient?.emergency_contact_phone ||
+        '',
+
+      emergency_contact_relationship:
+        patient?.emergency_contact_relationship ||
+        '',
     });
+
     setSaveError(null);
     setSaveSuccess(false);
     setIsEditing(true);
   };
 
-  const handleSave = async () => {
-    if (!formData.full_name?.trim()) { setSaveError('Full name is required.'); return; }
+  const updateField = (
+    field,
+    value
+  ) => {
+    setFormData(
+      previous => ({
+        ...previous,
+        [field]: value,
+      })
+    );
+  };
+
+  const saveProfile = async () => {
+    if (
+      !formData
+        .full_name
+        ?.trim()
+    ) {
+      setSaveError(
+        'Full name is required.'
+      );
+
+      return;
+    }
+
     setSaving(true);
     setSaveError(null);
+
     try {
-      const updated = await updatePatientProfile(activePatientId, formData);
-      setPatient(updated);
+      const updated =
+        await updatePatientProfile(
+          activePatientId,
+          formData
+        );
+
+      setPatient(
+        updated
+      );
+
       setIsEditing(false);
       setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
+
+      setTimeout(
+        () =>
+          setSaveSuccess(
+            false
+          ),
+        3000
+      );
+
     } catch (err) {
-      setSaveError('Failed to save. Please try again.');
+      console.error(
+        'Profile update error:',
+        err
+      );
+
+      setSaveError(
+        'Failed to save profile changes. Please try again.'
+      );
+
     } finally {
       setSaving(false);
     }
   };
 
-  const updateField = (field, value) => setFormData((prev) => ({ ...prev, [field]: value }));
+  /* =======================================================
+     PROFILE PHOTO
+  ======================================================= */
 
-  // --- Privacy & Consent Toggle Logic ---
-  const handleToggleConsent = async (category) => {
-    const isLocked = lockedCategories.includes(category);
-    let newCategories;
-    
-    if (isLocked) {
-      newCategories = lockedCategories.filter(c => c !== category);
-    } else {
-      newCategories = [...lockedCategories, category];
-    }
-    
-    // Optimistic UI Update
-    setLockedCategories(newCategories);
-    
-    try {
-      await updateConsentSettings(activePatientId, newCategories);
-    } catch (error) {
-      // Revert if failed
-      setLockedCategories(lockedCategories);
-      Alert.alert('Error', 'Failed to update privacy settings.');
-    }
-  };
+  const uploadSelectedPhoto = async (
+    asset
+  ) => {
+    if (
+      asset.fileSize &&
+      asset.fileSize >
+        MAX_PHOTO_SIZE_BYTES
+    ) {
+      Alert.alert(
+        'Image too large',
+        'Please choose an image that is 2 MB or smaller.'
+      );
 
-  // --- Allergy Logic ---
-  const handleSearchAllergens = (text) => {
-    setAllergenInput(text);
-    setSuggestions(searchAllergens(text));
-  };
-
-  const handleAddAllergy = async () => {
-    if (!allergenInput.trim()) {
-      Alert.alert('Validation Error', 'Please enter an allergen name.');
       return;
     }
-    setAddingAllergy(true);
+
+    setPhotoUploading(true);
+
     try {
-      await addAllergy(activePatientId, allergenInput.trim(), selectedSeverity, allergyNotes.trim());
-      const updatedAllergies = await  getAllergies(activePatientId);
-      setAllergies(updatedAllergies);
-      setIsAddModalOpen(false);
-      setAllergenInput('');
-      setAllergyNotes('');
-      setSelectedSeverity('mild');
+      const updated =
+        await uploadPatientPhoto(
+          activePatientId,
+          asset.uri,
+          asset.mimeType ||
+            'image/jpeg'
+        );
+
+      setPatient(
+        updated
+      );
+
+      Alert.alert(
+        'Photo updated',
+        'Your profile photo was updated successfully.'
+      );
+
     } catch (err) {
-      Alert.alert('Error', 'Failed to add allergy.');
+      console.error(
+        'Profile photo upload error:',
+        err
+      );
+
+      Alert.alert(
+        'Upload failed',
+        'Your profile photo could not be updated.'
+      );
+
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
+
+  const chooseProfilePhoto = async () => {
+    const permission =
+      await ImagePicker
+        .requestMediaLibraryPermissionsAsync();
+
+    if (
+      !permission.granted
+    ) {
+      Alert.alert(
+        'Permission required',
+        'Allow photo-library access to change your profile photo.'
+      );
+
+      return;
+    }
+
+    const result =
+      await ImagePicker
+        .launchImageLibraryAsync({
+          mediaTypes:
+            ImagePicker
+              .MediaTypeOptions
+              .Images,
+
+          quality: 0.8,
+        });
+
+    if (
+      !result.canceled
+    ) {
+      await uploadSelectedPhoto(
+        result.assets[0]
+      );
+    }
+  };
+
+  const takeProfilePhoto = async () => {
+    const permission =
+      await ImagePicker
+        .requestCameraPermissionsAsync();
+
+    if (
+      !permission.granted
+    ) {
+      Alert.alert(
+        'Permission required',
+        'Allow camera access to take a new profile photo.'
+      );
+
+      return;
+    }
+
+    const result =
+      await ImagePicker
+        .launchCameraAsync({
+          mediaTypes:
+            ImagePicker
+              .MediaTypeOptions
+              .Images,
+
+          quality: 0.8,
+        });
+
+    if (
+      !result.canceled
+    ) {
+      await uploadSelectedPhoto(
+        result.assets[0]
+      );
+    }
+  };
+
+  const handleChangePhoto = () => {
+    Alert.alert(
+      'Change Profile Photo',
+      'Choose how you want to update your photo.',
+      [
+        {
+          text: 'Take Photo',
+          onPress: takeProfilePhoto,
+        },
+
+        {
+          text: 'Choose from Gallery',
+          onPress: chooseProfilePhoto,
+        },
+
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+      ]
+    );
+  };
+
+  /* =======================================================
+     PRIVACY
+  ======================================================= */
+
+  const toggleConsent = async (
+    category
+  ) => {
+    if (
+      !isEditing
+    ) {
+      return;
+    }
+
+    const previous = [
+      ...lockedCategories,
+    ];
+
+    const isLocked =
+      lockedCategories.includes(
+        category
+      );
+
+    const next =
+      isLocked
+        ? lockedCategories.filter(
+            item =>
+              item !== category
+          )
+        : [
+            ...lockedCategories,
+            category,
+          ];
+
+    setLockedCategories(
+      next
+    );
+
+    try {
+      await updateConsentSettings(
+        activePatientId,
+        next
+      );
+
+    } catch (err) {
+      console.error(
+        'Consent update error:',
+        err
+      );
+
+      setLockedCategories(
+        previous
+      );
+
+      Alert.alert(
+        'Update failed',
+        'The privacy setting could not be updated.'
+      );
+    }
+  };
+
+  /* =======================================================
+     ALLERGIES
+  ======================================================= */
+
+  const addAllergyRecord = async () => {
+    if (
+      !allergenInput
+        .trim()
+    ) {
+      Alert.alert(
+        'Allergen required',
+        'Enter an allergen name.'
+      );
+
+      return;
+    }
+
+    setAddingAllergy(true);
+
+    try {
+      await addAllergy(
+        activePatientId,
+        allergenInput.trim(),
+        selectedSeverity,
+        allergyNotes.trim()
+      );
+
+      setAllergies(
+        await getAllergies(
+          activePatientId
+        )
+      );
+
+      setIsAddAllergyModalOpen(false);
+
+      setAllergenInput('');
+      setAllergySuggestions([]);
+      setSelectedSeverity('mild');
+      setAllergyNotes('');
+
+    } catch (err) {
+      Alert.alert(
+        'Unable to add allergy',
+        'Please try again.'
+      );
+
     } finally {
       setAddingAllergy(false);
     }
   };
 
-  const promptDeleteAllergy = (allergy) => {
+  const removeAllergy = (
+    allergy
+  ) => {
     Alert.alert(
-      "Remove Allergy",
-      `Are you sure you want to remove ${allergy.allergen}?`,
+      'Remove Allergy',
+      `Remove ${allergy.allergen} from your active allergy list?`,
       [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Remove", 
-          style: "destructive", 
-          onPress: async () => {
-            try {
-              await deleteAllergy(activePatientId, allergy.id);
-              const updatedAllergies = await  getAllergies(activePatientId);
-              setAllergies(updatedAllergies);
-            } catch (err) {
-              Alert.alert('Error', 'Failed to remove allergy.');
-            }
-          } 
-        }
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+
+        {
+          text: 'Remove',
+          style: 'destructive',
+
+          onPress:
+            async () => {
+              try {
+                await deleteAllergy(
+                  activePatientId,
+                  allergy.id
+                );
+
+                setAllergies(
+                  await getAllergies(
+                    activePatientId
+                  )
+                );
+
+              } catch (err) {
+                Alert.alert(
+                  'Unable to remove allergy',
+                  'Please try again.'
+                );
+              }
+            },
+        },
       ]
     );
   };
 
-  // --- Condition Logic ---
-  const handleAddCondition = async () => {
-    if (!conditionInput.trim()) {
-      Alert.alert('Validation Error', 'Please enter a condition name.');
+  /* =======================================================
+     CONDITIONS
+  ======================================================= */
+
+  const addConditionRecord = async () => {
+    if (
+      !conditionInput
+        .trim()
+    ) {
+      Alert.alert(
+        'Condition required',
+        'Enter a condition name.'
+      );
+
       return;
     }
+
     setAddingCondition(true);
+
     try {
-      await addCondition(activePatientId, conditionInput.trim(), diagnosedAtInput.trim(), conditionNotes.trim(), isPriorityInput);
-      const updatedConditions = await getConditions(activePatientId);
-      setConditions(updatedConditions);
+      await addCondition(
+        activePatientId,
+        conditionInput.trim(),
+        diagnosedAtInput.trim(),
+        conditionNotes.trim(),
+        isPriorityInput
+      );
+
+      setConditions(
+        await getConditions(
+          activePatientId
+        )
+      );
+
       setIsAddConditionModalOpen(false);
+
       setConditionInput('');
       setDiagnosedAtInput('');
       setConditionNotes('');
       setIsPriorityInput(false);
+
     } catch (err) {
-      Alert.alert('Error', 'Failed to add condition.');
+      Alert.alert(
+        'Unable to add condition',
+        'Please try again.'
+      );
+
     } finally {
       setAddingCondition(false);
     }
   };
 
-  const promptDeleteCondition = (condition) => {
+  const removeCondition = (
+    condition
+  ) => {
     Alert.alert(
-      "Remove Condition",
-      `Are you sure you want to remove ${condition.condition}?`,
+      'Remove Condition',
+      `Remove ${condition.condition} from your active profile?`,
       [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Remove", 
-          style: "destructive", 
-          onPress: async () => {
-            try {
-              await deleteCondition(activePatientId, condition.id);
-              const updatedConditions = await getConditions(activePatientId);
-              setConditions(updatedConditions);
-            } catch (err) {
-              Alert.alert('Error', 'Failed to remove condition.');
-            }
-          } 
-        }
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+
+        {
+          text: 'Remove',
+          style: 'destructive',
+
+          onPress:
+            async () => {
+              try {
+                await deleteCondition(
+                  activePatientId,
+                  condition.id
+                );
+
+                setConditions(
+                  await getConditions(
+                    activePatientId
+                  )
+                );
+
+              } catch (err) {
+                Alert.alert(
+                  'Unable to remove condition',
+                  'Please try again.'
+                );
+              }
+            },
+        },
       ]
     );
   };
 
-  // --- Bulk Vaccination Logic ---
-  const addVaccineRow = () => {
-    setBulkVaccines([...bulkVaccines, { id: Date.now().toString(), vaccineName: '', dateAdministered: '', doseNumber: '', notes: '' }]);
-  };
+  /* =======================================================
+     MEDICAL DEVICES
+  ======================================================= */
 
-  const removeVaccineRow = (id) => {
-    setBulkVaccines(bulkVaccines.filter(v => v.id !== id));
-  };
+  const addDeviceRecord = async () => {
+    if (
+      !deviceNameInput
+        .trim()
+    ) {
+      Alert.alert(
+        'Device required',
+        'Enter the device or implant name.'
+      );
 
-  const updateVaccineRow = (id, field, value) => {
-    setBulkVaccines(bulkVaccines.map(v => v.id === id ? { ...v, [field]: value } : v));
-    if (field === 'vaccineName') {
-      setVaccineSuggestions(searchVaccines(value));
-      setActiveVaccineRowId(id);
-    }
-  };
-
-  const submitBulkVaccination = async () => {
-    const validVaccines = bulkVaccines.filter(v => v.vaccineName.trim() !== '' || v.dateAdministered.trim() !== '');
-    
-    if (validVaccines.length === 0) {
-      return Alert.alert('Validation Error', 'Please complete at least one vaccination record.');
+      return;
     }
 
-    const hasMissingFields = validVaccines.some(v => v.vaccineName.trim() === '' || v.dateAdministered.trim() === '');
-    
-    if (hasMissingFields) {
-      return Alert.alert('Validation Error', 'Please ensure both Vaccine Name and Date are filled for all active rows.');
-    }
+    setAddingDevice(true);
 
-    setAddingVaccination(true);
     try {
-      await addBulkVaccinations(activePatientId, validVaccines);
-      const updatedVaccinations = await getVaccinations(activePatientId);
-      setVaccinations(updatedVaccinations);
-      setIsAddVaccinationModalOpen(false);
-      setBulkVaccines([{ id: 'initial-row', vaccineName: '', dateAdministered: '', doseNumber: '', notes: '' }]);
-      Alert.alert('Success', 'Vaccinations saved successfully.');
+      await addMedicalDevice(
+        activePatientId,
+        {
+          deviceName:
+            deviceNameInput.trim(),
+
+          deviceType:
+            deviceTypeInput.trim(),
+
+          implantedAt:
+            implantedAtInput,
+
+          notes:
+            deviceNotesInput.trim(),
+
+          isEmergencyRelevant:
+            isEmergencyRelevantInput,
+        }
+      );
+
+      setMedicalDevices(
+        await getMedicalDevices(
+          activePatientId
+        )
+      );
+
+      setIsAddDeviceModalOpen(false);
+
+      setDeviceNameInput('');
+      setDeviceTypeInput('');
+      setImplantedAtInput('');
+      setDeviceNotesInput('');
+      setIsEmergencyRelevantInput(true);
+
     } catch (err) {
-      Alert.alert('Error', 'Failed to add vaccinations.');
+      Alert.alert(
+        'Unable to add device',
+        'Please try again.'
+      );
+
     } finally {
-      setAddingVaccination(false);
+      setAddingDevice(false);
     }
   };
 
-  const promptDeleteVaccination = (vaccination) => {
+  const removeDevice = (
+    device
+  ) => {
     Alert.alert(
-      "Remove Record",
-      `Are you sure you want to remove ${vaccination.vaccine_name}?`,
+      'Remove Medical Device',
+      `Remove ${device.device_name} from your active profile?`,
       [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Remove", 
-          style: "destructive", 
-          onPress: async () => {
-            try {
-              await deleteVaccination(activePatientId, vaccination.id);
-              const updatedVaccinations = await getVaccinations(activePatientId);
-              setVaccinations(updatedVaccinations);
-            } catch (err) {
-              Alert.alert('Error', 'Failed to remove record.');
-            }
-          } 
-        }
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+
+        {
+          text: 'Remove',
+          style: 'destructive',
+
+          onPress:
+            async () => {
+              try {
+                await deleteMedicalDevice(
+                  activePatientId,
+                  device.id
+                );
+
+                setMedicalDevices(
+                  await getMedicalDevices(
+                    activePatientId
+                  )
+                );
+
+              } catch (err) {
+                Alert.alert(
+                  'Unable to remove device',
+                  'Please try again.'
+                );
+              }
+            },
+        },
       ]
     );
   };
 
-  // --- AI Camera Scanner ---
-  const handleTakeVaccinePhoto = async () => {
-    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-    if (permissionResult.granted === false) {
-      return Alert.alert("Permission Required", "You need to allow camera access to scan a card.");
-    }
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
-    });
-    if (!result.canceled) processVaccineImage(result.assets[0].uri, result.assets[0].mimeType);
-  };
+  /* =======================================================
+     MEDICAL BACKGROUND
+  ======================================================= */
 
-  const handleChooseVaccinePhoto = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (permissionResult.granted === false) {
-      return Alert.alert("Permission Required", "You need to allow gallery access to upload a card.");
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
-    });
-    if (!result.canceled) processVaccineImage(result.assets[0].uri, result.assets[0].mimeType);
-  };
+  const addBackgroundRecord = async () => {
+    if (
+      !backgroundTitleInput
+        .trim()
+    ) {
+      Alert.alert(
+        'Title required',
+        'Enter a title for the medical background record.'
+      );
 
-  const processVaccineImage = async (uri, mimeType) => {
-    setScanningCard(true);
+      return;
+    }
+
+    setAddingBackground(true);
+
     try {
-      const data = await scanVaccinationCard(activePatientId, uri, mimeType);
-      
-      const extractedArray = Array.isArray(data) ? data : [data];
-      const newBulkRows = extractedArray.map((item, index) => ({
-        id: Date.now().toString() + index,
-        vaccineName: item.vaccineName || '',
-        dateAdministered: item.dateAdministered || '',
-        doseNumber: item.doseNumber || '',
-        notes: ''
-      }));
+      await addHealthBackground(
+        activePatientId,
+        {
+          backgroundType:
+            backgroundTypeInput,
 
-      if (newBulkRows.length > 0) {
-        setBulkVaccines(newBulkRows);
-        Alert.alert('Success', 'Card scanned! Please review the extracted data below before saving.');
-      }
+          title:
+            backgroundTitleInput.trim(),
+
+          eventDate:
+            backgroundDateInput,
+
+          notes:
+            backgroundNotesInput.trim(),
+
+          isEmergencyRelevant:
+            backgroundEmergencyInput,
+        }
+      );
+
+      setHealthBackground(
+        await getHealthBackground(
+          activePatientId
+        )
+      );
+
+      setIsAddBackgroundModalOpen(false);
+
+      setBackgroundTypeInput('major_surgery');
+      setBackgroundTitleInput('');
+      setBackgroundDateInput('');
+      setBackgroundNotesInput('');
+      setBackgroundEmergencyInput(false);
+
     } catch (err) {
-      Alert.alert('Scan Failed', 'Failed to extract data from the image. Please try again or enter manually.');
+      Alert.alert(
+        'Unable to add medical background',
+        'Please try again.'
+      );
+
+    } finally {
+      setAddingBackground(false);
+    }
+  };
+
+  const removeBackground = (
+    record
+  ) => {
+    Alert.alert(
+      'Remove Medical Background',
+      `Remove ${record.title} from your active profile?`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+
+        {
+          text: 'Remove',
+          style: 'destructive',
+
+          onPress:
+            async () => {
+              try {
+                await deleteHealthBackground(
+                  activePatientId,
+                  record.id
+                );
+
+                setHealthBackground(
+                  await getHealthBackground(
+                    activePatientId
+                  )
+                );
+
+              } catch (err) {
+                Alert.alert(
+                  'Unable to remove record',
+                  'Please try again.'
+                );
+              }
+            },
+        },
+      ]
+    );
+  };
+
+  /* =======================================================
+     FAMILY HISTORY
+  ======================================================= */
+
+  const addFamilyRecord = async () => {
+    if (
+      !familyConditionInput
+        .trim()
+    ) {
+      Alert.alert(
+        'Condition required',
+        'Enter the family medical condition.'
+      );
+
+      return;
+    }
+
+    setAddingFamily(true);
+
+    try {
+      await addFamilyHistory(
+        activePatientId,
+        {
+          relation:
+            familyRelationInput,
+
+          condition:
+            familyConditionInput.trim(),
+
+          notes:
+            familyNotesInput.trim(),
+
+          isEmergencyRelevant:
+            familyEmergencyInput,
+        }
+      );
+
+      setFamilyHistory(
+        await getFamilyHistory(
+          activePatientId
+        )
+      );
+
+      setIsAddFamilyModalOpen(false);
+
+      setFamilyRelationInput('mother');
+      setFamilyConditionInput('');
+      setFamilyNotesInput('');
+      setFamilyEmergencyInput(false);
+
+    } catch (err) {
+      Alert.alert(
+        'Unable to add family history',
+        'Please try again.'
+      );
+
+    } finally {
+      setAddingFamily(false);
+    }
+  };
+
+  const removeFamilyRecord = (
+    record
+  ) => {
+    Alert.alert(
+      'Remove Family History',
+      `Remove ${record.condition} from your active family history?`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+
+        {
+          text: 'Remove',
+          style: 'destructive',
+
+          onPress:
+            async () => {
+              try {
+                await deleteFamilyHistory(
+                  activePatientId,
+                  record.id
+                );
+
+                setFamilyHistory(
+                  await getFamilyHistory(
+                    activePatientId
+                  )
+                );
+
+              } catch (err) {
+                Alert.alert(
+                  'Unable to remove record',
+                  'Please try again.'
+                );
+              }
+            },
+        },
+      ]
+    );
+  };
+
+  /* =======================================================
+     VACCINATIONS
+  ======================================================= */
+
+  const resetVaccines = () => {
+    setBulkVaccines([
+      {
+        id: 'initial',
+        vaccineName: '',
+        dateAdministered: '',
+        doseNumber: '',
+        notes: '',
+      },
+    ]);
+
+    setActiveVaccineRow(null);
+    setVaccineSuggestions([]);
+  };
+
+  const addVaccineRow = () => {
+    setBulkVaccines(
+      previous => [
+        ...previous,
+
+        {
+          id: `${Date.now()}`,
+          vaccineName: '',
+          dateAdministered: '',
+          doseNumber: '',
+          notes: '',
+        },
+      ]
+    );
+  };
+
+  const updateVaccineRow = (
+    id,
+    field,
+    value
+  ) => {
+    setBulkVaccines(
+      previous =>
+        previous.map(
+          row =>
+            row.id === id
+              ? {
+                  ...row,
+                  [field]: value,
+                }
+              : row
+        )
+    );
+
+    if (
+      field ===
+      'vaccineName'
+    ) {
+      setVaccineSuggestions(
+        searchVaccines(
+          value
+        )
+      );
+
+      setActiveVaccineRow(
+        id
+      );
+    }
+  };
+
+  const saveVaccinations = async () => {
+    const activeRows =
+      bulkVaccines.filter(
+        row =>
+          row.vaccineName.trim() ||
+          row.dateAdministered.trim()
+      );
+
+    if (
+      activeRows.length ===
+      0
+    ) {
+      Alert.alert(
+        'Vaccination required',
+        'Complete at least one vaccination record.'
+      );
+
+      return;
+    }
+
+    if (
+      activeRows.some(
+        row =>
+          !row.vaccineName.trim() ||
+          !row.dateAdministered.trim()
+      )
+    ) {
+      Alert.alert(
+        'Incomplete record',
+        'Vaccine Name and Date are required for every active row.'
+      );
+
+      return;
+    }
+
+    setAddingVaccinations(true);
+
+    try {
+      await addBulkVaccinations(
+        activePatientId,
+        activeRows
+      );
+
+      setVaccinations(
+        await getVaccinations(
+          activePatientId
+        )
+      );
+
+      setIsVaccinationModalOpen(false);
+
+      resetVaccines();
+
+    } catch (err) {
+      Alert.alert(
+        'Unable to save vaccinations',
+        'Please try again.'
+      );
+
+    } finally {
+      setAddingVaccinations(false);
+    }
+  };
+
+  const removeVaccination = (
+    vaccination
+  ) => {
+    Alert.alert(
+      'Remove Vaccination',
+      `Remove ${vaccination.vaccine_name} from your vaccination history?`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+
+        {
+          text: 'Remove',
+          style: 'destructive',
+
+          onPress:
+            async () => {
+              try {
+                await deleteVaccination(
+                  activePatientId,
+                  vaccination.id
+                );
+
+                setVaccinations(
+                  await getVaccinations(
+                    activePatientId
+                  )
+                );
+
+              } catch (err) {
+                Alert.alert(
+                  'Unable to remove vaccination',
+                  'Please try again.'
+                );
+              }
+            },
+        },
+      ]
+    );
+  };
+
+  /* =======================================================
+     AI VACCINATION CARD SCAN
+  ======================================================= */
+
+  const processVaccineImage = async (
+    asset
+  ) => {
+    setScanningCard(true);
+
+    try {
+      const data =
+        await scanVaccinationCard(
+          activePatientId,
+          asset.uri,
+          asset.mimeType ||
+            'image/jpeg'
+        );
+
+      const extracted =
+        Array.isArray(data)
+          ? data
+          : [
+              data,
+            ];
+
+      const rows =
+        extracted
+          .filter(Boolean)
+          .map(
+            (
+              item,
+              index
+            ) => ({
+              id:
+                `${Date.now()}-${index}`,
+
+              vaccineName:
+                item.vaccineName ||
+                '',
+
+              dateAdministered:
+                item.dateAdministered ||
+                '',
+
+              doseNumber:
+                item.doseNumber ||
+                '',
+
+              notes:
+                '',
+            })
+          );
+
+      if (
+        rows.length >
+        0
+      ) {
+        setBulkVaccines(
+          rows
+        );
+
+        Alert.alert(
+          'Card scanned',
+          'AI-extracted vaccination records are ready. Please review every field before saving.'
+        );
+      }
+
+    } catch (err) {
+      Alert.alert(
+        'Scan failed',
+        'The vaccination card could not be read. Try another image or enter the records manually.'
+      );
+
     } finally {
       setScanningCard(false);
     }
   };
 
-  if (loading) {
+  const takeVaccinePhoto = async () => {
+    const permission =
+      await ImagePicker
+        .requestCameraPermissionsAsync();
+
+    if (
+      !permission.granted
+    ) {
+      Alert.alert(
+        'Permission required',
+        'Allow camera access to scan a vaccination card.'
+      );
+
+      return;
+    }
+
+    const result =
+      await ImagePicker
+        .launchCameraAsync({
+          mediaTypes:
+            ImagePicker
+              .MediaTypeOptions
+              .Images,
+
+          quality: 0.8,
+        });
+
+    if (
+      !result.canceled
+    ) {
+      await processVaccineImage(
+        result.assets[0]
+      );
+    }
+  };
+
+  const chooseVaccinePhoto = async () => {
+    const permission =
+      await ImagePicker
+        .requestMediaLibraryPermissionsAsync();
+
+    if (
+      !permission.granted
+    ) {
+      Alert.alert(
+        'Permission required',
+        'Allow photo access to select a vaccination card.'
+      );
+
+      return;
+    }
+
+    const result =
+      await ImagePicker
+        .launchImageLibraryAsync({
+          mediaTypes:
+            ImagePicker
+              .MediaTypeOptions
+              .Images,
+
+          quality: 0.8,
+        });
+
+    if (
+      !result.canceled
+    ) {
+      await processVaccineImage(
+        result.assets[0]
+      );
+    }
+  };
+
+  /* =======================================================
+     LOADING / ERROR
+  ======================================================= */
+
+  if (
+    loading
+  ) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#1E3A5F" />
-        <Text style={styles.loadingText}>Loading profile...</Text>
+      <View style={styles.centerScreen}>
+
+        <View style={styles.centerIcon}>
+
+          <UserRound
+            size={28}
+            color={COLORS.teal}
+          />
+
+        </View>
+
+        <ActivityIndicator
+          color={COLORS.teal}
+        />
+
+        <Text style={styles.centerTitle}>
+          Loading your profile
+        </Text>
+
+        <Text style={styles.centerDescription}>
+          Preparing your Care4U health information
+        </Text>
+
       </View>
     );
   }
 
-  if (error) {
-    return <View style={styles.centered}><Text style={styles.errorText}>{error}</Text></View>;
+  if (
+    error &&
+    !patient
+  ) {
+    return (
+      <View style={styles.centerScreen}>
+
+        <View
+          style={[
+            styles.centerIcon,
+            {
+              backgroundColor:
+                COLORS.dangerSoft,
+            },
+          ]}
+        >
+
+          <AlertCircle
+            size={28}
+            color={COLORS.danger}
+          />
+
+        </View>
+
+        <Text style={styles.centerTitle}>
+          Profile unavailable
+        </Text>
+
+        <Text style={styles.centerDescription}>
+          {error}
+        </Text>
+
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={() =>
+            fetchData()
+          }
+        >
+
+          <Text style={styles.retryButtonText}>
+            Try again
+          </Text>
+
+        </TouchableOpacity>
+
+      </View>
+    );
   }
+
+  /* =======================================================
+     PAGE
+  ======================================================= */
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
 
-          <View style={styles.header}>
-            <View style={styles.headerRow}>
-              <View style={styles.avatarContainer}>
-                <Image
-                  source={{ uri: patient?.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(patient?.full_name || 'Patient')}&background=2E75B6&color=fff&size=120&bold=true&rounded=true` }}
-                  style={styles.profilePhoto}
-                />
-              </View>
-              <View style={styles.headerText}>
-                <Text style={styles.headerEyebrow}>MY PROFILE</Text>
-                <Text style={styles.headerTitle} numberOfLines={1}>{patient?.full_name || 'Patient'}</Text>
+      <KeyboardAvoidingView
+        style={{
+          flex: 1,
+        }}
+        behavior={
+          Platform.OS ===
+          'ios'
+            ? 'padding'
+            : undefined
+        }
+      >
 
-                {/* Clinical Badges Row */}
-                <View style={styles.badgesRow}>
-                  <Text style={styles.demographicsText}>
-                    {formatAge(patient?.date_of_birth)} · {patient?.gender ? patient.gender.charAt(0).toUpperCase() + patient.gender.slice(1) : '—'}
-                  </Text>
-                  {patient?.blood_group ? (
-                    <View style={styles.bloodGroupBadge}>
-                      <Text style={styles.bloodGroupText}>{patient.blood_group}</Text>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={
+            styles.scrollContent
+          }
+          showsVerticalScrollIndicator={
+            false
+          }
+          keyboardShouldPersistTaps="handled"
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() =>
+                fetchData(
+                  true
+                )
+              }
+              tintColor={COLORS.teal}
+            />
+          }
+        >
+
+          {/* =================================================
+              PROFILE HERO
+          ================================================== */}
+
+          <View style={styles.heroCard}>
+
+            <View style={styles.heroBackground}>
+
+              <View style={styles.heroCircleOne} />
+              <View style={styles.heroCircleTwo} />
+
+            </View>
+
+            <View style={styles.avatarPosition}>
+
+              <View style={styles.avatarOuter}>
+
+                <View style={styles.avatarInner}>
+
+                  {patient?.photo_url ? (
+
+                    <Image
+                      source={{
+                        uri:
+                          patient.photo_url,
+                      }}
+                      style={styles.avatarImage}
+                      resizeMode="cover"
+                    />
+
+                  ) : (
+
+                    <View style={styles.avatarFallback}>
+
+                      <UserRound
+                        size={34}
+                        color="rgba(255,255,255,0.72)"
+                      />
+
+                      <Text style={styles.avatarInitials}>
+                        {getInitials(
+                          patient?.full_name
+                        )}
+                      </Text>
+
                     </View>
-                  ) : null}
-                  {conditions.some(c => c.is_priority) && (
-                    <View style={styles.priorityConditionBadge}>
-                      <Text style={styles.priorityConditionText}>⚠ Priority</Text>
-                    </View>
+
                   )}
+
                 </View>
+
+                {isEditing ? (
+                  <TouchableOpacity
+                    style={styles.photoButton}
+                    activeOpacity={0.8}
+                    disabled={photoUploading}
+                    onPress={handleChangePhoto}
+                  >
+
+                    {photoUploading ? (
+                      <ActivityIndicator
+                        size="small"
+                        color="#FFFFFF"
+                      />
+                    ) : (
+                      <Camera
+                        size={16}
+                        color="#FFFFFF"
+                      />
+                    )}
+
+                  </TouchableOpacity>
+                ) : null}
+
               </View>
+
             </View>
 
-            <View style={styles.qrCodeContainer}>
-              <Text style={styles.qrCodeLabel}>PATIENT ID</Text>
-              <Text style={styles.qrCodeValue}>{patient?.qr_code_id || '—'}</Text>
+            <View style={styles.heroContent}>
+
+              <Text style={styles.heroEyebrow}>
+                CARE4U PATIENT
+              </Text>
+
+              <Text style={styles.heroName}>
+                {patient?.full_name ||
+                  'Patient'}
+              </Text>
+
+              <View style={styles.heroMeta}>
+
+                <Text style={styles.heroMetaText}>
+                  {formatAge(
+                    patient?.date_of_birth
+                  )}
+                </Text>
+
+                <View style={styles.heroMetaDot} />
+
+                <Text style={styles.heroMetaText}>
+                  {capitalise(
+                    patient?.gender
+                  )}
+                </Text>
+
+                {patient?.blood_group ? (
+                  <>
+                    <View style={styles.heroMetaDot} />
+
+                    <View style={styles.bloodBadge}>
+
+                      <Droplets
+                        size={11}
+                        color="#FFFFFF"
+                      />
+
+                      <Text style={styles.bloodBadgeText}>
+                        {
+                          patient.blood_group
+                        }
+                      </Text>
+
+                    </View>
+                  </>
+                ) : null}
+
+              </View>
+
+              {!isEditing ? (
+                <TouchableOpacity
+                  style={styles.primaryEditButton}
+                  activeOpacity={0.8}
+                  onPress={startEditing}
+                >
+
+                  <Pencil
+                    size={16}
+                    color="#FFFFFF"
+                  />
+
+                  <Text style={styles.primaryEditButtonText}>
+                    Edit Profile
+                  </Text>
+
+                </TouchableOpacity>
+              ) : (
+
+                <View style={styles.editingBanner}>
+
+                  <Pencil
+                    size={15}
+                    color={COLORS.teal}
+                  />
+
+                  <Text style={styles.editingBannerText}>
+                    Edit Mode Active
+                  </Text>
+
+                </View>
+
+              )}
+
             </View>
+
           </View>
 
-          {saveSuccess && (
+          {/* =================================================
+              SUCCESS
+          ================================================== */}
+
+          {saveSuccess ? (
             <View style={styles.successBanner}>
-              <Text style={styles.successText}>✓  Profile updated successfully</Text>
+
+              <CheckCircle2
+                size={17}
+                color={COLORS.green}
+              />
+
+              <Text style={styles.successText}>
+                Profile updated successfully
+              </Text>
+
             </View>
-          )}
+          ) : null}
 
-          {/* VIEW MODE */}
-          {!isEditing && (
-            <>
-              <View style={styles.card}>
-                <Text style={styles.cardTitle}>Personal Information</Text>
-                <ProfileField label="Full Name" value={patient?.full_name} />
-                <ProfileField label="Blood Group" value={patient?.blood_group} />
-                <ProfileField label="Date of Birth" value={formatDate(patient?.date_of_birth)} />
-                <ProfileField label="Gender" value={patient?.gender ? patient.gender.charAt(0).toUpperCase() + patient.gender.slice(1) : '—'} />
-                <ProfileField label="NIC" value={patient?.nic} />
-              </View>
+          {/* =================================================
+              HEALTH SNAPSHOT
+          ================================================== */}
 
-              <View style={styles.card}>
-                <Text style={styles.cardTitle}>Emergency Contact</Text>
-                <ProfileField label="Name" value={patient?.emergency_contact_name} />
-                <ProfileField label="Phone" value={patient?.emergency_contact_phone} />
-                <ProfileField label="Relationship" value={patient?.emergency_contact_relationship ? patient.emergency_contact_relationship.charAt(0).toUpperCase() + patient.emergency_contact_relationship.slice(1) : '—'} />
-              </View>
+          <View style={styles.summaryGrid}>
 
-              {/* Chronic Conditions Section */}
-              <View style={styles.card}>
-                <View style={styles.cardHeaderRow}>
-                  <Text style={styles.cardTitleHalf}>Chronic Conditions</Text>
-                  <TouchableOpacity onPress={() => setIsAddConditionModalOpen(true)} style={styles.addMiniButton}>
-                    <Text style={styles.addMiniButtonText}>+ Add</Text>
-                  </TouchableOpacity>
-                </View>
+            <View style={styles.summaryCard}>
 
-                {conditions.length === 0 ? (
-                  <Text style={styles.noAllergies}>No conditions recorded</Text>
-                ) : (
-                  conditions.map((condition) => (
-                    <View key={condition.id} style={[styles.allergyRow, condition.is_priority && styles.priorityRow]}>
-                      <View style={styles.allergyLeft}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                          <Text style={[styles.allergyName, condition.is_priority && styles.priorityText]}>
-                            {condition.condition}
-                          </Text>
-                        </View>
-                        {condition.diagnosed_at && <Text style={styles.allergyNotes}>Diagnosed: {formatDate(condition.diagnosed_at)}</Text>}
-                        {condition.notes ? <Text style={styles.allergyNotes}>{condition.notes}</Text> : null}
-                      </View>
-                      <View style={styles.allergyRight}>
-                        {condition.is_priority && (
-                          <View style={styles.priorityBadge}>
-                            <Text style={styles.priorityBadgeText}>PRIORITY</Text>
-                          </View>
-                        )}
-                        <TouchableOpacity onPress={() => promptDeleteCondition(condition)} style={styles.deleteIconBtn}>
-                          <Text style={styles.deleteIconText}>✕</Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  ))
-                )}
-              </View>
+              <Droplets
+                size={18}
+                color={COLORS.danger}
+              />
 
-              {/* Known Allergies Section */}
-              <View style={styles.card}>
-                <View style={styles.cardHeaderRow}>
-                  <Text style={styles.cardTitleHalf}>Known Allergies</Text>
-                  <TouchableOpacity onPress={() => { handleSearchAllergens(''); setIsAddModalOpen(true); }} style={styles.addMiniButton}>
-                    <Text style={styles.addMiniButtonText}>+ Add</Text>
-                  </TouchableOpacity>
-                </View>
+              <Text style={styles.summaryValue}>
+                {patient?.blood_group ||
+                  '—'}
+              </Text>
 
-                {allergies.length === 0 ? (
-                  <Text style={styles.noAllergies}>No allergies recorded</Text>
-                ) : (
-                  allergies.map((allergy) => (
-                    <View key={allergy.id} style={styles.allergyRow}>
-                      <View style={styles.allergyLeft}>
-                        <Text style={styles.allergyName}>{allergy.allergen}</Text>
-                        {allergy.notes ? <Text style={styles.allergyNotes}>{allergy.notes}</Text> : null}
-                      </View>
-                      <View style={styles.allergyRight}>
-                        <View style={[styles.severityBadge, { backgroundColor: severityColor(allergy.severity) }]}>
-                          <Text style={styles.severityText}>{allergy.severity.charAt(0).toUpperCase() + allergy.severity.slice(1)}</Text>
-                        </View>
-                        <TouchableOpacity onPress={() => promptDeleteAllergy(allergy)} style={styles.deleteIconBtn}>
-                          <Text style={styles.deleteIconText}>✕</Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  ))
-                )}
-              </View>
+              <Text style={styles.summaryLabel}>
+                Blood Group
+              </Text>
 
-              {/* Vaccination Records Section */}
-              <View style={styles.card}>
-                <View style={styles.cardHeaderRow}>
-                  <Text style={styles.cardTitleHalf}>Vaccination Records</Text>
-                  <TouchableOpacity onPress={() => { setBulkVaccines([{ id: 'initial-row', vaccineName: '', dateAdministered: '', doseNumber: '', notes: '' }]); setIsAddVaccinationModalOpen(true); }} style={styles.addMiniButton}>
-                    <Text style={styles.addMiniButtonText}>+ Add</Text>
-                  </TouchableOpacity>
-                </View>
+            </View>
 
-                {vaccinations.length === 0 ? (
-                  <Text style={styles.noAllergies}>No vaccination records found</Text>
-                ) : (
-                  vaccinations.map((vaccine) => (
-                    <View key={vaccine.id} style={styles.allergyRow}>
-                      <View style={styles.allergyLeft}>
-                        <Text style={styles.allergyName}>{vaccine.vaccine_name}</Text>
-                        <Text style={styles.allergyNotes}>Given: {formatDate(vaccine.date_administered)}</Text>
-                        {vaccine.dose_number ? <Text style={styles.allergyNotes}>Dose: {vaccine.dose_number}</Text> : null}
-                        {vaccine.notes ? <Text style={[styles.allergyNotes, { fontStyle: 'italic' }]}>"{vaccine.notes}"</Text> : null}
-                      </View>
-                      <View style={styles.allergyRight}>
-                        <TouchableOpacity onPress={() => promptDeleteVaccination(vaccine)} style={styles.deleteIconBtn}>
-                          <Text style={styles.deleteIconText}>✕</Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  ))
-                )}
-              </View>
+            <View style={styles.summaryCard}>
 
-              {/* ── NEW: Privacy & Consent Controls (Epic 8.12) ── */}
-              <View style={styles.card}>
-                <Text style={styles.cardTitle}>Privacy & Consent Controls</Text>
-                <Text style={styles.consentSubTitle}>
-                  Lock specific medical record categories. Doctors will require your explicit permission to view locked records.
-                </Text>
-                
-                <View style={styles.consentGrid}>
-                  {SENSITIVE_CATEGORIES.map(category => {
-                    const isLocked = lockedCategories.includes(category);
-                    return (
-                      <View key={category} style={[styles.consentItem, isLocked && styles.consentItemLocked]}>
-                        <View style={styles.consentHeader}>
-                          <View style={[styles.consentIcon, isLocked ? styles.consentIconLocked : styles.consentIconUnlocked]}>
-                            <Text style={styles.consentIconText}>{isLocked ? '🔒' : '🔓'}</Text>
-                          </View>
-                          <Switch
-                            value={isLocked}
-                            onValueChange={() => handleToggleConsent(category)}
-                            trackColor={{ false: '#E2E8F0', true: '#FCA5A5' }}
-                            thumbColor={isLocked ? '#DC2626' : '#FFFFFF'}
-                            ios_backgroundColor="#E2E8F0"
-                          />
-                        </View>
-                        <Text style={styles.consentCategoryName}>{category}</Text>
-                        <Text style={[styles.consentStatusText, isLocked ? styles.consentStatusTextLocked : styles.consentStatusTextUnlocked]}>
-                          {isLocked ? 'Locked (Requires Approval)' : 'Unlocked (Default Access)'}
-                        </Text>
-                      </View>
-                    );
-                  })}
-                </View>
-              </View>
+              <AlertTriangle
+                size={18}
+                color={COLORS.amber}
+              />
 
-              <TouchableOpacity style={styles.editButton} onPress={handleEditPress} activeOpacity={0.85}>
-                <Text style={styles.editButtonText}>✎  Edit Profile</Text>
-              </TouchableOpacity>
-            </>
-          )}
+              <Text style={styles.summaryValue}>
+                {allergies.length}
+              </Text>
 
-          {/* EDIT MODE */}
-          {isEditing && (
-            <>
-              <View style={styles.card}>
-                <Text style={styles.cardTitle}>Edit Personal Information</Text>
-                <View style={styles.editFieldWrapper}>
-                  <Text style={styles.editLabel}>Full Name</Text>
+              <Text style={styles.summaryLabel}>
+                Allergies
+              </Text>
+
+            </View>
+
+            <View style={styles.summaryCard}>
+
+              <HeartPulse
+                size={18}
+                color={COLORS.blue}
+              />
+
+              <Text style={styles.summaryValue}>
+                {conditions.length}
+              </Text>
+
+              <Text style={styles.summaryLabel}>
+                Conditions
+              </Text>
+
+            </View>
+
+            <View style={styles.summaryCard}>
+
+              <Syringe
+                size={18}
+                color={COLORS.teal}
+              />
+
+              <Text style={styles.summaryValue}>
+                {vaccinations.length}
+              </Text>
+
+              <Text style={styles.summaryLabel}>
+                Vaccinations
+              </Text>
+
+            </View>
+
+          </View>
+
+          {/* =================================================
+              PERSONAL INFORMATION
+          ================================================== */}
+
+          <SectionCard
+            title="Personal Information"
+            description="Your core identity and demographic information."
+          >
+
+            {isEditing ? (
+              <>
+
+                <View style={styles.formField}>
+
+                  <Text style={styles.formLabel}>
+                    Full Name
+                  </Text>
+
                   <TextInput
                     style={styles.textInput}
                     value={formData.full_name}
-                    onChangeText={(v) => updateField('full_name', v)}
+                    onChangeText={
+                      value =>
+                        updateField(
+                          'full_name',
+                          value
+                        )
+                    }
                     placeholder="Enter full name"
-                    placeholderTextColor="#94A3B8"
+                    placeholderTextColor={COLORS.subtle}
                   />
-                </View>
-                <OptionSelector label="Blood Group" value={formData.blood_group} options={BLOOD_GROUP_OPTIONS} onSelect={(v) => updateField('blood_group', v)} />
-              </View>
 
-              <View style={styles.card}>
-                <Text style={styles.cardTitle}>Edit Emergency Contact</Text>
-                <View style={styles.editFieldWrapper}>
-                  <Text style={styles.editLabel}>Contact Name</Text>
+                </View>
+
+                <OptionSelector
+                  label="Blood Group"
+                  value={formData.blood_group}
+                  options={BLOOD_GROUP_OPTIONS}
+                  onSelect={
+                    value =>
+                      updateField(
+                        'blood_group',
+                        value
+                      )
+                  }
+                />
+
+                <View style={styles.readOnlyNotice}>
+
+                  <ShieldCheck
+                    size={14}
+                    color={COLORS.subtle}
+                  />
+
+                  <Text style={styles.readOnlyNoticeText}>
+                    Date of birth, gender and NIC are protected identity fields.
+                  </Text>
+
+                </View>
+
+              </>
+            ) : (
+              <>
+
+                <InformationRow
+                  icon={UserRound}
+                  label="Full Name"
+                  value={patient?.full_name}
+                />
+
+                <InformationRow
+                  icon={CalendarDays}
+                  label="Date of Birth"
+                  value={
+                    formatDate(
+                      patient?.date_of_birth
+                    )
+                  }
+                />
+
+                <InformationRow
+                  icon={UserRound}
+                  label="Gender"
+                  value={
+                    capitalise(
+                      patient?.gender
+                    )
+                  }
+                />
+
+                <InformationRow
+                  icon={Droplets}
+                  label="Blood Group"
+                  value={patient?.blood_group}
+                />
+
+                <InformationRow
+                  icon={ShieldCheck}
+                  label="NIC"
+                  value={patient?.nic}
+                />
+
+              </>
+            )}
+
+          </SectionCard>
+
+          {/* =================================================
+              EMERGENCY CONTACT
+          ================================================== */}
+
+          <SectionCard
+            title="Emergency Contact"
+            description="Keep this information current for urgent care."
+          >
+
+            {isEditing ? (
+              <>
+
+                <View style={styles.formField}>
+
+                  <Text style={styles.formLabel}>
+                    Contact Name
+                  </Text>
+
                   <TextInput
                     style={styles.textInput}
                     value={formData.emergency_contact_name}
-                    onChangeText={(v) => updateField('emergency_contact_name', v)}
+                    onChangeText={
+                      value =>
+                        updateField(
+                          'emergency_contact_name',
+                          value
+                        )
+                    }
                     placeholder="Enter contact name"
-                    placeholderTextColor="#94A3B8"
+                    placeholderTextColor={COLORS.subtle}
                   />
+
                 </View>
-                <View style={styles.editFieldWrapper}>
-                  <Text style={styles.editLabel}>Contact Phone</Text>
+
+                <View style={styles.formField}>
+
+                  <Text style={styles.formLabel}>
+                    Contact Phone
+                  </Text>
+
                   <TextInput
                     style={styles.textInput}
                     value={formData.emergency_contact_phone}
-                    onChangeText={(v) => updateField('emergency_contact_phone', v)}
-                    placeholder="Enter phone number"
-                    placeholderTextColor="#94A3B8"
+                    onChangeText={
+                      value =>
+                        updateField(
+                          'emergency_contact_phone',
+                          value
+                        )
+                    }
                     keyboardType="phone-pad"
+                    placeholder="Enter phone number"
+                    placeholderTextColor={COLORS.subtle}
                   />
+
                 </View>
-                <OptionSelector label="Relationship" value={formData.emergency_contact_relationship} options={RELATIONSHIP_OPTIONS} onSelect={(v) => updateField('emergency_contact_relationship', v)} />
-              </View>
 
-              {saveError && (
-                <View style={styles.errorBanner}>
-                  <Text style={styles.errorBannerText}>{saveError}</Text>
-                </View>
-              )}
-
-              <View style={styles.buttonRow}>
-                <TouchableOpacity style={styles.cancelButton} onPress={() => setIsEditing(false)} disabled={saving}>
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.saveButton, saving && styles.saveButtonDisabled]} onPress={handleSave} disabled={saving}>
-                  {saving ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={styles.saveButtonText}>Save Changes</Text>}
-                </TouchableOpacity>
-              </View>
-            </>
-          )}
-
-        </ScrollView>
-      </KeyboardAvoidingView>
-
-      {/* Add Allergy Modal */}
-      <Modal visible={isAddModalOpen} animationType="slide" transparent={true}>
-        <View style={styles.modalOverlay}>
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalContent}>
-
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add New Allergy</Text>
-              <TouchableOpacity onPress={() => setIsAddModalOpen(false)}><Text style={styles.modalCloseText}>✕</Text></TouchableOpacity>
-            </View>
-
-            <ScrollView keyboardShouldPersistTaps="handled">
-              <View style={styles.editFieldWrapper}>
-                <Text style={styles.editLabel}>Allergen Name *</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={allergenInput}
-                  onChangeText={handleSearchAllergens}
-                  placeholder="Start typing to search..."
-                  placeholderTextColor="#94A3B8"
-                  autoCapitalize="words"
+                <OptionSelector
+                  label="Relationship"
+                  value={formData.emergency_contact_relationship}
+                  options={RELATIONSHIP_OPTIONS}
+                  onSelect={
+                    value =>
+                      updateField(
+                        'emergency_contact_relationship',
+                        value
+                      )
+                  }
                 />
 
-                {suggestions.length > 0 && allergenInput.length > 0 && (
-                  <View style={styles.suggestionsContainer}>
-                    {suggestions.map((sugg, i) => (
-                      <TouchableOpacity key={i} style={styles.suggestionItem} onPress={() => { setAllergenInput(sugg.name); setSuggestions([]); }}>
-                        <Text style={styles.suggestionName}>{sugg.name}</Text>
-                        <Text style={styles.suggestionCat}>{sugg.category}</Text>
+              </>
+            ) : (
+              <>
+
+                <InformationRow
+                  icon={UserRound}
+                  label="Contact Name"
+                  value={patient?.emergency_contact_name}
+                />
+
+                <InformationRow
+                  icon={Phone}
+                  label="Phone"
+                  value={patient?.emergency_contact_phone}
+                />
+
+                <InformationRow
+                  icon={Users}
+                  label="Relationship"
+                  value={
+                    capitalise(
+                      patient?.emergency_contact_relationship
+                    )
+                  }
+                />
+
+              </>
+            )}
+
+          </SectionCard>
+
+          {/* =================================================
+              CONDITIONS
+          ================================================== */}
+
+          <SectionCard
+            title="Chronic Conditions"
+            description="Long-term health conditions relevant to clinical care."
+            editing={isEditing}
+            onAction={() =>
+              setIsAddConditionModalOpen(
+                true
+              )
+            }
+          >
+
+            {conditions.length === 0 ? (
+
+              <EmptySection
+                icon={HeartPulse}
+                text="No chronic conditions recorded."
+              />
+
+            ) : (
+
+              conditions.map(
+                condition => (
+                  <View
+                    key={condition.id}
+                    style={[
+                      styles.recordItem,
+                      condition.is_priority &&
+                        styles.priorityRecord,
+                    ]}
+                  >
+
+                    <View style={styles.recordMain}>
+
+                      <View
+                        style={[
+                          styles.recordIcon,
+                          {
+                            backgroundColor:
+                              condition.is_priority
+                                ? COLORS.dangerSoft
+                                : COLORS.blueSoft,
+                          },
+                        ]}
+                      >
+
+                        {condition.is_priority ? (
+                          <AlertTriangle
+                            size={17}
+                            color={COLORS.danger}
+                          />
+                        ) : (
+                          <HeartPulse
+                            size={17}
+                            color={COLORS.blue}
+                          />
+                        )}
+
+                      </View>
+
+                      <View style={styles.recordText}>
+
+                        <View style={styles.recordTitleRow}>
+
+                          <Text style={styles.recordTitle}>
+                            {
+                              condition.condition
+                            }
+                          </Text>
+
+                          {condition.is_priority ? (
+                            <View style={styles.emergencyBadge}>
+
+                              <Text style={styles.emergencyBadgeText}>
+                                PRIORITY
+                              </Text>
+
+                            </View>
+                          ) : null}
+
+                        </View>
+
+                        {condition.diagnosed_at ? (
+                          <Text style={styles.recordMeta}>
+                            Diagnosed {
+                              formatDate(
+                                condition.diagnosed_at
+                              )
+                            }
+                          </Text>
+                        ) : null}
+
+                        {condition.notes ? (
+                          <Text style={styles.recordNotes}>
+                            {
+                              condition.notes
+                            }
+                          </Text>
+                        ) : null}
+
+                      </View>
+
+                    </View>
+
+                    {isEditing ? (
+                      <TouchableOpacity
+                        style={styles.deleteButton}
+                        onPress={() =>
+                          removeCondition(
+                            condition
+                          )
+                        }
+                      >
+
+                        <Trash2
+                          size={15}
+                          color={COLORS.danger}
+                        />
+
                       </TouchableOpacity>
-                    ))}
+                    ) : null}
+
                   </View>
-                )}
-              </View>
+                )
+              )
 
-              <OptionSelector label="Severity *" value={selectedSeverity} options={SEVERITY_OPTIONS} onSelect={setSelectedSeverity} />
+            )}
 
-              <View style={styles.editFieldWrapper}>
-                <Text style={styles.editLabel}>Notes (Optional)</Text>
-                <TextInput
-                  style={[styles.textInput, { height: 60, textAlignVertical: 'top' }]}
-                  value={allergyNotes}
-                  onChangeText={setAllergyNotes}
-                  placeholder="E.g. Triggers mild rhinitis"
-                  placeholderTextColor="#94A3B8"
-                  multiline
-                />
-              </View>
+          </SectionCard>
 
-              <TouchableOpacity style={styles.modalSaveButton} onPress={handleAddAllergy} disabled={addingAllergy}>
-                {addingAllergy ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={styles.saveButtonText}>Save Allergy</Text>}
-              </TouchableOpacity>
-            </ScrollView>
+          {/* =================================================
+              ALLERGIES
+          ================================================== */}
 
-          </KeyboardAvoidingView>
-        </View>
-      </Modal>
+          <SectionCard
+            title="Known Allergies"
+            description="Important allergy information used during treatment."
+            editing={isEditing}
+            onAction={() => {
+              setAllergenInput('');
+              setAllergySuggestions([]);
+              setIsAddAllergyModalOpen(true);
+            }}
+          >
 
-      {/* Add Condition Modal */}
-      <Modal visible={isAddConditionModalOpen} animationType="slide" transparent={true}>
-        <View style={styles.modalOverlay}>
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalContent}>
+            {allergies.length === 0 ? (
 
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add Chronic Condition</Text>
-              <TouchableOpacity onPress={() => setIsAddConditionModalOpen(false)}><Text style={styles.modalCloseText}>✕</Text></TouchableOpacity>
+              <EmptySection
+                icon={ShieldCheck}
+                text="No allergies recorded."
+              />
+
+            ) : (
+
+              [
+                ...allergies,
+              ]
+                .sort(
+                  (
+                    first,
+                    second
+                  ) => {
+                    const order = {
+                      severe: 0,
+                      moderate: 1,
+                      mild: 2,
+                    };
+
+                    return (
+                      (
+                        order[
+                          first.severity
+                        ] ??
+                        3
+                      ) -
+                      (
+                        order[
+                          second.severity
+                        ] ??
+                        3
+                      )
+                    );
+                  }
+                )
+                .map(
+                  allergy => {
+                    const meta =
+                      severityMeta(
+                        allergy.severity
+                      );
+
+                    return (
+                      <View
+                        key={allergy.id}
+                        style={styles.recordItem}
+                      >
+
+                        <View style={styles.recordMain}>
+
+                          <View
+                            style={[
+                              styles.recordIcon,
+                              {
+                                backgroundColor:
+                                  meta.background,
+                              },
+                            ]}
+                          >
+
+                            <AlertTriangle
+                              size={17}
+                              color={meta.color}
+                            />
+
+                          </View>
+
+                          <View style={styles.recordText}>
+
+                            <View style={styles.recordTitleRow}>
+
+                              <Text style={styles.recordTitle}>
+                                {
+                                  allergy.allergen
+                                }
+                              </Text>
+
+                              <View
+                                style={[
+                                  styles.severityBadge,
+                                  {
+                                    backgroundColor:
+                                      meta.background,
+                                  },
+                                ]}
+                              >
+
+                                <Text
+                                  style={[
+                                    styles.severityBadgeText,
+                                    {
+                                      color:
+                                        meta.color,
+                                    },
+                                  ]}
+                                >
+                                  {capitalise(
+                                    allergy.severity
+                                  )}
+                                </Text>
+
+                              </View>
+
+                            </View>
+
+                            {allergy.notes ? (
+                              <Text style={styles.recordNotes}>
+                                {
+                                  allergy.notes
+                                }
+                              </Text>
+                            ) : null}
+
+                          </View>
+
+                        </View>
+
+                        {isEditing ? (
+                          <TouchableOpacity
+                            style={styles.deleteButton}
+                            onPress={() =>
+                              removeAllergy(
+                                allergy
+                              )
+                            }
+                          >
+
+                            <Trash2
+                              size={15}
+                              color={COLORS.danger}
+                            />
+
+                          </TouchableOpacity>
+                        ) : null}
+
+                      </View>
+                    );
+                  }
+                )
+
+            )}
+
+          </SectionCard>
+
+          {/* =================================================
+              MEDICAL DEVICES
+          ================================================== */}
+
+          <SectionCard
+            title="Medical Devices & Implants"
+            description="Implants and medical equipment important to your care."
+            editing={isEditing}
+            onAction={() =>
+              setIsAddDeviceModalOpen(
+                true
+              )
+            }
+          >
+
+            <View style={styles.clinicalNotice}>
+
+              <Shield
+                size={15}
+                color={COLORS.teal}
+              />
+
+              <Text style={styles.clinicalNoticeText}>
+                Emergency-relevant devices may be included in authorized Break-Glass access.
+              </Text>
+
             </View>
 
-            <ScrollView keyboardShouldPersistTaps="handled">
-              <View style={styles.editFieldWrapper}>
-                <Text style={styles.editLabel}>Condition Name *</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={conditionInput}
-                  onChangeText={setConditionInput}
-                  placeholder="E.g. Type 2 Diabetes"
-                  placeholderTextColor="#94A3B8"
-                  autoCapitalize="words"
-                />
-              </View>
+            {medicalDevices.length === 0 ? (
 
-              <View style={styles.editFieldWrapper}>
-                <Text style={styles.editLabel}>Diagnosed Date (Optional)</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={diagnosedAtInput}
-                  onChangeText={setDiagnosedAtInput}
-                  placeholder="YYYY-MM-DD"
-                  placeholderTextColor="#94A3B8"
-                />
-              </View>
+              <EmptySection
+                icon={BriefcaseMedical}
+                text="No medical devices or implants recorded."
+              />
 
-              <View style={styles.editFieldWrapper}>
-                <Text style={styles.editLabel}>Notes (Optional)</Text>
-                <TextInput
-                  style={[styles.textInput, { height: 60, textAlignVertical: 'top' }]}
-                  value={conditionNotes}
-                  onChangeText={setConditionNotes}
-                  placeholder="E.g. Managed with Metformin"
-                  placeholderTextColor="#94A3B8"
-                  multiline
-                />
-              </View>
+            ) : (
 
-              <View style={styles.switchContainer}>
-                <View style={styles.switchRow}>
-                  <Text style={styles.switchLabel}>Mark as Priority/Severe</Text>
-                  <Switch
-                    value={isPriorityInput}
-                    onValueChange={setIsPriorityInput}
-                    trackColor={{ false: '#E2E8F0', true: '#FCA5A5' }}
-                    thumbColor={isPriorityInput ? '#C00000' : '#F8FAFC'}
+              medicalDevices.map(
+                device => (
+                  <View
+                    key={device.id}
+                    style={styles.recordItem}
+                  >
+
+                    <View style={styles.recordMain}>
+
+                      <View
+                        style={[
+                          styles.recordIcon,
+                          {
+                            backgroundColor:
+                              COLORS.tealSoft,
+                          },
+                        ]}
+                      >
+
+                        <HeartPulse
+                          size={17}
+                          color={COLORS.teal}
+                        />
+
+                      </View>
+
+                      <View style={styles.recordText}>
+
+                        <View style={styles.recordTitleRow}>
+
+                          <Text style={styles.recordTitle}>
+                            {
+                              device.device_name
+                            }
+                          </Text>
+
+                          {device.is_emergency_relevant ? (
+                            <View style={styles.emergencyBadge}>
+
+                              <Shield
+                                size={9}
+                                color={COLORS.danger}
+                              />
+
+                              <Text style={styles.emergencyBadgeText}>
+                                EMERGENCY
+                              </Text>
+
+                            </View>
+                          ) : null}
+
+                        </View>
+
+                        {device.device_type ? (
+                          <Text style={styles.recordAccent}>
+                            {
+                              device.device_type
+                            }
+                          </Text>
+                        ) : null}
+
+                        {device.implanted_at ? (
+                          <Text style={styles.recordMeta}>
+                            Implanted / Started {
+                              formatDate(
+                                device.implanted_at
+                              )
+                            }
+                          </Text>
+                        ) : null}
+
+                        {device.notes ? (
+                          <Text style={styles.recordNotes}>
+                            {
+                              device.notes
+                            }
+                          </Text>
+                        ) : null}
+
+                      </View>
+
+                    </View>
+
+                    {isEditing ? (
+                      <TouchableOpacity
+                        style={styles.deleteButton}
+                        onPress={() =>
+                          removeDevice(
+                            device
+                          )
+                        }
+                      >
+
+                        <Trash2
+                          size={15}
+                          color={COLORS.danger}
+                        />
+
+                      </TouchableOpacity>
+                    ) : null}
+
+                  </View>
+                )
+              )
+
+            )}
+
+          </SectionCard>
+
+          {/* =================================================
+              IMPORTANT MEDICAL BACKGROUND
+          ================================================== */}
+
+          <SectionCard
+            title="Important Medical Background"
+            description="Major surgeries, procedures and serious past health events."
+            editing={isEditing}
+            onAction={() =>
+              setIsAddBackgroundModalOpen(
+                true
+              )
+            }
+          >
+
+            {healthBackground.length === 0 ? (
+
+              <EmptySection
+                icon={History}
+                text="No important medical background recorded."
+              />
+
+            ) : (
+
+              healthBackground.map(
+                record => (
+                  <View
+                    key={record.id}
+                    style={styles.recordItem}
+                  >
+
+                    <View style={styles.recordMain}>
+
+                      <View
+                        style={[
+                          styles.recordIcon,
+                          {
+                            backgroundColor:
+                              COLORS.violetSoft,
+                          },
+                        ]}
+                      >
+
+                        <History
+                          size={17}
+                          color={COLORS.violet}
+                        />
+
+                      </View>
+
+                      <View style={styles.recordText}>
+
+                        <View style={styles.recordTitleRow}>
+
+                          <Text style={styles.recordTitle}>
+                            {
+                              record.title
+                            }
+                          </Text>
+
+                          {record.is_emergency_relevant ? (
+                            <View style={styles.emergencyBadge}>
+
+                              <Shield
+                                size={9}
+                                color={COLORS.danger}
+                              />
+
+                              <Text style={styles.emergencyBadgeText}>
+                                EMERGENCY
+                              </Text>
+
+                            </View>
+                          ) : null}
+
+                        </View>
+
+                        <Text style={styles.recordAccent}>
+                          {getBackgroundTypeLabel(
+                            record.background_type
+                          )}
+                        </Text>
+
+                        {record.event_date ? (
+                          <Text style={styles.recordMeta}>
+                            Event Date {
+                              formatDate(
+                                record.event_date
+                              )
+                            }
+                          </Text>
+                        ) : null}
+
+                        {record.notes ? (
+                          <Text style={styles.recordNotes}>
+                            {
+                              record.notes
+                            }
+                          </Text>
+                        ) : null}
+
+                      </View>
+
+                    </View>
+
+                    {isEditing ? (
+                      <TouchableOpacity
+                        style={styles.deleteButton}
+                        onPress={() =>
+                          removeBackground(
+                            record
+                          )
+                        }
+                      >
+
+                        <Trash2
+                          size={15}
+                          color={COLORS.danger}
+                        />
+
+                      </TouchableOpacity>
+                    ) : null}
+
+                  </View>
+                )
+              )
+
+            )}
+
+          </SectionCard>
+
+          {/* =================================================
+              FAMILY HISTORY
+          ================================================== */}
+
+          <SectionCard
+            title="Family Medical History"
+            description="Clinically relevant conditions affecting close family members."
+            editing={isEditing}
+            onAction={() =>
+              setIsAddFamilyModalOpen(
+                true
+              )
+            }
+          >
+
+            {familyHistory.length === 0 ? (
+
+              <EmptySection
+                icon={Users}
+                text="No family medical history recorded."
+              />
+
+            ) : (
+
+              familyHistory.map(
+                record => (
+                  <View
+                    key={record.id}
+                    style={styles.recordItem}
+                  >
+
+                    <View style={styles.recordMain}>
+
+                      <View
+                        style={[
+                          styles.recordIcon,
+                          {
+                            backgroundColor:
+                              COLORS.blueSoft,
+                          },
+                        ]}
+                      >
+
+                        <Users
+                          size={17}
+                          color={COLORS.blue}
+                        />
+
+                      </View>
+
+                      <View style={styles.recordText}>
+
+                        <View style={styles.recordTitleRow}>
+
+                          <Text style={styles.recordTitle}>
+                            {
+                              record.condition
+                            }
+                          </Text>
+
+                          {record.is_emergency_relevant ? (
+                            <View style={styles.emergencyBadge}>
+
+                              <Shield
+                                size={9}
+                                color={COLORS.danger}
+                              />
+
+                              <Text style={styles.emergencyBadgeText}>
+                                EMERGENCY
+                              </Text>
+
+                            </View>
+                          ) : null}
+
+                        </View>
+
+                        <Text style={styles.recordAccent}>
+                          {getFamilyRelationLabel(
+                            record.relation
+                          )}
+                        </Text>
+
+                        {record.notes ? (
+                          <Text style={styles.recordNotes}>
+                            {
+                              record.notes
+                            }
+                          </Text>
+                        ) : null}
+
+                      </View>
+
+                    </View>
+
+                    {isEditing ? (
+                      <TouchableOpacity
+                        style={styles.deleteButton}
+                        onPress={() =>
+                          removeFamilyRecord(
+                            record
+                          )
+                        }
+                      >
+
+                        <Trash2
+                          size={15}
+                          color={COLORS.danger}
+                        />
+
+                      </TouchableOpacity>
+                    ) : null}
+
+                  </View>
+                )
+              )
+
+            )}
+
+          </SectionCard>
+
+          {/* =================================================
+              VACCINATIONS
+          ================================================== */}
+
+          <SectionCard
+            title="Vaccination Records"
+            description="Your recorded immunisation history."
+            editing={isEditing}
+            onAction={() => {
+              resetVaccines();
+
+              setIsVaccinationModalOpen(
+                true
+              );
+            }}
+          >
+
+            {vaccinations.length === 0 ? (
+
+              <EmptySection
+                icon={Syringe}
+                text="No vaccination records found."
+              />
+
+            ) : (
+
+              vaccinations.map(
+                vaccination => (
+                  <View
+                    key={vaccination.id}
+                    style={styles.recordItem}
+                  >
+
+                    <View style={styles.recordMain}>
+
+                      <View
+                        style={[
+                          styles.recordIcon,
+                          {
+                            backgroundColor:
+                              COLORS.tealSoft,
+                          },
+                        ]}
+                      >
+
+                        <Syringe
+                          size={17}
+                          color={COLORS.teal}
+                        />
+
+                      </View>
+
+                      <View style={styles.recordText}>
+
+                        <Text style={styles.recordTitle}>
+                          {
+                            vaccination.vaccine_name
+                          }
+                        </Text>
+
+                        <Text style={styles.recordMeta}>
+                          Given {
+                            formatDate(
+                              vaccination.date_administered
+                            )
+                          }
+                        </Text>
+
+                        {vaccination.dose_number ? (
+                          <Text style={styles.recordMeta}>
+                            Dose: {
+                              vaccination.dose_number
+                            }
+                          </Text>
+                        ) : null}
+
+                        {vaccination.notes ? (
+                          <Text style={styles.recordNotes}>
+                            {
+                              vaccination.notes
+                            }
+                          </Text>
+                        ) : null}
+
+                      </View>
+
+                    </View>
+
+                    {isEditing ? (
+                      <TouchableOpacity
+                        style={styles.deleteButton}
+                        onPress={() =>
+                          removeVaccination(
+                            vaccination
+                          )
+                        }
+                      >
+
+                        <Trash2
+                          size={15}
+                          color={COLORS.danger}
+                        />
+
+                      </TouchableOpacity>
+                    ) : null}
+
+                  </View>
+                )
+              )
+
+            )}
+
+          </SectionCard>
+
+          {/* =================================================
+              PRIVACY
+          ================================================== */}
+
+          <SectionCard
+            title="Privacy & Consent"
+            description="Control access to sensitive medical-record categories."
+          >
+
+            {!isEditing ? (
+              <View style={styles.privacyReadOnlyNotice}>
+
+                <LockKeyhole
+                  size={14}
+                  color={COLORS.muted}
+                />
+
+                <Text style={styles.privacyReadOnlyText}>
+                  Enter Edit Mode to change privacy controls.
+                </Text>
+
+              </View>
+            ) : null}
+
+            {SENSITIVE_CATEGORIES.map(
+              category => {
+                const locked =
+                  lockedCategories.includes(
+                    category
+                  );
+
+                return (
+                  <View
+                    key={category}
+                    style={[
+                      styles.privacyItem,
+                      locked &&
+                        styles.privacyItemLocked,
+                    ]}
+                  >
+
+                    <View
+                      style={[
+                        styles.privacyIcon,
+                        {
+                          backgroundColor:
+                            locked
+                              ? COLORS.dangerSoft
+                              : COLORS.tealSoft,
+                        },
+                      ]}
+                    >
+
+                      {locked ? (
+                        <LockKeyhole
+                          size={17}
+                          color={COLORS.danger}
+                        />
+                      ) : (
+                        <Unlock
+                          size={17}
+                          color={COLORS.teal}
+                        />
+                      )}
+
+                    </View>
+
+                    <View style={styles.privacyText}>
+
+                      <Text style={styles.privacyTitle}>
+                        {category}
+                      </Text>
+
+                      <Text
+                        style={[
+                          styles.privacyStatus,
+                          {
+                            color:
+                              locked
+                                ? COLORS.danger
+                                : COLORS.teal,
+                          },
+                        ]}
+                      >
+                        {locked
+                          ? 'Locked · approval required'
+                          : 'Standard clinical access'}
+                      </Text>
+
+                    </View>
+
+                    <Switch
+                      value={locked}
+                      disabled={!isEditing}
+                      onValueChange={() =>
+                        toggleConsent(
+                          category
+                        )
+                      }
+                      trackColor={{
+                        false:
+                          '#DDE5E9',
+                        true:
+                          '#F3B6B6',
+                      }}
+                      thumbColor={
+                        locked
+                          ? COLORS.danger
+                          : '#FFFFFF'
+                      }
+                    />
+
+                  </View>
+                );
+              }
+            )}
+
+          </SectionCard>
+
+          {/* =================================================
+              GLOBAL EDIT ACTIONS
+          ================================================== */}
+
+          {isEditing ? (
+            <View style={styles.editActions}>
+
+              {saveError ? (
+                <View style={styles.editError}>
+
+                  <AlertCircle
+                    size={15}
+                    color={COLORS.danger}
                   />
+
+                  <Text style={styles.editErrorText}>
+                    {saveError}
+                  </Text>
+
                 </View>
-                <Text style={styles.switchHelpText}>Alerts doctors immediately when they scan your profile.</Text>
-              </View>
+              ) : null}
 
-              <TouchableOpacity style={styles.modalSaveButton} onPress={handleAddCondition} disabled={addingCondition}>
-                {addingCondition ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={styles.saveButtonText}>Save Condition</Text>}
-              </TouchableOpacity>
-            </ScrollView>
+              <View style={styles.editActionButtons}>
 
-          </KeyboardAvoidingView>
-        </View>
-      </Modal>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  disabled={saving}
+                  onPress={() =>
+                    setIsEditing(
+                      false
+                    )
+                  }
+                >
 
-      {/* Dynamic Bulk Add Vaccination Modal */}
-      <Modal visible={isAddVaccinationModalOpen} animationType="slide" transparent={true}>
-        <View style={styles.modalOverlay}>
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={[styles.modalContent, { maxHeight: '90%' }]}>
+                  <X
+                    size={16}
+                    color={COLORS.muted}
+                  />
 
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add Vaccination(s)</Text>
-              <TouchableOpacity onPress={() => setIsAddVaccinationModalOpen(false)}><Text style={styles.modalCloseText}>✕</Text></TouchableOpacity>
-            </View>
+                  <Text style={styles.cancelButtonText}>
+                    Cancel
+                  </Text>
 
-            {/* Smart AI Scan Banner inside Mobile */}
-            <View style={styles.aiBanner}>
-              <Text style={styles.aiBannerTitle}>📸 Smart AI Scan</Text>
-              <Text style={styles.aiBannerText}>Save time! Snap a photo of your vaccination card to automatically extract multiple entries at once.</Text>
-              <View style={styles.aiBannerButtons}>
-                <TouchableOpacity style={styles.aiButton} onPress={handleTakeVaccinePhoto} disabled={scanningCard}>
-                  {scanningCard ? <ActivityIndicator size="small" color="#1E3A5F" /> : <Text style={styles.aiButtonText}>Take Photo</Text>}
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.aiButton} onPress={handleChooseVaccinePhoto} disabled={scanningCard}>
-                  {scanningCard ? <ActivityIndicator size="small" color="#1E3A5F" /> : <Text style={styles.aiButtonText}>Gallery</Text>}
-                </TouchableOpacity>
-              </View>
-            </View>
 
-            <ScrollView style={{ marginTop: 10 }} keyboardShouldPersistTaps="handled">
-              
-              {bulkVaccines.map((row, index) => (
-                <View key={row.id} style={styles.bulkRowContainer}>
-                  
-                  {bulkVaccines.length > 1 && (
-                    <TouchableOpacity style={styles.removeRowBtn} onPress={() => removeVaccineRow(row.id)}>
-                      <Text style={styles.removeRowBtnText}>✕ Remove Row</Text>
-                    </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.saveButton}
+                  disabled={saving}
+                  onPress={saveProfile}
+                >
+
+                  {saving ? (
+                    <ActivityIndicator
+                      size="small"
+                      color="#FFFFFF"
+                    />
+                  ) : (
+                    <Save
+                      size={16}
+                      color="#FFFFFF"
+                    />
                   )}
 
-                  <View style={styles.editFieldWrapper}>
-                    <Text style={styles.editLabel}>Vaccine Name *</Text>
-                    <TextInput
-                      style={styles.textInput}
-                      value={row.vaccineName}
-                      onChangeText={(val) => updateVaccineRow(row.id, 'vaccineName', val)}
-                      onFocus={() => { setVaccineSuggestions(searchVaccines(row.vaccineName)); setActiveVaccineRowId(row.id); }}
-                      placeholder="E.g. BCG"
-                      placeholderTextColor="#94A3B8"
-                    />
+                  <Text style={styles.saveButtonText}>
+                    {saving
+                      ? 'Saving...'
+                      : 'Save Changes'}
+                  </Text>
 
-                    {activeVaccineRowId === row.id && vaccineSuggestions.length > 0 && row.vaccineName.length > 0 && (
-                      <View style={styles.suggestionsContainer}>
-                        {vaccineSuggestions.map((sugg, i) => (
-                          <TouchableOpacity key={i} style={styles.suggestionItem} onPress={() => { updateVaccineRow(row.id, 'vaccineName', sugg.name); setActiveVaccineRowId(null); }}>
-                            <Text style={styles.suggestionName}>{sugg.name}</Text>
-                            <Text style={styles.suggestionCat}>{sugg.category}</Text>
-                          </TouchableOpacity>
-                        ))}
-                      </View>
-                    )}
-                  </View>
+                </TouchableOpacity>
 
-                  <View style={styles.editFieldWrapper}>
-                    <Text style={styles.editLabel}>Date Administered *</Text>
-                    <TextInput
-                      style={styles.textInput}
-                      value={row.dateAdministered}
-                      onChangeText={(val) => updateVaccineRow(row.id, 'dateAdministered', val)}
-                      placeholder="YYYY-MM-DD"
-                      placeholderTextColor="#94A3B8"
-                    />
-                  </View>
+              </View>
 
-                  <View style={{ flexDirection: 'row', gap: 10 }}>
-                    <View style={[styles.editFieldWrapper, { flex: 1 }]}>
-                      <Text style={styles.editLabel}>Dose (Optional)</Text>
-                      <TextInput
-                        style={styles.textInput}
-                        value={row.doseNumber}
-                        onChangeText={(val) => updateVaccineRow(row.id, 'doseNumber', val)}
-                        placeholder="E.g. Booster"
-                        placeholderTextColor="#94A3B8"
-                      />
-                    </View>
-                    <View style={[styles.editFieldWrapper, { flex: 1 }]}>
-                      <Text style={styles.editLabel}>Notes (Optional)</Text>
-                      <TextInput
-                        style={styles.textInput}
-                        value={row.notes}
-                        onChangeText={(val) => updateVaccineRow(row.id, 'notes', val)}
-                        placeholder="E.g. Given at GH"
-                        placeholderTextColor="#94A3B8"
-                      />
-                    </View>
-                  </View>
-                </View>
-              ))}
+            </View>
+          ) : null}
 
-              <TouchableOpacity style={styles.addRowButton} onPress={addVaccineRow}>
-                <Text style={styles.addRowButtonText}>+ Add Another Row</Text>
-              </TouchableOpacity>
+          <View style={styles.securityFooter}>
 
-              <TouchableOpacity style={styles.modalSaveButton} onPress={submitBulkVaccination} disabled={addingVaccination}>
-                {addingVaccination ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={styles.saveButtonText}>Save All Records</Text>}
-              </TouchableOpacity>
-            </ScrollView>
+            <ShieldCheck
+              size={14}
+              color={COLORS.subtle}
+            />
 
-          </KeyboardAvoidingView>
+            <Text style={styles.securityFooterText}>
+              Your profile and clinical safety information are protected by Care4U access controls.
+            </Text>
+
+          </View>
+
+        </ScrollView>
+
+      </KeyboardAvoidingView>
+
+      {/* =====================================================
+          ALLERGY MODAL
+      ====================================================== */}
+
+      <ModalShell
+        visible={isAddAllergyModalOpen}
+        title="Add Allergy"
+        icon={AlertTriangle}
+        onClose={() =>
+          setIsAddAllergyModalOpen(
+            false
+          )
+        }
+      >
+
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+        >
+
+          <View style={styles.formField}>
+
+            <Text style={styles.formLabel}>
+              Allergen Name *
+            </Text>
+
+            <TextInput
+              style={styles.textInput}
+              value={allergenInput}
+              onChangeText={
+                value => {
+                  setAllergenInput(
+                    value
+                  );
+
+                  setAllergySuggestions(
+                    searchAllergens(
+                      value
+                    )
+                  );
+                }
+              }
+              placeholder="Start typing..."
+              placeholderTextColor={COLORS.subtle}
+            />
+
+            {allergySuggestions.length > 0 &&
+            allergenInput.length > 0 ? (
+              <View style={styles.suggestions}>
+
+                {allergySuggestions.map(
+                  (
+                    suggestion,
+                    index
+                  ) => (
+                    <TouchableOpacity
+                      key={`${suggestion.name}-${index}`}
+                      style={styles.suggestionRow}
+                      onPress={() => {
+                        setAllergenInput(
+                          suggestion.name
+                        );
+
+                        setAllergySuggestions(
+                          []
+                        );
+                      }}
+                    >
+
+                      <Text style={styles.suggestionName}>
+                        {
+                          suggestion.name
+                        }
+                      </Text>
+
+                      <Text style={styles.suggestionCategory}>
+                        {
+                          suggestion.category
+                        }
+                      </Text>
+
+                    </TouchableOpacity>
+                  )
+                )}
+
+              </View>
+            ) : null}
+
+          </View>
+
+          <OptionSelector
+            label="Severity"
+            value={selectedSeverity}
+            options={SEVERITY_OPTIONS}
+            onSelect={setSelectedSeverity}
+          />
+
+          <View style={styles.formField}>
+
+            <Text style={styles.formLabel}>
+              Notes
+            </Text>
+
+            <TextInput
+              style={[
+                styles.textInput,
+                styles.multilineInput,
+              ]}
+              multiline
+              textAlignVertical="top"
+              value={allergyNotes}
+              onChangeText={setAllergyNotes}
+              placeholder="Optional clinical notes"
+              placeholderTextColor={COLORS.subtle}
+            />
+
+          </View>
+
+          <TouchableOpacity
+            style={styles.modalSaveButton}
+            disabled={addingAllergy}
+            onPress={addAllergyRecord}
+          >
+
+            {addingAllergy ? (
+              <ActivityIndicator
+                size="small"
+                color="#FFFFFF"
+              />
+            ) : (
+              <Plus
+                size={16}
+                color="#FFFFFF"
+              />
+            )}
+
+            <Text style={styles.modalSaveText}>
+              Save Allergy
+            </Text>
+
+          </TouchableOpacity>
+
+        </ScrollView>
+
+      </ModalShell>
+
+      {/* =====================================================
+          CONDITION MODAL
+      ====================================================== */}
+
+      <ModalShell
+        visible={isAddConditionModalOpen}
+        title="Add Chronic Condition"
+        icon={HeartPulse}
+        onClose={() =>
+          setIsAddConditionModalOpen(
+            false
+          )
+        }
+      >
+
+        <ScrollView>
+
+          <View style={styles.formField}>
+
+            <Text style={styles.formLabel}>
+              Condition Name *
+            </Text>
+
+            <TextInput
+              style={styles.textInput}
+              value={conditionInput}
+              onChangeText={setConditionInput}
+              placeholder="e.g. Type 2 Diabetes"
+              placeholderTextColor={COLORS.subtle}
+            />
+
+          </View>
+
+          <View style={styles.formField}>
+
+            <Text style={styles.formLabel}>
+              Diagnosed Date
+            </Text>
+
+            <TextInput
+              style={styles.textInput}
+              value={diagnosedAtInput}
+              onChangeText={setDiagnosedAtInput}
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor={COLORS.subtle}
+            />
+
+          </View>
+
+          <View style={styles.formField}>
+
+            <Text style={styles.formLabel}>
+              Notes
+            </Text>
+
+            <TextInput
+              style={[
+                styles.textInput,
+                styles.multilineInput,
+              ]}
+              multiline
+              textAlignVertical="top"
+              value={conditionNotes}
+              onChangeText={setConditionNotes}
+              placeholder="Optional notes"
+              placeholderTextColor={COLORS.subtle}
+            />
+
+          </View>
+
+          <View style={styles.switchCard}>
+
+            <View style={styles.switchText}>
+
+              <Text style={styles.switchTitle}>
+                Priority condition
+              </Text>
+
+              <Text style={styles.switchDescription}>
+                Highlight this condition as important clinical safety information.
+              </Text>
+
+            </View>
+
+            <Switch
+              value={isPriorityInput}
+              onValueChange={setIsPriorityInput}
+              trackColor={{
+                false:
+                  '#DDE5E9',
+                true:
+                  '#F3B6B6',
+              }}
+              thumbColor={
+                isPriorityInput
+                  ? COLORS.danger
+                  : '#FFFFFF'
+              }
+            />
+
+          </View>
+
+          <TouchableOpacity
+            style={styles.modalSaveButton}
+            disabled={addingCondition}
+            onPress={addConditionRecord}
+          >
+
+            {addingCondition ? (
+              <ActivityIndicator
+                size="small"
+                color="#FFFFFF"
+              />
+            ) : null}
+
+            <Text style={styles.modalSaveText}>
+              {addingCondition
+                ? 'Saving...'
+                : 'Save Condition'}
+            </Text>
+
+          </TouchableOpacity>
+
+        </ScrollView>
+
+      </ModalShell>
+
+      {/* =====================================================
+          DEVICE MODAL
+      ====================================================== */}
+
+      <ModalShell
+        visible={isAddDeviceModalOpen}
+        title="Add Medical Device"
+        icon={BriefcaseMedical}
+        onClose={() =>
+          setIsAddDeviceModalOpen(
+            false
+          )
+        }
+      >
+
+        <ScrollView>
+
+          <View style={styles.formField}>
+
+            <Text style={styles.formLabel}>
+              Device / Implant Name *
+            </Text>
+
+            <TextInput
+              style={styles.textInput}
+              value={deviceNameInput}
+              onChangeText={setDeviceNameInput}
+              placeholder="e.g. Pacemaker"
+              placeholderTextColor={COLORS.subtle}
+            />
+
+          </View>
+
+          <View style={styles.formField}>
+
+            <Text style={styles.formLabel}>
+              Device Type
+            </Text>
+
+            <TextInput
+              style={styles.textInput}
+              value={deviceTypeInput}
+              onChangeText={setDeviceTypeInput}
+              placeholder="e.g. Cardiac Device"
+              placeholderTextColor={COLORS.subtle}
+            />
+
+          </View>
+
+          <View style={styles.formField}>
+
+            <Text style={styles.formLabel}>
+              Implanted / Started Date
+            </Text>
+
+            <TextInput
+              style={styles.textInput}
+              value={implantedAtInput}
+              onChangeText={setImplantedAtInput}
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor={COLORS.subtle}
+            />
+
+          </View>
+
+          <View style={styles.formField}>
+
+            <Text style={styles.formLabel}>
+              Notes
+            </Text>
+
+            <TextInput
+              style={[
+                styles.textInput,
+                styles.multilineInput,
+              ]}
+              multiline
+              textAlignVertical="top"
+              value={deviceNotesInput}
+              onChangeText={setDeviceNotesInput}
+              placeholder="Optional details"
+              placeholderTextColor={COLORS.subtle}
+            />
+
+          </View>
+
+          <View style={styles.switchCard}>
+
+            <View style={styles.switchText}>
+
+              <Text style={styles.switchTitle}>
+                Emergency Relevant
+              </Text>
+
+              <Text style={styles.switchDescription}>
+                Allow this device to appear during authorized emergency access.
+              </Text>
+
+            </View>
+
+            <Switch
+              value={isEmergencyRelevantInput}
+              onValueChange={setIsEmergencyRelevantInput}
+              trackColor={{
+                false:
+                  '#DDE5E9',
+                true:
+                  '#A7DDD8',
+              }}
+              thumbColor="#FFFFFF"
+            />
+
+          </View>
+
+          <TouchableOpacity
+            style={styles.modalSaveButton}
+            disabled={addingDevice}
+            onPress={addDeviceRecord}
+          >
+
+            {addingDevice ? (
+              <ActivityIndicator
+                size="small"
+                color="#FFFFFF"
+              />
+            ) : null}
+
+            <Text style={styles.modalSaveText}>
+              {addingDevice
+                ? 'Saving...'
+                : 'Save Medical Device'}
+            </Text>
+
+          </TouchableOpacity>
+
+        </ScrollView>
+
+      </ModalShell>
+
+      {/* =====================================================
+          MEDICAL BACKGROUND MODAL
+      ====================================================== */}
+
+      <ModalShell
+        visible={isAddBackgroundModalOpen}
+        title="Add Medical Background"
+        icon={History}
+        onClose={() =>
+          setIsAddBackgroundModalOpen(
+            false
+          )
+        }
+      >
+
+        <ScrollView>
+
+          <OptionSelector
+            label="Background Type"
+            value={backgroundTypeInput}
+            options={HEALTH_BACKGROUND_TYPES}
+            onSelect={setBackgroundTypeInput}
+          />
+
+          <View style={styles.formField}>
+
+            <Text style={styles.formLabel}>
+              Title *
+            </Text>
+
+            <TextInput
+              style={styles.textInput}
+              value={backgroundTitleInput}
+              onChangeText={setBackgroundTitleInput}
+              placeholder="e.g. Coronary Artery Bypass Surgery"
+              placeholderTextColor={COLORS.subtle}
+            />
+
+          </View>
+
+          <View style={styles.formField}>
+
+            <Text style={styles.formLabel}>
+              Event Date
+            </Text>
+
+            <TextInput
+              style={styles.textInput}
+              value={backgroundDateInput}
+              onChangeText={setBackgroundDateInput}
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor={COLORS.subtle}
+            />
+
+          </View>
+
+          <View style={styles.formField}>
+
+            <Text style={styles.formLabel}>
+              Notes
+            </Text>
+
+            <TextInput
+              style={[
+                styles.textInput,
+                styles.multilineInput,
+              ]}
+              multiline
+              textAlignVertical="top"
+              value={backgroundNotesInput}
+              onChangeText={setBackgroundNotesInput}
+              placeholder="Important details"
+              placeholderTextColor={COLORS.subtle}
+            />
+
+          </View>
+
+          <View style={styles.switchCard}>
+
+            <View style={styles.switchText}>
+
+              <Text style={styles.switchTitle}>
+                Emergency Relevant
+              </Text>
+
+              <Text style={styles.switchDescription}>
+                Include this event in authorized emergency access.
+              </Text>
+
+            </View>
+
+            <Switch
+              value={backgroundEmergencyInput}
+              onValueChange={setBackgroundEmergencyInput}
+              trackColor={{
+                false:
+                  '#DDE5E9',
+                true:
+                  '#A7DDD8',
+              }}
+              thumbColor="#FFFFFF"
+            />
+
+          </View>
+
+          <TouchableOpacity
+            style={styles.modalSaveButton}
+            disabled={addingBackground}
+            onPress={addBackgroundRecord}
+          >
+
+            {addingBackground ? (
+              <ActivityIndicator
+                size="small"
+                color="#FFFFFF"
+              />
+            ) : null}
+
+            <Text style={styles.modalSaveText}>
+              {addingBackground
+                ? 'Saving...'
+                : 'Save Medical Background'}
+            </Text>
+
+          </TouchableOpacity>
+
+        </ScrollView>
+
+      </ModalShell>
+
+      {/* =====================================================
+          FAMILY HISTORY MODAL
+      ====================================================== */}
+
+      <ModalShell
+        visible={isAddFamilyModalOpen}
+        title="Add Family Medical History"
+        icon={Users}
+        onClose={() =>
+          setIsAddFamilyModalOpen(
+            false
+          )
+        }
+      >
+
+        <ScrollView>
+
+          <OptionSelector
+            label="Relationship"
+            value={familyRelationInput}
+            options={FAMILY_RELATIONS}
+            onSelect={setFamilyRelationInput}
+          />
+
+          <View style={styles.formField}>
+
+            <Text style={styles.formLabel}>
+              Medical Condition *
+            </Text>
+
+            <TextInput
+              style={styles.textInput}
+              value={familyConditionInput}
+              onChangeText={setFamilyConditionInput}
+              placeholder="e.g. Premature coronary artery disease"
+              placeholderTextColor={COLORS.subtle}
+            />
+
+          </View>
+
+          <View style={styles.formField}>
+
+            <Text style={styles.formLabel}>
+              Notes
+            </Text>
+
+            <TextInput
+              style={[
+                styles.textInput,
+                styles.multilineInput,
+              ]}
+              multiline
+              textAlignVertical="top"
+              value={familyNotesInput}
+              onChangeText={setFamilyNotesInput}
+              placeholder="e.g. Heart attack at age 42"
+              placeholderTextColor={COLORS.subtle}
+            />
+
+          </View>
+
+          <View style={styles.switchCard}>
+
+            <View style={styles.switchText}>
+
+              <Text style={styles.switchTitle}>
+                Emergency Relevant
+              </Text>
+
+              <Text style={styles.switchDescription}>
+                Mark only if this history may materially affect urgent treatment.
+              </Text>
+
+            </View>
+
+            <Switch
+              value={familyEmergencyInput}
+              onValueChange={setFamilyEmergencyInput}
+              trackColor={{
+                false:
+                  '#DDE5E9',
+                true:
+                  '#A7DDD8',
+              }}
+              thumbColor="#FFFFFF"
+            />
+
+          </View>
+
+          <TouchableOpacity
+            style={styles.modalSaveButton}
+            disabled={addingFamily}
+            onPress={addFamilyRecord}
+          >
+
+            {addingFamily ? (
+              <ActivityIndicator
+                size="small"
+                color="#FFFFFF"
+              />
+            ) : null}
+
+            <Text style={styles.modalSaveText}>
+              {addingFamily
+                ? 'Saving...'
+                : 'Save Family History'}
+            </Text>
+
+          </TouchableOpacity>
+
+        </ScrollView>
+
+      </ModalShell>
+
+      {/* =====================================================
+          VACCINATION MODAL
+      ====================================================== */}
+
+      <ModalShell
+        visible={isVaccinationModalOpen}
+        title="Add Vaccinations"
+        icon={Syringe}
+        maxHeight="93%"
+        onClose={() =>
+          setIsVaccinationModalOpen(
+            false
+          )
+        }
+      >
+
+        <View style={styles.aiScanCard}>
+
+          <View style={styles.aiScanTitleRow}>
+
+            <ScanLine
+              size={20}
+              color={COLORS.teal}
+            />
+
+            <View style={styles.aiScanTitleText}>
+
+              <Text style={styles.aiScanTitle}>
+                Smart Card Scan
+              </Text>
+
+              <Text style={styles.aiScanBadge}>
+                AI ASSISTED
+              </Text>
+
+            </View>
+
+          </View>
+
+          <Text style={styles.aiScanDescription}>
+            Scan a vaccination card to extract multiple records. AI-generated values must be reviewed before saving.
+          </Text>
+
+          <View style={styles.aiScanButtons}>
+
+            <TouchableOpacity
+              style={styles.aiScanButton}
+              disabled={scanningCard}
+              onPress={takeVaccinePhoto}
+            >
+
+              {scanningCard ? (
+                <ActivityIndicator
+                  size="small"
+                  color={COLORS.teal}
+                />
+              ) : (
+                <Camera
+                  size={16}
+                  color={COLORS.teal}
+                />
+              )}
+
+              <Text style={styles.aiScanButtonText}>
+                Camera
+              </Text>
+
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.aiScanButton}
+              disabled={scanningCard}
+              onPress={chooseVaccinePhoto}
+            >
+
+              {scanningCard ? (
+                <ActivityIndicator
+                  size="small"
+                  color={COLORS.teal}
+                />
+              ) : (
+                <ImageIcon
+                  size={16}
+                  color={COLORS.teal}
+                />
+              )}
+
+              <Text style={styles.aiScanButtonText}>
+                Gallery
+              </Text>
+
+            </TouchableOpacity>
+
+          </View>
+
         </View>
-      </Modal>
+
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+        >
+
+          {bulkVaccines.map(
+            (
+              row,
+              index
+            ) => (
+              <View
+                key={row.id}
+                style={styles.vaccineRow}
+              >
+
+                <View style={styles.vaccineRowHeader}>
+
+                  <View style={styles.vaccineNumber}>
+
+                    <Text style={styles.vaccineNumberText}>
+                      {index + 1}
+                    </Text>
+
+                  </View>
+
+                  <Text style={styles.vaccineRowTitle}>
+                    Vaccination Record
+                  </Text>
+
+                  {bulkVaccines.length > 1 ? (
+                    <TouchableOpacity
+                      style={styles.deleteButton}
+                      onPress={() =>
+                        setBulkVaccines(
+                          previous =>
+                            previous.filter(
+                              item =>
+                                item.id !==
+                                row.id
+                            )
+                        )
+                      }
+                    >
+
+                      <Trash2
+                        size={14}
+                        color={COLORS.danger}
+                      />
+
+                    </TouchableOpacity>
+                  ) : null}
+
+                </View>
+
+                <View style={styles.formField}>
+
+                  <Text style={styles.formLabel}>
+                    Vaccine Name *
+                  </Text>
+
+                  <TextInput
+                    style={styles.textInput}
+                    value={row.vaccineName}
+                    onFocus={() => {
+                      setActiveVaccineRow(
+                        row.id
+                      );
+
+                      setVaccineSuggestions(
+                        searchVaccines(
+                          row.vaccineName
+                        )
+                      );
+                    }}
+                    onChangeText={
+                      value =>
+                        updateVaccineRow(
+                          row.id,
+                          'vaccineName',
+                          value
+                        )
+                    }
+                    placeholder="e.g. BCG"
+                    placeholderTextColor={COLORS.subtle}
+                  />
+
+                  {activeVaccineRow === row.id &&
+                  vaccineSuggestions.length > 0 &&
+                  row.vaccineName ? (
+                    <View style={styles.suggestions}>
+
+                      {vaccineSuggestions.map(
+                        (
+                          suggestion,
+                          suggestionIndex
+                        ) => (
+                          <TouchableOpacity
+                            key={`${suggestion.name}-${suggestionIndex}`}
+                            style={styles.suggestionRow}
+                            onPress={() => {
+                              updateVaccineRow(
+                                row.id,
+                                'vaccineName',
+                                suggestion.name
+                              );
+
+                              setActiveVaccineRow(
+                                null
+                              );
+                            }}
+                          >
+
+                            <Text style={styles.suggestionName}>
+                              {
+                                suggestion.name
+                              }
+                            </Text>
+
+                            <Text style={styles.suggestionCategory}>
+                              {
+                                suggestion.category
+                              }
+                            </Text>
+
+                          </TouchableOpacity>
+                        )
+                      )}
+
+                    </View>
+                  ) : null}
+
+                </View>
+
+                <View style={styles.formField}>
+
+                  <Text style={styles.formLabel}>
+                    Date Administered *
+                  </Text>
+
+                  <TextInput
+                    style={styles.textInput}
+                    value={row.dateAdministered}
+                    onChangeText={
+                      value =>
+                        updateVaccineRow(
+                          row.id,
+                          'dateAdministered',
+                          value
+                        )
+                    }
+                    placeholder="YYYY-MM-DD"
+                    placeholderTextColor={COLORS.subtle}
+                  />
+
+                </View>
+
+                <View style={styles.splitFields}>
+
+                  <View style={styles.splitField}>
+
+                    <Text style={styles.formLabel}>
+                      Dose
+                    </Text>
+
+                    <TextInput
+                      style={styles.textInput}
+                      value={row.doseNumber}
+                      onChangeText={
+                        value =>
+                          updateVaccineRow(
+                            row.id,
+                            'doseNumber',
+                            value
+                          )
+                      }
+                      placeholder="Optional"
+                      placeholderTextColor={COLORS.subtle}
+                    />
+
+                  </View>
+
+                  <View style={styles.splitField}>
+
+                    <Text style={styles.formLabel}>
+                      Notes
+                    </Text>
+
+                    <TextInput
+                      style={styles.textInput}
+                      value={row.notes}
+                      onChangeText={
+                        value =>
+                          updateVaccineRow(
+                            row.id,
+                            'notes',
+                            value
+                          )
+                      }
+                      placeholder="Optional"
+                      placeholderTextColor={COLORS.subtle}
+                    />
+
+                  </View>
+
+                </View>
+
+              </View>
+            )
+          )}
+
+          <TouchableOpacity
+            style={styles.addAnotherButton}
+            onPress={addVaccineRow}
+          >
+
+            <Plus
+              size={16}
+              color={COLORS.teal}
+            />
+
+            <Text style={styles.addAnotherText}>
+              Add Another Record
+            </Text>
+
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.modalSaveButton}
+            disabled={addingVaccinations}
+            onPress={saveVaccinations}
+          >
+
+            {addingVaccinations ? (
+              <ActivityIndicator
+                size="small"
+                color="#FFFFFF"
+              />
+            ) : null}
+
+            <Text style={styles.modalSaveText}>
+              {addingVaccinations
+                ? 'Saving...'
+                : 'Save All Records'}
+            </Text>
+
+          </TouchableOpacity>
+
+        </ScrollView>
+
+      </ModalShell>
 
     </SafeAreaView>
   );
-}
+};
 
-// ─────────────────────────────────────────────
-//  Styles
-// ─────────────────────────────────────────────
+/* =========================================================
+   STYLES
+========================================================= */
+
 const styles = StyleSheet.create({
-  safeArea:    { flex: 1, backgroundColor: '#F8FAFC' },
-  container:   { flex: 1 },
-  centered:    { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
-  loadingText: { marginTop: 12, fontSize: 14, color: '#64748B' },
-  errorText:   { fontSize: 14, color: '#C00000', textAlign: 'center' },
+  safeArea: {
+    flex: 1,
+    backgroundColor:
+      COLORS.background,
+  },
 
-  header: { backgroundColor: '#1E3A5F', padding: 20, paddingTop: 60, borderBottomLeftRadius: 24, borderBottomRightRadius: 24, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 4, zIndex: 10 },
-  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  avatarContainer: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 5, elevation: 5 },
-  profilePhoto: { width: 76, height: 76, borderRadius: 38, borderWidth: 3, borderColor: 'rgba(255,255,255,0.25)' },
-  headerText: { flex: 1, justifyContent: 'center' },
-  headerEyebrow: { fontSize: 10, fontWeight: 'bold', color: '#93C5FD', letterSpacing: 1, marginBottom: 4 },
-  headerTitle: { fontSize: 22, fontWeight: 'bold', color: '#FFFFFF', marginBottom: 8 },
-  badgesRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
-  demographicsText: { fontSize: 13, color: '#CBD5E1', fontWeight: '500' },
-  bloodGroupBadge: { backgroundColor: '#C00000', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12 },
-  bloodGroupText: { fontSize: 11, color: '#FFFFFF', fontWeight: 'bold' },
-  priorityConditionBadge: { backgroundColor: '#D97706', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12, flexDirection: 'row', alignItems: 'center' },
-  priorityConditionText: { fontSize: 11, color: '#FFFFFF', fontWeight: 'bold' },
-  qrCodeContainer: { marginTop: 24, backgroundColor: 'rgba(255,255,255,0.1)', alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
-  qrCodeLabel: { fontSize: 10, color: '#93C5FD', fontWeight: 'bold', letterSpacing: 0.5 },
-  qrCodeValue: { fontSize: 14, color: '#FFFFFF', fontWeight: '600', fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', marginTop: 2 },
+  scrollView: {
+    flex: 1,
+  },
 
-  successBanner: { backgroundColor: '#DCFCE7', marginHorizontal: 16, marginTop: 12, borderRadius: 8, padding: 12, borderLeftWidth: 4, borderLeftColor: '#1F7A1F' },
-  successText: { fontSize: 13, color: '#1F7A1F', fontWeight: '500' },
-  errorBanner: { backgroundColor: '#FEE2E2', marginHorizontal: 16, marginTop: 8, borderRadius: 8, padding: 12, borderLeftWidth: 4, borderLeftColor: '#C00000' },
-  errorBannerText: { fontSize: 13, color: '#C00000', fontWeight: '500' },
+  scrollContent: {
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 30,
+  },
 
-  card: { backgroundColor: '#FFFFFF', margin: 16, marginBottom: 0, borderRadius: 12, padding: 16, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 4, elevation: 2 },
-  cardTitle: { fontSize: 16, fontWeight: '600', color: '#1E293B', marginBottom: 12, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
-  cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
-  cardTitleHalf: { fontSize: 16, fontWeight: '600', color: '#1E293B' },
-  addMiniButton: { backgroundColor: '#EFF6FF', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
-  addMiniButtonText: { color: '#1E3A5F', fontSize: 13, fontWeight: '600' },
+  /* =====================================================
+     PROFILE HERO
+  ====================================================== */
 
-  fieldRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F8FAFC' },
-  fieldLabel: { fontSize: 13, color: '#64748B', flex: 1 },
-  fieldValue: { fontSize: 13, color: '#1E293B', fontWeight: '500', flex: 2, textAlign: 'right' },
+  heroCard: {
+    position: 'relative',
+    overflow: 'hidden',
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor:
+      COLORS.border,
+    backgroundColor:
+      COLORS.surface,
+    marginBottom: 15,
 
-  noAllergies: { fontSize: 13, color: '#64748B', marginTop: 4 },
-  allergyRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
-  allergyLeft:   { flex: 1, marginRight: 8 },
-  allergyName:   { fontSize: 14, fontWeight: '600', color: '#1E293B' },
-  allergyNotes:  { fontSize: 12, color: '#64748B', marginTop: 3 },
-  allergyRight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  severityBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
-  severityText:  { fontSize: 11, color: '#FFFFFF', fontWeight: '700' },
-  deleteIconBtn: { padding: 6, backgroundColor: '#FEE2E2', borderRadius: 20 },
-  deleteIconText: { color: '#C00000', fontSize: 12, fontWeight: 'bold' },
+    shadowColor:
+      '#0F172A',
 
-  priorityRow: { backgroundColor: '#FEF2F2', paddingHorizontal: 8, borderRadius: 8, marginHorizontal: -8 },
-  priorityText: { color: '#7F1D1D' },
-  priorityBadge: { backgroundColor: '#DC2626', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
-  priorityBadgeText: { fontSize: 10, color: '#FFFFFF', fontWeight: '700', letterSpacing: 0.5 },
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
 
-  // --- NEW PRIVACY & CONSENT STYLES ---
-  consentSubTitle: { fontSize: 12, color: '#64748B', marginBottom: 16, lineHeight: 18 },
-  consentGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'space-between' },
-  consentItem: { width: '48%', backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 12, marginBottom: 4 },
-  consentItemLocked: { borderColor: '#FCA5A5', backgroundColor: '#FEF2F2' },
-  consentHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  consentIcon: { width: 32, height: 32, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
-  consentIconUnlocked: { backgroundColor: '#F0FDFA' },
-  consentIconLocked: { backgroundColor: '#FEE2E2' },
-  consentIconText: { fontSize: 14 },
-  consentCategoryName: { fontSize: 13, fontWeight: '700', color: '#1E293B', marginBottom: 4 },
-  consentStatusText: { fontSize: 10, fontWeight: '600' },
-  consentStatusTextUnlocked: { color: '#0D9488' },
-  consentStatusTextLocked: { color: '#DC2626' },
+    shadowOpacity: 0.07,
+    shadowRadius: 14,
+    elevation: 3,
+  },
 
-  editButton: { backgroundColor: '#1E3A5F', marginHorizontal: 16, marginTop: 16, borderRadius: 10, paddingVertical: 14, alignItems: 'center' },
-  editButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '600' },
+  heroBackground: {
+    height: 115,
+    backgroundColor:
+      COLORS.navy,
+    overflow: 'hidden',
+  },
 
-  editFieldWrapper: { marginBottom: 14, position: 'relative' },
-  editLabel: { fontSize: 11, color: '#64748B', marginBottom: 6, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
-  textInput: { borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, color: '#1E293B', backgroundColor: '#FFFFFF' },
+  heroCircleOne: {
+    position: 'absolute',
+    width: 190,
+    height: 190,
+    borderRadius: 95,
+    right: -65,
+    top: -95,
+    backgroundColor:
+      'rgba(15,139,131,0.42)',
+  },
 
-  selectorButton: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: '#FFFFFF' },
-  selectorButtonOpen: { borderColor: '#1E3A5F', borderBottomLeftRadius: 0, borderBottomRightRadius: 0 },
-  selectorValue:       { fontSize: 14, color: '#1E293B' },
-  selectorPlaceholder: { fontSize: 14, color: '#94A3B8' },
-  selectorChevron:     { fontSize: 11, color: '#64748B' },
-  optionsList: { borderWidth: 1, borderTopWidth: 0, borderColor: '#1E3A5F', borderBottomLeftRadius: 8, borderBottomRightRadius: 8, backgroundColor: '#FFFFFF', overflow: 'hidden' },
-  optionItem:         { paddingHorizontal: 12, paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
-  optionItemSelected: { backgroundColor: '#EFF6FF' },
-  optionText:         { fontSize: 14, color: '#1E293B' },
-  optionTextSelected: { color: '#1E3A5F', fontWeight: '600' },
+  heroCircleTwo: {
+    position: 'absolute',
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    left: 20,
+    top: -25,
+    backgroundColor:
+      'rgba(255,255,255,0.07)',
+  },
 
-  switchContainer: { backgroundColor: '#FEF2F2', padding: 12, borderRadius: 8, marginBottom: 16, borderWidth: 1, borderColor: '#FEE2E2' },
-  switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-  switchLabel: { fontSize: 14, fontWeight: '600', color: '#7F1D1D' },
-  switchHelpText: { fontSize: 11, color: '#B91C1C' },
+  avatarPosition: {
+    position: 'absolute',
+    top: 52,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 5,
+  },
 
-  buttonRow: { flexDirection: 'row', gap: 12, marginHorizontal: 16, marginTop: 16 },
-  cancelButton: { flex: 1, borderWidth: 1.5, borderColor: '#CBD5E1', borderRadius: 10, paddingVertical: 13, alignItems: 'center', backgroundColor: '#FFFFFF' },
-  cancelButtonText: { fontSize: 14, color: '#64748B', fontWeight: '600' },
-  saveButton: { flex: 2, backgroundColor: '#1E3A5F', borderRadius: 10, paddingVertical: 13, alignItems: 'center' },
-  saveButtonDisabled: { backgroundColor: '#94A3B8' },
-  saveButtonText:     { fontSize: 14, color: '#FFFFFF', fontWeight: '600' },
+  avatarOuter: {
+    width: 130,
+    height: 130,
+    padding: 5,
+    borderRadius: 65,
+    backgroundColor:
+      COLORS.surface,
 
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.6)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, maxHeight: '80%' },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  modalTitle: { fontSize: 18, fontWeight: '700', color: '#1E293B' },
-  modalCloseText: { fontSize: 20, color: '#64748B', padding: 4 },
-  modalSaveButton: { backgroundColor: '#1E3A5F', borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginTop: 10 },
+    shadowColor:
+      '#0F172A',
 
-  suggestionsContainer: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0', borderTopWidth: 0, borderBottomLeftRadius: 8, borderBottomRightRadius: 8, maxHeight: 150, zIndex: 50 },
-  suggestionItem: { flexDirection: 'row', justifyContent: 'space-between', padding: 12, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
-  suggestionName: { fontSize: 14, color: '#1E293B', fontWeight: '500' },
-  suggestionCat: { fontSize: 11, color: '#94A3B8', textTransform: 'uppercase' },
+    shadowOffset: {
+      width: 0,
+      height: 7,
+    },
 
-  aiBanner: { backgroundColor: '#EFF6FF', borderRadius: 12, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: '#DBEAFE' },
-  aiBannerTitle: { fontSize: 15, fontWeight: 'bold', color: '#1E3A5F', marginBottom: 4 },
-  aiBannerText: { fontSize: 12, color: '#475569', marginBottom: 12, lineHeight: 18 },
-  aiBannerButtons: { flexDirection: 'row', gap: 10 },
-  aiButton: { flex: 1, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#BFDBFE', paddingVertical: 10, borderRadius: 8, alignItems: 'center' },
-  aiButtonText: { color: '#1E3A5F', fontSize: 13, fontWeight: '600' },
+    shadowOpacity: 0.16,
+    shadowRadius: 16,
+    elevation: 6,
+  },
 
-  bulkRowContainer: { backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, marginBottom: 16 },
-  removeRowBtn: { position: 'absolute', top: -10, right: -10, backgroundColor: '#FEE2E2', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, borderWidth: 1, borderColor: '#FECACA' },
-  removeRowBtnText: { fontSize: 10, color: '#C00000', fontWeight: 'bold' },
-  addRowButton: { backgroundColor: '#F1F5F9', borderWidth: 1, borderColor: '#CBD5E1', borderStyle: 'dashed', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginBottom: 16 },
-  addRowButtonText: { color: '#475569', fontSize: 14, fontWeight: '600' }
+  avatarInner: {
+    flex: 1,
+    overflow: 'hidden',
+    borderRadius: 60,
+    backgroundColor:
+      COLORS.navy,
+  },
+
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+
+  avatarFallback: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor:
+      COLORS.navy,
+  },
+
+  avatarInitials: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '800',
+    marginTop: 4,
+  },
+
+  photoButton: {
+    position: 'absolute',
+    right: 2,
+    bottom: 2,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 3,
+    borderColor:
+      COLORS.surface,
+    backgroundColor:
+      COLORS.teal,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  heroContent: {
+    paddingTop: 76,
+    paddingHorizontal: 17,
+    paddingBottom: 17,
+    alignItems: 'center',
+  },
+
+  heroEyebrow: {
+    color:
+      COLORS.teal,
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+
+  heroName: {
+    color:
+      COLORS.text,
+    fontSize: 22,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginTop: 4,
+  },
+
+  heroMeta: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    marginTop: 8,
+  },
+
+  heroMetaText: {
+    color:
+      COLORS.muted,
+    fontSize: 10,
+    fontWeight: '600',
+  },
+
+  heroMetaDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor:
+      COLORS.subtle,
+  },
+
+  bloodBadge: {
+    flexDirection: 'row',
+    gap: 4,
+    alignItems: 'center',
+    borderRadius: 99,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor:
+      COLORS.danger,
+  },
+
+  bloodBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 8,
+    fontWeight: '800',
+  },
+
+  primaryEditButton: {
+    width: '100%',
+    minHeight: 46,
+    borderRadius: 14,
+    backgroundColor:
+      COLORS.teal,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 7,
+    marginTop: 15,
+  },
+
+  primaryEditButtonText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+
+  editingBanner: {
+    flexDirection: 'row',
+    gap: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 13,
+    backgroundColor:
+      COLORS.tealSoft,
+    paddingHorizontal: 13,
+    paddingVertical: 9,
+    marginTop: 14,
+  },
+
+  editingBannerText: {
+    color:
+      COLORS.tealDark,
+    fontSize: 9,
+    fontWeight: '800',
+  },
+
+  /* =====================================================
+     SUMMARY
+  ====================================================== */
+
+  summaryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 9,
+    marginBottom: 15,
+  },
+
+  summaryCard: {
+    width: '48%',
+    minHeight: 105,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor:
+      COLORS.border,
+    backgroundColor:
+      COLORS.surface,
+    padding: 13,
+
+    shadowColor:
+      '#0F172A',
+
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+
+  summaryValue: {
+    color:
+      COLORS.text,
+    fontSize: 18,
+    fontWeight: '800',
+    marginTop: 8,
+  },
+
+  summaryLabel: {
+    color:
+      COLORS.muted,
+    fontSize: 8,
+    marginTop: 2,
+    fontWeight: '600',
+  },
+
+  /* =====================================================
+     SECTION CARDS
+  ====================================================== */
+
+  sectionCard: {
+    borderWidth: 1,
+    borderColor:
+      COLORS.border,
+    borderRadius: 21,
+    backgroundColor:
+      COLORS.surface,
+    overflow: 'hidden',
+    marginBottom: 14,
+
+    shadowColor:
+      '#0F172A',
+
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+
+    shadowOpacity: 0.035,
+    shadowRadius: 8,
+    elevation: 1,
+  },
+
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent:
+      'space-between',
+    gap: 10,
+
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 14,
+
+    borderBottomWidth: 1,
+    borderBottomColor:
+      COLORS.border,
+
+    backgroundColor:
+      COLORS.surface,
+  },
+
+  sectionHeadingText: {
+    flex: 1,
+  },
+
+  sectionTitle: {
+    color:
+      COLORS.navy,
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: '800',
+    letterSpacing: -0.2,
+  },
+
+  sectionDescription: {
+    color:
+      COLORS.muted,
+    fontSize: 9,
+    lineHeight: 14,
+    marginTop: 4,
+    maxWidth: 290,
+  },
+
+  sectionAddButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+
+    borderRadius: 10,
+
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+
+    backgroundColor:
+      COLORS.tealSoft,
+  },
+
+  sectionAddText: {
+    color:
+      COLORS.tealDark,
+    fontSize: 9,
+    fontWeight: '800',
+  },
+
+  sectionBody: {
+    paddingHorizontal: 15,
+    paddingTop: 6,
+    paddingBottom: 10,
+    backgroundColor:
+      '#FBFCFD',
+  },
+
+  /* =====================================================
+     INFORMATION ROWS
+  ====================================================== */
+
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+
+    borderBottomWidth: 1,
+    borderBottomColor:
+      '#EEF2F4',
+  },
+
+  infoIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    backgroundColor:
+      COLORS.tealSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+
+  infoText: {
+    flex: 1,
+  },
+
+  infoLabel: {
+    color:
+      COLORS.subtle,
+    fontSize: 7,
+    fontWeight: '800',
+    textTransform:
+      'uppercase',
+    letterSpacing: 0.6,
+  },
+
+  infoValue: {
+    color:
+      COLORS.text,
+    fontSize: 11,
+    fontWeight: '700',
+    marginTop: 3,
+  },
+
+  /* =====================================================
+     RECORDS
+  ====================================================== */
+
+  recordItem: {
+    flexDirection: 'row',
+    justifyContent:
+      'space-between',
+    alignItems:
+      'flex-start',
+    gap: 8,
+
+    paddingVertical: 12,
+
+    borderBottomWidth: 1,
+    borderBottomColor:
+      '#EEF2F4',
+  },
+
+  priorityRecord: {
+    borderRadius: 14,
+    borderBottomWidth: 0,
+
+    backgroundColor:
+      COLORS.dangerSoft,
+
+    paddingHorizontal: 10,
+    marginTop: 7,
+    marginBottom: 4,
+  },
+
+  recordMain: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems:
+      'flex-start',
+  },
+
+  recordIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+
+  recordText: {
+    flex: 1,
+    minWidth: 0,
+  },
+
+  recordTitleRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 5,
+  },
+
+  recordTitle: {
+    flexShrink: 1,
+    color:
+      COLORS.text,
+    fontSize: 11,
+    fontWeight: '800',
+  },
+
+  recordMeta: {
+    color:
+      COLORS.muted,
+    fontSize: 8,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+
+  recordAccent: {
+    color:
+      COLORS.tealDark,
+    fontSize: 8,
+    fontWeight: '700',
+    marginTop: 4,
+  },
+
+  recordNotes: {
+    color:
+      COLORS.textSoft,
+    fontSize: 9,
+    lineHeight: 14,
+    marginTop: 5,
+  },
+
+  deleteButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor:
+      COLORS.dangerSoft,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  severityBadge: {
+    borderRadius: 99,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+  },
+
+  severityBadgeText: {
+    fontSize: 7,
+    fontWeight: '800',
+  },
+
+  emergencyBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    borderRadius: 99,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    backgroundColor:
+      COLORS.dangerSoft,
+  },
+
+  emergencyBadgeText: {
+    color:
+      COLORS.danger,
+    fontSize: 6,
+    fontWeight: '800',
+  },
+
+  emptySection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+
+    borderRadius: 13,
+
+    backgroundColor:
+      COLORS.background,
+
+    padding: 12,
+    marginTop: 9,
+  },
+
+  emptySectionText: {
+    flex: 1,
+    color:
+      COLORS.muted,
+    fontSize: 9,
+    lineHeight: 14,
+  },
+
+  clinicalNotice: {
+    flexDirection: 'row',
+    alignItems:
+      'flex-start',
+    gap: 7,
+
+    borderRadius: 13,
+
+    backgroundColor:
+      COLORS.tealSoft,
+
+    padding: 10,
+    marginTop: 8,
+    marginBottom: 2,
+  },
+
+  clinicalNoticeText: {
+    flex: 1,
+    color:
+      COLORS.tealDark,
+    fontSize: 8,
+    lineHeight: 13,
+  },
+
+  /* =====================================================
+     PRIVACY
+  ====================================================== */
+
+  privacyReadOnlyNotice: {
+    flexDirection: 'row',
+    gap: 6,
+    alignItems: 'center',
+
+    borderRadius: 11,
+
+    backgroundColor:
+      COLORS.background,
+
+    padding: 10,
+    marginTop: 8,
+  },
+
+  privacyReadOnlyText: {
+    color:
+      COLORS.muted,
+    fontSize: 8,
+  },
+
+  privacyItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+
+    borderRadius: 15,
+
+    borderWidth: 1,
+    borderColor:
+      COLORS.border,
+
+    backgroundColor:
+      COLORS.surface,
+
+    padding: 11,
+    marginTop: 9,
+  },
+
+  privacyItemLocked: {
+    borderColor:
+      '#F0CCCC',
+
+    backgroundColor:
+      COLORS.dangerSoft,
+  },
+
+  privacyIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 9,
+  },
+
+  privacyText: {
+    flex: 1,
+    marginRight: 6,
+  },
+
+  privacyTitle: {
+    color:
+      COLORS.text,
+    fontSize: 10,
+    fontWeight: '800',
+  },
+
+  privacyStatus: {
+    fontSize: 7,
+    marginTop: 3,
+    fontWeight: '700',
+  },
+
+  /* =====================================================
+     FORMS
+  ====================================================== */
+
+  formField: {
+    marginTop: 13,
+    position: 'relative',
+  },
+
+  formLabel: {
+    color:
+      COLORS.muted,
+    fontSize: 8,
+    fontWeight: '800',
+    textTransform:
+      'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 6,
+  },
+
+  textInput: {
+    minHeight: 45,
+
+    borderRadius: 13,
+
+    borderWidth: 1,
+    borderColor:
+      COLORS.border,
+
+    backgroundColor:
+      COLORS.surface,
+
+    color:
+      COLORS.text,
+
+    fontSize: 11,
+
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+
+  multilineInput: {
+    minHeight: 82,
+    textAlignVertical:
+      'top',
+  },
+
+  selectorButton: {
+    minHeight: 45,
+
+    borderRadius: 13,
+
+    borderWidth: 1,
+    borderColor:
+      COLORS.border,
+
+    backgroundColor:
+      COLORS.surface,
+
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent:
+      'space-between',
+
+    paddingHorizontal: 12,
+  },
+
+  selectorButtonOpen: {
+    borderColor:
+      COLORS.teal,
+
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+  },
+
+  selectorValue: {
+    color:
+      COLORS.text,
+    fontSize: 11,
+    fontWeight: '600',
+  },
+
+  selectorPlaceholder: {
+    color:
+      COLORS.subtle,
+    fontSize: 11,
+  },
+
+  optionsList: {
+    borderWidth: 1,
+    borderTopWidth: 0,
+
+    borderColor:
+      COLORS.teal,
+
+    borderBottomLeftRadius: 13,
+    borderBottomRightRadius: 13,
+
+    overflow: 'hidden',
+
+    backgroundColor:
+      COLORS.surface,
+  },
+
+  optionItem: {
+    minHeight: 42,
+
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent:
+      'space-between',
+
+    paddingHorizontal: 12,
+
+    borderBottomWidth: 1,
+    borderBottomColor:
+      COLORS.border,
+  },
+
+  optionItemSelected: {
+    backgroundColor:
+      COLORS.tealSoft,
+  },
+
+  optionText: {
+    color:
+      COLORS.textSoft,
+    fontSize: 11,
+  },
+
+  optionTextSelected: {
+    color:
+      COLORS.tealDark,
+    fontWeight: '800',
+  },
+
+  readOnlyNotice: {
+    flexDirection: 'row',
+    gap: 6,
+
+    alignItems:
+      'flex-start',
+
+    borderRadius: 12,
+
+    backgroundColor:
+      COLORS.background,
+
+    padding: 10,
+    marginTop: 13,
+  },
+
+  readOnlyNoticeText: {
+    flex: 1,
+
+    color:
+      COLORS.muted,
+
+    fontSize: 8,
+    lineHeight: 13,
+  },
+
+  switchCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+
+    borderWidth: 1,
+    borderColor:
+      COLORS.border,
+
+    borderRadius: 14,
+
+    padding: 12,
+    marginTop: 14,
+
+    backgroundColor:
+      COLORS.background,
+  },
+
+  switchText: {
+    flex: 1,
+    marginRight: 10,
+  },
+
+  switchTitle: {
+    color:
+      COLORS.text,
+    fontSize: 10,
+    fontWeight: '800',
+  },
+
+  switchDescription: {
+    color:
+      COLORS.muted,
+    fontSize: 8,
+    lineHeight: 13,
+    marginTop: 3,
+  },
+
+  /* =====================================================
+     MODALS
+  ====================================================== */
+
+  modalOverlay: {
+    flex: 1,
+
+    justifyContent:
+      'flex-end',
+
+    backgroundColor:
+      'rgba(15,23,42,0.55)',
+  },
+
+  modalContent: {
+    backgroundColor:
+      COLORS.surface,
+
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
+
+    paddingHorizontal: 18,
+    paddingTop: 9,
+    paddingBottom: 22,
+  },
+
+  modalHandle: {
+    alignSelf: 'center',
+
+    width: 42,
+    height: 4,
+
+    borderRadius: 99,
+
+    backgroundColor:
+      '#D6DEE3',
+
+    marginBottom: 11,
+  },
+
+  modalHeader: {
+    flexDirection: 'row',
+
+    alignItems: 'center',
+
+    justifyContent:
+      'space-between',
+
+    paddingBottom: 12,
+
+    borderBottomWidth: 1,
+    borderBottomColor:
+      COLORS.border,
+  },
+
+  modalHeaderLeft: {
+    flex: 1,
+
+    flexDirection: 'row',
+
+    alignItems: 'center',
+  },
+
+  modalHeaderIcon: {
+    width: 38,
+    height: 38,
+
+    borderRadius: 12,
+
+    justifyContent: 'center',
+    alignItems: 'center',
+
+    backgroundColor:
+      COLORS.tealSoft,
+
+    marginRight: 9,
+  },
+
+  modalTitle: {
+    flex: 1,
+
+    color:
+      COLORS.text,
+
+    fontSize: 14,
+
+    fontWeight: '800',
+  },
+
+  modalCloseButton: {
+    width: 38,
+    height: 38,
+
+    borderRadius: 12,
+
+    justifyContent: 'center',
+    alignItems: 'center',
+
+    backgroundColor:
+      COLORS.background,
+  },
+
+  modalSaveButton: {
+    minHeight: 49,
+
+    borderRadius: 14,
+
+    backgroundColor:
+      COLORS.teal,
+
+    flexDirection: 'row',
+
+    justifyContent: 'center',
+    alignItems: 'center',
+
+    gap: 7,
+
+    marginTop: 16,
+  },
+
+  modalSaveText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+
+  suggestions: {
+    borderWidth: 1,
+    borderTopWidth: 0,
+
+    borderColor:
+      COLORS.border,
+
+    borderBottomLeftRadius: 13,
+    borderBottomRightRadius: 13,
+
+    overflow: 'hidden',
+
+    backgroundColor:
+      COLORS.surface,
+  },
+
+  suggestionRow: {
+    flexDirection: 'row',
+
+    justifyContent:
+      'space-between',
+
+    gap: 8,
+
+    padding: 11,
+
+    borderBottomWidth: 1,
+    borderBottomColor:
+      COLORS.border,
+  },
+
+  suggestionName: {
+    flex: 1,
+
+    color:
+      COLORS.text,
+
+    fontSize: 10,
+
+    fontWeight: '700',
+  },
+
+  suggestionCategory: {
+    color:
+      COLORS.subtle,
+
+    fontSize: 7,
+
+    textTransform:
+      'uppercase',
+  },
+
+  /* =====================================================
+     VACCINATION MODAL
+  ====================================================== */
+
+  aiScanCard: {
+    borderRadius: 17,
+
+    borderWidth: 1,
+    borderColor:
+      '#CAE7E4',
+
+    backgroundColor:
+      COLORS.tealSoft,
+
+    padding: 13,
+
+    marginTop: 13,
+    marginBottom: 9,
+  },
+
+  aiScanTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  aiScanTitleText: {
+    marginLeft: 8,
+  },
+
+  aiScanTitle: {
+    color:
+      COLORS.tealDark,
+
+    fontSize: 11,
+
+    fontWeight: '800',
+  },
+
+  aiScanBadge: {
+    color:
+      COLORS.teal,
+
+    fontSize: 6,
+
+    fontWeight: '800',
+
+    letterSpacing: 0.7,
+
+    marginTop: 2,
+  },
+
+  aiScanDescription: {
+    color:
+      COLORS.tealDark,
+
+    fontSize: 8,
+
+    lineHeight: 13,
+
+    opacity: 0.8,
+
+    marginTop: 8,
+  },
+
+  aiScanButtons: {
+    flexDirection: 'row',
+
+    gap: 8,
+
+    marginTop: 10,
+  },
+
+  aiScanButton: {
+    flex: 1,
+
+    minHeight: 40,
+
+    borderRadius: 12,
+
+    borderWidth: 1,
+    borderColor:
+      '#C9E8E5',
+
+    backgroundColor:
+      COLORS.surface,
+
+    flexDirection: 'row',
+
+    gap: 6,
+
+    alignItems: 'center',
+
+    justifyContent: 'center',
+  },
+
+  aiScanButtonText: {
+    color:
+      COLORS.tealDark,
+
+    fontSize: 9,
+
+    fontWeight: '800',
+  },
+
+  vaccineRow: {
+    borderRadius: 15,
+
+    borderWidth: 1,
+    borderColor:
+      COLORS.border,
+
+    padding: 12,
+
+    backgroundColor:
+      COLORS.background,
+
+    marginBottom: 10,
+  },
+
+  vaccineRowHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  vaccineNumber: {
+    width: 28,
+    height: 28,
+
+    borderRadius: 9,
+
+    backgroundColor:
+      COLORS.navy,
+
+    justifyContent: 'center',
+
+    alignItems: 'center',
+
+    marginRight: 7,
+  },
+
+  vaccineNumberText: {
+    color: '#FFFFFF',
+
+    fontSize: 8,
+
+    fontWeight: '800',
+  },
+
+  vaccineRowTitle: {
+    flex: 1,
+
+    color:
+      COLORS.text,
+
+    fontSize: 10,
+
+    fontWeight: '800',
+  },
+
+  splitFields: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+
+  splitField: {
+    flex: 1,
+  },
+
+  addAnotherButton: {
+    minHeight: 44,
+
+    borderRadius: 13,
+
+    borderWidth: 1,
+
+    borderStyle: 'dashed',
+
+    borderColor:
+      '#B7D9D5',
+
+    backgroundColor:
+      COLORS.tealSoft,
+
+    flexDirection: 'row',
+
+    gap: 6,
+
+    alignItems: 'center',
+
+    justifyContent: 'center',
+
+    marginTop: 3,
+  },
+
+  addAnotherText: {
+    color:
+      COLORS.tealDark,
+
+    fontSize: 9,
+
+    fontWeight: '800',
+  },
+
+  /* =====================================================
+     GLOBAL EDIT ACTIONS
+  ====================================================== */
+
+  editActions: {
+    borderRadius: 20,
+
+    borderWidth: 1,
+
+    borderColor:
+      COLORS.border,
+
+    backgroundColor:
+      COLORS.surface,
+
+    padding: 14,
+
+    marginBottom: 13,
+  },
+
+  editError: {
+    flexDirection: 'row',
+
+    alignItems:
+      'flex-start',
+
+    gap: 7,
+
+    borderRadius: 12,
+
+    backgroundColor:
+      COLORS.dangerSoft,
+
+    padding: 10,
+
+    marginBottom: 10,
+  },
+
+  editErrorText: {
+    flex: 1,
+
+    color:
+      COLORS.danger,
+
+    fontSize: 8,
+
+    lineHeight: 13,
+  },
+
+  editActionButtons: {
+    flexDirection: 'row',
+
+    gap: 9,
+  },
+
+  cancelButton: {
+    flex: 1,
+
+    minHeight: 48,
+
+    borderRadius: 14,
+
+    borderWidth: 1,
+
+    borderColor:
+      COLORS.border,
+
+    backgroundColor:
+      COLORS.surface,
+
+    flexDirection: 'row',
+
+    alignItems: 'center',
+
+    justifyContent: 'center',
+
+    gap: 6,
+  },
+
+  cancelButtonText: {
+    color:
+      COLORS.muted,
+
+    fontSize: 10,
+
+    fontWeight: '800',
+  },
+
+  saveButton: {
+    flex: 2,
+
+    minHeight: 48,
+
+    borderRadius: 14,
+
+    backgroundColor:
+      COLORS.teal,
+
+    flexDirection: 'row',
+
+    alignItems: 'center',
+
+    justifyContent: 'center',
+
+    gap: 6,
+  },
+
+  saveButtonText: {
+    color: '#FFFFFF',
+
+    fontSize: 10,
+
+    fontWeight: '800',
+  },
+
+  successBanner: {
+    flexDirection: 'row',
+
+    alignItems: 'center',
+
+    gap: 7,
+
+    borderRadius: 14,
+
+    backgroundColor:
+      COLORS.greenSoft,
+
+    padding: 11,
+
+    marginBottom: 13,
+  },
+
+  successText: {
+    color:
+      COLORS.green,
+
+    fontSize: 9,
+
+    fontWeight: '800',
+  },
+
+  /* =====================================================
+     GENERAL STATES
+  ====================================================== */
+
+  securityFooter: {
+    flexDirection: 'row',
+
+    alignItems: 'center',
+
+    justifyContent:
+      'center',
+
+    gap: 6,
+
+    paddingHorizontal: 16,
+
+    marginTop: 3,
+  },
+
+  securityFooterText: {
+    flex: 1,
+
+    color:
+      COLORS.subtle,
+
+    fontSize: 8,
+
+    lineHeight: 13,
+
+    textAlign: 'center',
+  },
+
+  centerScreen: {
+    flex: 1,
+
+    backgroundColor:
+      COLORS.background,
+
+    justifyContent: 'center',
+
+    alignItems: 'center',
+
+    paddingHorizontal: 28,
+  },
+
+  centerIcon: {
+    width: 58,
+    height: 58,
+
+    borderRadius: 18,
+
+    backgroundColor:
+      COLORS.tealSoft,
+
+    justifyContent: 'center',
+
+    alignItems: 'center',
+
+    marginBottom: 14,
+  },
+
+  centerTitle: {
+    color:
+      COLORS.text,
+
+    fontSize: 16,
+
+    fontWeight: '800',
+
+    marginTop: 11,
+  },
+
+  centerDescription: {
+    color:
+      COLORS.muted,
+
+    fontSize: 10,
+
+    lineHeight: 16,
+
+    textAlign: 'center',
+
+    maxWidth: 280,
+
+    marginTop: 5,
+  },
+
+  retryButton: {
+    borderRadius: 13,
+
+    paddingHorizontal: 15,
+
+    paddingVertical: 11,
+
+    backgroundColor:
+      COLORS.teal,
+
+    marginTop: 15,
+  },
+
+  retryButtonText: {
+    color: '#FFFFFF',
+
+    fontSize: 10,
+
+    fontWeight: '800',
+  },
 });
+
+export default PatientProfileScreen;
