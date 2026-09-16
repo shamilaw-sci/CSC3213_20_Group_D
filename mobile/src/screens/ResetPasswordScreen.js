@@ -1,13 +1,12 @@
 /**
- * @file    ResetPasswordScreen.js
+ * @file    ForgotPasswordScreen.js
  * @module  Auth
- * @desc    Mobile screen for setting a new password using a reset token.
- *          Token is entered manually (copied from the reset email/console
- *          log) since mobile has no URL bar to carry it automatically.
+ * @desc    Premium mobile screen for requesting a Care4U password reset.
  * @author  I.M.L.S. Idirisinghe (S/21/389)
  */
 
 import React, { useState } from 'react';
+
 import {
   View,
   Text,
@@ -18,49 +17,79 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
 } from 'react-native';
-import { resetPassword } from '../services/auth.service';
 
-export default function ResetPasswordScreen({ onBackToLogin }) {
-  const [token, setToken]                 = useState('');
-  const [newPassword, setNewPassword]     = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading]             = useState(false);
-  const [error, setError]                 = useState('');
-  const [success, setSuccess]             = useState(false);
+import {
+  AlertCircle,
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  LockKeyhole,
+  Mail,
+  ShieldCheck,
+} from 'lucide-react-native';
 
-  // Validate inputs
+import {
+  forgotPassword,
+} from '../services/auth.service';
+
+const COLORS = {
+  background: '#F6F8FA',
+  surface: '#FFFFFF',
+  navy: '#12344D',
+  teal: '#0F8B83',
+  tealDark: '#0B6F69',
+  tealSoft: '#E7F7F5',
+  text: '#102331',
+  muted: '#718096',
+  subtle: '#9AA8B6',
+  border: '#E3E9ED',
+  danger: '#C94C4C',
+  dangerSoft: '#FFF1F1',
+  green: '#2F855A',
+  greenSoft: '#EDF9F2',
+};
+
+export default function ForgotPasswordScreen({
+  onBackToLogin,
+  onResetPassword,
+}) {
+  const [email, setEmail] = useState('');
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+
   const validate = () => {
-    if (!token) { setError('Reset token is required'); return false; }
-    if (!newPassword) { setError('New password is required'); return false; }
-    if (newPassword.length < 8) {
-      setError('Password must be at least 8 characters');
+    if (!email.trim()) {
+      setError('Email is required');
       return false;
     }
-    if (newPassword !== confirmPassword) {
-      setError('Passwords do not match');
-      return false;
-    }
+
     return true;
   };
 
-  // Handle submit
   const handleSubmit = async () => {
-    if (!validate()) return;
+    if (!validate()) {
+      return;
+    }
 
     setLoading(true);
     setError('');
 
     try {
-      const data = await resetPassword(token, newPassword);
-      if (data.success) {
-        setSuccess(true);
-      } else {
-        setError(data.message || 'Something went wrong. Please try again.');
-      }
-    } catch (err) {
-      const message = err.response?.data?.message || 'Something went wrong. Please try again.';
-      setError(message);
+      await forgotPassword(
+        email.trim()
+      );
+
+      setSubmitted(true);
+
+    } catch {
+      setError(
+        'Something went wrong. Please try again.'
+      );
+
     } finally {
       setLoading(false);
     }
@@ -69,101 +98,217 @@ export default function ResetPasswordScreen({ onBackToLogin }) {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={
+        Platform.OS === 'ios'
+          ? 'padding'
+          : 'height'
+      }
     >
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
 
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.logo}>Care4U</Text>
-          <Text style={styles.tagline}>Centralized Healthcare Ecosystem</Text>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+
+        <View style={styles.hero}>
+
+          <View style={styles.heroCircleOne} />
+
+          <View style={styles.logoTile}>
+            <Image
+              source={require('../../assets/logo.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+          </View>
+
+          <Text style={styles.brandName}>
+            Care4U
+          </Text>
+
+          <Text style={styles.heroText}>
+            Secure account recovery
+          </Text>
+
         </View>
 
-        {/* Card */}
         <View style={styles.card}>
-          <Text style={styles.title}>Set a new password</Text>
 
-          {success ? (
-            <View style={styles.successBox}>
-              <Text style={styles.successText}>
-                Your password has been reset successfully.
-              </Text>
-              <TouchableOpacity onPress={onBackToLogin}>
-                <Text style={styles.successLink}>Go to Login</Text>
+          <View style={styles.iconTile}>
+            <LockKeyhole
+              size={23}
+              color={COLORS.teal}
+            />
+          </View>
+
+          <Text style={styles.eyebrow}>
+            ACCOUNT RECOVERY
+          </Text>
+
+          <Text style={styles.title}>
+            Forgot your password?
+          </Text>
+
+          <Text style={styles.subtitle}>
+            Enter the email address linked to your Care4U account to request a password reset.
+          </Text>
+
+          {submitted ? (
+            <>
+
+              <View style={styles.successBox}>
+
+                <CheckCircle2
+                  size={20}
+                  color={COLORS.green}
+                />
+
+                <View style={styles.messageContent}>
+
+                  <Text style={styles.successTitle}>
+                    Request processed
+                  </Text>
+
+                  <Text style={styles.successText}>
+                    If an account exists for this email, the password reset request has been processed.
+                  </Text>
+
+                </View>
+
+              </View>
+
+              <TouchableOpacity
+                style={styles.primaryButton}
+                activeOpacity={0.85}
+                onPress={onResetPassword}
+              >
+
+                <Text style={styles.primaryButtonText}>
+                  Continue to Reset Password
+                </Text>
+
+                <ArrowRight
+                  size={17}
+                  color="#FFFFFF"
+                />
+
               </TouchableOpacity>
-            </View>
+
+            </>
           ) : (
             <>
+
               {error !== '' && (
                 <View style={styles.errorBox}>
-                  <Text style={styles.errorText}>{error}</Text>
+
+                  <AlertCircle
+                    size={17}
+                    color={COLORS.danger}
+                  />
+
+                  <Text style={styles.errorText}>
+                    {error}
+                  </Text>
+
                 </View>
               )}
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>RESET TOKEN</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Paste the token from your email"
-                  placeholderTextColor="#94A3B8"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  value={token}
-                  onChangeText={(text) => { setToken(text); setError(''); }}
-                />
-              </View>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>NEW PASSWORD</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your new password"
-                  placeholderTextColor="#94A3B8"
-                  secureTextEntry
-                  value={newPassword}
-                  onChangeText={(text) => { setNewPassword(text); setError(''); }}
-                />
-              </View>
+                <Text style={styles.label}>
+                  EMAIL ADDRESS
+                </Text>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>CONFIRM NEW PASSWORD</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Re-enter your new password"
-                  placeholderTextColor="#94A3B8"
-                  secureTextEntry
-                  value={confirmPassword}
-                  onChangeText={(text) => { setConfirmPassword(text); setError(''); }}
-                />
+                <View style={styles.inputWrapper}>
+
+                  <Mail
+                    size={18}
+                    color={COLORS.subtle}
+                  />
+
+                  <TextInput
+                    style={styles.input}
+                    placeholder="you@example.com"
+                    placeholderTextColor={COLORS.subtle}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    value={email}
+                    onChangeText={(text) => {
+                      setEmail(text);
+                      setError('');
+                    }}
+                  />
+
+                </View>
+
               </View>
 
               <TouchableOpacity
-                style={[styles.button, loading && styles.buttonDisabled]}
+                style={[
+                  styles.primaryButton,
+                  loading && styles.buttonDisabled,
+                ]}
+                activeOpacity={0.85}
                 onPress={handleSubmit}
                 disabled={loading}
               >
-                {loading
-                  ? <ActivityIndicator color="#FFFFFF" />
-                  : <Text style={styles.buttonText}>Reset Password</Text>
-                }
+
+                {loading ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <>
+                    <Text style={styles.primaryButtonText}>
+                      Request Password Reset
+                    </Text>
+
+                    <ArrowRight
+                      size={17}
+                      color="#FFFFFF"
+                    />
+                  </>
+                )}
+
               </TouchableOpacity>
+
             </>
           )}
 
-          {!success && (
-            <TouchableOpacity onPress={onBackToLogin}>
-              <Text style={styles.backText}>
-                Remember your password? <Text style={styles.backLink}>Back to Login</Text>
-              </Text>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity
+            style={styles.backButton}
+            activeOpacity={0.75}
+            onPress={onBackToLogin}
+          >
+
+            <ArrowLeft
+              size={15}
+              color={COLORS.teal}
+            />
+
+            <Text style={styles.backText}>
+              Back to Login
+            </Text>
+
+          </TouchableOpacity>
 
         </View>
 
-        {/* Footer */}
-        <Text style={styles.footer}>© 2026 Care4U — Group D | CSC3213</Text>
+        <View style={styles.securityFooter}>
+
+          <ShieldCheck
+            size={14}
+            color={COLORS.subtle}
+          />
+
+          <Text style={styles.securityFooterText}>
+            Secure Care4U account recovery
+          </Text>
+
+        </View>
 
       </ScrollView>
+
     </KeyboardAvoidingView>
   );
 }
@@ -171,121 +316,231 @@ export default function ResetPasswordScreen({ onBackToLogin }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: COLORS.background,
   },
+
   scroll: {
     flexGrow: 1,
-    justifyContent: 'center',
-    padding: 24,
+    paddingBottom: 30,
   },
-  header: {
+
+  hero: {
+    height: 230,
+    backgroundColor: COLORS.navy,
+    overflow: 'hidden',
     alignItems: 'center',
-    marginBottom: 32,
+    paddingTop: 48,
+    position: 'relative',
   },
-  logo: {
-    fontSize: 36,
-    fontWeight: '700',
-    color: '#1E3A5F',
+
+  heroCircleOne: {
+    position: 'absolute',
+    width: 210,
+    height: 210,
+    borderRadius: 105,
+    right: -75,
+    top: -85,
+    backgroundColor: 'rgba(15,139,131,0.38)',
   },
-  tagline: {
-    fontSize: 14,
-    color: '#64748B',
+
+  logoTile: {
+    width: 63,
+    height: 63,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  logoImage: {
+    width: 50,
+    height: 50,
+  },
+
+  brandName: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: '800',
+    marginTop: 10,
+  },
+
+  heroText: {
+    color: 'rgba(255,255,255,0.65)',
+    fontSize: 10,
     marginTop: 4,
   },
+
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
+    marginHorizontal: 18,
+    marginTop: -38,
+    padding: 21,
+    borderRadius: 25,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    shadowColor: '#0F172A',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    elevation: 4,
   },
+
+  iconTile: {
+    width: 46,
+    height: 46,
+    borderRadius: 15,
+    backgroundColor: COLORS.tealSoft,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+
+  eyebrow: {
+    color: COLORS.teal,
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+
   title: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1E293B',
-    marginBottom: 20,
+    color: COLORS.text,
+    fontSize: 22,
+    fontWeight: '800',
+    marginTop: 4,
   },
-  successBox: {
-    backgroundColor: '#F0FDF4',
-    borderWidth: 1,
-    borderColor: '#BBF7D0',
-    borderRadius: 8,
-    padding: 12,
+
+  subtitle: {
+    color: COLORS.muted,
+    fontSize: 10,
+    lineHeight: 16,
+    marginTop: 6,
+    marginBottom: 19,
   },
-  successText: {
-    fontSize: 13,
-    color: '#15803D',
-  },
-  successLink: {
-    fontSize: 13,
-    color: '#1E3A5F',
-    fontWeight: '600',
-    marginTop: 8,
-  },
-  errorBox: {
-    backgroundColor: '#FEF2F2',
-    borderWidth: 1,
-    borderColor: '#FECACA',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-  },
-  errorText: {
-    fontSize: 13,
-    color: '#DC2626',
-  },
+
   inputGroup: {
     marginBottom: 16,
   },
+
   label: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#64748B',
-    letterSpacing: 0.8,
-    marginBottom: 6,
+    color: COLORS.muted,
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 0.7,
+    marginBottom: 7,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: '#1E293B',
-    backgroundColor: '#FFFFFF',
-  },
-  button: {
-    backgroundColor: '#1E3A5F',
-    borderRadius: 8,
-    paddingVertical: 14,
+
+  inputWrapper: {
+    minHeight: 50,
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
+    gap: 10,
+    paddingHorizontal: 13,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: '#FBFCFD',
   },
+
+  input: {
+    flex: 1,
+    color: COLORS.text,
+    fontSize: 12,
+  },
+
+  errorBox: {
+    flexDirection: 'row',
+    gap: 8,
+    padding: 11,
+    borderRadius: 13,
+    borderWidth: 1,
+    borderColor: '#F1CCCC',
+    backgroundColor: COLORS.dangerSoft,
+    marginBottom: 16,
+  },
+
+  errorText: {
+    flex: 1,
+    color: COLORS.danger,
+    fontSize: 10,
+    lineHeight: 15,
+  },
+
+  successBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 9,
+    padding: 13,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#CDE9D7',
+    backgroundColor: COLORS.greenSoft,
+    marginBottom: 17,
+  },
+
+  messageContent: {
+    flex: 1,
+  },
+
+  successTitle: {
+    color: COLORS.green,
+    fontSize: 10,
+    fontWeight: '800',
+  },
+
+  successText: {
+    color: COLORS.green,
+    fontSize: 9,
+    lineHeight: 14,
+    marginTop: 3,
+  },
+
+  primaryButton: {
+    minHeight: 51,
+    borderRadius: 15,
+    backgroundColor: COLORS.teal,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+
+  primaryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+
   buttonDisabled: {
     opacity: 0.6,
   },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '600',
+
+  backButton: {
+    flexDirection: 'row',
+    gap: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 19,
   },
+
   backText: {
-    textAlign: 'center',
-    fontSize: 13,
-    color: '#64748B',
+    color: COLORS.teal,
+    fontSize: 10,
+    fontWeight: '800',
+  },
+
+  securityFooter: {
+    flexDirection: 'row',
+    gap: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginTop: 20,
   },
-  backLink: {
-    color: '#1E3A5F',
-    fontWeight: '600',
-  },
-  footer: {
-    textAlign: 'center',
-    fontSize: 11,
-    color: '#94A3B8',
-    marginTop: 24,
+
+  securityFooterText: {
+    color: COLORS.subtle,
+    fontSize: 8,
   },
 });
