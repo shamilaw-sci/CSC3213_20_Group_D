@@ -43,9 +43,8 @@ import {
   Users
 } from 'lucide-react';
 
-import {
-  QRCodeSVG,
-} from 'qrcode.react';
+import { QRCodeSVG } from 'qrcode.react';
+
 
 import { 
   getPatientProfile, 
@@ -77,14 +76,12 @@ import {
 import { searchAllergens } from '../../utils/allergenSearch';
 import { searchVaccines } from '../../utils/vaccineSearch';
 
-import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Spinner from '../../components/common/Spinner';
 import Alert from '../../components/common/Alert';
 import Modal from '../../components/common/Modal'; 
 import HealthAwarenessFeed from '../../components/common/HealthAwarenessFeed';
-import PageHeader from '../../components/common/PageHeader';
 
 /**
  * Fetches the currently logged-in patient's real ID from the session,
@@ -245,6 +242,34 @@ const formatDate = (dateStr) => {
   );
 };
 
+const formatAge = (dateStr) => {
+  if (!dateStr) return '—';
+
+  const birthDate = new Date(dateStr);
+
+  if (Number.isNaN(birthDate.getTime())) {
+    return '—';
+  }
+
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+
+  const monthDifference =
+    today.getMonth() - birthDate.getMonth();
+
+  if (
+    monthDifference < 0 ||
+    (
+      monthDifference === 0 &&
+      today.getDate() < birthDate.getDate()
+    )
+  ) {
+    age -= 1;
+  }
+
+  return `${age} yrs`;
+};
+
 const capitalise = (str) => {
   if (!str) return '—';
 
@@ -379,6 +404,94 @@ const ProfileField = ({
           {value || '—'}
         </p>
 
+      </div>
+
+    </div>
+
+  </div>
+);
+
+// ─── Premium Section Shell ───────────────────────────────────────────────────
+const SectionPanel = ({
+  title,
+  description,
+  editing = false,
+  actionLabel = 'Add',
+  onAction,
+  children,
+  className = ''
+}) => (
+  <section
+    className={`overflow-hidden rounded-2xl border border-border/70 bg-card shadow-[0_8px_28px_rgba(15,23,42,0.045)] ${className}`}
+  >
+
+    <div className="flex items-start justify-between gap-4 px-5 sm:px-6 py-5 border-b border-border bg-card">
+
+      <div className="min-w-0">
+
+        <h2 className="text-base sm:text-lg font-extrabold tracking-tight text-[#12344D]">
+          {title}
+        </h2>
+
+        {description && (
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1.5 leading-relaxed max-w-2xl">
+            {description}
+          </p>
+        )}
+
+      </div>
+
+      {editing && onAction && (
+        <button
+          type="button"
+          onClick={onAction}
+          className="inline-flex items-center gap-1.5 shrink-0 rounded-xl bg-module-soft text-primary px-3 py-2 text-xs font-bold hover:bg-primary hover:text-white transition-colors"
+        >
+          <Plus size={14} />
+          {actionLabel}
+        </button>
+      )}
+
+    </div>
+
+    <div className="bg-secondary/15 px-5 sm:px-6 py-5">
+      {children}
+    </div>
+
+  </section>
+);
+
+// ─── Premium Summary Tile ────────────────────────────────────────────────────
+const SummaryTile = ({
+  label,
+  value,
+  helper,
+  icon: Icon,
+  iconClass = 'text-primary',
+  iconBgClass = 'bg-module-soft'
+}) => (
+  <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
+
+    <div className="flex items-start justify-between gap-4">
+
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+          {label}
+        </p>
+
+        <p className="text-2xl sm:text-3xl font-black tracking-tight text-foreground mt-2">
+          {value}
+        </p>
+
+        {helper && (
+          <p className="text-xs text-muted-foreground mt-1">
+            {helper}
+          </p>
+        )}
+      </div>
+
+      <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${iconBgClass} ${iconClass}`}>
+        <Icon size={20} strokeWidth={2} />
       </div>
 
     </div>
@@ -2086,1700 +2199,909 @@ if (isError) {
 
       <BannerAnimationStyles />
 
-<PageHeader
-  eyebrow="Patient Portal"
-  icon={User}
-  mobileSideBySide
-  title={
-    <>
-      Welcome back,{' '}
-      {getFirstName(
-        patient?.full_name
-      )}
-    </>
-  }
-  description="Manage your personal health information"
-  actions={
-    <div className="flex items-center gap-3">
+      {/* =====================================================
+          PREMIUM PROFILE HERO
+      ====================================================== */}
+      <section
+        className="
+          relative
+          overflow-hidden
+          rounded-[2rem]
+          border
+          border-primary/15
+          bg-gradient-to-br
+          from-[#084F49]
+          via-[#0B6F68]
+          to-[#19B8A9]
+          shadow-[0_16px_44px_rgba(15,92,83,0.18)]
+        "
+      >
 
-      {/* Profile photo */}
-      <div className="relative w-12 h-12 sm:w-16 sm:h-16 shrink-0">
-
-        <div className="cu-glow-ring absolute inset-0" />
-
-        <img
-          src={
-            getAvatarSrc(
-              patient
-            )
-          }
-          alt="Profile"
-          className="
-            cu-avatar-pop
-            w-12 h-12
-            sm:w-16 sm:h-16
-            rounded-full
-            border-2 border-white/25
-            shadow-lg
-            object-cover
-          "
-        />
-
-        {uploadPhotoMutation.isPending && (
-          <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center">
-
-            <Spinner
-              size="sm"
-            />
-
-          </div>
-        )}
-
-        {isEditing && (
-          <button
-            type="button"
-            onClick={
-              handlePhotoButtonClick
-            }
-            disabled={
-              uploadPhotoMutation.isPending
-            }
-            title="Change profile photo"
-            className="
-              absolute
-              -bottom-1 -right-1
-              w-7 h-7
-              rounded-full
-              bg-white
-              text-primary
-              shadow-md
-              flex items-center justify-center
-              hover:bg-white/90
-              transition-colors
-              disabled:opacity-50
-            "
-          >
-            <Camera
-              size={13}
-            />
-          </button>
-        )}
-
-        <input
-          ref={
-            photoInputRef
-          }
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          className="hidden"
-          onChange={
-            handlePhotoFileChange
-          }
-        />
-
-      </div>
-
-      {/* Edit action */}
-      {!isEditing ? (
-        <button
-          type="button"
-          onClick={
-            handleEditClick
-          }
-          className="
-            inline-flex
-            items-center
-            gap-2
-            px-3.5 py-2.5
-            rounded-xl
-            bg-white/10
-            border border-white/20
-            text-white
-            text-xs
-            sm:text-sm
-            font-semibold
-            backdrop-blur-sm
-            hover:bg-white/15
-            hover:border-white/30
-            transition-all
-            focus:outline-none
-            focus:ring-2
-            focus:ring-white/30
-          "
-        >
-          <Edit2
-            size={15}
-          />
-
-          Edit Profile
-        </button>
-      ) : (
-        <div
-          className="
-            inline-flex
-            items-center
-            gap-2
-            px-3.5 py-2.5
-            rounded-xl
-            bg-white/10
-            border border-white/20
-            text-white/90
-            text-xs
-            sm:text-sm
-            font-semibold
-            backdrop-blur-sm
-          "
-        >
-          <Edit2
-            size={15}
-          />
-
-          Editing
-        </div>
-      )}
-
-    </div>
-  }
-  meta={
-    patient?.qr_code_id ? (
-      <div className="flex items-center gap-3 sm:gap-4">
-
-        <div
-          className="
-            bg-white
-            rounded-xl
-            shrink-0
-          "
-        >
-          <QRCodeSVG
-            value={
-              patient.qr_code_id
-            }
-            size={92}
-            level="M"
-            bgColor="#FFFFFF"
-            fgColor="#0F172A"
-            className="
-              w-[76px] h-[76px]
-              sm:w-[92px] sm:h-[92px]
-            "
-          />
+        {/* Decorative background elements */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -right-24 -top-28 w-72 h-72 rounded-full bg-white/10" />
+          <div className="absolute -left-10 -top-14 w-36 h-36 rounded-full border border-white/10 bg-white/5" />
+          <div className="absolute right-[31%] -bottom-20 w-44 h-44 rounded-full border border-white/10 bg-white/5" />
+          <div className="absolute inset-0 opacity-[0.06] bg-[linear-gradient(32deg,transparent_32%,white_33%,white_35%,transparent_36%,transparent_64%,white_65%,white_67%,transparent_68%)] bg-[length:180px_110px]" />
         </div>
 
-        {/* Keep text on tablet / desktop.
-            Mobile only needs the QR itself. */}
-        <div className="hidden sm:block min-w-0">
+        <div className="relative px-5 py-6 sm:px-8 sm:py-8 lg:px-9 lg:py-9">
 
-          <p
-            className="
-              text-[10px]
-              font-bold
-              uppercase
-              tracking-[0.12em]
-              text-primary
-            "
-          >
-            My Care4U QR
-          </p>
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-7 lg:gap-10 lg:items-center">
 
-          <p className="text-sm font-bold text-foreground mt-1">
-            Patient Identity
-          </p>
+            {/* Patient identity */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-6 min-w-0">
 
-          <p
-            className="
-              text-xs
-              text-muted-foreground
-              mt-1
-              leading-relaxed
-              max-w-[145px]
-            "
-          >
-            Show this QR to your doctor or pharmacist.
-          </p>
+              {/* Large profile photo */}
+              <div className="relative w-32 h-32 sm:w-40 sm:h-40 shrink-0 self-center sm:self-auto">
 
-        </div>
+                <div className="cu-glow-ring absolute inset-0" />
 
-      </div>
-    ) : (
-      <p className="text-xs text-muted-foreground">
-        QR unavailable
-      </p>
-    )
-  }
-/>
-
-      <div className="space-y-7">
-        
-        {!isEditing && (
-          <HealthAwarenessFeed
-            patientAllergies={
-              allergies
-            }
-          />
-        )}
-
-        {/* ── View vs Edit Mode for Personal Info ── */}
-        {!isEditing ? (
-          <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-6">
-
-            <Card title="Personal Information">
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-
-                <ProfileField
-                  icon={User}
-                  label="Full Name"
-                  value={
-                    patient?.full_name
-                  }
-                />
-
-                <ProfileField
-                  icon={Droplets}
-                  label="Blood Group"
-                  value={
-                    patient?.blood_group
-                  }
-                />
-
-                <ProfileField
-                  icon={Calendar}
-                  label="Date of Birth"
-                  value={
-                    formatDate(
-                      patient?.date_of_birth
-                    )
-                  }
-                />
-
-                <ProfileField
-                  icon={User}
-                  label="Gender"
-                  value={
-                    capitalise(
-                      patient?.gender
-                    )
-                  }
-                />
-
-                <ProfileField
-                  icon={User}
-                  label="NIC"
-                  value={
-                    patient?.nic
-                  }
-                />
-
-              </div>
-
-            </Card>
-
-            <Card title="Emergency Contact">
-
-              <div className="space-y-3">
-
-                <ProfileField
-                  icon={User}
-                  label="Contact Name"
-                  value={
-                    patient?.emergency_contact_name
-                  }
-                />
-
-                <ProfileField
-                  icon={Phone}
-                  label="Contact Phone"
-                  value={
-                    patient?.emergency_contact_phone
-                  }
-                />
-
-                <ProfileField
-                  icon={Users}
-                  label="Relationship"
-                  value={
-                    capitalise(
-                      patient?.emergency_contact_relationship
-                    )
-                  }
-                />
-
-              </div>
-
-            </Card>
-
-          </div>
-        ) : (
-          <form
-            onSubmit={
-              handleSubmit(
-                (
-                  data
-                ) =>
-                  updateMutation.mutate(
-                    data
-                  )
-              )
-            }
-          >
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-              <Card title="Personal Information">
-                <div className="space-y-4">
-
-                  <Input
-                    label="Full Name"
-                    placeholder="Enter full name"
-                    error={
-                      errors.full_name?.message
-                    }
-                    {...register(
-                      'full_name',
-                      {
-                        required:
-                          'Full name is required'
-                      }
-                    )}
+                <div className="relative w-full h-full rounded-full bg-white p-1.5 shadow-[0_18px_42px_rgba(2,44,40,0.28)]">
+                  <img
+                    src={getAvatarSrc(patient)}
+                    alt="Profile"
+                    className="cu-avatar-pop w-full h-full rounded-full object-cover bg-[#0B5F58]"
                   />
+                </div>
 
-                  <div className="flex flex-col gap-1">
+                {uploadPhotoMutation.isPending && (
+                  <div className="absolute inset-1.5 rounded-full bg-black/45 flex items-center justify-center">
+                    <Spinner size="sm" />
+                  </div>
+                )}
 
-                    <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                      Blood Group{' '}
-                      <span className="text-destructive">
-                        *
+                {isEditing && (
+                  <button
+                    type="button"
+                    onClick={handlePhotoButtonClick}
+                    disabled={uploadPhotoMutation.isPending}
+                    title="Change profile photo"
+                    className="
+                      absolute
+                      bottom-1 right-1
+                      w-10 h-10
+                      rounded-full
+                      border-[3px]
+                      border-white
+                      bg-[#12344D]
+                      text-white
+                      shadow-lg
+                      flex items-center justify-center
+                      hover:bg-[#173F5C]
+                      transition-colors
+                      disabled:opacity-50
+                    "
+                  >
+                    <Camera size={17} />
+                  </button>
+                )}
+
+                <input
+                  ref={photoInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={handlePhotoFileChange}
+                />
+
+              </div>
+
+              <div className="min-w-0 text-center sm:text-left">
+
+                <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 backdrop-blur-sm">
+                  <User size={13} className="text-white/85" />
+                  <span className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/90">
+                    Care4U Patient
+                  </span>
+                </div>
+
+                <h1 className="text-2xl sm:text-3xl lg:text-[2rem] font-black tracking-tight text-white mt-3">
+                  {patient?.full_name || 'Patient'}
+                </h1>
+
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 mt-3 text-xs sm:text-sm text-white/80">
+                  <span>{formatAge(patient?.date_of_birth)}</span>
+                  <span className="w-1 h-1 rounded-full bg-white/35" />
+                  <span>{capitalise(patient?.gender)}</span>
+
+                  {patient?.blood_group && (
+                    <>
+                      <span className="w-1 h-1 rounded-full bg-white/35" />
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-[#EF5350] text-white px-2.5 py-1 text-xs font-bold shadow-sm">
+                        <Droplets size={12} />
+                        {patient.blood_group}
                       </span>
-                    </label>
+                    </>
+                  )}
+                </div>
 
-                    <select
-                      className="w-full px-3 py-2 text-sm text-foreground bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                      {...register(
-                        'blood_group',
-                        {
-                          required:
-                            'Required'
-                        }
-                      )}
+                <p className="text-xs sm:text-sm text-white/75 mt-3 max-w-xl leading-relaxed mx-auto sm:mx-0">
+                  Keep your identity, emergency contact details, clinical safety information, vaccination history, and privacy preferences current in one place.
+                </p>
+
+                <div className="mt-4 flex justify-center sm:justify-start">
+                  {!isEditing ? (
+                    <button
+                      type="button"
+                      onClick={handleEditClick}
+                      className="
+                        inline-flex
+                        items-center
+                        justify-center
+                        gap-2
+                        rounded-xl
+                        border border-white/25
+                        bg-white/12
+                        text-white
+                        px-4 py-2.5
+                        text-sm
+                        font-bold
+                        backdrop-blur-sm
+                        hover:bg-white/18
+                        hover:border-white/35
+                        transition-all
+                      "
                     >
-                      <option value="">
-                        Select blood group
-                      </option>
+                      <Edit2 size={16} />
+                      Edit Profile
+                    </button>
+                  ) : (
+                    <div className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/12 text-white px-4 py-2.5 text-sm font-bold backdrop-blur-sm">
+                      <Edit2 size={16} />
+                      Edit Mode Active
+                    </div>
+                  )}
+                </div>
 
-                      {[
-                        'A+',
-                        'A-',
-                        'B+',
-                        'B-',
-                        'AB+',
-                        'AB-',
-                        'O+',
-                        'O-'
-                      ].map(
-                        (
-                          bg
-                        ) => (
-                          <option
-                            key={bg}
-                            value={bg}
-                          >
-                            {bg}
-                          </option>
-                        )
-                      )}
+              </div>
 
-                    </select>
+            </div>
+
+            {/* Care4U QR — web keeps QR identity in the profile header */}
+            <div className="w-full lg:w-[286px]">
+              {patient?.qr_code_id ? (
+                <div className="rounded-2xl bg-white p-4 sm:p-5 shadow-[0_16px_34px_rgba(2,44,40,0.18)]">
+
+                  <div className="flex items-center gap-4">
+
+                    <div className="rounded-xl border border-slate-100 bg-white p-2 shrink-0">
+                      <QRCodeSVG
+                        value={patient.qr_code_id}
+                        size={92}
+                        level="M"
+                        bgColor="#FFFFFF"
+                        fgColor="#0F172A"
+                        className="w-[76px] h-[76px] sm:w-[92px] sm:h-[92px]"
+                      />
+                    </div>
+
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-primary">
+                        My Care4U QR
+                      </p>
+
+                      <p className="text-sm font-extrabold text-[#12344D] mt-1">
+                        Patient Identity
+                      </p>
+
+                      <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+                        Show this QR to your doctor or pharmacist.
+                      </p>
+                    </div>
 
                   </div>
 
                 </div>
-              </Card>
+              ) : (
+                <div className="rounded-2xl border border-white/20 bg-white/10 px-4 py-5 text-center backdrop-blur-sm">
+                  <p className="text-sm font-semibold text-white/80">
+                    QR unavailable
+                  </p>
+                </div>
+              )}
+            </div>
 
-              <Card title="Emergency Contact">
-                <div className="space-y-4">
+          </div>
 
-                  <Input
-                    label="Contact Name"
-                    placeholder="Enter contact name"
-                    {...register(
-                      'emergency_contact_name'
-                    )}
-                  />
+        </div>
 
-                  <Input
-                    label="Contact Phone"
-                    placeholder="Enter contact phone"
-                    error={
-                      errors
-                        .emergency_contact_phone
-                        ?.message
+      </section>
+
+      {/* =====================================================
+          HEALTH AWARENESS
+      ====================================================== */}
+      {!isEditing && (
+        <HealthAwarenessFeed
+          patientAllergies={allergies}
+        />
+      )}
+
+      {/* =====================================================
+          HEALTH SNAPSHOT
+      ====================================================== */}
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <SummaryTile
+          label="Blood Group"
+          value={patient?.blood_group || '—'}
+          helper="Emergency identity"
+          icon={Droplets}
+          iconClass="text-destructive"
+          iconBgClass="bg-destructive/10"
+        />
+
+        <SummaryTile
+          label="Allergies"
+          value={allergies.length}
+          helper={allergies.length === 1 ? 'Known allergy' : 'Known allergies'}
+          icon={AlertTriangle}
+          iconClass="text-urgent-foreground"
+          iconBgClass="bg-urgent/10"
+        />
+
+        <SummaryTile
+          label="Conditions"
+          value={conditions.length}
+          helper={conditions.some(item => item.is_priority) ? 'Priority condition on file' : 'Active conditions'}
+          icon={HeartPulse}
+          iconClass="text-primary"
+          iconBgClass="bg-module-soft"
+        />
+
+        <SummaryTile
+          label="Vaccinations"
+          value={vaccinations.length}
+          helper="Recorded doses"
+          icon={Syringe}
+          iconClass="text-success"
+          iconBgClass="bg-success/10"
+        />
+      </section>
+
+      {/* =====================================================
+          GLOBAL PROFILE FORM
+      ====================================================== */}
+      <form
+        onSubmit={handleSubmit(
+          data => updateMutation.mutate(data)
+        )}
+        className="space-y-6"
+      >
+
+        {/* ===================================================
+            PERSONAL + EMERGENCY
+        ==================================================== */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+
+          <SectionPanel
+            title="Personal Information"
+            description="Your core identity and demographic information. Protected identity fields stay read-only."
+          >
+
+            {!isEditing ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <ProfileField icon={User} label="Full Name" value={patient?.full_name} />
+                <ProfileField icon={Droplets} label="Blood Group" value={patient?.blood_group} />
+                <ProfileField icon={Calendar} label="Date of Birth" value={formatDate(patient?.date_of_birth)} />
+                <ProfileField icon={User} label="Gender" value={capitalise(patient?.gender)} />
+                <ProfileField icon={User} label="NIC" value={patient?.nic} />
+              </div>
+            ) : (
+              <div className="space-y-4">
+
+                <Input
+                  label="Full Name"
+                  placeholder="Enter full name"
+                  error={errors.full_name?.message}
+                  {...register(
+                    'full_name',
+                    {
+                      required: 'Full name is required'
                     }
+                  )}
+                />
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    Blood Group <span className="text-destructive">*</span>
+                  </label>
+
+                  <select
+                    className="w-full px-3 py-2.5 text-sm text-foreground bg-card border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                     {...register(
-                      'emergency_contact_phone',
+                      'blood_group',
                       {
-                        pattern: {
-                          value:
-                            /^[0-9+\s\-()]{7,15}$/,
-                          message:
-                            'Invalid phone number'
-                        }
+                        required: 'Required'
                       }
                     )}
-                  />
+                  >
+                    <option value="">Select blood group</option>
+                    {[
+                      'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'
+                    ].map(bg => (
+                      <option key={bg} value={bg}>{bg}</option>
+                    ))}
+                  </select>
+                </div>
 
-                  <div className="flex flex-col gap-1">
+                <div className="flex items-start gap-2 rounded-xl bg-secondary/60 p-3 text-xs text-muted-foreground">
+                  <Shield size={15} className="shrink-0 mt-0.5" />
+                  <span>Date of birth, gender, and NIC are protected identity fields and are not editable here.</span>
+                </div>
 
-                    <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                      Relationship
-                    </label>
+              </div>
+            )}
 
-                    <select
-                      className="w-full px-3 py-2 text-sm text-foreground bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                      {...register(
-                        'emergency_contact_relationship'
-                      )}
-                    >
-                      <option value="">
-                        Select relationship
+          </SectionPanel>
+
+          <SectionPanel
+            title="Emergency Contact"
+            description="The person Care4U can contact when urgent support is needed."
+          >
+
+            {!isEditing ? (
+              <div className="space-y-3">
+                <ProfileField icon={User} label="Contact Name" value={patient?.emergency_contact_name} />
+                <ProfileField icon={Phone} label="Contact Phone" value={patient?.emergency_contact_phone} />
+                <ProfileField icon={Users} label="Relationship" value={capitalise(patient?.emergency_contact_relationship)} />
+              </div>
+            ) : (
+              <div className="space-y-4">
+
+                <Input
+                  label="Contact Name"
+                  placeholder="Enter contact name"
+                  {...register('emergency_contact_name')}
+                />
+
+                <Input
+                  label="Contact Phone"
+                  placeholder="Enter contact phone"
+                  error={errors.emergency_contact_phone?.message}
+                  {...register(
+                    'emergency_contact_phone',
+                    {
+                      pattern: {
+                        value: /^[0-9+\s\-()]{7,15}$/,
+                        message: 'Invalid phone number'
+                      }
+                    }
+                  )}
+                />
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    Relationship
+                  </label>
+
+                  <select
+                    className="w-full px-3 py-2.5 text-sm text-foreground bg-card border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+                    {...register('emergency_contact_relationship')}
+                  >
+                    <option value="">Select relationship</option>
+                    {[
+                      'parent', 'sibling', 'spouse', 'child', 'friend', 'other'
+                    ].map(relation => (
+                      <option key={relation} value={relation}>
+                        {capitalise(relation)}
                       </option>
+                    ))}
+                  </select>
+                </div>
 
-                      {[
-                        'parent',
-                        'sibling',
-                        'spouse',
-                        'child',
-                        'friend',
-                        'other'
-                      ].map(
-                        (
-                          r
-                        ) => (
-                          <option
-                            key={r}
-                            value={r}
-                          >
-                            {capitalise(
-                              r
-                            )}
-                          </option>
-                        )
+              </div>
+            )}
+
+          </SectionPanel>
+
+        </div>
+
+        {/* ===================================================
+            CONDITIONS + ALLERGIES
+        ==================================================== */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+
+          <SectionPanel
+            title="Chronic Conditions"
+            description="Long-term health conditions relevant to ongoing treatment and safety."
+            editing={isEditing}
+            actionLabel="Add"
+            onAction={() => setIsAddConditionModalOpen(true)}
+          >
+
+            {conditionsLoading ? (
+              <div className="py-8 flex justify-center"><Spinner size="sm" /></div>
+            ) : conditions.length === 0 ? (
+              <div className="rounded-xl bg-card border border-border/60 p-6 text-center">
+                <HeartPulse size={24} className="mx-auto text-muted-foreground" />
+                <p className="text-sm font-semibold text-foreground mt-3">No chronic conditions recorded</p>
+                <p className="text-xs text-muted-foreground mt-1">Conditions you add will appear here.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {conditions.map(condition => (
+                  <div
+                    key={condition.id}
+                    className={`flex items-start justify-between gap-4 rounded-xl border p-4 ${condition.is_priority ? 'border-destructive/20 bg-destructive/5' : 'border-border/60 bg-card'}`}
+                  >
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-bold text-foreground">{condition.condition}</p>
+                        {condition.is_priority && <SeverityBadge severity="priority" />}
+                      </div>
+
+                      {condition.diagnosed_at && (
+                        <p className="text-xs text-muted-foreground mt-1.5">
+                          Diagnosed {formatDate(condition.diagnosed_at)}
+                        </p>
                       )}
 
-                    </select>
+                      {condition.notes && (
+                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{condition.notes}</p>
+                      )}
+                    </div>
 
+                    {isEditing && (
+                      <button
+                        type="button"
+                        onClick={() => promptDeleteCondition(condition)}
+                        className="p-2 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                        title="Remove condition"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+          </SectionPanel>
+
+          <SectionPanel
+            title="Known Allergies"
+            description="Important allergy information used during medication and treatment decisions."
+            editing={isEditing}
+            actionLabel="Add"
+            onAction={() => {
+              setAllergySuggestions(searchAllergens(''));
+              setIsAddAllergyModalOpen(true);
+            }}
+          >
+
+            {allergiesLoading ? (
+              <div className="py-8 flex justify-center"><Spinner size="sm" /></div>
+            ) : allergies.length === 0 ? (
+              <div className="rounded-xl bg-card border border-border/60 p-6 text-center">
+                <Shield size={24} className="mx-auto text-success" />
+                <p className="text-sm font-semibold text-foreground mt-3">No allergies recorded</p>
+                <p className="text-xs text-muted-foreground mt-1">Your active allergy list will appear here.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {sortedAllergies.map(allergy => (
+                  <div
+                    key={allergy.id}
+                    className="flex items-start justify-between gap-4 rounded-xl border border-border/60 bg-card p-4"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-bold text-foreground">{allergy.allergen}</p>
+                        <SeverityBadge severity={allergy.severity} />
+                      </div>
+
+                      {allergy.notes && (
+                        <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">{allergy.notes}</p>
+                      )}
+                    </div>
+
+                    {isEditing && (
+                      <button
+                        type="button"
+                        onClick={() => promptDeleteAllergy(allergy)}
+                        className="p-2 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                        title="Remove allergy"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+          </SectionPanel>
+
+        </div>
+
+        {/* ===================================================
+            MEDICAL DEVICES
+        ==================================================== */}
+        <SectionPanel
+          title="Medical Devices & Implants"
+          description="Implants and medical equipment that may affect routine or emergency care."
+          editing={isEditing}
+          actionLabel="Add Device"
+          onAction={() => {
+            setDeviceNameInput('');
+            setDeviceTypeInput('');
+            setImplantedAtInput('');
+            setDeviceNotesInput('');
+            setIsEmergencyRelevantInput(true);
+            setIsAddDeviceModalOpen(true);
+          }}
+        >
+
+          <div className="flex items-start gap-3 rounded-xl bg-module-soft/60 p-4 mb-4">
+            <Shield size={18} className="text-primary shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-bold text-foreground">Emergency readiness information</p>
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                Devices marked as emergency relevant may appear during authorized and audited Break-Glass access.
+              </p>
+            </div>
+          </div>
+
+          {medicalDevicesLoading ? (
+            <div className="py-8 flex justify-center"><Spinner size="sm" /></div>
+          ) : medicalDevices.length === 0 ? (
+            <div className="rounded-xl border border-border/60 bg-card p-7 text-center">
+              <HeartPulse size={26} className="mx-auto text-muted-foreground" />
+              <p className="text-sm font-bold text-foreground mt-3">No medical devices or implants recorded</p>
+              <p className="text-xs text-muted-foreground mt-1">Examples include pacemakers, insulin pumps, ICDs, cochlear implants, and dialysis access.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {medicalDevices.map(device => (
+                <div key={device.id} className="relative rounded-xl border border-border/60 bg-card p-4">
+                  <div className="pr-10">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-bold text-foreground">{device.device_name}</p>
+                      {device.is_emergency_relevant && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 text-destructive px-2 py-1 text-[10px] font-bold uppercase tracking-wide">
+                          <Shield size={10} /> Emergency
+                        </span>
+                      )}
+                    </div>
+
+                    {device.device_type && (
+                      <p className="text-xs font-semibold text-primary mt-1.5">{device.device_type}</p>
+                    )}
+
+                    {device.implanted_at && (
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Implanted / Started <span className="font-medium text-foreground">{formatDate(device.implanted_at)}</span>
+                      </p>
+                    )}
+
+                    {device.notes && (
+                      <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{device.notes}</p>
+                    )}
                   </div>
 
+                  {isEditing && (
+                    <button
+                      type="button"
+                      onClick={() => promptDeleteMedicalDevice(device)}
+                      className="absolute right-3 top-3 p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                      title="Remove medical device"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
                 </div>
-              </Card>
+              ))}
+            </div>
+          )}
+
+        </SectionPanel>
+
+        {/* ===================================================
+            IMPORTANT MEDICAL BACKGROUND
+        ==================================================== */}
+        <SectionPanel
+          title="Important Medical Background"
+          description="Major surgeries, procedures, transplants, hospitalizations, and serious past health events that remain clinically relevant."
+          editing={isEditing}
+          actionLabel="Add Record"
+          onAction={() => {
+            setBackgroundTypeInput('major_surgery');
+            setBackgroundTitleInput('');
+            setBackgroundEventDateInput('');
+            setBackgroundNotesInput('');
+            setIsBackgroundEmergencyRelevantInput(false);
+            setIsAddBackgroundModalOpen(true);
+          }}
+        >
+
+          {healthBackgroundLoading ? (
+            <div className="py-8 flex justify-center"><Spinner size="sm" /></div>
+          ) : healthBackground.length === 0 ? (
+            <div className="rounded-xl border border-border/60 bg-card p-7 text-center">
+              <History size={26} className="mx-auto text-muted-foreground" />
+              <p className="text-sm font-bold text-foreground mt-3">No important medical background recorded</p>
+              <p className="text-xs text-muted-foreground mt-1">Major past health events you add will appear here.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {healthBackground.map(background => (
+                <div key={background.id} className="relative rounded-xl border border-border/60 bg-card p-4">
+                  <div className="pr-10">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-bold text-foreground">{background.title}</p>
+                      {background.is_emergency_relevant && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 text-destructive px-2 py-1 text-[10px] font-bold uppercase tracking-wide">
+                          <Shield size={10} /> Emergency
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="text-xs font-semibold text-primary mt-1.5">
+                      {getHealthBackgroundTypeLabel(background.background_type)}
+                    </p>
+
+                    {background.event_date && (
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Event Date <span className="font-medium text-foreground">{formatDate(background.event_date)}</span>
+                      </p>
+                    )}
+
+                    {background.notes && (
+                      <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{background.notes}</p>
+                    )}
+                  </div>
+
+                  {isEditing && (
+                    <button
+                      type="button"
+                      onClick={() => promptDeleteHealthBackground(background)}
+                      className="absolute right-3 top-3 p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                      title="Remove medical background"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+        </SectionPanel>
+
+        {/* ===================================================
+            FAMILY HISTORY
+        ==================================================== */}
+        <SectionPanel
+          title="Family Medical History"
+          description="Clinically relevant conditions in close family members that may help doctors understand familial health risks."
+          editing={isEditing}
+          actionLabel="Add History"
+          onAction={() => {
+            setFamilyRelationInput('mother');
+            setFamilyConditionInput('');
+            setFamilyHistoryNotesInput('');
+            setIsFamilyHistoryEmergencyRelevantInput(false);
+            setIsAddFamilyHistoryModalOpen(true);
+          }}
+        >
+
+          {familyHistoryLoading ? (
+            <div className="py-8 flex justify-center"><Spinner size="sm" /></div>
+          ) : familyHistory.length === 0 ? (
+            <div className="rounded-xl border border-border/60 bg-card p-7 text-center">
+              <Users size={26} className="mx-auto text-muted-foreground" />
+              <p className="text-sm font-bold text-foreground mt-3">No family medical history recorded</p>
+              <p className="text-xs text-muted-foreground mt-1">You do not need to enter relatives&apos; names.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {familyHistory.map(history => (
+                <div key={history.id} className="relative rounded-xl border border-border/60 bg-card p-4">
+                  <div className="pr-10">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-bold text-foreground">{history.condition}</p>
+                      {history.is_emergency_relevant && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 text-destructive px-2 py-1 text-[10px] font-bold uppercase tracking-wide">
+                          <Shield size={10} /> Emergency
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="text-xs font-semibold text-primary mt-1.5">
+                      {getFamilyRelationLabel(history.relation)}
+                    </p>
+
+                    {history.notes && (
+                      <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{history.notes}</p>
+                    )}
+                  </div>
+
+                  {isEditing && (
+                    <button
+                      type="button"
+                      onClick={() => promptDeleteFamilyHistory(history)}
+                      className="absolute right-3 top-3 p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                      title="Remove family medical history"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+        </SectionPanel>
+
+        {/* ===================================================
+            VACCINATIONS
+        ==================================================== */}
+        <SectionPanel
+          title="Vaccination Records"
+          description="Your recorded immunisation history, including manually entered and AI-assisted card records."
+          editing={isEditing}
+          actionLabel="Add Vaccination"
+          onAction={() => {
+            setBulkVaccines([
+              {
+                id: 'initial-row',
+                vaccineName: '',
+                dateAdministered: '',
+                doseNumber: '',
+                notes: ''
+              }
+            ]);
+            setIsAddVaccinationModalOpen(true);
+          }}
+        >
+
+          {vaccinationsLoading ? (
+            <div className="py-8 flex justify-center"><Spinner size="sm" /></div>
+          ) : vaccinations.length === 0 ? (
+            <div className="rounded-xl border border-border/60 bg-card p-7 text-center">
+              <Syringe size={26} className="mx-auto text-muted-foreground" />
+              <p className="text-sm font-bold text-foreground mt-3">No vaccination records found</p>
+              <p className="text-xs text-muted-foreground mt-1">Vaccination history you add will appear here.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {vaccinations.map(vaccine => (
+                <div key={vaccine.id} className="relative rounded-xl border border-border/60 bg-card p-4">
+                  <div className="pr-9">
+                    <p className="text-sm font-bold text-foreground">{vaccine.vaccine_name}</p>
+                    <p className="text-xs text-muted-foreground mt-1.5">
+                      Given <span className="font-medium text-foreground">{formatDate(vaccine.date_administered)}</span>
+                    </p>
+
+                    {vaccine.dose_number && (
+                      <p className="text-xs text-muted-foreground mt-1">Dose: {vaccine.dose_number}</p>
+                    )}
+
+                    {vaccine.notes && (
+                      <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{vaccine.notes}</p>
+                    )}
+                  </div>
+
+                  {isEditing && (
+                    <button
+                      type="button"
+                      onClick={() => promptDeleteVaccination(vaccine)}
+                      className="absolute right-3 top-3 p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                      title="Remove vaccination"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+        </SectionPanel>
+
+        {/* ===================================================
+            PRIVACY & CONSENT
+        ==================================================== */}
+        <SectionPanel
+          title="Privacy & Consent"
+          description="Choose which sensitive medical-record categories require explicit patient approval before doctor access."
+        >
+
+          {!isEditing && (
+            <div className="flex items-start gap-2 rounded-xl bg-secondary/70 px-4 py-3 mb-4">
+              <Lock size={15} className="text-muted-foreground shrink-0 mt-0.5" />
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Privacy settings are read-only until you enter Edit Mode.
+              </p>
+            </div>
+          )}
+
+          {consentLoading ? (
+            <div className="py-8 flex justify-center"><Spinner size="sm" /></div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {SENSITIVE_CATEGORIES.map(category => {
+                const isLocked = lockedCategories.includes(category);
+
+                return (
+                  <div
+                    key={category}
+                    className={`flex items-center justify-between gap-4 rounded-xl border p-4 ${isLocked ? 'border-destructive/20 bg-destructive/5' : 'border-border/60 bg-card'}`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isLocked ? 'bg-destructive/10 text-destructive' : 'bg-module-soft text-primary'}`}>
+                        {isLocked ? <Lock size={18} /> : <Unlock size={18} />}
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-foreground">{category}</p>
+                        <p className={`text-xs mt-1 font-medium ${isLocked ? 'text-destructive' : 'text-primary'}`}>
+                          {isLocked ? 'Locked · approval required' : 'Standard clinical access'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleToggleConsent(category)}
+                      disabled={consentMutation.isPending || !isEditing}
+                      aria-label={`${isLocked ? 'Unlock' : 'Lock'} ${category}`}
+                      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${!isEditing ? 'opacity-45 cursor-not-allowed' : 'hover:opacity-90'} ${isLocked ? 'bg-destructive' : 'bg-slate-300'}`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-300 ${isLocked ? 'translate-x-6' : 'translate-x-1'}`}
+                      />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+        </SectionPanel>
+
+        {/* ===================================================
+            GLOBAL EDIT ACTIONS
+        ==================================================== */}
+        {isEditing && (
+          <div className="sticky bottom-4 z-30 rounded-2xl border border-border/80 bg-card/95 backdrop-blur-xl p-4 shadow-[0_16px_48px_rgba(15,23,42,0.16)]">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+
+              <div className="flex items-start gap-2 text-xs text-muted-foreground">
+                <Shield size={15} className="shrink-0 mt-0.5" />
+                <span>Save changes to your editable profile fields before leaving Edit Mode.</span>
+              </div>
+
+              <div className="flex gap-2 sm:shrink-0">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setIsEditing(false)}
+                  disabled={updateMutation.isPending}
+                >
+                  <X size={15} />
+                  Cancel
+                </Button>
+
+                <Button
+                  type="submit"
+                  variant="primary"
+                  loading={updateMutation.isPending}
+                >
+                  <Save size={15} />
+                  Save Changes
+                </Button>
+              </div>
 
             </div>
-
-            <div className="flex justify-end gap-3 mt-6">
-
-              <Button
-                variant="secondary"
-                onClick={() =>
-                  setIsEditing(
-                    false
-                  )
-                }
-                disabled={
-                  updateMutation.isPending
-                }
-              >
-                Cancel
-              </Button>
-
-              <Button
-                type="submit"
-                variant="primary"
-                loading={
-                  updateMutation.isPending
-                }
-              >
-                <Save size={16} />
-                Save Changes
-              </Button>
-
-            </div>
-
-          </form>
+          </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-          {/* ── Chronic Conditions ── */}
-          <Card title="Chronic Conditions">
-            <div>
-
-              {conditionsLoading ? (
-                <div className="py-4 flex justify-center">
-                  <Spinner size="sm" />
-                </div>
-
-              ) : conditions.length ===
-                0 ? (
-
-                <div className="text-center py-6">
-
-                  <div className="inline-flex p-3 rounded-full bg-secondary mb-2">
-                    <AlertTriangle
-                      className="text-muted-foreground"
-                      size={24}
-                    />
-                  </div>
-
-                  <p className="text-sm text-muted-foreground">
-                    No conditions recorded.
-                  </p>
-
-                </div>
-
-              ) : (
-
-                <div className="flex flex-col gap-3 pt-1">
-
-                  {conditions.map(
-                    (
-                      condition
-                    ) => (
-
-                      <div
-                        key={
-                          condition.id
-                        }
-                        className="group flex items-start justify-between gap-4 p-4 rounded-xl bg-secondary/45 transition-colors hover:bg-secondary/65"
-                      >
-
-                        <div>
-
-                          <p className="text-sm font-semibold text-foreground">
-                            {
-                              condition.condition
-                            }
-                          </p>
-
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Diagnosed:{' '}
-                            {formatDate(
-                              condition.diagnosed_at
-                            )}
-                          </p>
-
-                          {condition.notes && (
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              {
-                                condition.notes
-                              }
-                            </p>
-                          )}
-
-                        </div>
-
-                        <div className="flex items-center gap-3 shrink-0">
-
-                          {condition.is_priority && (
-                            <SeverityBadge
-                              severity="priority"
-                            />
-                          )}
-
-                          {isEditing && (
-                            <button 
-                              type="button"
-                              onClick={() =>
-                                promptDeleteCondition(
-                                  condition
-                                )
-                              }
-                              className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
-                              title="Remove condition"
-                            >
-                              <Trash2
-                                size={16}
-                              />
-                            </button>
-                          )}
-
-                        </div>
-
-                      </div>
-
-                    )
-                  )}
-
-                </div>
-              )}
-              
-              {isEditing && (
-                <div className="mt-5 flex justify-center">
-
-                  <Button
-                    variant="secondary"
-                    onClick={() =>
-                      setIsAddConditionModalOpen(
-                        true
-                      )
-                    }
-                    className="w-full text-primary border-primary/20 hover:bg-primary/5"
-                  >
-                    <Plus
-                      size={16}
-                      className="mr-2"
-                    />
-                    Add Condition
-                  </Button>
-
-                </div>
-              )}
-
-            </div>
-          </Card>
-
-          {/* ── Known Allergies ── */}
-          <Card title="Known Allergies">
-            <div>
-
-              {allergiesLoading ? (
-                <div className="py-4 flex justify-center">
-                  <Spinner size="sm" />
-                </div>
-
-              ) : allergies.length ===
-                0 ? (
-
-                <div className="text-center py-6">
-
-                  <div className="inline-flex p-3 rounded-full bg-secondary mb-2">
-                    <AlertTriangle
-                      className="text-muted-foreground"
-                      size={24}
-                    />
-                  </div>
-
-                  <p className="text-sm text-muted-foreground">
-                    No allergies recorded.
-                  </p>
-
-                </div>
-
-              ) : (
-
-                <div className="flex flex-col gap-3 pt-1">
-
-                  {sortedAllergies.map(
-                    (
-                      allergy
-                    ) => (
-
-                      <div 
-                        key={
-                          allergy.id
-                        } 
-                        className="group flex items-start justify-between gap-4 p-4 rounded-xl bg-secondary/45 transition-colors hover:bg-secondary/65"
-                      >
-
-                        <div>
-
-                          <p className="text-sm font-semibold text-foreground">
-                            {
-                              allergy.allergen
-                            }
-                          </p>
-
-                          {allergy.notes && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {
-                                allergy.notes
-                              }
-                            </p>
-                          )}
-
-                        </div>
-
-                        <div className="flex items-center gap-3 shrink-0">
-
-                          <SeverityBadge
-                            severity={
-                              allergy.severity
-                            }
-                          />
-
-                          {isEditing && (
-                            <button 
-                              type="button"
-                              onClick={() =>
-                                promptDeleteAllergy(
-                                  allergy
-                                )
-                              }
-                              className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
-                              title="Remove allergy"
-                            >
-                              <Trash2
-                                size={16}
-                              />
-                            </button>
-                          )}
-
-                        </div>
-
-                      </div>
-
-                    )
-                  )}
-
-                </div>
-              )}
-              
-              {isEditing && (
-                <div className="mt-5 flex justify-center">
-
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      setAllergySuggestions(
-                        searchAllergens('')
-                      );
-
-                      setIsAddAllergyModalOpen(
-                        true
-                      );
-                    }}
-                    className="w-full text-primary border-primary/20 hover:bg-primary/5"
-                  >
-                    <Plus
-                      size={16}
-                      className="mr-2"
-                    />
-                    Add Allergy
-                  </Button>
-
-                </div>
-              )}
-
-            </div>
-          </Card>
-
-        </div>
-
-        {/* ── Medical Devices & Implants ── */}
-        <div>
-
-          <Card
-            title={
-              <span className="flex items-center gap-2">
-                <HeartPulse
-                  size={18}
-                  className="text-primary"
-                />
-                Medical Devices & Implants
-              </span>
-            }
-          >
-
-            <div>
-
-              <div className="mb-4 p-4 rounded-xl bg-module-soft/60">
-
-                <div className="flex items-start gap-3">
-
-                  <Shield
-                    size={18}
-                    className="text-primary shrink-0 mt-0.5"
-                  />
-
-                  <div>
-
-                    <p className="text-sm font-semibold text-foreground">
-                      Emergency readiness information
-                    </p>
-
-                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                      Keep implanted devices and important medical equipment up to date.
-                      Devices marked as emergency relevant may be shown to authorized
-                      hospital staff during audited Break-Glass emergency access.
-                    </p>
-
-                  </div>
-
-                </div>
-
-              </div>
-
-              {medicalDevicesLoading ? (
-
-                <div className="py-6 flex justify-center">
-                  <Spinner size="sm" />
-                </div>
-
-              ) : medicalDevices.length ===
-                0 ? (
-
-                <div className="text-center py-8">
-
-                  <div className="inline-flex p-3 rounded-full bg-secondary mb-3">
-                    <HeartPulse
-                      className="text-muted-foreground"
-                      size={26}
-                    />
-                  </div>
-
-                  <p className="text-sm font-semibold text-foreground">
-                    No medical devices or implants recorded
-                  </p>
-
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Examples include pacemakers, insulin pumps,
-                    ICDs, cochlear implants, and dialysis access.
-                  </p>
-
-                </div>
-
-              ) : (
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-                  {medicalDevices.map(
-                    (
-                      device
-                    ) => (
-
-                      <div
-                        key={
-                          device.id
-                        }
-                        className="relative p-4 rounded-xl bg-secondary/45 transition-colors hover:bg-secondary/65"
-                      >
-
-                        <div className="flex items-start gap-3 pr-8">
-
-                          <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                            <HeartPulse
-                              size={19}
-                            />
-                          </div>
-
-                          <div className="min-w-0">
-
-                            <div className="flex flex-wrap items-center gap-2">
-
-                              <p className="text-sm font-bold text-foreground">
-                                {
-                                  device.device_name
-                                }
-                              </p>
-
-                              {device.is_emergency_relevant && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-destructive/10 text-destructive text-[10px] font-bold uppercase tracking-wide">
-                                  <Shield
-                                    size={10}
-                                  />
-                                  Emergency
-                                </span>
-                              )}
-
-                            </div>
-
-                            {device.device_type && (
-                              <p className="text-xs font-medium text-primary mt-1">
-                                {
-                                  device.device_type
-                                }
-                              </p>
-                            )}
-
-                            <p className="text-xs text-muted-foreground mt-2">
-                              Implanted / Started:{' '}
-                              <span className="text-foreground font-medium">
-                                {formatDate(
-                                  device.implanted_at
-                                )}
-                              </span>
-                            </p>
-
-                            {device.notes && (
-                              <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-                                {
-                                  device.notes
-                                }
-                              </p>
-                            )}
-
-                          </div>
-
-                        </div>
-
-                        {isEditing && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              promptDeleteMedicalDevice(
-                                device
-                              )
-                            }
-                            className="absolute right-3 top-3 p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
-                            title="Remove medical device"
-                          >
-                            <Trash2
-                              size={16}
-                            />
-                          </button>
-                        )}
-
-                      </div>
-
-                    )
-                  )}
-
-                </div>
-              )}
-
-              {isEditing && (
-                <div className="mt-5 flex justify-center">
-
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      setDeviceNameInput('');
-                      setDeviceTypeInput('');
-                      setImplantedAtInput('');
-                      setDeviceNotesInput('');
-                      setIsEmergencyRelevantInput(
-                        true
-                      );
-
-                      setIsAddDeviceModalOpen(
-                        true
-                      );
-                    }}
-                    className="w-full sm:w-auto text-primary border-primary/20 hover:bg-primary/5"
-                  >
-                    <Plus
-                      size={16}
-                      className="mr-2"
-                    />
-                    Add Medical Device
-                  </Button>
-
-                </div>
-              )}
-
-            </div>
-
-          </Card>
-
-        </div>
-
-        {/* ── Important Medical Background ── */}
-        <div>
-
-          <Card
-            title={
-              <span className="flex items-center gap-2">
-                <History
-                  size={18}
-                  className="text-primary"
-                />
-                Important Medical Background
-              </span>
-            }
-          >
-
-            <div>
-
-              <div className="mb-4 p-4 rounded-xl bg-module-soft/60">
-
-                <div className="flex items-start gap-3">
-
-                  <History
-                    size={18}
-                    className="text-primary shrink-0 mt-0.5"
-                  />
-
-                  <div>
-
-                    <p className="text-sm font-semibold text-foreground">
-                      Major past health events
-                    </p>
-
-                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                      Record major surgeries, procedures, transplants,
-                      hospitalizations, and other serious past conditions
-                      that remain important to your care.
-                    </p>
-
-                  </div>
-
-                </div>
-
-              </div>
-
-              {healthBackgroundLoading ? (
-
-                <div className="py-6 flex justify-center">
-                  <Spinner size="sm" />
-                </div>
-
-              ) : healthBackground.length ===
-                0 ? (
-
-                <div className="text-center py-8">
-
-                  <div className="inline-flex p-3 rounded-full bg-secondary mb-3">
-                    <History
-                      className="text-muted-foreground"
-                      size={26}
-                    />
-                  </div>
-
-                  <p className="text-sm font-semibold text-foreground">
-                    No important medical background recorded
-                  </p>
-
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Add major past health events that may still be
-                    important for future treatment.
-                  </p>
-
-                </div>
-
-              ) : (
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-                  {healthBackground.map(
-                    (
-                      background
-                    ) => (
-
-                      <div
-                        key={
-                          background.id
-                        }
-                        className="relative p-4 rounded-xl bg-secondary/45 transition-colors hover:bg-secondary/65"
-                      >
-
-                        <div className="flex items-start gap-3 pr-8">
-
-                          <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                            <History
-                              size={19}
-                            />
-                          </div>
-
-                          <div className="min-w-0">
-
-                            <div className="flex flex-wrap items-center gap-2">
-
-                              <p className="text-sm font-bold text-foreground">
-                                {
-                                  background.title
-                                }
-                              </p>
-
-                              {background.is_emergency_relevant && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-destructive/10 text-destructive text-[10px] font-bold uppercase tracking-wide">
-                                  <Shield
-                                    size={10}
-                                  />
-                                  Emergency
-                                </span>
-                              )}
-
-                            </div>
-
-                            <p className="text-xs font-medium text-primary mt-1">
-                              {getHealthBackgroundTypeLabel(
-                                background.background_type
-                              )}
-                            </p>
-
-                            <p className="text-xs text-muted-foreground mt-2">
-                              Event Date:{' '}
-                              <span className="text-foreground font-medium">
-                                {formatDate(
-                                  background.event_date
-                                )}
-                              </span>
-                            </p>
-
-                            {background.notes && (
-                              <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-                                {
-                                  background.notes
-                                }
-                              </p>
-                            )}
-
-                          </div>
-
-                        </div>
-
-                        {isEditing && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              promptDeleteHealthBackground(
-                                background
-                              )
-                            }
-                            className="absolute right-3 top-3 p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
-                            title="Remove medical background"
-                          >
-                            <Trash2
-                              size={16}
-                            />
-                          </button>
-                        )}
-
-                      </div>
-
-                    )
-                  )}
-
-                </div>
-              )}
-
-              {isEditing && (
-                <div className="mt-5 flex justify-center">
-
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      setBackgroundTypeInput(
-                        'major_surgery'
-                      );
-                      setBackgroundTitleInput('');
-                      setBackgroundEventDateInput('');
-                      setBackgroundNotesInput('');
-                      setIsBackgroundEmergencyRelevantInput(
-                        false
-                      );
-
-                      setIsAddBackgroundModalOpen(
-                        true
-                      );
-                    }}
-                    className="w-full sm:w-auto text-primary border-primary/20 hover:bg-primary/5"
-                  >
-                    <Plus
-                      size={16}
-                      className="mr-2"
-                    />
-                    Add Medical Background
-                  </Button>
-
-                </div>
-              )}
-
-            </div>
-
-          </Card>
-
-        </div>
-
-
-        {/* ── Family Medical History ── */}
-        <div>
-
-          <Card
-            title={
-              <span className="flex items-center gap-2">
-                <Users
-                  size={18}
-                  className="text-primary"
-                />
-                Family Medical History
-              </span>
-            }
-          >
-
-            <div>
-
-              <div className="mb-4 p-4 rounded-xl bg-module-soft/60">
-
-                <div className="flex items-start gap-3">
-
-                  <Users
-                    size={18}
-                    className="text-primary shrink-0 mt-0.5"
-                  />
-
-                  <div>
-
-                    <p className="text-sm font-semibold text-foreground">
-                      Clinically relevant family history
-                    </p>
-
-                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                      Record important conditions in close family members that
-                      may help doctors understand inherited or familial health
-                      risks. You do not need to enter relatives&apos; names.
-                    </p>
-
-                  </div>
-
-                </div>
-
-              </div>
-
-              {familyHistoryLoading ? (
-
-                <div className="py-6 flex justify-center">
-                  <Spinner size="sm" />
-                </div>
-
-              ) : familyHistory.length ===
-                0 ? (
-
-                <div className="text-center py-8">
-
-                  <div className="inline-flex p-3 rounded-full bg-secondary mb-3">
-                    <Users
-                      className="text-muted-foreground"
-                      size={26}
-                    />
-                  </div>
-
-                  <p className="text-sm font-semibold text-foreground">
-                    No family medical history recorded
-                  </p>
-
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Add clinically important conditions affecting close
-                    family members.
-                  </p>
-
-                </div>
-
-              ) : (
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-                  {familyHistory.map(
-                    (
-                      history
-                    ) => (
-
-                      <div
-                        key={
-                          history.id
-                        }
-                        className="relative p-4 rounded-xl bg-secondary/45 transition-colors hover:bg-secondary/65"
-                      >
-
-                        <div className="flex items-start gap-3 pr-8">
-
-                          <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                            <Users
-                              size={19}
-                            />
-                          </div>
-
-                          <div className="min-w-0">
-
-                            <div className="flex flex-wrap items-center gap-2">
-
-                              <p className="text-sm font-bold text-foreground">
-                                {
-                                  history.condition
-                                }
-                              </p>
-
-                              {history.is_emergency_relevant && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-destructive/10 text-destructive text-[10px] font-bold uppercase tracking-wide">
-                                  <Shield
-                                    size={10}
-                                  />
-                                  Emergency
-                                </span>
-                              )}
-
-                            </div>
-
-                            <p className="text-xs font-medium text-primary mt-1">
-                              {getFamilyRelationLabel(
-                                history.relation
-                              )}
-                            </p>
-
-                            {history.notes && (
-                              <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-                                {
-                                  history.notes
-                                }
-                              </p>
-                            )}
-
-                          </div>
-
-                        </div>
-
-                        {isEditing && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              promptDeleteFamilyHistory(
-                                history
-                              )
-                            }
-                            className="absolute right-3 top-3 p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
-                            title="Remove family medical history"
-                          >
-                            <Trash2
-                              size={16}
-                            />
-                          </button>
-                        )}
-
-                      </div>
-
-                    )
-                  )}
-
-                </div>
-              )}
-
-              {isEditing && (
-                <div className="mt-5 flex justify-center">
-
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      setFamilyRelationInput(
-                        'mother'
-                      );
-                      setFamilyConditionInput('');
-                      setFamilyHistoryNotesInput('');
-                      setIsFamilyHistoryEmergencyRelevantInput(
-                        false
-                      );
-
-                      setIsAddFamilyHistoryModalOpen(
-                        true
-                      );
-                    }}
-                    className="w-full sm:w-auto text-primary border-primary/20 hover:bg-primary/5"
-                  >
-                    <Plus
-                      size={16}
-                      className="mr-2"
-                    />
-                    Add Family History
-                  </Button>
-
-                </div>
-              )}
-
-            </div>
-
-          </Card>
-
-        </div>
-
-        {/* ── Vaccination Records (CARE4U-148) ── */}
-        <div>
-
-          <Card
-            title={
-              <span className="flex items-center gap-2">
-                <Syringe
-                  size={18}
-                  className="text-primary"
-                />
-                Vaccination Records
-              </span>
-            }
-          >
-
-            <div>
-
-              {vaccinationsLoading ? (
-
-                <div className="py-4 flex justify-center">
-                  <Spinner size="sm" />
-                </div>
-
-              ) : vaccinations.length ===
-                0 ? (
-
-                <div className="text-center py-6">
-
-                  <div className="inline-flex p-3 rounded-full bg-secondary mb-2">
-                    <Syringe
-                      className="text-muted-foreground"
-                      size={24}
-                    />
-                  </div>
-
-                  <p className="text-sm text-muted-foreground">
-                    No vaccination records found.
-                  </p>
-
-                </div>
-
-              ) : (
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-
-                  {vaccinations.map(
-                    (
-                      vaccine
-                    ) => (
-
-                      <div
-                        key={
-                          vaccine.id
-                        }
-                        className="group relative flex flex-col p-4 rounded-xl bg-secondary/45 transition-colors hover:bg-secondary/65"
-                      >
-
-                        <div className="flex justify-between items-start pr-8">
-
-                          <div>
-
-                            <p className="text-sm font-bold text-primary">
-                              {
-                                vaccine.vaccine_name
-                              }
-                            </p>
-
-                            <p className="text-xs text-muted-foreground mt-1 font-medium">
-                              Given:{' '}
-                              <span className="text-foreground">
-                                {formatDate(
-                                  vaccine.date_administered
-                                )}
-                              </span>
-                            </p>
-
-                            {vaccine.dose_number && (
-                              <p className="text-xs text-muted-foreground mt-0.5">
-                                Dose:{' '}
-                                {
-                                  vaccine.dose_number
-                                }
-                              </p>
-                            )}
-
-                            {vaccine.notes && (
-                              <p className="text-xs text-muted-foreground mt-0.5 italic">
-                                "
-                                {
-                                  vaccine.notes
-                                }
-                                "
-                              </p>
-                            )}
-
-                          </div>
-
-                        </div>
-
-                        {isEditing && (
-                          <button 
-                            type="button"
-                            onClick={() =>
-                              promptDeleteVaccination(
-                                vaccine
-                              )
-                            }
-                            className="absolute right-3 top-3 p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
-                            title="Remove record"
-                          >
-                            <Trash2
-                              size={16}
-                            />
-                          </button>
-                        )}
-
-                      </div>
-
-                    )
-                  )}
-
-                </div>
-              )}
-              
-              {isEditing && (
-                <div className="mt-5 flex justify-center">
-
-                  <Button
-                    variant="secondary"
-                    onClick={() => { 
-                      setBulkVaccines([
-                        {
-                          id: 'initial-row',
-                          vaccineName: '',
-                          dateAdministered: '',
-                          doseNumber: '',
-                          notes: ''
-                        }
-                      ]); 
-
-                      setIsAddVaccinationModalOpen(
-                        true
-                      ); 
-                    }}
-                    className="w-full sm:w-auto text-primary border-primary/20 hover:bg-primary/5"
-                  >
-                    <Plus
-                      size={16}
-                      className="mr-2"
-                    />
-                    Add Vaccination
-                  </Button>
-
-                </div>
-              )}
-
-            </div>
-
-          </Card>
-
-        </div>
-
-        {/* ── NEW: Privacy & Consent Controls (Epic 8.12) ── */}
-        <div>
-
-          <Card
-            title={
-              <span className="flex items-center gap-2">
-                <Shield
-                  size={18}
-                  className="text-primary"
-                />
-                Privacy & Consent Controls
-              </span>
-            }
-          >
-
-            <div>
-
-              <p className="text-sm text-muted-foreground mb-4">
-                Lock specific medical record categories. Doctors will require your explicit permission to view locked records.
-              </p>
-              
-              {consentLoading ? (
-
-                <div className="py-6 flex justify-center">
-                  <Spinner size="sm" />
-                </div>
-
-              ) : (
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-                  {SENSITIVE_CATEGORIES.map(
-                    (
-                      category
-                    ) => {
-                      const isLocked =
-                        lockedCategories.includes(
-                          category
-                        );
-
-                      return (
-                        <div
-                          key={
-                            category
-                          }
-                          className="flex items-center justify-between gap-4 p-4 rounded-xl bg-secondary/45 transition-colors hover:bg-secondary/65"
-                        >
-
-                          <div className="flex items-center gap-3">
-
-                            <div
-                              className={`p-2.5 rounded-full ${
-                                isLocked
-                                  ? 'bg-destructive/10 text-destructive'
-                                  : 'bg-primary/10 text-primary'
-                              }`}
-                            >
-                              {isLocked ? (
-                                <Lock
-                                  size={18}
-                                  strokeWidth={2.5}
-                                />
-                              ) : (
-                                <Unlock
-                                  size={18}
-                                  strokeWidth={2.5}
-                                />
-                              )}
-                            </div>
-
-                            <div>
-
-                              <p className="text-sm font-bold text-foreground">
-                                {
-                                  category
-                                }
-                              </p>
-
-                              <p
-                                className={`text-xs mt-0.5 font-medium ${
-                                  isLocked
-                                    ? 'text-destructive'
-                                    : 'text-primary'
-                                }`}
-                              >
-                                {isLocked
-                                  ? 'Locked (Requires Approval)'
-                                  : 'Unlocked (Default Access)'}
-                              </p>
-
-                            </div>
-
-                          </div>
-                        
-                          {/* Animated Toggle Switch */}
-                          <button 
-                            type="button"
-                            onClick={() =>
-                              handleToggleConsent(
-                                category
-                              )
-                            }
-                            disabled={
-                              consentMutation.isPending ||
-                              !isEditing
-                            }
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${
-                              !isEditing
-                                ? 'opacity-50 cursor-not-allowed'
-                                : 'hover:opacity-90'
-                            } ${
-                              isLocked
-                                ? 'bg-destructive'
-                                : 'bg-secondary'
-                            }`}
-                          >
-                            <span
-                              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-300 ease-in-out ${
-                                isLocked
-                                  ? 'translate-x-6'
-                                  : 'translate-x-1'
-                              }`}
-                            />
-                          </button>
-
-                        </div>
-                      );
-                    }
-                  )}
-
-                </div>
-              )}
-
-            </div>
-
-          </Card>
-
-        </div>
-
+      </form>
+
+      <div className="flex items-center justify-center gap-2 px-4 text-xs text-muted-foreground">
+        <Shield size={15} />
+        <span>Your profile and clinical safety information are protected by Care4U access controls.</span>
       </div>
 
       {/* ── Add Allergy Modal ── */}
