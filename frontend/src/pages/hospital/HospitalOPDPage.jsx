@@ -22,7 +22,6 @@ import {
   ShieldCheck,
   Stethoscope,
   UserPlus,
-  UserRound,
   Users,
   X,
 } from 'lucide-react';
@@ -61,6 +60,31 @@ const formatTime = (
       minute: '2-digit',
     }
   );
+};
+
+/**
+ * Converts a patient name into initials for a compact queue avatar.
+ *
+ * @param {string} name - Patient full name
+ * @returns {string} Initials used when no patient image is available
+ */
+const getInitials = (
+  name
+) => {
+  if (!name) {
+    return '?';
+  }
+
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(
+      (part) =>
+        part[0]
+          .toUpperCase()
+    )
+    .join('');
 };
 
 const formatStatus = (
@@ -710,16 +734,26 @@ const HospitalOPDPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="min-h-[60vh] bg-[#F6F8FA] flex items-center justify-center px-4">
 
-        <div className="flex flex-col items-center gap-3">
+        <div className="flex flex-col items-center text-center">
+
+          <div className="w-16 h-16 rounded-2xl bg-cyan-50 border border-cyan-100 text-cyan-700 flex items-center justify-center shadow-sm mb-4">
+            <Stethoscope
+              size={27}
+            />
+          </div>
 
           <Spinner
             size="lg"
           />
 
-          <p className="text-sm font-medium text-muted-foreground">
-            Loading today&apos;s OPD queue...
+          <p className="text-sm font-bold text-foreground mt-4">
+            Preparing today&apos;s OPD workspace
+          </p>
+
+          <p className="text-xs text-muted-foreground mt-1">
+            Loading hospital appointments and reception activity
           </p>
 
         </div>
@@ -729,29 +763,103 @@ const HospitalOPDPage = () => {
   }
 
   return (
-    <div className="min-h-[calc(100vh-5rem)] bg-muted/30">
+    <div className="min-h-[calc(100vh-5rem)] bg-[#F6F8FA]">
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 pt-6 sm:pt-8">
 
         <PageHeader
           eyebrow="Hospital Operations"
           title="Today&apos;s OPD"
-          description="Hospital-wide view of today&apos;s patients across all doctors, with reception check-in and walk-in registration support."
+          description="Coordinate arrivals, hospital-assisted registration, walk-in assignment, and today&apos;s outpatient queue from one reception workspace."
           icon={Stethoscope}
+          actions={
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+
+              <button
+                type="button"
+                onClick={
+                  openRegistrationModal
+                }
+                className="
+  inline-flex
+  items-center
+  justify-center
+  gap-2
+  w-full
+  sm:w-auto
+  px-4
+  py-2.5
+  rounded-xl
+  bg-white/10
+  border
+  border-white/20
+  text-white
+  text-sm
+  font-semibold
+  backdrop-blur-sm
+  hover:bg-white/15
+  hover:border-white/30
+  transition-all
+  focus:outline-none
+  focus:ring-2
+  focus:ring-white/30
+"
+              >
+                <UserPlus
+                  size={16}
+                />
+
+                Register Walk-in
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  loadAppointments(
+                    true
+                  )
+                }
+                disabled={
+                  refreshing
+                }
+                className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white text-sm font-semibold backdrop-blur-sm hover:bg-white/15 hover:border-white/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <RefreshCw
+                  size={16}
+                  className={
+                    refreshing
+                      ? 'animate-spin'
+                      : ''
+                  }
+                />
+
+                {refreshing
+                  ? 'Refreshing...'
+                  : 'Refresh'}
+              </button>
+
+            </div>
+          }
           meta={
             <div className="flex items-center gap-3">
 
-              <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                <Users size={18} />
+              <div className="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-700 flex items-center justify-center shrink-0">
+                <Users
+                  size={18}
+                />
               </div>
 
               <div>
-                <p className="text-[10px] uppercase tracking-wide font-bold text-primary">
-                  Queue Today
+                <p className="text-[10px] uppercase tracking-[0.12em] font-bold text-cyan-700">
+                  Reception Queue
                 </p>
 
-                <p className="text-sm font-bold text-foreground">
-                  {stats.total} {stats.total === 1 ? 'Patient' : 'Patients'}
+                <p className="text-sm font-bold text-foreground mt-0.5">
+                  {stats.total} {stats.total === 1 ? 'patient' : 'patients'} today
+                </p>
+
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Auto-updates every 15 sec
                 </p>
               </div>
 
@@ -759,54 +867,13 @@ const HospitalOPDPage = () => {
           }
         />
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 mt-4">
-
-          <Button
-            variant="primary"
-            onClick={
-              openRegistrationModal
-            }
-          >
-            <UserPlus
-              size={16}
-              className="mr-2"
-            />
-
-            Register Walk-in Patient
-          </Button>
-
-          <Button
-            variant="secondary"
-            onClick={() =>
-              loadAppointments(
-                true
-              )
-            }
-            disabled={
-              refreshing
-            }
-          >
-            <RefreshCw
-              size={16}
-              className={`mr-2 ${
-                refreshing
-                  ? 'animate-spin'
-                  : ''
-              }`}
-            />
-
-            Refresh
-          </Button>
-
-        </div>
-
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 sm:py-7">
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
 
-        <Card>
+        <Card className="relative overflow-hidden border-cyan-100 shadow-[0_8px_24px_rgba(15,23,42,0.045)]">
 
           <div className="flex items-center gap-3">
 
@@ -837,7 +904,7 @@ const HospitalOPDPage = () => {
 
         </Card>
 
-        <Card>
+        <Card className="relative overflow-hidden border-amber-100 shadow-[0_8px_24px_rgba(15,23,42,0.045)]">
 
           <div className="flex items-center gap-3">
 
@@ -868,7 +935,7 @@ const HospitalOPDPage = () => {
 
         </Card>
 
-        <Card>
+        <Card className="relative overflow-hidden border-blue-100 shadow-[0_8px_24px_rgba(15,23,42,0.045)]">
 
           <div className="flex items-center gap-3">
 
@@ -899,7 +966,7 @@ const HospitalOPDPage = () => {
 
         </Card>
 
-        <Card>
+        <Card className="relative overflow-hidden border-emerald-100 shadow-[0_8px_24px_rgba(15,23,42,0.045)]">
 
           <div className="flex items-center gap-3">
 
@@ -930,18 +997,30 @@ const HospitalOPDPage = () => {
 
         </Card>
 
-      </div>
+      </section>
 
       <Card
+        className="overflow-hidden border-border/70 shadow-[0_10px_30px_rgba(15,23,42,0.05)]"
         title={
-          <span className="flex items-center gap-2">
-            <CalendarDays
-              size={18}
-              className="text-primary"
-            />
+          <div className="flex items-center gap-3">
 
-            Patient Queue
-          </span>
+            <div className="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-700 flex items-center justify-center">
+              <CalendarDays
+                size={18}
+              />
+            </div>
+
+            <div>
+              <p className="text-base font-bold text-foreground">
+                Patient Queue
+              </p>
+
+              <p className="text-xs text-muted-foreground font-normal mt-0.5">
+                Reception view of today&apos;s appointments across all doctors
+              </p>
+            </div>
+
+          </div>
         }
       >
 
@@ -950,11 +1029,11 @@ const HospitalOPDPage = () => {
 
           <div className="py-12 text-center">
 
-            <div className="w-16 h-16 mx-auto rounded-full bg-secondary flex items-center justify-center mb-4">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-cyan-50 border border-cyan-100 flex items-center justify-center mb-4">
 
               <CalendarDays
                 size={28}
-                className="text-muted-foreground"
+                className="text-cyan-700"
               />
 
             </div>
@@ -971,13 +1050,13 @@ const HospitalOPDPage = () => {
 
         ) : (
 
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto -mx-1">
 
             <table className="w-full min-w-[850px]">
 
-              <thead>
+              <thead className="bg-slate-50/80">
 
-                <tr className="border-b border-border text-left">
+                <tr className="border-y border-border/70 text-left">
 
                   <th className="px-3 py-3 text-xs uppercase tracking-wide text-muted-foreground font-semibold">
                     Time
@@ -1018,16 +1097,16 @@ const HospitalOPDPage = () => {
                       key={
                         appointment.id
                       }
-                      className="border-b border-border last:border-0 hover:bg-secondary/30 transition-colors"
+                      className="border-b border-border/70 last:border-0 hover:bg-cyan-50/35 transition-colors"
                     >
 
                       <td className="px-3 py-4">
 
-                        <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                        <div className="inline-flex items-center gap-2 rounded-lg bg-cyan-50/80 border border-cyan-100 px-2.5 py-1.5 text-sm font-bold text-cyan-900">
 
                           <Clock
                             size={15}
-                            className="text-primary"
+                            className="text-cyan-700"
                           />
 
                           {formatTime(
@@ -1043,13 +1122,11 @@ const HospitalOPDPage = () => {
 
                         <div className="flex items-center gap-3">
 
-                          <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-
-                            <UserRound
-                              size={16}
-                              className="text-primary"
-                            />
-
+                          <div className="w-10 h-10 rounded-full bg-cyan-50 border border-cyan-100 text-cyan-800 flex items-center justify-center shrink-0 font-black text-xs">
+                            {getInitials(
+                              appointment
+                                .patient_name
+                            )}
                           </div>
 
                           <div>
@@ -1171,9 +1248,16 @@ const HospitalOPDPage = () => {
 
       </Card>
 
-      <p className="text-xs text-muted-foreground mt-4 text-center">
-        Hospital staff manage patient arrival only. Consultation actions remain with the assigned doctor.
-      </p>
+      <div className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground px-4">
+        <ShieldCheck
+          size={14}
+          className="text-cyan-700"
+        />
+
+        <span>
+          Hospital staff manage patient arrival and queue placement only. Clinical consultation actions remain with the assigned doctor.
+        </span>
+      </div>
 
       </main>
 
@@ -1184,7 +1268,7 @@ const HospitalOPDPage = () => {
           <button
             type="button"
             aria-label="Close registration modal"
-            className="absolute inset-0 bg-black/50"
+            className="absolute inset-0 bg-slate-950/55 backdrop-blur-[2px]"
             onClick={
               closeRegistrationModal
             }
@@ -1194,14 +1278,14 @@ const HospitalOPDPage = () => {
             role="dialog"
             aria-modal="true"
             aria-labelledby="assisted-registration-title"
-            className="relative z-10 w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-background border border-border rounded-2xl shadow-2xl"
+            className="relative z-10 w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-white border border-slate-200 rounded-[24px] shadow-[0_28px_80px_rgba(15,23,42,0.25)]"
           >
 
-            <div className="sticky top-0 z-10 bg-background border-b border-border px-5 sm:px-6 py-4 flex items-start justify-between gap-4">
+            <div className="sticky top-0 z-10 bg-[#12344D] border-b border-white/10 px-5 sm:px-6 py-5 flex items-start justify-between gap-4">
 
               <div>
 
-                <div className="flex items-center gap-2 text-primary mb-1">
+                <div className="flex items-center gap-2 text-cyan-300 mb-1">
 
                   <UserPlus
                     size={18}
@@ -1215,12 +1299,12 @@ const HospitalOPDPage = () => {
 
                 <h2
                   id="assisted-registration-title"
-                  className="text-xl font-bold text-foreground"
+                  className="text-xl font-bold text-white"
                 >
                   Register Walk-in Patient
                 </h2>
 
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm text-slate-300 mt-1">
                   Create a Care4U patient profile and place the patient into today&apos;s OPD queue.
                 </p>
 
@@ -1235,7 +1319,7 @@ const HospitalOPDPage = () => {
                   registering ||
                   assigningWalkIn
                 }
-                className="w-9 h-9 shrink-0 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors disabled:opacity-50"
+                className="w-9 h-9 shrink-0 rounded-xl flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-50"
                 aria-label="Close"
               >
                 <X
@@ -1249,7 +1333,7 @@ const HospitalOPDPage = () => {
 
               <div className="p-5 sm:p-6">
 
-                <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-6">
+                <div className="relative overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-6 shadow-sm">
 
                   <div className="w-14 h-14 rounded-full bg-emerald-500/10 flex items-center justify-center mb-4">
 
@@ -1339,7 +1423,7 @@ const HospitalOPDPage = () => {
 
                 {assignedAppointment ? (
 
-                  <div className="mt-6 rounded-2xl border border-primary/20 bg-primary/5 p-6">
+                  <div className="mt-6 rounded-2xl border border-cyan-200 bg-cyan-50/60 p-6 shadow-sm">
 
                     <div className="flex items-start gap-4">
 
@@ -1420,7 +1504,7 @@ const HospitalOPDPage = () => {
 
                 ) : (
 
-                  <div className="mt-6 rounded-2xl border border-border bg-background p-6">
+                  <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
 
                     <div className="flex items-start gap-3 mb-5">
 
@@ -1493,7 +1577,7 @@ const HospitalOPDPage = () => {
                             disabled={
                               assigningWalkIn
                             }
-                            className="w-full h-11 rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+                            className="w-full h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
                           >
                             <option value="">
                               Select a doctor
@@ -1565,7 +1649,7 @@ const HospitalOPDPage = () => {
                           }
                           rows={3}
                           placeholder="Optional note for the OPD visit"
-                          className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none resize-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-foreground outline-none resize-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
                         />
 
                       </div>
@@ -1633,10 +1717,10 @@ const HospitalOPDPage = () => {
                 onSubmit={
                   handleRegisterPatient
                 }
-                className="p-5 sm:p-6"
+                className="p-5 sm:p-6 bg-slate-50/45"
               >
 
-                <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 mb-6">
+                <div className="rounded-2xl border border-cyan-200 bg-cyan-50/70 p-4 mb-6">
 
                   <div className="flex items-start gap-3">
 
@@ -1691,7 +1775,7 @@ const HospitalOPDPage = () => {
                       }
                       required
                       placeholder="Enter patient full name"
-                      className="w-full h-11 rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+                      className="w-full h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
                     />
 
                   </div>
@@ -1720,7 +1804,7 @@ const HospitalOPDPage = () => {
                         registering
                       }
                       placeholder="Optional"
-                      className="w-full h-11 rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+                      className="w-full h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
                     />
 
                     <p className="text-xs text-muted-foreground mt-1.5">
@@ -1759,7 +1843,7 @@ const HospitalOPDPage = () => {
                         registering
                       }
                       required
-                      className="w-full h-11 rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+                      className="w-full h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
                     />
 
                   </div>
@@ -1786,7 +1870,7 @@ const HospitalOPDPage = () => {
                       disabled={
                         registering
                       }
-                      className="w-full h-11 rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+                      className="w-full h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
                     >
                       <option value="">
                         Not specified
@@ -1830,7 +1914,7 @@ const HospitalOPDPage = () => {
                       disabled={
                         registering
                       }
-                      className="w-full h-11 rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+                      className="w-full h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
                     >
                       <option value="">
                         Not recorded
@@ -1914,7 +1998,7 @@ const HospitalOPDPage = () => {
                         registering
                       }
                       placeholder="Optional"
-                      className="w-full h-11 rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+                      className="w-full h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
                     />
 
                   </div>
@@ -1943,7 +2027,7 @@ const HospitalOPDPage = () => {
                         registering
                       }
                       placeholder="Optional"
-                      className="w-full h-11 rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+                      className="w-full h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
                     />
 
                   </div>
@@ -1972,7 +2056,7 @@ const HospitalOPDPage = () => {
                         registering
                       }
                       placeholder="e.g. Daughter, Son, Spouse"
-                      className="w-full h-11 rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+                      className="w-full h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
                     />
 
                   </div>
