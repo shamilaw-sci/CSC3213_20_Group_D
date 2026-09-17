@@ -21,7 +21,8 @@ const {
 
 const {
   isAuthenticated,
-  authorize
+  authorize,
+  authorizeOwnProfile
 } = require('../../middleware/auth');
 
 const router =
@@ -111,6 +112,7 @@ router.get(
   authorize(
     'hospital_staff'
   ),
+  authorizeOwnProfile(),
   getHospitalProfileController
 );
 

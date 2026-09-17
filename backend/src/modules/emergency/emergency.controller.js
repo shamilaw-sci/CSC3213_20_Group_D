@@ -24,13 +24,11 @@ const saveSession = (req) =>
 const triggerSosController = async (req, res) => {
   try {
     const {
-      patientId,
       latitude,
       longitude
     } = req.body;
 
     const finalPatientId =
-      patientId ||
       req.session?.user?.profile_id;
 
     const alert =

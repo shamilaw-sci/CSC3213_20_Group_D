@@ -32,7 +32,7 @@ router.post(
   isAuthenticated,
   authorize(
     'doctor',
-    'emergency',
+    'emergency_staff',
     'admin',
     'hospital_staff'
   ),
@@ -46,7 +46,7 @@ router.get(
   isAuthenticated,
   authorize(
     'doctor',
-    'emergency',
+    'emergency_staff',
     'admin',
     'hospital_staff'
   ),
@@ -60,7 +60,7 @@ router.get(
   isAuthenticated,
   authorize(
     'doctor',
-    'emergency',
+    'emergency_staff',
     'admin',
     'hospital_staff'
   ),
@@ -74,7 +74,7 @@ router.patch(
   isAuthenticated,
   authorize(
     'doctor',
-    'emergency',
+    'emergency_staff',
     'admin',
     'hospital_staff'
   ),

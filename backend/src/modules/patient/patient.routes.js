@@ -56,6 +56,10 @@ const {
   authorize
 } = require('../../middleware/auth');
 
+const {
+  authorizePatientResource
+} = require('../../middleware/patientAccess');
+
 /* =========================================================
    PATIENT LOOKUP
 ========================================================= */
@@ -66,6 +70,8 @@ const {
  */
 router.get(
   '/qr/:qrCodeId',
+  isAuthenticated,
+  authorize('doctor', 'pharmacist'),
   getPatientByQrCodeController
 );
 
@@ -87,22 +93,30 @@ router.get(
   getPatientByNicController
 );
 
+/**
+ * All remaining patient routes require authentication.
+ */
+router.use(isAuthenticated);
+
 /* =========================================================
    PATIENT PROFILE
 ========================================================= */
 
 router.get(
   '/:id',
+  authorizePatientResource(),
   getPatientController
 );
 
 router.put(
   '/:id',
+  authorizePatientResource(),
   updatePatientController
 );
 
 router.post(
   '/:id/photo',
+  authorizePatientResource(),
   upload.single('photo'),
   uploadPatientPhotoController
 );
@@ -121,6 +135,7 @@ router.get(
   '/:id/consent',
   isAuthenticated,
   authorize('patient'),
+  authorizePatientResource(),
   consentController.getConsent
 );
 
@@ -134,6 +149,7 @@ router.put(
   '/:id/consent',
   isAuthenticated,
   authorize('patient'),
+  authorizePatientResource(),
   consentController.updateConsent
 );
 
@@ -196,6 +212,7 @@ router.get(
     'patient',
     'doctor'
   ),
+  authorizePatientResource({ allowDoctor: true }),
   getMedicalRecordsController
 );
 
@@ -205,16 +222,19 @@ router.get(
 
 router.get(
   '/:id/allergies',
+  authorizePatientResource({ allowDoctor: true }),
   getAllergiesController
 );
 
 router.post(
   '/:id/allergies',
+  authorizePatientResource(),
   addAllergyController
 );
 
 router.delete(
   '/:id/allergies/:allergyId',
+  authorizePatientResource(),
   deleteAllergyController
 );
 
@@ -224,16 +244,19 @@ router.delete(
 
 router.get(
   '/:id/conditions',
+  authorizePatientResource({ allowDoctor: true }),
   getConditionsController
 );
 
 router.post(
   '/:id/conditions',
+  authorizePatientResource(),
   addConditionController
 );
 
 router.delete(
   '/:id/conditions/:conditionId',
+  authorizePatientResource(),
   deleteConditionController
 );
 
@@ -254,6 +277,7 @@ router.get(
     'patient',
     'doctor'
   ),
+  authorizePatientResource({ allowDoctor: true }),
   getMedicalDevicesController
 );
 
@@ -266,6 +290,7 @@ router.post(
   '/:id/medical-devices',
   isAuthenticated,
   authorize('patient'),
+  authorizePatientResource(),
   addMedicalDeviceController
 );
 
@@ -278,6 +303,7 @@ router.delete(
   '/:id/medical-devices/:deviceId',
   isAuthenticated,
   authorize('patient'),
+  authorizePatientResource(),
   deleteMedicalDeviceController
 );
 
@@ -298,6 +324,7 @@ router.get(
     'patient',
     'doctor'
   ),
+  authorizePatientResource({ allowDoctor: true }),
   getHealthBackgroundController
 );
 
@@ -310,6 +337,7 @@ router.post(
   '/:id/health-background',
   isAuthenticated,
   authorize('patient'),
+  authorizePatientResource(),
   addHealthBackgroundController
 );
 
@@ -322,6 +350,7 @@ router.delete(
   '/:id/health-background/:backgroundId',
   isAuthenticated,
   authorize('patient'),
+  authorizePatientResource(),
   deleteHealthBackgroundController
 );
 
@@ -342,6 +371,7 @@ router.get(
     'patient',
     'doctor'
   ),
+  authorizePatientResource({ allowDoctor: true }),
   getFamilyHistoryController
 );
 
@@ -354,6 +384,7 @@ router.post(
   '/:id/family-history',
   isAuthenticated,
   authorize('patient'),
+  authorizePatientResource(),
   addFamilyHistoryController
 );
 
@@ -366,6 +397,7 @@ router.delete(
   '/:id/family-history/:familyHistoryId',
   isAuthenticated,
   authorize('patient'),
+  authorizePatientResource(),
   deleteFamilyHistoryController
 );
 
@@ -379,6 +411,7 @@ router.delete(
  */
 router.post(
   '/:id/vaccinations/scan',
+  authorizePatientResource(),
   upload.single('image'),
   extractVaccinationDataController
 );
@@ -388,21 +421,25 @@ router.post(
  */
 router.post(
   '/:id/vaccinations/bulk',
+  authorizePatientResource(),
   addBulkVaccinationsController
 );
 
 router.get(
   '/:id/vaccinations',
+  authorizePatientResource({ allowDoctor: true }),
   getVaccinationsController
 );
 
 router.post(
   '/:id/vaccinations',
+  authorizePatientResource(),
   addVaccinationController
 );
 
 router.delete(
   '/:id/vaccinations/:vaccinationId',
+  authorizePatientResource(),
   deleteVaccinationController
 );
 
@@ -412,6 +449,10 @@ router.delete(
 
 router.get(
   '/:id/prescriptions',
+  authorizePatientResource({
+    allowDoctor: true,
+    allowPharmacist: true
+  }),
   getPatientPrescriptionsController
 );
 
@@ -436,6 +477,7 @@ router.get(
     'patient',
     'doctor'
   ),
+  authorizePatientResource({ allowDoctor: true }),
   getPatientHistorySummaryController
 );
 
@@ -445,11 +487,13 @@ router.get(
 
 router.get(
   '/:id/lab-reports',
+  authorizePatientResource({ allowDoctor: true }),
   getLabReportsController
 );
 
 router.put(
   '/:id/lab-reports/:reportId/read',
+  authorizePatientResource(),
   markLabReportAsReadController
 );
 
@@ -459,6 +503,7 @@ router.put(
 
 router.get(
   '/:id/appointments',
+  authorizePatientResource(),
   getPatientAppointmentsController
 );
 
@@ -490,6 +535,7 @@ const chatRateLimiter =
  */
 router.post(
   '/:id/chat',
+  authorizePatientResource(),
   chatRateLimiter,
   generatePatientChatController
 );

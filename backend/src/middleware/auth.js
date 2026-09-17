@@ -66,4 +66,35 @@ const authorize = (...roles) => {
   };
 };
 
-module.exports = { isAuthenticated, authorize };
+/**
+ * Restricts a profile-scoped route to the profile stored in the session.
+ * Must be used after isAuthenticated.
+ *
+ * @param {string} [paramName='id'] - Route parameter containing the profile ID
+ * @returns {Function} Express middleware
+ */
+const authorizeOwnProfile = (paramName = 'id') => {
+  return (req, res, next) => {
+    const profileId = req.session?.user?.profile_id;
+    const requestedId = req.params?.[paramName];
+
+    if (
+      !profileId ||
+      !requestedId ||
+      String(profileId) !== String(requestedId)
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. You can only access your own profile.'
+      });
+    }
+
+    return next();
+  };
+};
+
+module.exports = {
+  isAuthenticated,
+  authorize,
+  authorizeOwnProfile
+};
