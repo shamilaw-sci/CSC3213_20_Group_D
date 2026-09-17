@@ -163,22 +163,19 @@
 
   /*
    * LABORATORY
-   * Diagnostic violet.
-   *
-   * Reserved now so Member 4's future Lab pages can use
-   * the shared Care4U design system without redesign.
+   * Diagnostic aqua / teal.
    */
   [data-module='laboratory'] {
-    --primary: 262 62% 52%;
+    --primary: 184 68% 36%;
     --primary-foreground: 210 40% 98%;
 
-    --brand-deep: 260 48% 22%;
+    --brand-deep: 187 63% 17%;
     --brand-deep-foreground: 210 40% 98%;
 
-    --module-soft: 260 55% 96%;
-    --module-soft-foreground: 260 48% 25%;
+    --module-soft: 182 52% 94%;
+    --module-soft-foreground: 187 63% 20%;
 
-    --ring: 262 62% 52%;
+    --ring: 184 68% 36%;
   }
 
   /*
@@ -238,8 +235,8 @@
   }
 
   .dark [data-module='laboratory'] {
-    --module-soft: 260 32% 16%;
-    --module-soft-foreground: 262 70% 82%;
+    --module-soft: 184 34% 14%;
+    --module-soft-foreground: 182 65% 78%;
   }
 
   .dark [data-module='hospital'] {

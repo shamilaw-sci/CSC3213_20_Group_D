@@ -41,7 +41,7 @@ const MODULE_HOME_MAP = {
   patient: '/patient/profile',
   doctor: '/doctor/dashboard',
   pharmacy: '/pharmacy/dashboard',
-  laboratory: '/lab/dashboard',
+  laboratory: '/laboratory/dashboard',
   hospital: '/hospital/dashboard',
   admin: '/admin',
 };

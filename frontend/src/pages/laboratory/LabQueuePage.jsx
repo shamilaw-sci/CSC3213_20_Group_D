@@ -1,175 +1,397 @@
 /**
- * @component LabQueuePage
- * @desc      Lab staff view of incoming test requests.
- *            Shows all requests with status update controls
- *            and links to upload reports.
- * @author    Pamudika Abayarathna (S/21/001)
+ * @file    LabQueuePage.jsx
+ * @desc    Searchable laboratory request queue with status progression
+ *          and report-upload actions for assigned tests.
  */
 
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import api from '../../services/api';
+import toast from 'react-hot-toast';
+import {
+  CalendarClock,
+  ClipboardList,
+  FileUp,
+  FlaskConical,
+  Search,
+  Stethoscope,
+  UserRound,
+} from 'lucide-react';
+
+import Alert from '../../components/common/Alert';
+import Button from '../../components/common/Button';
+import Card from '../../components/common/Card';
+import PageHeader from '../../components/common/PageHeader';
 import Spinner from '../../components/common/Spinner';
+import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
 
-const STATUS_COLORS = {
-  pending:          'bg-orange-100 text-orange-700',
-  sample_collected: 'bg-blue-100 text-blue-700',
-  in_progress:      'bg-purple-100 text-purple-700',
-  completed:        'bg-green-100 text-green-700',
-  cancelled:        'bg-red-100 text-red-700',
+const STATUS_LABELS = {
+  pending: 'Pending',
+  sample_collected: 'Sample collected',
+  in_progress: 'In progress',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+};
+
+const STATUS_STYLES = {
+  pending: 'bg-amber-50 text-amber-700 border-amber-200',
+  sample_collected: 'bg-sky-50 text-sky-700 border-sky-200',
+  in_progress: 'bg-cyan-50 text-cyan-700 border-cyan-200',
+  completed: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  cancelled: 'bg-rose-50 text-rose-700 border-rose-200',
+};
+
+const PRIORITY_STYLES = {
+  routine: 'bg-slate-50 text-slate-600 border-slate-200',
+  urgent: 'bg-orange-50 text-orange-700 border-orange-200',
+  stat: 'bg-rose-50 text-rose-700 border-rose-200',
 };
 
 const NEXT_STATUS = {
-  pending:          'sample_collected',
-  sample_collected: 'in_progress',
-  in_progress:      'completed',
+  pending: {
+    value: 'sample_collected',
+    label: 'Mark sample collected',
+  },
+  sample_collected: {
+    value: 'in_progress',
+    label: 'Begin testing',
+  },
+  in_progress: {
+    value: 'completed',
+    label: 'Mark completed',
+  },
 };
 
-const STATUS_LABELS = {
-  pending:          'Mark Sample Collected',
-  sample_collected: 'Mark In Progress',
-  in_progress:      'Mark Completed',
-};
+const VALID_STATUS_FILTERS = [
+  'all',
+  'pending',
+  'sample_collected',
+  'in_progress',
+  'completed',
+  'cancelled',
+];
 
-const formatDate = (iso) => {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('en-GB', {
-    day: 'numeric', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit',
+const formatDate = (value) => {
+  if (!value) return 'Date unavailable';
+
+  return new Date(value).toLocaleString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 };
 
 const LabQueuePage = () => {
-  const navigate      = useNavigate();
-  const queryClient   = useQueryClient();
-  const [updating, setUpdating] = useState(null);
-  const labId = useAuthStore(state => state.user?.profile_id);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedStatus = searchParams.get('status') || 'all';
+  const statusFilter = VALID_STATUS_FILTERS.includes(requestedStatus)
+    ? requestedStatus
+    : 'all';
+  const [searchTerm, setSearchTerm] = useState('');
+  const [priorityFilter, setPriorityFilter] = useState('all');
+  const [updatingId, setUpdatingId] = useState(null);
+  const labId = useAuthStore((state) => state.user?.profile_id);
 
-  const { data: requests, isLoading } = useQuery({
+  const requestsQuery = useQuery({
     queryKey: ['lab-requests', labId],
     queryFn: async () => {
-      const res = await api.get(`/api/laboratories/${labId}/requests`);
-      return res.data.data;
+      const response = await api.get(`/api/laboratories/${labId}/requests`);
+      return response.data.data;
     },
-    enabled: !!labId,
+    enabled: Boolean(labId),
   });
 
-  const handleStatusUpdate = async (requestId, newStatus) => {
-    setUpdating(requestId);
+  const requests = useMemo(
+    () => requestsQuery.data || [],
+    [requestsQuery.data]
+  );
+
+  const filteredRequests = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    return requests.filter((request) => {
+      const matchesStatus = statusFilter === 'all'
+        || request.status === statusFilter;
+      const matchesPriority = priorityFilter === 'all'
+        || request.priority === priorityFilter;
+      const searchableText = [
+        request.test_type,
+        request.patient_name,
+        request.doctor_name,
+        request.id,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      return matchesStatus
+        && matchesPriority
+        && (!normalizedSearch || searchableText.includes(normalizedSearch));
+    });
+  }, [priorityFilter, requests, searchTerm, statusFilter]);
+
+  const handleStatusChange = (value) => {
+    if (value === 'all') {
+      setSearchParams({});
+      return;
+    }
+
+    setSearchParams({ status: value });
+  };
+
+  const handleStatusUpdate = async (requestId, nextStatus) => {
+    setUpdatingId(requestId);
+
     try {
-      await api.put(`/api/laboratories/requests/${requestId}/status`, { status: newStatus });
-      queryClient.invalidateQueries({ queryKey: ['lab-requests', labId] });
-    } catch (err) {
-      console.error('Status update failed:', err);
+      await api.put(`/api/laboratories/requests/${requestId}/status`, {
+        status: nextStatus,
+      });
+      await queryClient.invalidateQueries({ queryKey: ['lab-requests', labId] });
+      toast.success(`Request updated to ${STATUS_LABELS[nextStatus].toLowerCase()}.`);
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || 'Unable to update the request status.'
+      );
     } finally {
-      setUpdating(null);
+      setUpdatingId(null);
     }
   };
 
-  if (isLoading) return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-      <Spinner size="lg" />
-    </div>
-  );
+  if (requestsQuery.isLoading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  const errorMessage = requestsQuery.error?.response?.data?.message
+    || requestsQuery.error?.message
+    || 'Unable to load laboratory requests.';
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <main className="bg-muted/30 min-h-full">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+        {/* Queue identity */}
+        <PageHeader
+          eyebrow="Diagnostic workflow"
+          title="Test request queue"
+          description="Review assigned tests, track sample progress, and publish completed findings from one workspace."
+          icon={ClipboardList}
+          meta={(
+            <div>
+              <p className="text-3xl font-extrabold text-foreground">
+                {requests.length}
+              </p>
+              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground mt-1">
+                Total requests
+              </p>
+            </div>
+          )}
+        />
 
-      {/* Header */}
-      <div className="px-8 py-6" style={{ backgroundColor: '#1E3A5F' }}>
-        <div className="max-w-4xl mx-auto flex justify-between items-center">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest mb-1 text-blue-300">
-              Laboratory Portal
-            </p>
-            <h1 className="text-2xl font-bold text-white">Test Request Queue</h1>
-          </div>
-          <button
-            onClick={() => navigate('/laboratory/dashboard')}
-            className="px-4 py-2 rounded-lg text-sm font-semibold text-white border border-white/30 hover:bg-white/10"
-          >
-            ← Dashboard
-          </button>
-        </div>
-      </div>
-
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        {!requests || requests.length === 0 ? (
-          <div className="bg-white rounded-xl border border-slate-100 p-12 text-center">
-            <p className="text-4xl mb-3">🧪</p>
-            <p className="text-slate-500 text-sm">No test requests yet.</p>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {requests.map(request => (
-              <div key={request.id}
-                className="bg-white rounded-xl border border-slate-100 shadow-sm p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-base font-bold text-slate-800">{request.test_type}</h3>
-                      {request.priority === 'urgent' && (
-                        <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">
-                          🚨 URGENT
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-slate-600">
-                      Patient: <span className="font-semibold">{request.patient_name || '—'}</span>
-                    </p>
-                    <p className="text-sm text-slate-600">
-                      Doctor: <span className="font-semibold">Dr. {request.doctor_name || '—'}</span>
-                    </p>
-                    {request.notes && (
-                      <p className="text-xs text-slate-400 mt-1 italic">{request.notes}</p>
-                    )}
-                    <p className="text-xs text-slate-400 mt-1">
-                      Requested: {formatDate(request.created_at)}
-                    </p>
-                  </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${STATUS_COLORS[request.status] || ''}`}>
-                    {request.status.replace('_', ' ')}
-                  </span>
-                </div>
-
-                <div className="flex gap-3">
-                  {NEXT_STATUS[request.status] && (
-                    <button
-                      onClick={() => handleStatusUpdate(request.id, NEXT_STATUS[request.status])}
-                      disabled={updating === request.id}
-                      className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white disabled:opacity-60"
-                      style={{ backgroundColor: '#1E3A5F' }}
-                    >
-                      {updating === request.id ? 'Updating...' : STATUS_LABELS[request.status]}
-                    </button>
-                  )}
-
-                  {request.status === 'completed' ? (
-                    <button
-                      onClick={() => navigate(`/laboratory/report/${request.id}`)}
-                      className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white"
-                      style={{ backgroundColor: '#1F7A1F' }}
-                    >
-                      ✅ View/Upload Report
-                    </button>
-                  ) : request.status === 'in_progress' && (
-                    <button
-                      onClick={() => navigate(`/laboratory/report/${request.id}`)}
-                      className="flex-1 py-2.5 rounded-lg text-sm font-semibold border-2 text-slate-700"
-                      style={{ borderColor: '#1E3A5F' }}
-                    >
-                      📤 Upload Report
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+        {!labId && (
+          <Alert
+            type="error"
+            message="Your laboratory profile is not linked to this session. Please sign out and contact an administrator."
+          />
         )}
+
+        {requestsQuery.error && <Alert type="error" message={errorMessage} />}
+
+        {/* Search and filters */}
+        <Card>
+          <div className="grid md:grid-cols-[minmax(0,1fr)_220px_180px] gap-3">
+            <label className="relative block">
+              <span className="sr-only">Search test requests</span>
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <input
+                type="search"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Search patient, doctor, test, or request ID"
+                className="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-input rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </label>
+
+            <label>
+              <span className="sr-only">Filter by status</span>
+              <select
+                value={statusFilter}
+                onChange={(event) => handleStatusChange(event.target.value)}
+                className="w-full px-3.5 py-2.5 text-sm bg-white border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="all">All statuses</option>
+                <option value="pending">Pending</option>
+                <option value="sample_collected">Sample collected</option>
+                <option value="in_progress">In progress</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </label>
+
+            <label>
+              <span className="sr-only">Filter by priority</span>
+              <select
+                value={priorityFilter}
+                onChange={(event) => setPriorityFilter(event.target.value)}
+                className="w-full px-3.5 py-2.5 text-sm bg-white border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="all">All priorities</option>
+                <option value="routine">Routine</option>
+                <option value="urgent">Urgent</option>
+                <option value="stat">Stat</option>
+              </select>
+            </label>
+          </div>
+        </Card>
+
+        {/* Request results */}
+        <section aria-live="polite">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div>
+              <h2 className="text-xl font-bold text-foreground">Requests</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Showing {filteredRequests.length} of {requests.length} requests
+              </p>
+            </div>
+            {(searchTerm || statusFilter !== 'all' || priorityFilter !== 'all') && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSearchTerm('');
+                  setPriorityFilter('all');
+                  setSearchParams({});
+                }}
+              >
+                Clear filters
+              </Button>
+            )}
+          </div>
+
+          {filteredRequests.length === 0 ? (
+            <Card>
+              <div className="py-10 text-center">
+                <span className="w-16 h-16 rounded-2xl bg-module-soft text-primary inline-flex items-center justify-center">
+                  <FlaskConical className="w-8 h-8" />
+                </span>
+                <h3 className="font-bold text-foreground mt-4">
+                  {requests.length ? 'No matching requests' : 'No test requests yet'}
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
+                  {requests.length
+                    ? 'Try changing the search text or filters.'
+                    : 'Requests assigned by doctors will appear in this queue.'}
+                </p>
+              </div>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {filteredRequests.map((request) => {
+                const nextStatus = NEXT_STATUS[request.status];
+                const canUpload = ['in_progress', 'completed'].includes(request.status);
+
+                return (
+                  <Card key={request.id}>
+                    <article>
+                      <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="text-lg font-extrabold text-foreground">
+                              {request.test_type}
+                            </h3>
+                            <span className={`inline-flex px-2.5 py-1 rounded-full border text-[10px] font-extrabold uppercase tracking-wide ${PRIORITY_STYLES[request.priority] || PRIORITY_STYLES.routine}`}>
+                              {request.priority || 'routine'} priority
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground font-mono mt-2 break-all">
+                            Request {request.id}
+                          </p>
+                        </div>
+
+                        <span className={`inline-flex self-start px-3 py-1.5 rounded-full border text-xs font-bold whitespace-nowrap ${STATUS_STYLES[request.status] || STATUS_STYLES.pending}`}>
+                          {STATUS_LABELS[request.status] || request.status}
+                        </span>
+                      </div>
+
+                      <div className="grid sm:grid-cols-3 gap-3 mt-5">
+                        <div className="rounded-xl bg-muted/60 p-3 flex items-start gap-3">
+                          <UserRound className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Patient</p>
+                            <p className="text-sm font-semibold text-foreground mt-1 truncate">
+                              {request.patient_name || 'Unavailable'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="rounded-xl bg-muted/60 p-3 flex items-start gap-3">
+                          <Stethoscope className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Requested by</p>
+                            <p className="text-sm font-semibold text-foreground mt-1 truncate">
+                              {request.doctor_name ? `Dr. ${request.doctor_name}` : 'Unavailable'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="rounded-xl bg-muted/60 p-3 flex items-start gap-3">
+                          <CalendarClock className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                          <div>
+                            <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Received</p>
+                            <p className="text-sm font-semibold text-foreground mt-1">
+                              {formatDate(request.created_at)}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {request.notes && (
+                        <div className="mt-4 p-4 rounded-xl border border-border bg-card">
+                          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                            Clinical notes
+                          </p>
+                          <p className="text-sm text-foreground leading-relaxed mt-2 whitespace-pre-wrap">
+                            {request.notes}
+                          </p>
+                        </div>
+                      )}
+
+                      {(nextStatus || canUpload) && (
+                        <div className="flex flex-col sm:flex-row gap-3 mt-5 pt-5 border-t border-border">
+                          {nextStatus && (
+                            <Button
+                              loading={updatingId === request.id}
+                              disabled={Boolean(updatingId) && updatingId !== request.id}
+                              onClick={() => handleStatusUpdate(request.id, nextStatus.value)}
+                            >
+                              {nextStatus.label}
+                            </Button>
+                          )}
+                          {canUpload && (
+                            <Button
+                              variant={request.status === 'in_progress' ? 'secondary' : 'ghost'}
+                              icon={<FileUp className="w-4 h-4" />}
+                              onClick={() => navigate(`/laboratory/report/${request.id}`)}
+                            >
+                              Upload report
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </article>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </section>
       </div>
-    </div>
+    </main>
   );
 };
 

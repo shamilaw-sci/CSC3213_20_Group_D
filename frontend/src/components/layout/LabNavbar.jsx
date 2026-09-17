@@ -1,27 +1,49 @@
 /**
- * @component LabNavbar
- * @desc      Top navigation bar for the laboratory portal, using TopNavbar
- *            with lab request queues, report uploads, and management links.
+ * @file    LabNavbar.jsx
+ * @desc    Persistent navigation for active laboratory workflows.
  */
-import { API_BASE_URL } from '../../services/api';
 
-import { LayoutDashboard, ClipboardList, Upload, CheckCircle2 } from 'lucide-react';
+import { ClipboardList, LayoutDashboard } from 'lucide-react';
+
 import TopNavbar from './TopNavbar';
-
-const handleLogout = async () => {
-  try {
-    await fetch(`${API_BASE_URL}/api/auth/logout`, { method: 'POST', credentials: 'include' });
-  } catch { /* ignore */ }
-  window.location.href = '/login';
-};
+import api from '../../services/api';
+import useAuthStore from '../../store/authStore';
 
 export default function LabNavbar() {
+  const clearUser = useAuthStore((state) => state.clearUser);
+
+  const handleLogout = async () => {
+    try {
+      await api.post('/api/auth/logout');
+    } catch (error) {
+      console.error('Laboratory logout error:', error);
+    } finally {
+      clearUser();
+      window.location.href = '/login';
+    }
+  };
+
   const navItems = [
-    { type: 'link', to: '/lab/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { type: 'link', to: '/lab/queue', label: 'Test Requests', icon: ClipboardList },
-    { type: 'link', to: '/lab/upload', label: 'Upload Report', icon: Upload },
-    { type: 'link', to: '/lab/completed', label: 'Completed Tests', icon: CheckCircle2 },
+    {
+      type: 'link',
+      to: '/laboratory/dashboard',
+      label: 'Dashboard',
+      icon: LayoutDashboard,
+    },
+    {
+      type: 'link',
+      to: '/laboratory/queue',
+      label: 'Test Requests',
+      icon: ClipboardList,
+    },
   ];
 
-  return <TopNavbar portalLabel="Laboratory Portal" theme="lab" navItems={navItems} onLogout={handleLogout} />;
+  return (
+    <TopNavbar
+      portalLabel="Laboratory Portal"
+      theme="laboratory"
+      navItems={navItems}
+      onLogout={handleLogout}
+    />
+  );
 }

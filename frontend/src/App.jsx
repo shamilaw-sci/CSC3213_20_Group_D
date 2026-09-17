@@ -16,6 +16,7 @@ import AdminLayout            from './components/layout/AdminLayout';
 import HospitalLayout         from './components/layout/HospitalLayout';
 import DoctorLayout from './components/layout/DoctorLayout';
 import PharmacyLayout from './components/layout/PharmacyLayout';
+import LabLayout from './components/layout/LabLayout';
 
 import PatientProfilePage     from './pages/patient/PatientProfilePage';
 import MedicalRecordsPage     from './pages/patient/MedicalRecordsPage';
@@ -44,6 +45,7 @@ import PharmacyDispensingHistoryPage
 import LabDashboard from './pages/laboratory/LabDashboard';
 import LabQueuePage from './pages/laboratory/LabQueuePage';
 import LabReportUploadPage from './pages/laboratory/LabReportUploadPage';
+import LabRegisterPage from './pages/laboratory/LabRegisterPage';
 
 import PaymentHistoryPage     from './pages/patient/PaymentHistoryPage';
 import OrderTrackerPage       from './pages/patient/OrderTrackerPage';
@@ -99,11 +101,9 @@ const ProtectedRoute = ({
     allowedRoles &&
     !allowedRoles.includes(user.role)
   ) {
-    // Don't guess another destination - that role may not have a
-    // dedicated route (e.g. lab_technician, hospital_staff have none
-    // yet), and guessing wrong here creates a redirect loop with
-    // /login's own role-based redirect. Clear the mismatched session
-    // and go to login cleanly instead.
+    // Do not guess another role destination here. Clear a mismatched
+    // session to avoid redirect loops with the login route's own
+    // role-based redirect handling.
     clearUser();
 
     return (
@@ -457,39 +457,29 @@ function App() {
           />
         </Route>
 
+        {/* Laboratory registration — public, with admin approval before login */}
+        <Route
+          path="/laboratory/register"
+          element={<LabRegisterPage />}
+        />
+
         {/* Laboratory pages — restricted to 'lab_technician' */}
         <Route
           path="/laboratory"
           element={
             <ProtectedRoute allowedRoles={['lab_technician']}>
-              <Navigate to="/laboratory/dashboard" replace />
+              <LabLayout />
             </ProtectedRoute>
           }
-        />
-        <Route
-          path="/laboratory/dashboard"
-          element={
-            <ProtectedRoute allowedRoles={['lab_technician']}>
-              <LabDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/laboratory/queue"
-          element={
-            <ProtectedRoute allowedRoles={['lab_technician']}>
-              <LabQueuePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/laboratory/report/:requestId"
-          element={
-            <ProtectedRoute allowedRoles={['lab_technician']}>
-              <LabReportUploadPage />
-            </ProtectedRoute>
-          }
-        />
+        >
+          <Route
+            index
+            element={<Navigate to="/laboratory/dashboard" replace />}
+          />
+          <Route path="dashboard" element={<LabDashboard />} />
+          <Route path="queue" element={<LabQueuePage />} />
+          <Route path="report/:requestId" element={<LabReportUploadPage />} />
+        </Route>
 
         {/* Hospital pages — restricted to 'hospital_staff' */}
         <Route
