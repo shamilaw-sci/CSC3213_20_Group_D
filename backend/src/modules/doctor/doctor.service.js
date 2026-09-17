@@ -6,6 +6,7 @@
  */
 
 const doctorRepository = require('./doctor.repository');
+const appointmentRepository = require('../appointment/appointment.repository');
 const { supabase } = require('../../config/supabase');
 
 const PRIORITY_LEVELS = ['routine', 'urgent', 'stat'];
@@ -157,6 +158,7 @@ const orderLabTest = async (data) => {
   const {
     patientId,
     doctorId,
+    appointmentId,
     laboratoryId,
     testType
   } = data;
@@ -164,15 +166,32 @@ const orderLabTest = async (data) => {
   if (
     !patientId ||
     !doctorId ||
+    !appointmentId ||
     !laboratoryId ||
     !testType ||
     !testType.trim()
   ) {
     const error = new Error(
-      'Validation failed: patientId, doctorId, laboratoryId and testType are required'
+      'Validation failed: patientId, doctorId, appointmentId, laboratoryId and testType are required'
     );
 
     error.statusCode = 400;
+    throw error;
+  }
+
+  const appointment =
+    await appointmentRepository.getAppointmentById(appointmentId);
+
+  if (
+    !appointment ||
+    appointment.status !== 'in_progress' ||
+    String(appointment.patient_id) !== String(patientId) ||
+    String(appointment.doctor_id) !== String(doctorId)
+  ) {
+    const error = new Error(
+      'Lab tests can only be ordered during your active patient consultation'
+    );
+    error.statusCode = 403;
     throw error;
   }
 
@@ -208,7 +227,7 @@ const orderLabTest = async (data) => {
   return await doctorRepository.createLabTestRequest({
     patientId,
     doctorId,
-    appointmentId: data.appointmentId,
+    appointmentId,
     laboratoryId,
     testType: testType.trim(),
     priority,
@@ -242,7 +261,7 @@ const getUnreviewedLabReports = async (doctorId) => {
  * @param {string} remark - Doctor's short remark on the report
  * @returns {Promise<Object>} The updated lab report
  */
-const reviewLabReport = async (reportId, remark) => {
+const reviewLabReport = async (reportId, remark, doctorId) => {
   if (!reportId) {
     const error = new Error(
       'Validation failed: reportId is required'
@@ -264,7 +283,8 @@ const reviewLabReport = async (reportId, remark) => {
   const updated =
     await doctorRepository.reviewLabReport(
       reportId,
-      remark.trim()
+      remark.trim(),
+      doctorId
     );
 
   if (!updated) {

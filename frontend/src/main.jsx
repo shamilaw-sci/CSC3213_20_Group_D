@@ -1,3 +1,10 @@
+/**
+ * @file main.jsx
+ * @module Application
+ * @desc Mounts the Care4U React web application.
+ * @author Wasana Karunanayaka (S/21/081)
+ */
+
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'

@@ -388,15 +388,18 @@ const getUnreviewedLabReports = async (doctorId) => {
  * @param {string} remark - Doctor's short remark on the report
  * @returns {Promise<Object>} The updated lab report row
  */
-const reviewLabReport = async (reportId, remark) => {
+const reviewLabReport = async (reportId, remark, doctorId) => {
   const result = await pool.query(
-    `UPDATE lab_reports
+    `UPDATE lab_reports lr
      SET doctor_reviewed_at = NOW(),
          doctor_remark = $1,
          updated_at = NOW()
-     WHERE id = $2
-     RETURNING *`,
-    [remark, reportId]
+     FROM lab_test_requests ltr
+     WHERE lr.id = $2
+       AND lr.lab_request_id = ltr.id
+       AND ltr.doctor_id = $3
+     RETURNING lr.*`,
+    [remark, reportId, doctorId]
   );
 
   return result.rows[0] || null;

@@ -496,9 +496,9 @@ const approveUser = async (userId) => {
             );
         }
 
-        // Laboratory accounts use the lab_staff role and have
+        // Laboratory accounts use the lab_technician role and have
         // a separate laboratories.is_verified flag.
-        if (role === 'lab_staff') {
+        if (role === 'lab_technician') {
             await client.query(
                 `UPDATE laboratories
                  SET is_verified = true,
@@ -594,7 +594,7 @@ const rejectUser = async (userId) => {
 
         // Keep the laboratory profile's verification state
         // synchronized with the user approval state.
-        if (role === 'lab_staff') {
+        if (role === 'lab_technician') {
             await client.query(
                 `UPDATE laboratories
                  SET is_verified = false,

@@ -1,3 +1,10 @@
+/**
+ * @file Alert.jsx
+ * @module Components
+ * @desc Shared Care4U alert component.
+ * @author Wasana Karunanayaka (S/21/081)
+ */
+
 import { CheckCircle2, XCircle, AlertTriangle, Info } from 'lucide-react';
 
 /**

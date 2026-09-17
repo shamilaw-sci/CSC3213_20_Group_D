@@ -1,3 +1,10 @@
+/**
+ * @file authStore.js
+ * @module Store
+ * @desc Zustand authentication state for the Care4U mobile application.
+ * @author Wasana Karunanayaka (S/21/081)
+ */
+
 import { create } from 'zustand';
 
 const useAuthStore = create((set) => ({

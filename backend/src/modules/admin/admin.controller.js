@@ -50,23 +50,23 @@ const RBAC_MATRIX = [
     },
     {
         resourceGroup: 'Emergency — Access Logs',
-        allowedRoles: ['doctor', 'emergency', 'admin'],
-        notes: "'emergency' role is defined in code but not currently assigned to any real account"
+        allowedRoles: ['doctor', 'emergency_staff', 'hospital_staff', 'admin'],
+        notes: 'Break-glass access is restricted to clinical emergency roles and administrators'
     },
     {
         resourceGroup: 'Emergency — Patient Snapshot',
-        allowedRoles: ['doctor', 'emergency', 'admin'],
-        notes: "'emergency' role is defined in code but not currently assigned to any real account"
+        allowedRoles: ['doctor', 'emergency_staff', 'hospital_staff', 'admin'],
+        notes: 'Break-glass access is restricted to clinical emergency roles and administrators'
     },
     {
         resourceGroup: 'Emergency — Active Alerts',
-        allowedRoles: ['doctor', 'emergency', 'admin'],
-        notes: "'emergency' role is defined in code but not currently assigned to any real account"
+        allowedRoles: ['doctor', 'emergency_staff', 'hospital_staff', 'admin'],
+        notes: 'Break-glass access is restricted to clinical emergency roles and administrators'
     },
     {
         resourceGroup: 'Emergency — Resolve Alert',
-        allowedRoles: ['doctor', 'emergency', 'admin'],
-        notes: "'emergency' role is defined in code but not currently assigned to any real account"
+        allowedRoles: ['doctor', 'emergency_staff', 'hospital_staff', 'admin'],
+        notes: 'Break-glass access is restricted to clinical emergency roles and administrators'
     },
     {
         resourceGroup: 'Auth — Register/Login/Forgot Password',

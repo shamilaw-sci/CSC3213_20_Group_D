@@ -6,7 +6,7 @@
  */
 
 import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
@@ -225,8 +225,6 @@ const MedicineRow = ({
 };
 
 const PharmacyLookupPage = () => {
-  const navigate = useNavigate();
-
   const { qrValue } = useParams();
 
   const queryClient =

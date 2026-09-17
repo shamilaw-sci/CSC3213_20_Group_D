@@ -29,6 +29,7 @@ const {
 const {
   isAuthenticated,
   authorize,
+  authorizeOwnProfile,
 } = require('../../middleware/auth');
 
 const { auditMiddleware } = require('../../middleware/auditLog');
@@ -74,6 +75,7 @@ router.put(
   '/:id',
   isAuthenticated,
   authorize('doctor'),
+  authorizeOwnProfile(),
   auditMiddleware('UPDATE_DOCTOR_PROFILE', 'doctor'),
   updateDoctorController
 );
@@ -83,6 +85,7 @@ router.put(
   '/:id/photo',
   isAuthenticated,
   authorize('doctor'),
+  authorizeOwnProfile(),
   upload.single('photo'),
   auditMiddleware('UPDATE_DOCTOR_PROFILE_PHOTO', 'doctor'),
   uploadDoctorPhotoController
@@ -99,6 +102,7 @@ router.put(
   '/:id/availability',
   isAuthenticated,
   authorize('doctor'),
+  authorizeOwnProfile(),
   auditMiddleware('UPDATE_DOCTOR_AVAILABILITY', 'doctor'),
   updateDoctorAvailabilityController
 );
@@ -108,6 +112,7 @@ router.get(
   '/:id/appointments/today',
   isAuthenticated,
   authorize('doctor'),
+  authorizeOwnProfile(),
   auditMiddleware('VIEW_APPOINTMENT_QUEUE', 'doctor'),
   getTodayAppointmentsController
 );
@@ -117,6 +122,7 @@ router.get(
   '/:id/dashboard-stats',
   isAuthenticated,
   authorize('doctor'),
+  authorizeOwnProfile(),
   auditMiddleware('VIEW_DASHBOARD_STATS', 'doctor'),
   getDoctorDashboardStatsController
 );
@@ -126,6 +132,7 @@ router.get(
   '/:id/ai-insights',
   isAuthenticated,
   authorize('doctor'),
+  authorizeOwnProfile(),
   auditMiddleware('VIEW_AI_INSIGHTS', 'doctor'),
   getDoctorAiInsightsController
 );
@@ -135,6 +142,7 @@ router.post(
   '/:id/lab-test-requests',
   isAuthenticated,
   authorize('doctor'),
+  authorizeOwnProfile(),
   auditMiddleware('ORDER_LAB_TEST', 'doctor'),
   orderLabTestController
 );
@@ -144,6 +152,7 @@ router.get(
   '/:id/unreviewed-lab-reports',
   isAuthenticated,
   authorize('doctor'),
+  authorizeOwnProfile(),
   auditMiddleware('VIEW_UNREVIEWED_LAB_REPORTS', 'doctor'),
   getUnreviewedLabReportsController
 );

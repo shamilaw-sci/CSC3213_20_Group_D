@@ -1,3 +1,10 @@
+/**
+ * @file index.js
+ * @module Application
+ * @desc Registers the Care4U Expo application entry point.
+ * @author Wasana Karunanayaka (S/21/081)
+ */
+
 import { registerRootComponent } from 'expo';
 
 import App from './App';

@@ -1,3 +1,10 @@
+/**
+ * @file DataTable.jsx
+ * @module Components
+ * @desc Shared Care4U data-table component.
+ * @author Wasana Karunanayaka (S/21/081)
+ */
+
 import { Inbox } from 'lucide-react';
 
 /**

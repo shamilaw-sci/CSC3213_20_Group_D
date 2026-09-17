@@ -28,7 +28,7 @@ const getDoctorController = async (req, res) => {
   } catch (error) {
     console.error('getDoctorController error:', error);
 
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       message: 'Internal server error'
     });
@@ -463,7 +463,8 @@ const reviewLabReportController = async (req, res) => {
     const updated =
       await doctorService.reviewLabReport(
         reportId,
-        remark
+        remark,
+        req.session.user.profile_id
       );
 
     res.status(200).json({

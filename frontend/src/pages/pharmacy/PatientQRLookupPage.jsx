@@ -56,7 +56,7 @@ const formatDate = (iso) => {
  * QR-TEST-001
  *
  * and also URLs such as:
- * http://localhost:5173/lookup/QR-TEST-001
+ * /lookup/QR-TEST-001
  */
 const normalizePatientQrValue = (value) => {
   if (!value) return '';

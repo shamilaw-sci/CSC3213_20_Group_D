@@ -291,14 +291,6 @@ const getAvatarSrc = (patient) => {
   )}&background=0D9488&color=fff&size=120&bold=true&rounded=true`;
 };
 
-const getFirstName = (fullName) => {
-  if (!fullName) return 'there';
-
-  return fullName
-    .trim()
-    .split(' ')[0];
-};
-
 const getHealthBackgroundTypeLabel = (
   type
 ) => {

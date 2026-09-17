@@ -65,7 +65,7 @@ const formatDate = (iso) => {
  *
  * and also URLs containing the QR value,
  * such as:
- * http://localhost:5173/pharmacy/RX-xxxx
+ * /pharmacy/RX-xxxx
  */
 const normalizePrescriptionQrValue = (value) => {
   if (!value) return '';

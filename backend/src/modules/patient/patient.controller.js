@@ -6,6 +6,24 @@
  */
 
 const patientService = require('./patient.service');
+
+/**
+ * Limits pharmacy lookup responses to identity and dispensing-safety fields.
+ *
+ * @param {Object} patient - Full patient lookup result
+ * @returns {Object} Pharmacy-safe patient summary
+ */
+const getPharmacyPatientSummary = (patient) => ({
+  id: patient.id,
+  full_name: patient.full_name,
+  nic: patient.nic,
+  uhi: patient.uhi,
+  date_of_birth: patient.date_of_birth,
+  gender: patient.gender,
+  blood_group: patient.blood_group,
+  qr_code_id: patient.qr_code_id,
+  photo_url: patient.photo_url,
+});
 const { logAudit } = require('../../middleware/auditLog');
 const { generateAIResponse } = require('../../utils/ai.util');
 
@@ -490,7 +508,10 @@ const getPatientByQrCodeController = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Patient found',
-      data: patient
+      data:
+        req.session.user.role === 'pharmacist'
+          ? getPharmacyPatientSummary(patient)
+          : patient
     });
   } catch (error) {
     res.status(error.statusCode || 500).json({
@@ -521,7 +542,10 @@ const getPatientByNicController = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Patient found',
-      data: patient
+      data:
+        req.session.user.role === 'pharmacist'
+          ? getPharmacyPatientSummary(patient)
+          : patient
     });
 
   } catch (error) {

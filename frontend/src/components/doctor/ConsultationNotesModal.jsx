@@ -50,7 +50,10 @@ const ConsultationNotesModal = ({ isOpen, onClose, appointmentId, patientId, doc
 
   useEffect(() => {
     if (isOpen) {
-      fetch(`${API_URL}/api/doctors/laboratories`)
+      fetch(
+        `${API_URL}/api/doctors/laboratories`,
+        { credentials: 'include' }
+      )
         .then((res) => res.json())
         .then((data) => {
           if (data.success) setLabs(data.data);
@@ -79,6 +82,7 @@ const ConsultationNotesModal = ({ isOpen, onClose, appointmentId, patientId, doc
     try {
       const res = await fetch(`${API_URL}/api/appointments/${appointmentId}/summarize-notes`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ observations }),
       });
@@ -118,6 +122,7 @@ const ConsultationNotesModal = ({ isOpen, onClose, appointmentId, patientId, doc
     try {
       const res = await fetch(`${API_URL}/api/doctors/${doctorId}/lab-test-requests`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           patientId,
@@ -160,6 +165,7 @@ const ConsultationNotesModal = ({ isOpen, onClose, appointmentId, patientId, doc
     try {
       const res = await fetch(`${API_URL}/api/appointments/${appointmentId}/notes`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       });

@@ -13,7 +13,15 @@ import api from './api';
  * @param {string} medicineName - Full medicine name being prescribed
  * @returns {Promise<Array>} List of warning objects (empty if no conflicts)
  */
-export const checkDrugInteractions = async (patientId, medicineName) => {
-  const response = await api.post('/api/interactions/check', { patientId, medicineName });
+export const checkDrugInteractions = async (
+  patientId,
+  medicineName,
+  appointmentId
+) => {
+  const response = await api.post('/api/interactions/check', {
+    patientId,
+    medicineName,
+    appointmentId,
+  });
   return response.data.data.warnings;
 };

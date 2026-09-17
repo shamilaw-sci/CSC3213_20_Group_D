@@ -27,7 +27,10 @@ const PatientNotesModal = ({ isOpen, onClose, patientId, patientName }) => {
       // eslint-disable-next-line
       setLoading(true);
       setError('');
-      fetch(`${API_URL}/api/appointments/patients/${patientId}/notes`)
+      fetch(
+        `${API_URL}/api/appointments/patients/${patientId}/notes`,
+        { credentials: 'include' }
+      )
         .then((res) => res.json())
         .then((data) => {
           if (data.success) {

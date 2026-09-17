@@ -75,6 +75,8 @@ const LoginPage = () => {
           window.location.href = '/pharmacy/dashboard';
         } else if (data.data.role === 'hospital_staff') {
           window.location.href = '/hospital/dashboard';
+        } else if (data.data.role === 'lab_technician') {
+          window.location.href = '/laboratory/dashboard';
         } else {
           window.location.href = '/';
         }

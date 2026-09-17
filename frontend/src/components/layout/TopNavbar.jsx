@@ -208,13 +208,12 @@ const TopNavbar = ({
   }, []);
 
   useEffect(() => {
-    setOpenGroup(
-      null
-    );
+    const closeMenus = window.setTimeout(() => {
+      setOpenGroup(null);
+      setMobileOpen(false);
+    }, 0);
 
-    setMobileOpen(
-      false
-    );
+    return () => window.clearTimeout(closeMenus);
   }, [
     location.pathname
   ]);

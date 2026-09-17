@@ -1,57 +1,65 @@
 /**
- * @file    sms.util.js
- * @desc    Utility service for sending Emergency SOS via Telegram Bot API.
- *          Provides a highly reliable, free, and visual push notification 
- *          demonstration for the project panel.
- * @author  Wasana Karunanayaka (S/21/081)
+ * @file sms.util.js
+ * @module Utils
+ * @desc Sends emergency SOS notifications through the Telegram Bot API.
+ * @author Wasana Karunanayaka (S/21/081)
  */
 
-// Paste the Token from BotFather here:
-const TELEGRAM_BOT_TOKEN = '8847358478:AAGUe0bLTAFhnwMIwO48wcLBcR2dgwNxV-4';
-
-// Paste your User ID from @getmyid_bot here:
-const DEMO_CONTACT_CHAT_ID = '1215345410';
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
 /**
- * Sends an emergency SOS notification via Telegram to the emergency contact.
- * @param {string} toPhone - The emergency contact's phone number (kept for function signature)
+ * Sends an emergency SOS notification to the configured emergency channel.
+ *
+ * @param {string} toPhone - Reserved emergency-contact phone number
  * @param {string} patientName - Full name of the patient
- * @param {number} latitude - GPS Latitude
- * @param {number} longitude - GPS Longitude
- * @returns {Promise<boolean>} True if sent successfully
+ * @param {number} latitude - GPS latitude
+ * @param {number} longitude - GPS longitude
+ * @returns {Promise<boolean>} Whether Telegram accepted the notification
  */
-const sendEmergencySMS = async (toPhone, patientName, latitude, longitude) => {
-  const locationStr = (latitude && longitude) 
-    ? `https://www.google.com/maps?q=${latitude},${longitude}` 
-    : 'Location unavailable';
+const sendEmergencySMS = async (
+  toPhone,
+  patientName,
+  latitude,
+  longitude
+) => {
+  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+    console.error(
+      '[Telegram] TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID are required.'
+    );
+    return false;
+  }
 
-  // Format the message with Markdown for bold text
-  const messageBody = `🚨 *CARE4U URGENT ALERT* 🚨\n\n*${patientName}* has triggered an Emergency SOS!\n\n*Location:* ${locationStr}\n\nPlease contact them or local emergency services immediately.`;
+  const location =
+    latitude && longitude
+      ? `https://www.google.com/maps?q=${latitude},${longitude}`
+      : 'Location unavailable';
 
-  console.log(`[Telegram] Dispatching SOS for ${patientName}...`);
+  const message =
+    `CARE4U URGENT ALERT\n\n${patientName} has triggered an Emergency SOS!` +
+    `\n\nLocation: ${location}` +
+    '\n\nPlease contact them or local emergency services immediately.';
 
   try {
-    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-    
+    const url =
+      `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        chat_id: DEMO_CONTACT_CHAT_ID,
-        text: messageBody,
-        parse_mode: 'Markdown' // Allows us to use *bold* text
-      })
+        chat_id: TELEGRAM_CHAT_ID,
+        text: message,
+      }),
     });
-    
-    if (response.ok) {
-      console.log(`✅ [Telegram] Emergency alert successfully delivered to phone!`);
-      return true;
-    } else {
-      console.error('❌ [Telegram] Failed to send message. Check Token and Chat ID.');
+
+    if (!response.ok) {
+      console.error('[Telegram] Emergency notification was rejected.');
       return false;
     }
+
+    return true;
   } catch (error) {
-    console.error('❌ [Telegram] Network error while sending message:', error.message);
+    console.error('[Telegram] Emergency notification failed:', error.message);
     return false;
   }
 };

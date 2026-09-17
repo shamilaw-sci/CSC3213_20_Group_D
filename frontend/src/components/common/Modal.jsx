@@ -1,3 +1,10 @@
+/**
+ * @file Modal.jsx
+ * @module Components
+ * @desc Shared accessible modal component.
+ * @author Wasana Karunanayaka (S/21/081)
+ */
+
 import { X } from 'lucide-react';
 
 /**
