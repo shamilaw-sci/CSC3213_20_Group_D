@@ -20,10 +20,17 @@
         "foregroundImage": "./assets/logo.png",
         "backgroundColor": "#1E3A5F"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.care4uteam.care4u"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "d88e515c-e95b-4bbb-af59-26800d92b21c"
+      }
+    },
+    "owner": "care4u-team"
   }
 }

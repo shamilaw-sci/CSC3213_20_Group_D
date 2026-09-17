@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "axios": "^1.15.2",
-    "expo": "~54.0.33",
+    "expo": "~54.0.37",
     "expo-image-picker": "~17.0.11",
     "expo-location": "~19.0.8",
     "expo-status-bar": "~3.0.9",
@@ -20,7 +20,7 @@
     "react-native": "0.81.5",
     "react-native-markdown-display": "^7.0.2",
     "react-native-qrcode-svg": "^6.3.21",
-    "react-native-svg": "^15.15.4",
+    "react-native-svg": "15.12.1",
     "zustand": "^5.0.15"
   },
   "private": true
