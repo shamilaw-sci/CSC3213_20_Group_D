@@ -1,16 +1,20 @@
 /**
  * @file    api.js
  * @module  Services
- * @desc    Axios base instance for all Care4U API calls.
- *          withCredentials must be true for session cookies to be sent.
- * @author  Member 2 (S/21/081)
+ * @desc    Central API configuration for the Care4U web application.
+ * @author  Wasana Karunanayaka (S/21/081)
  */
 
 import axios from 'axios';
 
+export const API_BASE_URL = (
+  import.meta.env.VITE_API_URL ||
+  'http://localhost:5000'
+).replace(/\/$/, '');
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000',
-  withCredentials: true,          // sends session cookie on every request
+  baseURL: API_BASE_URL,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },

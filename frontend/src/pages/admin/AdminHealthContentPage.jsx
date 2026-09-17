@@ -5,6 +5,8 @@
  *          draft -> published workflow.
  */
 
+import { API_BASE_URL } from '../../services/api';
+
 import {
   useEffect,
   useRef,
@@ -29,7 +31,7 @@ import Badge from '../../components/common/Badge';
 import Alert from '../../components/common/Alert';
 import PageHeader from '../../components/common/PageHeader';
 
-const API_URL = 'http://localhost:5000';
+const API_URL = API_BASE_URL;
 
 const CATEGORIES = [
   'first-aid',

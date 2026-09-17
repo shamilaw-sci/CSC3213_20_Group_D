@@ -18,6 +18,8 @@
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
+import { API_BASE_URL } from '../../services/api';
+
 import {
   useEffect,
   useMemo,
@@ -109,8 +111,7 @@ import DataTable from '../../components/common/DataTable';
 
 import useAuthStore from '../../store/authStore';
 
-const API_URL =
-  'http://localhost:5000';
+const API_URL = API_BASE_URL;
 
 /**
  * Shared default structure for a new medicine row.

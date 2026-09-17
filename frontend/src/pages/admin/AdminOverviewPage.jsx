@@ -5,6 +5,8 @@
  *          quick-access links to all admin sections.
  */
 
+import { API_BASE_URL } from '../../services/api';
+
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -27,7 +29,7 @@ import Card from '../../components/common/Card';
 import Alert from '../../components/common/Alert';
 import PageHeader from '../../components/common/PageHeader';
 
-const API_URL = 'http://localhost:5000';
+const API_URL = API_BASE_URL;
 
 const QUICK_LINKS = [
   { to: '/admin/approvals',           label: 'Pending Approvals',   icon: CheckCircle },

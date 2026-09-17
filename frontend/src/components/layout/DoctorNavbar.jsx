@@ -4,6 +4,8 @@
  *            with doctor-specific clinical navigation links.
  */
 
+import { API_BASE_URL } from '../../services/api';
+
 import {
   LayoutDashboard,
   Users,
@@ -15,7 +17,7 @@ import TopNavbar from './TopNavbar';
 const handleLogout = async () => {
   try {
     await fetch(
-      'http://localhost:5000/api/auth/logout',
+      `${API_BASE_URL}/api/auth/logout`,
       {
         method: 'POST',
         credentials: 'include',

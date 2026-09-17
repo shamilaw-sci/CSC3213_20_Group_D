@@ -43,6 +43,7 @@ const adminRoutes = require('./src/modules/admin/admin.routes');
 const healthContentRoutes = require('./src/modules/health-content/healthContent.routes');
 
 const app = express();
+app.set('trust proxy', 1);
 
 // Security & Middleware
 
@@ -140,6 +141,14 @@ app.get('/', (req, res) => {
 
   res.json({ status: 'Care4U API is running' });
 
+});
+
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    success: true,
+    status: 'ok',
+    message: 'Care4U API is healthy'
+  });
 });
 
 // Module Routes

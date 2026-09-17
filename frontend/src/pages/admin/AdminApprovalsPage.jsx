@@ -5,6 +5,8 @@
  *          hospital_staff) awaiting admin approval, with approve/reject actions.
  */
 
+import { API_BASE_URL } from '../../services/api';
+
 import { useEffect, useState } from 'react';
 
 import {
@@ -21,7 +23,7 @@ import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
 import PageHeader from '../../components/common/PageHeader';
 
-const API_URL = 'http://localhost:5000';
+const API_URL = API_BASE_URL;
 
 const formatRole = (role) => {
   if (!role) return 'Unknown role';

@@ -16,6 +16,8 @@
  * @author  Tharindu (S/21/166)
  */
 
+import { API_BASE_URL } from '../../services/api';
+
 import {
   useCallback,
   useEffect,
@@ -51,8 +53,7 @@ import PageHeader from '../../components/common/PageHeader';
 
 import useAuthStore from '../../store/authStore';
 
-const API_URL =
-  'http://localhost:5000';
+const API_URL = API_BASE_URL;
 
 /**
  * Queue polling interval.

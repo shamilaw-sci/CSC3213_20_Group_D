@@ -15,6 +15,8 @@
  * @author  Tharindu (S/21/166)
  */
 
+import { API_BASE_URL } from '../../services/api';
+
 import {
   createElement,
   useCallback,
@@ -68,8 +70,7 @@ import {
 
 import useAuthStore from '../../store/authStore';
 
-const API_URL =
-  'http://localhost:5000';
+const API_URL = API_BASE_URL;
 
 /**
  * Polling interval for time-sensitive dashboard information.

@@ -17,6 +17,8 @@
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
+import { API_BASE_URL } from '../../services/api';
+
 import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -95,7 +97,7 @@ const usePatientId = () => {
     const fetchMe = async () => {
       try {
         const res = await fetch(
-          'http://localhost:5000/api/auth/me',
+          `${API_BASE_URL}/api/auth/me`,
           {
             credentials: 'include',
           }

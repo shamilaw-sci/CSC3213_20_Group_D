@@ -4,6 +4,8 @@
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
+import { API_BASE_URL } from './services/api';
+
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
@@ -128,7 +130,7 @@ function App() {
     const checkSession = async () => {
       try {
         const response = await fetch(
-          'http://localhost:5000/api/auth/me',
+          `${API_BASE_URL}/api/auth/me`,
           {
             credentials: 'include'
           }

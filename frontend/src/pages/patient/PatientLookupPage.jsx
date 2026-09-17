@@ -32,6 +32,8 @@
  * @author    Wasana Karunanayaka (S/21/081)
  */
 
+import { API_BASE_URL } from '../../services/api';
+
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
@@ -270,7 +272,7 @@ const PatientLookupPage = () => {
     const recoverSession = async () => {
       if (!user) {
         try {
-          const response = await fetch('http://localhost:5000/api/auth/me', {
+          const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' }
           });

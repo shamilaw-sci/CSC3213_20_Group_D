@@ -5,6 +5,8 @@
  * @author  Tharindu (S/21/166)
  */
 
+import { API_BASE_URL } from '../../services/api';
+
 import { useState, useEffect } from 'react';
 import { Sparkles, FlaskConical, CheckCircle2 } from 'lucide-react';
 import Modal from '../common/Modal';
@@ -14,7 +16,7 @@ import Badge from '../common/Badge';
 import Alert from '../common/Alert';
 import { searchLabTests } from '../../utils/labTestSearch';
 
-const API_URL = 'http://localhost:5000';
+const API_URL = API_BASE_URL;
 
 const initialForm = {
   title: '',

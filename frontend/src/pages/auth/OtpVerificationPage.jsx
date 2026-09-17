@@ -5,6 +5,8 @@
  *          registration previously had no OTP step at all.
  */
 
+import { API_BASE_URL } from '../../services/api';
+
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Input  from '../../components/common/Input';
@@ -34,7 +36,7 @@ const OtpVerificationPage = () => {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/verify-otp', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -62,7 +64,7 @@ const OtpVerificationPage = () => {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/resend-otp', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/resend-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

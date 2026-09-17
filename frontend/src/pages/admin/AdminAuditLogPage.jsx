@@ -4,6 +4,8 @@
  * @desc    Paginated, filterable view over the audit_logs table.
  */
 
+import { API_BASE_URL } from '../../services/api';
+
 import { useEffect, useState } from 'react';
 
 import {
@@ -21,7 +23,7 @@ import Badge from '../../components/common/Badge';
 import Alert from '../../components/common/Alert';
 import PageHeader from '../../components/common/PageHeader';
 
-const API_URL = 'http://localhost:5000';
+const API_URL = API_BASE_URL;
 const PAGE_SIZE = 15;
 
 const AdminAuditLogPage = () => {

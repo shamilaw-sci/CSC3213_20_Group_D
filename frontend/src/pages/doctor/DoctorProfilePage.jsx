@@ -5,6 +5,8 @@
  * @author  Tharindu (S/21/166)
  */
 
+import { API_BASE_URL } from '../../services/api';
+
 import {
   useEffect,
   useState,
@@ -42,7 +44,7 @@ import {
   uploadDoctorPhoto
 } from '../../services/doctor.service';
 
-const API_URL = 'http://localhost:5000';
+const API_URL = API_BASE_URL;
 
 const DAYS = [
   'monday',

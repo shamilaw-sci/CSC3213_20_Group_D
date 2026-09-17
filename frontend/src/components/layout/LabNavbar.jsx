@@ -3,12 +3,14 @@
  * @desc      Top navigation bar for the laboratory portal, using TopNavbar
  *            with lab request queues, report uploads, and management links.
  */
+import { API_BASE_URL } from '../../services/api';
+
 import { LayoutDashboard, ClipboardList, Upload, CheckCircle2 } from 'lucide-react';
 import TopNavbar from './TopNavbar';
 
 const handleLogout = async () => {
   try {
-    await fetch('http://localhost:5000/api/auth/logout', { method: 'POST', credentials: 'include' });
+    await fetch(`${API_BASE_URL}/api/auth/logout`, { method: 'POST', credentials: 'include' });
   } catch { /* ignore */ }
   window.location.href = '/login';
 };

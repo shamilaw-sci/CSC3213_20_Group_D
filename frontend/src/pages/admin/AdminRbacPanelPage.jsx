@@ -5,6 +5,8 @@
  *          resource groups, sourced from the codebase's authorize() calls.
  */
 
+import { API_BASE_URL } from '../../services/api';
+
 import { useEffect, useState } from 'react';
 
 import {
@@ -20,7 +22,7 @@ import Alert from '../../components/common/Alert';
 import Card from '../../components/common/Card';
 import PageHeader from '../../components/common/PageHeader';
 
-const API_URL = 'http://localhost:5000';
+const API_URL = API_BASE_URL;
 
 const AdminRbacPanelPage = () => {
   const [

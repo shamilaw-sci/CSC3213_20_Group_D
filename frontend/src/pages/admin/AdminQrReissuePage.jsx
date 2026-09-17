@@ -5,6 +5,8 @@
  *          code is instantly deactivated, a fresh one is assigned.
  */
 
+import { API_BASE_URL } from '../../services/api';
+
 import { useState } from 'react';
 
 import {
@@ -23,7 +25,7 @@ import Button from '../../components/common/Button';
 import Alert from '../../components/common/Alert';
 import PageHeader from '../../components/common/PageHeader';
 
-const API_URL = 'http://localhost:5000';
+const API_URL = API_BASE_URL;
 
 const AdminQrReissuePage = () => {
   const [search, setSearch] = useState('');

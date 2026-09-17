@@ -5,6 +5,8 @@
  *          activate/deactivate toggle.
  */
 
+import { API_BASE_URL } from '../../services/api';
+
 import { useEffect, useState } from 'react';
 
 import {
@@ -22,7 +24,7 @@ import Input from '../../components/common/Input';
 import Card from '../../components/common/Card';
 import PageHeader from '../../components/common/PageHeader';
 
-const API_URL = 'http://localhost:5000';
+const API_URL = API_BASE_URL;
 
 const AdminAccountManagementPage = () => {
   const [users, setUsers] = useState([]);

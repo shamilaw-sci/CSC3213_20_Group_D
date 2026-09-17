@@ -5,6 +5,8 @@
  *          password policy, session timeout, emergency-access duration).
  */
 
+import { API_BASE_URL } from '../../services/api';
+
 import { useEffect, useState } from 'react';
 
 import {
@@ -24,7 +26,7 @@ import Button from '../../components/common/Button';
 import Alert from '../../components/common/Alert';
 import PageHeader from '../../components/common/PageHeader';
 
-const API_URL = 'http://localhost:5000';
+const API_URL = API_BASE_URL;
 
 const SETTING_META = {
   otp_expiry_minutes: {
