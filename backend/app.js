@@ -1,3 +1,10 @@
+/**
+ * @file app.js
+ * @module Application
+ * @desc Configures the Care4U Express application and module routes.
+ * @author Wasana Karunanayaka (S/21/081)
+ */
+
 require('dotenv').config();
 
 const express = require('express');
@@ -95,6 +102,14 @@ app.use(express.urlencoded({ extended: true }));
 
 const isProduction = process.env.NODE_ENV === 'production';
 
+if (!process.env.SESSION_SECRET) {
+  throw new Error('SESSION_SECRET is required');
+}
+
+if (isProduction && allowedOrigins.length === 0) {
+  throw new Error('CORS_ALLOWED_ORIGINS or CLIENT_URL is required in production');
+}
+
 const sessionMaxAge = parseInt(process.env.SESSION_MAX_AGE_MS, 10) || (1000 * 60 * 60 * 24);
 
 app.use(session({
@@ -110,6 +125,7 @@ app.use(session({
   }),
 
   secret: process.env.SESSION_SECRET,
+  proxy: isProduction,
 
   resave: false,
 
