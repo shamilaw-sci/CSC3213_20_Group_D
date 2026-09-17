@@ -102,7 +102,7 @@ const getAllVerifiedLaboratories = async () => {
  * @param {string} doctorId      - UUID of the requesting doctor
  * @param {string} appointmentId - UUID of the linked appointment
  * @param {string} testType      - Type of test requested
- * @param {string} priority      - normal or urgent
+ * @param {string} priority      - routine, urgent, or stat
  * @param {string} notes         - Optional notes from doctor
  * @returns {Promise<Object>} The created lab test request row
  */
@@ -112,7 +112,7 @@ const createLabTestRequest = async (laboratoryId, patientId, doctorId, appointme
       (laboratory_id, patient_id, doctor_id, appointment_id, test_type, priority, notes)
      VALUES ($1, $2, $3, $4, $5, $6, $7)
      RETURNING *`,
-    [laboratoryId, patientId, doctorId, appointmentId, testType, priority || 'normal', notes || null]
+    [laboratoryId, patientId, doctorId, appointmentId, testType, priority || 'routine', notes || null]
   );
   return result.rows[0];
 };

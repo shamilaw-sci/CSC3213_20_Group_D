@@ -177,7 +177,11 @@ const updateLabRequestStatusController = async (req, res) => {
       });
     }
 
-    const updated = await laboratoryService.updateLabRequestStatus(id, status);
+    const updated = await laboratoryService.updateLabRequestStatus(
+      id,
+      status,
+      req.session.user.profile_id
+    );
 
     res.status(200).json({
       success: true,
@@ -212,7 +216,12 @@ const uploadLabReportController = async (req, res) => {
       });
     }
 
-    const report = await laboratoryService.uploadLabReport(id, findings, report_url);
+    const report = await laboratoryService.uploadLabReport(
+      id,
+      findings,
+      report_url,
+      req.session.user.profile_id
+    );
 
     res.status(201).json({
       success: true,

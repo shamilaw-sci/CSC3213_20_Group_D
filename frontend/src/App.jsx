@@ -41,6 +41,10 @@ import PharmacyProfilePage    from './pages/pharmacy/PharmacyProfilePage';
 import PharmacyDispensingHistoryPage
   from './pages/pharmacy/PharmacyDispensingHistoryPage';
 
+import LabDashboard from './pages/laboratory/LabDashboard';
+import LabQueuePage from './pages/laboratory/LabQueuePage';
+import LabReportUploadPage from './pages/laboratory/LabReportUploadPage';
+
 import PaymentHistoryPage     from './pages/patient/PaymentHistoryPage';
 import OrderTrackerPage       from './pages/patient/OrderTrackerPage';
 import LabReportsPage         from './pages/patient/LabReportsPage';
@@ -242,12 +246,15 @@ function App() {
                   replace
                 />
               ) :
+              user.role === 'lab_technician' ? (
+                <Navigate
+                  to="/laboratory/dashboard"
+                  replace
+                />
+              ) :
               (
                 <LoginPage />
               )
-              // unrecognized role (e.g. lab_technician, hospital_staff)
-              // - no dedicated destination yet, just show login
-              // rather than guessing
             ) : (
               <LoginPage />
             )
@@ -449,6 +456,40 @@ function App() {
             }
           />
         </Route>
+
+        {/* Laboratory pages — restricted to 'lab_technician' */}
+        <Route
+          path="/laboratory"
+          element={
+            <ProtectedRoute allowedRoles={['lab_technician']}>
+              <Navigate to="/laboratory/dashboard" replace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/laboratory/dashboard"
+          element={
+            <ProtectedRoute allowedRoles={['lab_technician']}>
+              <LabDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/laboratory/queue"
+          element={
+            <ProtectedRoute allowedRoles={['lab_technician']}>
+              <LabQueuePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/laboratory/report/:requestId"
+          element={
+            <ProtectedRoute allowedRoles={['lab_technician']}>
+              <LabReportUploadPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Hospital pages — restricted to 'hospital_staff' */}
         <Route

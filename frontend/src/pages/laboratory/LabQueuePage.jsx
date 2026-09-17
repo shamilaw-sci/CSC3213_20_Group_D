@@ -11,8 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
 import Spinner from '../../components/common/Spinner';
-
-const TEST_LAB_ID = 'd7d01020-b5ca-41d1-9f8a-3cb5424ab4c7';
+import useAuthStore from '../../store/authStore';
 
 const STATUS_COLORS = {
   pending:          'bg-orange-100 text-orange-700',
@@ -46,20 +45,22 @@ const LabQueuePage = () => {
   const navigate      = useNavigate();
   const queryClient   = useQueryClient();
   const [updating, setUpdating] = useState(null);
+  const labId = useAuthStore(state => state.user?.profile_id);
 
   const { data: requests, isLoading } = useQuery({
-    queryKey: ['lab-requests', TEST_LAB_ID],
+    queryKey: ['lab-requests', labId],
     queryFn: async () => {
-      const res = await api.get(`/api/laboratories/${TEST_LAB_ID}/requests`);
+      const res = await api.get(`/api/laboratories/${labId}/requests`);
       return res.data.data;
     },
+    enabled: !!labId,
   });
 
   const handleStatusUpdate = async (requestId, newStatus) => {
     setUpdating(requestId);
     try {
       await api.put(`/api/laboratories/requests/${requestId}/status`, { status: newStatus });
-      queryClient.invalidateQueries(['lab-requests', TEST_LAB_ID]);
+      queryClient.invalidateQueries({ queryKey: ['lab-requests', labId] });
     } catch (err) {
       console.error('Status update failed:', err);
     } finally {

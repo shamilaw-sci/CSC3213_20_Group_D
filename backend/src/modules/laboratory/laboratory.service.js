@@ -10,6 +10,14 @@ const laboratoryRepository = require('./laboratory.repository');
 const { pool } = require('../../config/db');
 const bcrypt = require('bcrypt');
 
+const VALID_STATUS_TRANSITIONS = {
+  pending: ['sample_collected', 'cancelled'],
+  sample_collected: ['in_progress', 'cancelled'],
+  in_progress: ['completed', 'cancelled'],
+  completed: [],
+  cancelled: [],
+};
+
 /**
  * Registers a new laboratory by creating a user account
  * and a linked laboratory record.
@@ -65,7 +73,7 @@ const registerLaboratory = async (
   const passwordHash =
     await bcrypt.hash(password, 12);
 
-  // Step 4: Create user account with role 'lab_staff'
+  // Step 4: Create user account with the canonical laboratory role.
   // The account is created as pending so it appears in the
   // admin approval queue, matching the doctor/pharmacist flow.
   const userResult = await pool.query(
@@ -84,7 +92,7 @@ const registerLaboratory = async (
          $1,
          $2,
          $3,
-         'lab_staff',
+         'lab_technician',
          true,
          true,
          'pending'
@@ -203,7 +211,8 @@ const getLabRequestsByLaboratory = async (laboratoryId) => {
  */
 const updateLabRequestStatus = async (
   id,
-  status
+  status,
+  laboratoryId
 ) => {
   const VALID_STATUSES = [
     'pending',
@@ -233,6 +242,25 @@ const updateLabRequestStatus = async (
     throw error;
   }
 
+  if (
+    !laboratoryId ||
+    String(request.laboratory_id) !== String(laboratoryId)
+  ) {
+    const error = new Error(
+      'You cannot update a request assigned to another laboratory'
+    );
+    error.statusCode = 403;
+    throw error;
+  }
+
+  if (!VALID_STATUS_TRANSITIONS[request.status]?.includes(status)) {
+    const error = new Error(
+      `Cannot change lab request status from ${request.status} to ${status}`
+    );
+    error.statusCode = 409;
+    throw error;
+  }
+
   return await laboratoryRepository.updateLabRequestStatus(
     id,
     status
@@ -250,7 +278,8 @@ const updateLabRequestStatus = async (
 const uploadLabReport = async (
   labRequestId,
   findings,
-  reportUrl
+  reportUrl,
+  laboratoryId
 ) => {
   // Step 1: Get the lab request with patient and doctor info
   const request =
@@ -263,6 +292,26 @@ const uploadLabReport = async (
       new Error('Lab test request not found');
 
     error.statusCode = 404;
+    throw error;
+  }
+
+
+  if (
+    !laboratoryId ||
+    String(request.laboratory_id) !== String(laboratoryId)
+  ) {
+    const error = new Error(
+      'You cannot upload a report for another laboratory'
+    );
+    error.statusCode = 403;
+    throw error;
+  }
+
+  if (!['in_progress', 'completed'].includes(request.status)) {
+    const error = new Error(
+      'A report can only be uploaded for a test that is in progress or completed'
+    );
+    error.statusCode = 409;
     throw error;
   }
 
