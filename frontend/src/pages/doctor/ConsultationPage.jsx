@@ -267,6 +267,105 @@ const formatFamilyRelation = (
     );
 };
 
+
+/**
+ * Builds a searchable text representation of a clinical record.
+ *
+ * Care4U protected categories are stored as labels such as
+ * "Mental Health" and "Reproductive Health". The backend remains
+ * responsible for access control; this helper is used only to
+ * separate temporarily unlocked records from the general timeline
+ * after the backend has returned them.
+ */
+const getClinicalRecordSearchText = (
+  record
+) => {
+  if (!record) {
+    return '';
+  }
+
+  return [
+    record.title,
+    record.description,
+    record.chief_complaint,
+    record.diagnosis,
+    record.treatment_plan,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+};
+
+/**
+ * Returns search terms for one Care4U privacy category.
+ */
+const getProtectedCategorySearchTerms = (
+  category
+) => {
+  if (!category) {
+    return [];
+  }
+
+  const normalized =
+    category
+      .toLowerCase()
+      .trim();
+
+  const withoutRecords =
+    normalized
+      .replace(
+        /\brecords?\b/g,
+        ''
+      )
+      .trim();
+
+  const terms =
+    new Set([
+      normalized,
+      withoutRecords,
+    ]);
+
+  if (
+    normalized.includes(
+      'std/sti'
+    )
+  ) {
+    terms.add('std');
+    terms.add('sti');
+    terms.add(
+      'sexually transmitted'
+    );
+  }
+
+  return [...terms]
+    .filter(Boolean);
+};
+
+/**
+ * Checks whether one clinical record belongs to a protected category.
+ *
+ * This is a presentation helper only. It must never replace backend
+ * privacy enforcement.
+ */
+const recordMatchesProtectedCategory = (
+  record,
+  category
+) => {
+  const searchableText =
+    getClinicalRecordSearchText(
+      record
+    );
+
+  return getProtectedCategorySearchTerms(
+    category
+  ).some(
+    (term) =>
+      searchableText.includes(
+        term
+      )
+  );
+};
+
 /**
  * Checks whether a prescription has expired.
  */
@@ -1961,6 +2060,157 @@ const ConsultationPage = () => {
 
 
   /**
+   * Categories currently protected by the patient.
+   */
+  const protectedCategories =
+    useMemo(
+      () =>
+        consentAccessStatus
+          ?.lockedCategories ||
+        [],
+      [
+        consentAccessStatus
+          ?.lockedCategories,
+      ]
+    );
+
+  /**
+   * Categories temporarily granted for this consultation.
+   */
+  const grantedProtectedCategories =
+    useMemo(
+      () =>
+        consentAccessStatus
+          ?.grantedCategories ||
+        [],
+      [
+        consentAccessStatus
+          ?.grantedCategories,
+      ]
+    );
+
+  /**
+   * Finds the protected category represented by one record.
+   */
+  const getRecordProtectedCategory =
+    (record) =>
+      protectedCategories.find(
+        (category) =>
+          recordMatchesProtectedCategory(
+            record,
+            category
+          )
+      ) || null;
+
+  /**
+   * Sensitive records returned after successful OTP verification.
+   *
+   * They are intentionally surfaced in a dedicated section so a
+   * doctor does not need to search through a long general timeline.
+   */
+  const unlockedSensitiveRecords =
+    useMemo(
+      () => {
+
+        if (
+          !consentAccessStatus
+            ?.hasActiveGrant
+        ) {
+          return [];
+        }
+
+        return records.filter(
+          (record) =>
+            grantedProtectedCategories.some(
+              (category) =>
+                recordMatchesProtectedCategory(
+                  record,
+                  category
+                )
+            )
+        );
+      },
+      [
+        records,
+        consentAccessStatus
+          ?.hasActiveGrant,
+        grantedProtectedCategories,
+      ]
+    );
+
+  /**
+   * General timeline records exclude protected-category records.
+   * Those records are shown only in the temporary-access section.
+   *
+   * Confidential rows are also held back while privacy state is
+   * loading, preventing a brief UI flash before consent status arrives.
+   */
+  const generalMedicalRecords =
+    useMemo(
+      () =>
+        records.filter(
+          (record) => {
+
+            if (
+              consentStatusLoading &&
+              record.is_confidential
+            ) {
+              return false;
+            }
+
+            return !protectedCategories.some(
+              (category) =>
+                recordMatchesProtectedCategory(
+                  record,
+                  category
+                )
+            );
+          }
+        ),
+      [
+        records,
+        protectedCategories,
+        consentStatusLoading,
+      ]
+    );
+
+  /**
+   * The standalone consultation-note endpoint is kept clear of
+   * protected-category notes. If a protected consultation record is
+   * temporarily unlocked, it appears in the dedicated sensitive-record
+   * section instead of being duplicated here.
+   */
+  const visiblePreviousNotes =
+    useMemo(
+      () =>
+        previousNotes.filter(
+          (note) => {
+
+            if (
+              consentStatusLoading &&
+              note.is_confidential
+            ) {
+              return false;
+            }
+
+            return !protectedCategories.some(
+              (category) =>
+                recordMatchesProtectedCategory(
+                  note,
+                  category
+                )
+            );
+          }
+        ),
+      [
+        previousNotes,
+        protectedCategories,
+        consentStatusLoading,
+      ]
+    );
+
+
+  /**
    * Laboratory reports are ordered newest first so the doctor
    * sees the most clinically recent diagnostic result first.
    */
@@ -2978,6 +3228,19 @@ const ConsultationPage = () => {
         );
 
         setAiSummary(
+          null
+        );
+
+        /**
+         * Close any open record detail view when temporary consent
+         * expires so protected information cannot remain visible in
+         * an already-open modal after the backend grant has ended.
+         */
+        setSelectedRecord(
+          null
+        );
+
+        setSelectedConsultationNote(
           null
         );
 
@@ -5475,6 +5738,193 @@ const ConsultationPage = () => {
 
                 )}
 
+                {/* =================================================
+                    TEMPORARILY UNLOCKED SENSITIVE RECORDS
+                ================================================== */}
+                {consentAccessStatus
+                  ?.hasActiveGrant && (
+
+                  <section className="rounded-2xl overflow-hidden border border-success/25 bg-white shadow-[0_8px_26px_rgba(15,23,42,0.05)]">
+
+                    <div className="px-5 sm:px-6 py-5 border-b border-success/15 bg-success/5">
+
+                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+
+                        <div className="flex items-start gap-3 min-w-0">
+
+                          <div className="w-11 h-11 rounded-xl bg-success/10 text-success flex items-center justify-center shrink-0">
+                            <ShieldCheck
+                              size={20}
+                            />
+                          </div>
+
+                          <div className="min-w-0">
+
+                            <p className="text-[10px] uppercase tracking-[0.15em] font-bold text-success">
+                              Temporary Patient Consent
+                            </p>
+
+                            <h2 className="text-lg font-bold text-slate-950 mt-1">
+                              Temporarily Unlocked Sensitive Records
+                            </h2>
+
+                            <p className="text-xs text-slate-600 mt-1 leading-relaxed max-w-3xl">
+                              Protected records approved for this consultation are shown separately from the general medical timeline so they can be reviewed without searching through years of history.
+                            </p>
+
+                          </div>
+
+                        </div>
+
+                        <div className="flex items-center gap-3 lg:justify-end">
+
+                          <div className="rounded-xl border border-success/20 bg-white px-4 py-2.5 shadow-sm">
+
+                            <p className="text-[9px] uppercase tracking-[0.12em] font-bold text-slate-500">
+                              Access remaining
+                            </p>
+
+                            <p className="text-lg font-bold text-success font-mono mt-0.5">
+                              {formatCountdown(
+                                consentSecondsRemaining
+                              )}
+                            </p>
+
+                          </div>
+
+                          <span className="min-w-10 h-10 px-3 rounded-xl bg-success/10 text-success flex items-center justify-center text-xs font-bold">
+                            {unlockedSensitiveRecords.length}
+                          </span>
+
+                        </div>
+
+                      </div>
+
+                      {grantedProtectedCategories.length > 0 && (
+
+                        <div className="flex flex-wrap gap-2 mt-4">
+
+                          {grantedProtectedCategories.map(
+                            (category) => (
+
+                              <span
+                                key={category}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-success/20 bg-white text-xs font-semibold text-slate-800"
+                              >
+                                <Check
+                                  size={12}
+                                  className="text-success"
+                                />
+                                {category}
+                              </span>
+
+                            )
+                          )}
+
+                        </div>
+
+                      )}
+
+                    </div>
+
+                    <div className="p-5 sm:p-6 bg-slate-50/45">
+
+                      {unlockedSensitiveRecords.length === 0 ? (
+
+                        <div className="rounded-xl border border-slate-200 bg-white p-5 text-center">
+
+                          <Lock
+                            size={22}
+                            className="text-slate-400 mx-auto"
+                          />
+
+                          <p className="text-sm font-bold text-slate-950 mt-3">
+                            No matching protected records found
+                          </p>
+
+                          <p className="text-xs text-slate-500 mt-1 max-w-lg mx-auto leading-relaxed">
+                            Consent is active, but Care4U did not receive a medical record matching the granted protected categories.
+                          </p>
+
+                        </div>
+
+                      ) : (
+
+                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+
+                          {[...unlockedSensitiveRecords]
+                            .sort(
+                              (
+                                first,
+                                second
+                              ) =>
+                                new Date(
+                                  second.created_at
+                                ) -
+                                new Date(
+                                  first.created_at
+                                )
+                            )
+                            .map(
+                              (record) => {
+
+                                const protectedCategory =
+                                  getRecordProtectedCategory(
+                                    record
+                                  );
+
+                                return (
+                                  <div
+                                    key={record.id}
+                                    className="space-y-2"
+                                  >
+
+                                    {protectedCategory && (
+                                      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-1 text-[9px] uppercase tracking-[0.1em] font-bold">
+                                        <Lock
+                                          size={10}
+                                        />
+                                        {protectedCategory}
+                                      </span>
+                                    )}
+
+                                    <MedicalRecordCard
+                                      record={record}
+                                      onOpen={() =>
+                                        setSelectedRecord(
+                                          record
+                                        )
+                                      }
+                                    />
+
+                                  </div>
+                                );
+                              }
+                            )}
+
+                        </div>
+
+                      )}
+
+                      <div className="flex items-start gap-2 mt-5 rounded-xl border border-success/15 bg-success/5 p-4">
+
+                        <ShieldCheck
+                          size={15}
+                          className="text-success shrink-0 mt-0.5"
+                        />
+
+                        <p className="text-xs text-slate-600 leading-relaxed">
+                          These records are available only while the current temporary consent grant remains active. They will disappear automatically when access expires, without changing the patient's permanent privacy settings.
+                        </p>
+
+                      </div>
+
+                    </div>
+
+                  </section>
+
+                )}
+
                 {/* AI summary */}
                 <Card title="AI Clinical Summary">
 
@@ -5742,14 +6192,14 @@ const ConsultationPage = () => {
                     </div>
 
                     <span className="inline-flex items-center justify-center self-start sm:self-auto min-w-9 h-9 px-3 rounded-xl bg-blue-50 text-blue-700 text-xs font-bold">
-                      {previousNotes.length}
+                      {visiblePreviousNotes.length}
                     </span>
 
                   </div>
 
                   <div className="p-5 sm:p-6 bg-slate-50/45">
 
-                    {previousNotes.length === 0 ? (
+                    {visiblePreviousNotes.length === 0 ? (
 
                       <div className="flex flex-col items-center justify-center text-center py-10 px-4">
 
@@ -5773,7 +6223,7 @@ const ConsultationPage = () => {
 
                       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
 
-                        {[...previousNotes]
+                        {[...visiblePreviousNotes]
                           .sort(
                             (
                               first,
@@ -5833,7 +6283,7 @@ const ConsultationPage = () => {
                     </div>
 
                     <span className="inline-flex items-center justify-center self-start sm:self-auto min-w-9 h-9 px-3 rounded-xl bg-module-soft text-primary text-xs font-bold">
-                      {records.length}
+                      {generalMedicalRecords.length}
                     </span>
 
                   </div>
@@ -5848,7 +6298,7 @@ const ConsultationPage = () => {
                         />
                       </div>
 
-                    ) : records.length === 0 ? (
+                    ) : generalMedicalRecords.length === 0 ? (
 
                       <div className="flex flex-col items-center justify-center text-center py-10 px-4">
 
@@ -5872,7 +6322,7 @@ const ConsultationPage = () => {
 
                       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
 
-                        {[...records]
+                        {[...generalMedicalRecords]
                           .sort(
                             (
                               first,
