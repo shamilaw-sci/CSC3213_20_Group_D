@@ -16,19 +16,26 @@ const pharmacyRepository = require('../pharmacy/pharmacy.repository');
  */
 const createPrescriptionController = async (req, res) => {
   try {
-    const currentUser = req.user;
+    const currentUser = req.session.user;
 
     const { patientId, appointmentId, items, notes } = req.body;
 
-    if (!patientId || !items || items.length === 0) {
+    if (!patientId || !appointmentId || !items || items.length === 0) {
       return res.status(400).json({
         success: false,
         message: 'Validation failed: patientId, appointmentId and items are required'
       });
     }
 
+    if (!currentUser.profile_id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Doctor profile could not be resolved'
+      });
+    }
+
     const prescription = await prescriptionService.createPrescription(
-      currentUser.profile_id || currentUser.id,
+      currentUser.profile_id,
       patientId,
       appointmentId,
       items,
@@ -44,9 +51,9 @@ const createPrescriptionController = async (req, res) => {
   } catch (error) {
     console.error('createPrescriptionController error:', error);
 
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
-      message: 'Internal server error'
+      message: error.message || 'Internal server error'
     });
   }
 };
@@ -65,6 +72,20 @@ const getPrescriptionController = async (req, res) => {
       await prescriptionService.getPrescriptionById(id);
 
     if (!prescription) {
+      return res.status(404).json({
+        success: false,
+        message: 'Prescription not found'
+      });
+    }
+
+    const currentUser = req.session.user;
+    const ownsPrescription =
+      currentUser.role === 'patient'
+        ? String(currentUser.profile_id) === String(prescription.patient_id)
+        : currentUser.role === 'doctor' &&
+          String(currentUser.profile_id) === String(prescription.doctor_id);
+
+    if (!ownsPrescription) {
       return res.status(404).json({
         success: false,
         message: 'Prescription not found'

@@ -7,6 +7,7 @@
  */
 
 const prescriptionRepository = require('./prescription.repository');
+const appointmentRepository = require('../appointment/appointment.repository');
 const { generatePrescriptionQR } = require('../../utils/qr');
 
 /**
@@ -48,6 +49,22 @@ const createPrescription = async (
   items,
   notes
 ) => {
+  const appointment =
+    await appointmentRepository.getAppointmentById(appointmentId);
+
+  if (
+    !appointment ||
+    appointment.status !== 'in_progress' ||
+    String(appointment.doctor_id) !== String(doctorId) ||
+    String(appointment.patient_id) !== String(patientId)
+  ) {
+    const error = new Error(
+      'Prescriptions can only be issued during your active patient consultation'
+    );
+    error.statusCode = 403;
+    throw error;
+  }
+
   // Step 1: Generate unique QR code value
   const qrCodeValue = generatePrescriptionQR();
 

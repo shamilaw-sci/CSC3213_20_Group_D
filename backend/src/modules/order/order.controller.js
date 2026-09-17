@@ -16,7 +16,15 @@ const placeOrderController = async (req, res) => {
         message: 'Validation failed: patient_id, pharmacy_id and delivery_address are required',
       });
     }
-    const order = await orderService.placeOrder(patient_id, pharmacy_id, prescription_id, delivery_address, total_amount, notes);
+    const order = await orderService.placeOrder(
+      patient_id,
+      pharmacy_id,
+      prescription_id,
+      delivery_address,
+      total_amount,
+      notes,
+      req.session.user
+    );
     res.status(201).json({ success: true, message: 'Order placed successfully', data: order });
   } catch (error) {
     console.error('placeOrderController error:', error);
@@ -31,7 +39,7 @@ const updateOrderStatusController = async (req, res) => {
     if (!status) {
       return res.status(400).json({ success: false, message: 'status is required' });
     }
-    const order = await orderService.updateOrderStatus(id, status);
+    const order = await orderService.updateOrderStatus(id, status, req.session.user);
     res.status(200).json({ success: true, message: 'Order status updated successfully', data: order });
   } catch (error) {
     console.error('updateOrderStatusController error:', error);
@@ -64,7 +72,7 @@ const getPharmacyOrdersController = async (req, res) => {
 const getOrderByIdController = async (req, res) => {
   try {
     const { id } = req.params;
-    const order = await orderService.getOrderById(id);
+    const order = await orderService.getOrderById(id, req.session.user);
     res.status(200).json({ success: true, message: 'Order retrieved successfully', data: order });
   } catch (error) {
     console.error('getOrderByIdController error:', error);

@@ -42,6 +42,7 @@ router.get(
 router.get(
   '/:id',
   isAuthenticated,
+  authorize('patient', 'doctor'),
   getPrescriptionController
 );
 

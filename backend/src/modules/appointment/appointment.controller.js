@@ -35,6 +35,14 @@ const VALID_STATUSES = [
   'cancelled'
 ];
 
+const VALID_STATUS_TRANSITIONS = {
+  scheduled: ['confirmed', 'in_progress', 'cancelled'],
+  confirmed: ['in_progress', 'cancelled'],
+  in_progress: ['completed', 'cancelled'],
+  completed: [],
+  cancelled: []
+};
+
 /**
  * Temporary in-memory protection for AI note
  * structuring requests within one backend process.
@@ -48,9 +56,7 @@ const MAX_SUMMARIZE_CALLS_PER_SESSION =
 /**
  * Resolves the authenticated doctor's profile ID.
  *
- * Care4U sessions normally contain profile_id.
- * The fallback user ID is retained for compatibility
- * with the current authentication structure.
+ * Care4U sessions contain the linked doctor profile in profile_id.
  *
  * @param {Object} currentUser
  * @returns {string|null}
@@ -62,11 +68,7 @@ const resolveDoctorProfileId = (
     return null;
   }
 
-  return (
-    currentUser.profile_id ||
-    currentUser.id ||
-    null
-  );
+  return currentUser.profile_id || null;
 };
 
 /**
@@ -118,6 +120,37 @@ const updateAppointmentStatusController =
           success: false,
           message:
             'Appointment not found',
+        });
+      }
+
+      const currentUser = req.session.user;
+      const isOwningDoctor =
+        currentUser.role === 'doctor' &&
+        String(existing.doctor_id) === String(currentUser.profile_id);
+      const isOwningPatient =
+        currentUser.role === 'patient' &&
+        String(existing.patient_id) === String(currentUser.profile_id);
+
+      if (!isOwningDoctor && !isOwningPatient) {
+        return res.status(403).json({
+          success: false,
+          message: 'You are not authorized to update this appointment.'
+        });
+      }
+
+      if (isOwningPatient && status !== 'cancelled') {
+        return res.status(403).json({
+          success: false,
+          message: 'Patients may only cancel their own appointments.'
+        });
+      }
+
+      if (
+        !VALID_STATUS_TRANSITIONS[existing.status]?.includes(status)
+      ) {
+        return res.status(409).json({
+          success: false,
+          message: `Cannot change appointment status from ${existing.status} to ${status}.`
         });
       }
 
@@ -251,6 +284,25 @@ const addConsultationNotesController =
         });
       }
 
+      const doctorProfileId = req.session?.user?.profile_id;
+
+      if (
+        !doctorProfileId ||
+        String(appointment.doctor_id) !== String(doctorProfileId)
+      ) {
+        return res.status(403).json({
+          success: false,
+          message: 'You are not authorized to add notes to this appointment.'
+        });
+      }
+
+      if (appointment.status !== 'in_progress') {
+        return res.status(409).json({
+          success: false,
+          message: 'Consultation notes can only be added during an active consultation.'
+        });
+      }
+
       const note =
         await appointmentRepository
           .createConsultationNote(
@@ -305,6 +357,29 @@ const getPatientConsultationNotesController =
       const {
         patientId
       } = req.params;
+
+      const doctorProfileId = req.session?.user?.profile_id;
+
+      if (!doctorProfileId) {
+        return res.status(403).json({
+          success: false,
+          message: 'Doctor profile could not be resolved.'
+        });
+      }
+
+      const activeAppointment =
+        await appointmentRepository
+          .getTodayActiveAppointmentByPatientAndDoctor(
+            patientId,
+            doctorProfileId
+          );
+
+      if (!activeAppointment) {
+        return res.status(403).json({
+          success: false,
+          message: 'Patient notes are available only during your active consultation.'
+        });
+      }
 
       const notes =
         await appointmentRepository
@@ -490,6 +565,25 @@ const summarizeNotesController =
           success: false,
           message:
             'Appointment not found',
+        });
+      }
+
+      const doctorProfileId = currentUser.profile_id;
+
+      if (
+        !doctorProfileId ||
+        String(appointment.doctor_id) !== String(doctorProfileId)
+      ) {
+        return res.status(403).json({
+          success: false,
+          message: 'You are not authorized to summarize notes for this appointment.'
+        });
+      }
+
+      if (appointment.status !== 'in_progress') {
+        return res.status(409).json({
+          success: false,
+          message: 'Notes can only be summarized during an active consultation.'
         });
       }
 
@@ -680,9 +774,9 @@ const getConsultationAppointmentController =
         null;
 
       if (
-        doctorProfileId &&
-        appointment.doctor_id !==
-          doctorProfileId
+        !doctorProfileId ||
+        String(appointment.doctor_id) !==
+          String(doctorProfileId)
       ) {
         return res.status(403).json({
           success: false,
@@ -842,10 +936,14 @@ if (
            PATIENT SELF-BOOKING
         ==================================================== */
 
-        patientId =
-          currentUser.profile_id ||
-          patientId ||
-          currentUser.id;
+        patientId = currentUser.profile_id;
+
+        if (!patientId) {
+          return res.status(400).json({
+            success: false,
+            message: 'Patient profile could not be resolved.',
+          });
+        }
       }
 
       if (

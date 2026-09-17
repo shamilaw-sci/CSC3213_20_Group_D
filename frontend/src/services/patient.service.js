@@ -112,11 +112,13 @@ export const getMedicalRecords = async (
  * Fetches all prescriptions with medicine items for a patient.
  */
 export const getPatientPrescriptions = async (
-  patientId
+  patientId,
+  appointmentId = null
 ) => {
   const response =
     await api.get(
-      `/api/patients/${patientId}/prescriptions`
+      `/api/patients/${patientId}/prescriptions`,
+      { params: appointmentId ? { appointmentId } : {} }
     );
 
   return response.data.data;
@@ -140,11 +142,13 @@ export const getPatientByQrCode = async (
  * Fetches all allergy records for a patient.
  */
 export const getAllergies = async (
-  patientId
+  patientId,
+  appointmentId = null
 ) => {
   const response =
     await api.get(
-      `/api/patients/${patientId}/allergies`
+      `/api/patients/${patientId}/allergies`,
+      { params: appointmentId ? { appointmentId } : {} }
     );
 
   return response.data.data;
@@ -245,11 +249,13 @@ export const deleteCondition = async (
  * belonging to the authenticated patient.
  */
 export const getMedicalDevices = async (
-  patientId
+  patientId,
+  appointmentId = null
 ) => {
   const response =
     await api.get(
-      `/api/patients/${patientId}/medical-devices`
+      `/api/patients/${patientId}/medical-devices`,
+      { params: appointmentId ? { appointmentId } : {} }
     );
 
   return response.data.data;
@@ -295,11 +301,13 @@ export const deleteMedicalDevice = async (
  * @returns {Promise<Array>} Array of background records
  */
 export const getHealthBackground = async (
-  patientId
+  patientId,
+  appointmentId = null
 ) => {
   const response =
     await api.get(
-      `/api/patients/${patientId}/health-background`
+      `/api/patients/${patientId}/health-background`,
+      { params: appointmentId ? { appointmentId } : {} }
     );
 
   return response.data.data;
@@ -353,11 +361,13 @@ export const deleteHealthBackground = async (
  * @returns {Promise<Array>} Array of family history records
  */
 export const getFamilyHistory = async (
-  patientId
+  patientId,
+  appointmentId = null
 ) => {
   const response =
     await api.get(
-      `/api/patients/${patientId}/family-history`
+      `/api/patients/${patientId}/family-history`,
+      { params: appointmentId ? { appointmentId } : {} }
     );
 
   return response.data.data;
@@ -542,11 +552,13 @@ export const getPatientHistorySummary = async (
  * Fetches completed laboratory reports.
  */
 export const getLabReports = async (
-  patientId
+  patientId,
+  appointmentId = null
 ) => {
   const response =
     await api.get(
-      `/api/patients/${patientId}/lab-reports`
+      `/api/patients/${patientId}/lab-reports`,
+      { params: appointmentId ? { appointmentId } : {} }
     );
 
   if (

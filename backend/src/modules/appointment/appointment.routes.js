@@ -25,6 +25,11 @@ const {
   auditMiddleware
 } = require('../../middleware/auditLog');
 
+const {
+  isAuthenticated,
+  authorize
+} = require('../../middleware/auth');
+
 /**
  * POST /api/appointments
  *
@@ -36,6 +41,8 @@ const {
  */
 router.post(
   '/',
+  isAuthenticated,
+  authorize('patient', 'doctor'),
   bookAppointmentController
 );
 
@@ -51,6 +58,8 @@ router.post(
  */
 router.get(
   '/active',
+  isAuthenticated,
+  authorize('doctor'),
   auditMiddleware(
     'CHECK_ACTIVE_CONSULTATION',
     'appointment'
@@ -65,6 +74,8 @@ router.get(
  */
 router.get(
   '/patients/:patientId/notes',
+  isAuthenticated,
+  authorize('doctor'),
   auditMiddleware(
     'VIEW_CONSULTATION_NOTES',
     'appointment'
@@ -83,6 +94,8 @@ router.get(
  */
 router.get(
   '/:id/consultation',
+  isAuthenticated,
+  authorize('doctor'),
   auditMiddleware(
     'VIEW_CONSULTATION_WORKSPACE',
     'appointment'
@@ -97,6 +110,8 @@ router.get(
  */
 router.put(
   '/:id/status',
+  isAuthenticated,
+  authorize('patient', 'doctor'),
   auditMiddleware(
     'UPDATE_APPOINTMENT_STATUS',
     'appointment'
@@ -111,6 +126,8 @@ router.put(
  */
 router.post(
   '/:id/notes',
+  isAuthenticated,
+  authorize('doctor'),
   auditMiddleware(
     'ADD_CONSULTATION_NOTES',
     'appointment'
@@ -126,6 +143,8 @@ router.post(
  */
 router.post(
   '/:id/summarize-notes',
+  isAuthenticated,
+  authorize('doctor'),
   summarizeNotesController
 );
 

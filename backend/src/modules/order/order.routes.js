@@ -14,11 +14,33 @@ const {
   getPharmacyOrdersController,
   getOrderByIdController,
 } = require('./order.controller');
+const {
+  isAuthenticated,
+  authorize,
+  authorizeOwnProfile,
+} = require('../../middleware/auth');
 
-router.post('/', placeOrderController);
-router.put('/:id/status', updateOrderStatusController);
-router.get('/patient/:patientId', getPatientOrdersController);
-router.get('/pharmacy/:pharmacyId', getPharmacyOrdersController);
-router.get('/:id', getOrderByIdController);
+router.post('/', isAuthenticated, authorize('patient'), placeOrderController);
+router.put('/:id/status', isAuthenticated, authorize('pharmacist'), updateOrderStatusController);
+router.get(
+  '/patient/:patientId',
+  isAuthenticated,
+  authorize('patient'),
+  authorizeOwnProfile('patientId'),
+  getPatientOrdersController
+);
+router.get(
+  '/pharmacy/:pharmacyId',
+  isAuthenticated,
+  authorize('pharmacist'),
+  authorizeOwnProfile('pharmacyId'),
+  getPharmacyOrdersController
+);
+router.get(
+  '/:id',
+  isAuthenticated,
+  authorize('patient', 'pharmacist'),
+  getOrderByIdController
+);
 
 module.exports = router;

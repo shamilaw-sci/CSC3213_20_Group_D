@@ -1741,7 +1741,8 @@ const ConsultationPage = () => {
 
               getAllergies(
                 consultation
-                  .patient_id
+                  .patient_id,
+                appointmentId
               ),
 
               getMedicalRecords(
@@ -1753,22 +1754,26 @@ const ConsultationPage = () => {
 
               getPatientPrescriptions(
                 consultation
-                  .patient_id
+                  .patient_id,
+                appointmentId
               ),
 
               getMedicalDevices(
                 consultation
-                  .patient_id
+                  .patient_id,
+                appointmentId
               ),
 
               getHealthBackground(
                 consultation
-                  .patient_id
+                  .patient_id,
+                appointmentId
               ),
 
               getFamilyHistory(
                 consultation
-                  .patient_id
+                  .patient_id,
+                appointmentId
               ),
 
               /**
@@ -1781,7 +1786,8 @@ const ConsultationPage = () => {
                */
               getLabReports(
                 consultation
-                  .patient_id
+                  .patient_id,
+                appointmentId
               ).catch(
                 (labReportError) => {
                   console.warn(
@@ -3276,6 +3282,8 @@ const ConsultationPage = () => {
       );
     };
 
+  // refreshMedicalRecords is intentionally read at interval execution time.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     consentAccessStatus
       ?.hasActiveGrant,
@@ -3784,7 +3792,8 @@ const ConsultationPage = () => {
           await checkDrugInteractions(
             consultation
               .patient_id,
-            medicineName
+            medicineName,
+            appointmentId
           );
 
         setMedicineWarnings(
@@ -4024,7 +4033,8 @@ const ConsultationPage = () => {
           const refreshed =
             await getPatientPrescriptions(
               consultation
-                .patient_id
+                .patient_id,
+              appointmentId
             );
 
           setPrescriptions(
@@ -4234,77 +4244,6 @@ const ConsultationPage = () => {
         );
       }
     };
-
-  /* =========================================================
-     MEDICAL RECORD TABLE
-  ========================================================= */
-
-  const recordColumns = [
-    {
-      key:
-        'created_at',
-
-      label:
-        'Date',
-
-      render:
-        (value) =>
-          formatDate(
-            value
-          ),
-    },
-    {
-      key:
-        'record_type',
-
-      label:
-        'Type',
-
-      render:
-        (value) =>
-          capitalise(
-            value
-          ),
-    },
-    {
-      key:
-        'title',
-
-      label:
-        'Title',
-    },
-    {
-      key:
-        'doctor_name',
-
-      label:
-        'Doctor',
-
-      render:
-        (value) =>
-          value
-            ? `Dr. ${value}`
-            : '—',
-    },
-    {
-      key:
-        'is_confidential',
-
-      label:
-        'Status',
-
-      render:
-        (value) => (
-          <Badge
-            status={
-              value
-                ? 'confidential'
-                : 'normal'
-            }
-          />
-        ),
-    },
-  ];
 
   /* =========================================================
      LOADING / ERROR STATES
