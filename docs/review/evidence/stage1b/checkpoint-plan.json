@@ -1,0 +1,76 @@
+{
+  "original_head": "eeacffb0100288c7b89f5bddc33ffc917d6970b0",
+  "branch": "codex/care4u-final-review-2026-11-12",
+  "commit_author": "Codex Review Assistant <codex-review@users.noreply.local>",
+  "runtime_verification": "NOT PERFORMED; checkpoints preserve inherited contents",
+  "groups": [
+    {
+      "scope": "Inherited authentication, approval, reset and published-content contracts",
+      "subject": "chore(review): checkpoint inherited auth and content changes",
+      "paths": [
+        "backend/src/middleware/auth.js",
+        "backend/src/modules/auth/auth.controller.js",
+        "backend/src/modules/auth/auth.routes.js",
+        "backend/src/modules/auth/auth.service.js",
+        "backend/src/modules/patient/consent.service.js",
+        "backend/src/modules/health-content/healthContent.controller.js",
+        "backend/src/modules/health-content/healthContent.routes.js",
+        "frontend/src/pages/auth/LoginPage.jsx",
+        "frontend/src/pages/auth/OtpVerificationPage.jsx",
+        "frontend/src/pages/admin/AdminHealthContentPage.jsx",
+        "frontend/src/services/healthContentService.js",
+        "mobile/src/screens/OtpVerificationScreen.js",
+        "mobile/src/components/HealthAwarenessFeed.js",
+        "mobile/src/screens/ResetPasswordScreen.js",
+        "mobile/App.js"
+      ]
+    },
+    {
+      "scope": "Inherited booking, dispensing, lab transactions and pharmacy QR data contracts; includes existing consent-note and chat-audit changes in shared controllers",
+      "subject": "chore(review): checkpoint inherited clinical workflow changes",
+      "paths": [
+        "backend/src/modules/appointment/appointment.controller.js",
+        "backend/src/modules/appointment/appointment.repository.js",
+        "backend/src/modules/doctor/doctor.repository.js",
+        "backend/src/modules/laboratory/laboratory.repository.js",
+        "backend/src/modules/laboratory/laboratory.service.js",
+        "backend/src/modules/prescription/prescription.repository.js",
+        "backend/src/modules/prescription/prescription.service.js",
+        "backend/src/modules/patient/patient.controller.js",
+        "backend/src/modules/patient/patient.routes.js",
+        "frontend/src/pages/pharmacy/PatientQRLookupPage.jsx"
+      ]
+    },
+    {
+      "scope": "Inherited SOS dialer/reporting and scheduled-job log minimization; placeholder mobile env example only",
+      "subject": "chore(review): checkpoint inherited SOS and logging changes",
+      "paths": [
+        "backend/src/modules/emergency/emergency.controller.js",
+        "backend/src/utils/expiryJob.js",
+        "backend/src/utils/reminderJob.js",
+        "mobile/src/components/EmergencySOS.js",
+        "mobile/.env.example"
+      ]
+    },
+    {
+      "scope": "Inherited display wording, toast cleanup, variable naming and author-header edits; source attribution not certified by checkpoint",
+      "subject": "chore(review): checkpoint inherited presentation changes",
+      "paths": [
+        "frontend/src/App.jsx",
+        "frontend/src/components/common/QRScanner.jsx",
+        "frontend/src/components/layout/PatientNavbar.jsx",
+        "frontend/src/pages/doctor/ConsultationPage.jsx",
+        "frontend/src/pages/doctor/DoctorDashboard.jsx",
+        "frontend/src/pages/hospital/HospitalEmergencyPage.jsx",
+        "frontend/src/pages/patient/BookAppointmentPage.jsx",
+        "frontend/src/pages/patient/PrescriptionsPage.jsx",
+        "frontend/src/pages/pharmacy/PharmacyDashboard.jsx",
+        "frontend/src/pages/pharmacy/PharmacyDispensingHistoryPage.jsx",
+        "frontend/src/services/appointment.service.js",
+        "frontend/src/services/doctor.service.js",
+        "mobile/src/constants/theme.js",
+        "mobile/src/screens/PrescriptionsScreen.js"
+      ]
+    }
+  ]
+}

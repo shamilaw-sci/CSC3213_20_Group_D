@@ -1,0 +1,418 @@
+{
+  "id": "B01",
+  "kind": "syntax",
+  "required": true,
+  "run_id": "2026-11-12T12-53-47-100Z-b3655841-4000-44f0-aaf1-862d382ec60e",
+  "command": [
+    "C:\\Users\\Waasana\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+    "scripts/check-syntax.js"
+  ],
+  "cwd": "backend",
+  "result": "PASS",
+  "source_snapshot": {
+    "head": "43f07480c36638245d74c32138ac9ddf4b7c944a",
+    "sha256": "58c7901e26284d852062ba1ae0956da736edbf496592635362600e1499fcadf1",
+    "files": [
+      {
+        "path": "backend/.env.example",
+        "sha256": "9550466e290e4842bc0184e208ba72a279fbf14d5e54dab5d39e3cbe15c5a741"
+      },
+      {
+        "path": "backend/.eslintrc.js",
+        "sha256": "fb9cf14c434307a60063f54d3c335fa388921dcab1f2a84e06cc1b6cb0d0262a"
+      },
+      {
+        "path": "backend/.gitignore",
+        "sha256": "ee07d8e0c77573a9b108ff251cd4c71d5df13408409947aba8599cf7c312a692"
+      },
+      {
+        "path": "backend/.prettierrc",
+        "sha256": "37832bb432811fa8370749f4426a826b930271efd2ced4ecf2150c1dc67e5d6b"
+      },
+      {
+        "path": "backend/.vscode/settings.json",
+        "sha256": "e28fa7edc70724208911a2693126e6af0a5080acf7005eded588ee61deee5136"
+      },
+      {
+        "path": "backend/app.js",
+        "sha256": "4a79887edaa1348cd54b63cb5378b3879efc5ef7c946611c571e4cbf54aa3866"
+      },
+      {
+        "path": "backend/migrations/001_create_otp_verifications.sql",
+        "sha256": "a972d1a7c34592eafe667540dcf4251050a1661b49b5cb34aaefef389cd147f1"
+      },
+      {
+        "path": "backend/migrations/003_add_verification_status.sql",
+        "sha256": "cb06012830a22151641c02a430428432fb550c35c8bb0168fb8878756f54b9a5"
+      },
+      {
+        "path": "backend/migrations/004_create_health_content_table.sql",
+        "sha256": "2772b6d360a4f1f7945d4f85173dcc064a38b075ef4b9ef263b2e10549321b71"
+      },
+      {
+        "path": "backend/migrations/005_create_system_settings_table.sql",
+        "sha256": "ad212d9f3005bebce24182e3710bbd29b89e5d8b18d3f43b05b50612ee663e64"
+      },
+      {
+        "path": "backend/migrations/006_fix_lab_technician_role_constraint.sql",
+        "sha256": "93949f19c30dadb562a23ef13ae5d4498c70a5229b97814f7238dd07b2b290a6"
+      },
+      {
+        "path": "backend/migrations/007_fix_lab_request_priority_default.sql",
+        "sha256": "2a09e76e50a4e57112a1a18d76326b3a2aef6bbb097be5f13a94fb7cd5a9b5ff"
+      },
+      {
+        "path": "backend/package-lock.json",
+        "sha256": "775ce877c96ef82c19073bf82e4bedbc99813b89bac07405066e25e98129b6b6"
+      },
+      {
+        "path": "backend/package.json",
+        "sha256": "8178f15dc9cab124e150223340487b770874a5b149c982d8492ef21dfa905ab9"
+      },
+      {
+        "path": "backend/scripts/check-syntax.js",
+        "sha256": "4a8bc6ad0afd279fe08b26902787f7d3ab807c75657fb9da5888ad3344146987"
+      },
+      {
+        "path": "backend/server.js",
+        "sha256": "8bb5fa2c936ffcdec2b397d1b9335ce9092e4d035e7bb56392e74cbd6b8c136c"
+      },
+      {
+        "path": "backend/src/config/.gitkeep",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "backend/src/config/db.js",
+        "sha256": "325cf9c5fc1aa8c766b8fdda8f8516ee82dec0a59e63d7b98640b783375a026b"
+      },
+      {
+        "path": "backend/src/config/supabase.js",
+        "sha256": "3087a9a26decc9c3d16229ed979c9013e8edf8efdd4be7194e04fa941dd12f12"
+      },
+      {
+        "path": "backend/src/middleware/.gitkeep",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "backend/src/middleware/auditLog.js",
+        "sha256": "8bd0b4265496942b7e22615317eb1cc826b306f09e41c1b6e0367b91a6b6b325"
+      },
+      {
+        "path": "backend/src/middleware/auth.js",
+        "sha256": "f517e8696b471a55ae4ca5ce11005fc1186805fe8dfdd37fb5f2c1851cbf5064"
+      },
+      {
+        "path": "backend/src/middleware/patientAccess.js",
+        "sha256": "b998d1159e5d81a39326a5f289f2c943155e1daf2e67eb801959e02711b3dd17"
+      },
+      {
+        "path": "backend/src/middleware/upload.js",
+        "sha256": "abdaed92e4be1ebd123ca39d9590373dc8495be04d8f868122f661cfdd9adf86"
+      },
+      {
+        "path": "backend/src/modules/admin/admin.controller.js",
+        "sha256": "37fad2b3baed57d40ea35ae95630beba6741e98479d10e3be0fc6f2ddfeac1f1"
+      },
+      {
+        "path": "backend/src/modules/admin/admin.repository.js",
+        "sha256": "12a2aacef55d643f48cf138c07b3bcd929c1b483350c1e7d3c5c896075e62a1f"
+      },
+      {
+        "path": "backend/src/modules/admin/admin.routes.js",
+        "sha256": "78f9840e06706be881403a68162c24f0f6266a8f5c92885f414e032435f2be4d"
+      },
+      {
+        "path": "backend/src/modules/admin/admin.service.js",
+        "sha256": "8810474de86cefb13f94e508b49d1cf057032f115d374a39a13354e453d8a142"
+      },
+      {
+        "path": "backend/src/modules/appointment/appointment.controller.js",
+        "sha256": "5bb912b6334fca4fcb11ad1d48d23a0e1e3dde9fce6bc50d6a0a25e387652081"
+      },
+      {
+        "path": "backend/src/modules/appointment/appointment.repository.js",
+        "sha256": "1170e913ec37b6bd9267f629ad87f26eac3f8bd6f4a608046492927c79512b68"
+      },
+      {
+        "path": "backend/src/modules/appointment/appointment.routes.js",
+        "sha256": "8d3af62489da920cb508f9c55e6a1ff62bdc4617ce49548c08294e66315d3c60"
+      },
+      {
+        "path": "backend/src/modules/auth/auth.controller.js",
+        "sha256": "03eab69907d63d282b7e7c218d5ceb1ce78c69c1398ae5d7d98805fa84e6ed24"
+      },
+      {
+        "path": "backend/src/modules/auth/auth.repository.js",
+        "sha256": "cfc742f1efe9025257d080075872e8016e8c71aa67574db687c6b0d95846289a"
+      },
+      {
+        "path": "backend/src/modules/auth/auth.routes.js",
+        "sha256": "a5116bbbfee687b2dd5d645608ce5cd50a3a60b1ff80a951a28ccadd69026e6f"
+      },
+      {
+        "path": "backend/src/modules/auth/auth.service.js",
+        "sha256": "48dbc485486b18d75152b8b33ce4913f19f0cf13291562d9be9ece37ee14f7d0"
+      },
+      {
+        "path": "backend/src/modules/doctor/doctor.controller.js",
+        "sha256": "cc50856455911f18f982b83dbf1b0a0028518e011cbeb8403ed9773d86a8f98d"
+      },
+      {
+        "path": "backend/src/modules/doctor/doctor.repository.js",
+        "sha256": "01c304bd670985cd34abf6288c5504cab32c81cd008de03ba0bab382a5e149fb"
+      },
+      {
+        "path": "backend/src/modules/doctor/doctor.routes.js",
+        "sha256": "0a5b135e81e7a29d2c9f5342f73a1e726c39a6af1b3ff8ba363c8844a5e33ddd"
+      },
+      {
+        "path": "backend/src/modules/doctor/doctor.service.js",
+        "sha256": "9429a2deb6921f5cbea6945940dbe533a14b44d42330ef32d9e528f62e369135"
+      },
+      {
+        "path": "backend/src/modules/emergency/emergency.controller.js",
+        "sha256": "c19507292ced66a791bb0044198d43398b346934df9b982e3b443f27715e3315"
+      },
+      {
+        "path": "backend/src/modules/emergency/emergency.repository.js",
+        "sha256": "b1a33ad8e58b578c1dbf48721e406936a98859be10a2f2a71a2f63b6f749109a"
+      },
+      {
+        "path": "backend/src/modules/emergency/emergency.routes.js",
+        "sha256": "8640e02d934d094348b80138e9da8f2a5390f87e7a4785c7665b6569fbe0e1f9"
+      },
+      {
+        "path": "backend/src/modules/emergency/emergency.service.js",
+        "sha256": "47318e2c2efb8797f1715b0755dae5b4e55bb98ad3e12afddee0ee801f780f56"
+      },
+      {
+        "path": "backend/src/modules/health-content/healthContent.controller.js",
+        "sha256": "4f879d6ec07996e353f27b05388513da5d138789e1b0be61acf988beeb9e4ea3"
+      },
+      {
+        "path": "backend/src/modules/health-content/healthContent.repository.js",
+        "sha256": "9d34634d72329a40572d73b77035c16d3e4e85f4a98206ff849361ee586fead2"
+      },
+      {
+        "path": "backend/src/modules/health-content/healthContent.routes.js",
+        "sha256": "9f95316ae29eecd167d08f71be4d7e51f81b770807c2343759860b5fe0efe017"
+      },
+      {
+        "path": "backend/src/modules/health-content/healthContent.service.js",
+        "sha256": "d5a6eae02bd225e82c54949d87cce94dc4a72c831abd079093be454e42c9f417"
+      },
+      {
+        "path": "backend/src/modules/hospital/hospital.controller.js",
+        "sha256": "a052d6b18090f31a3b8e00f1302694127ffb7ab987b976fde67005e6ad6c183b"
+      },
+      {
+        "path": "backend/src/modules/hospital/hospital.repository.js",
+        "sha256": "22b442c786b3236cb30d2953bc28da3c797f77db469f2ed00d4045614381192d"
+      },
+      {
+        "path": "backend/src/modules/hospital/hospital.routes.js",
+        "sha256": "ccff8db3f6afcd6616f37cb6680835cf5e9bf880f597dc320cdd418f24eefa18"
+      },
+      {
+        "path": "backend/src/modules/hospital/hospital.service.js",
+        "sha256": "7433630f518c47216413cf75e977e6396e5b59b852368f3def9f6aeb95ab0e33"
+      },
+      {
+        "path": "backend/src/modules/interaction/interaction.controller.js",
+        "sha256": "c2c08b95b0f63dedb6fbfbfc71cb77622a2c7c0734c810f19828105e33250541"
+      },
+      {
+        "path": "backend/src/modules/interaction/interaction.repository.js",
+        "sha256": "05f8e497f0de015fc089df2528604cdcc5888cc964adf40da900b6245ecf509b"
+      },
+      {
+        "path": "backend/src/modules/interaction/interaction.routes.js",
+        "sha256": "1c7a94609a2fce5b54e0469aeffe4819c34f3fd8bcfd7775f11f400553fb7db4"
+      },
+      {
+        "path": "backend/src/modules/interaction/interaction.service.js",
+        "sha256": "79dab5306a8169f93798cff4a887e09136231942a2cb9f560dd46a4cb7bd33a2"
+      },
+      {
+        "path": "backend/src/modules/laboratory/laboratory.controller.js",
+        "sha256": "4e71bfaf877b24070d181e775415ab9d45d2eb5bddd86c3bcbf7cb3295745641"
+      },
+      {
+        "path": "backend/src/modules/laboratory/laboratory.repository.js",
+        "sha256": "6c5ad3d42186ab9b1f629c125aee1d95d8f0d47b15db51131043f150b35a7328"
+      },
+      {
+        "path": "backend/src/modules/laboratory/laboratory.routes.js",
+        "sha256": "97e6a79a6e75d8eeccb22a2e373c27606c81f2b27a08eca8306766b7071f2dce"
+      },
+      {
+        "path": "backend/src/modules/laboratory/laboratory.service.js",
+        "sha256": "657219efa35f0741addfc89ca9d578b09a72d37e8beee1185b2a81f05b3a0ab6"
+      },
+      {
+        "path": "backend/src/modules/order/order.controller.js",
+        "sha256": "bdbac21e0c55b9626838f30c45ab72a70e9a1060eb1210571d6eaa5c91b11dd1"
+      },
+      {
+        "path": "backend/src/modules/order/order.repository.js",
+        "sha256": "d7743f9064e1c56178072857ff4b94a6187b2a50bfa9573a581d3d101033d3fe"
+      },
+      {
+        "path": "backend/src/modules/order/order.routes.js",
+        "sha256": "bba989b343cbe68aad900b12b8d90e69d4d60d9da85ecb2d6b6be2490f9e25c3"
+      },
+      {
+        "path": "backend/src/modules/order/order.service.js",
+        "sha256": "0cbcfe8f34aa5662ba76d1b8b9aa9c226c4f6294990e55fa16dda69fd871966d"
+      },
+      {
+        "path": "backend/src/modules/patient/consent.controller.js",
+        "sha256": "9633de979edf9b9d72a2489620e3a40fdabfda42ddde1c209931101f7d719a0f"
+      },
+      {
+        "path": "backend/src/modules/patient/consent.repository.js",
+        "sha256": "59fc67085066ac2711ddd1888485fa9e2eced0422bcd3b76d41b4f8ef57806b7"
+      },
+      {
+        "path": "backend/src/modules/patient/consent.service.js",
+        "sha256": "f91effbff2a7d7464c682fb21bf98a7a938e8b8251d5073beeef59bef2950d9b"
+      },
+      {
+        "path": "backend/src/modules/patient/patient.controller.js",
+        "sha256": "0c1297329141f75fed5ec2330496e7e91f792db729b2d557df31e4fe0aaac4c6"
+      },
+      {
+        "path": "backend/src/modules/patient/patient.repository.js",
+        "sha256": "630cce9782d4913e5e05e0bb24991d2a8bbfcb716c5dd4105e85efcb7d01dd18"
+      },
+      {
+        "path": "backend/src/modules/patient/patient.routes.js",
+        "sha256": "db7b30f7616f3e193fe89d34056b46a165d9188391316c587af622c1803529c9"
+      },
+      {
+        "path": "backend/src/modules/patient/patient.service.js",
+        "sha256": "618648d49ac303e7f42a069b9304efaa1798302485bcbe685602cec530d079b8"
+      },
+      {
+        "path": "backend/src/modules/payment/payment.controller.js",
+        "sha256": "2c92bf5995a342bcadac5628bc8bdc12e9baf4cd3551d556a2bf6ffb2bf92234"
+      },
+      {
+        "path": "backend/src/modules/payment/payment.repository.js",
+        "sha256": "26e707582967b8c2b4b696cbd0bb587dd58be311e7ba7c0bff8c85071ad0e297"
+      },
+      {
+        "path": "backend/src/modules/payment/payment.routes.js",
+        "sha256": "c01feed98fd8291a9c6c52fe7db3a95fc939e690802893845e27b067724a8c28"
+      },
+      {
+        "path": "backend/src/modules/payment/payment.service.js",
+        "sha256": "ecfaac9861b8877e4faec4a161c46136e60a93f2ea5c7cc577bc1ae30c077ec2"
+      },
+      {
+        "path": "backend/src/modules/pharmacy/pharmacy.controller.js",
+        "sha256": "35b9a818894d11756ccbc7a7f9fbb3d7a0959e8421f6f8f497dae3aa2a4599c2"
+      },
+      {
+        "path": "backend/src/modules/pharmacy/pharmacy.repository.js",
+        "sha256": "29353bfd9d68610779f6dab0313c84833bdbdd177df5f372f43fa6ec965a3163"
+      },
+      {
+        "path": "backend/src/modules/pharmacy/pharmacy.routes.js",
+        "sha256": "8566f1eb192dada5ab972bbe0be2745e4a08fa285df9e339f33c36d755d5f3b6"
+      },
+      {
+        "path": "backend/src/modules/pharmacy/pharmacy.service.js",
+        "sha256": "35ff15911dc6ea9225afe640bf8869e00d3fe5102842d86d43d6f3f6926a413f"
+      },
+      {
+        "path": "backend/src/modules/prescription/prescription.controller.js",
+        "sha256": "7a76ac9e07f700d546c2906b4288eeffcdd952bdcc775d70039f63e2a3da07d6"
+      },
+      {
+        "path": "backend/src/modules/prescription/prescription.repository.js",
+        "sha256": "9fbaecd8d0d7319f3f5b4ae29a131950ebd332b5044c284fa862b7d1a0479ed6"
+      },
+      {
+        "path": "backend/src/modules/prescription/prescription.routes.js",
+        "sha256": "813272481266ab0290694dce5cd4dd1c919a422bc4e9af6e0b8cda78661a1df6"
+      },
+      {
+        "path": "backend/src/modules/prescription/prescription.service.js",
+        "sha256": "8312ec5faf6ddd9896be2baff38fb60badd66a8a5f435802cf0e2d782ddedcde"
+      },
+      {
+        "path": "backend/src/utils/.gitkeep",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "backend/src/utils/ai.util.js",
+        "sha256": "f56a8bb1c1331485b7942eb04f5d78689ae254d9e89abc933b842c2c38894af3"
+      },
+      {
+        "path": "backend/src/utils/email.js",
+        "sha256": "a737a9786474284dd2ec954d0920033bd6035e4d17084a6ae5c5fe2932f11994"
+      },
+      {
+        "path": "backend/src/utils/expiryJob.js",
+        "sha256": "e1c744a0e952e37d07493ea3a47c94b5cc8825e873ddbdaad02b890af8a49465"
+      },
+      {
+        "path": "backend/src/utils/otp.js",
+        "sha256": "b5c21d941ca1db76035723402bcac07d51a4939ea3d79242d528da47c83e9891"
+      },
+      {
+        "path": "backend/src/utils/qr.js",
+        "sha256": "13f199d9f1de5e6aabb04cb8ffc3b8a275b282f59ce10da5b46a4f83e9640db4"
+      },
+      {
+        "path": "backend/src/utils/reminderJob.js",
+        "sha256": "9f8b168f3b40e5255aad511bfc79608d1e51dcf01836c4840fd87eda3b1fc886"
+      },
+      {
+        "path": "backend/src/utils/sms.util.js",
+        "sha256": "97d494b2cc8918fedcbd7c9177d95011d527e4a871120f1bd24c20b5371b05ea"
+      },
+      {
+        "path": "docs/review/tools/check-evidence.mjs",
+        "sha256": "bf3fae6a50f77ddc7d95fce3d497048a43f2918777a2b645e8dfcf7e23da0c61"
+      },
+      {
+        "path": "docs/review/tools/inventory.py",
+        "sha256": "e7e72ebc0ae9b35fc868421ba8a8aa9aa103a8ad68fc17c2bc5e74178f08b56a"
+      },
+      {
+        "path": "docs/review/tools/static-checks.mjs",
+        "sha256": "dd72704ced6a88f6b88e781345b8d0d7e56b9817225fdae9147cccb665bc5253"
+      },
+      {
+        "path": "docs/review/tools/static-worker.mjs",
+        "sha256": "dbf36c9d18d7bce1e2caadb030e5709c847e3957206d79dc216314ddddc22bfe"
+      },
+      {
+        "path": "docs/review/tools/tests/static-checks.test.mjs",
+        "sha256": "8d5236958ddf005a0e0017fbb6d25829e7c3b7c3bd3fab20cd99302ca4e07e18"
+      },
+      {
+        "path": "docs/review/tools/tests/test_inventory.py",
+        "sha256": "b0b2ab74da62f8e8c91ba8a6b1475814078cbabd0a20b677456b41396e578a45"
+      }
+    ]
+  },
+  "limitations": "Node syntax only; no module evaluation, API or database assertions",
+  "started_at": "2026-11-12T12:53:47.112Z",
+  "finished_at": "2026-11-12T12:53:50.869Z",
+  "exit_code": 0,
+  "error_code": null,
+  "details": {
+    "files": 75
+  },
+  "warnings": [],
+  "output": {
+    "stdout_sha256": "56e7eec05e80e3733cdc1495aa3bc983c24915b12dccdb9ad5c734a3e5ea4750",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_bytes": 53,
+    "stderr_bytes": 0,
+    "policy": "Raw output not persisted; no source snippets or environment values in evidence"
+  }
+}

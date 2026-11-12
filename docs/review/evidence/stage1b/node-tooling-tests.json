@@ -1,0 +1,16 @@
+{
+  "command": [
+    "node",
+    "--test",
+    "--test-reporter=tap",
+    "docs/review/tools/tests/static-checks.test.mjs"
+  ],
+  "started_at": "2026-11-12T12:54:19.3944022Z",
+  "finished_at": "2026-11-12T12:54:20.1257534Z",
+  "result": "PASS",
+  "exit_code": 0,
+  "test_count": 9,
+  "head": "43f07480c36638245d74c32138ac9ddf4b7c944a",
+  "output_sha256": "f945f7895a9fbc79f1741c4d20a69b4edfac724c28eb9aadbc03c20e8632f0f8",
+  "limitations": "Review-tool fixture behavior only; no application runtime assertion"
+}

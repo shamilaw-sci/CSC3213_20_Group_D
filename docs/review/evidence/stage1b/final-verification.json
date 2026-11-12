@@ -1,0 +1,34 @@
+{
+  "verified_at": "2026-11-12T12:55:46.867270+00:00",
+  "source_checkpoint": "a609f07",
+  "tooling_commit": "43f0748",
+  "original_head": "eeacffb0100288c7b89f5bddc33ffc917d6970b0",
+  "original_files_checked": 290,
+  "original_files_changed": [],
+  "stage1_evidence_checked": 13,
+  "stage1_evidence_changed": [],
+  "original_tracker_rows_preserved": 283,
+  "static_run_id": "2026-11-12T12-53-47-100Z-b3655841-4000-44f0-aaf1-862d382ec60e",
+  "static_results": {
+    "B01": "PASS",
+    "B02": "PASS",
+    "B03": "PASS",
+    "B04": "PASS",
+    "B05": "PASS",
+    "B06": "PASS"
+  },
+  "tooling_tests": 21,
+  "runtime_verification": "NOT_RUN",
+  "visual_verification": "NOT_RUN",
+  "develop_and_local_origin_develop_unchanged": true,
+  "limitations": [
+    "Static and review-tool tests do not certify inherited application behavior",
+    "Base schema unavailable; no live services queried",
+    "Git commit blobs normalize text line endings; worktree preservation uses entry byte hashes"
+  ],
+  "tracked_paths": 340,
+  "tracker_rows": 340,
+  "missing_tracker_paths": [],
+  "untracked_review_deliverables": 0,
+  "application_rows_marked_reviewed": 0
+}

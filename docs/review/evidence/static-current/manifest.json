@@ -1,0 +1,41 @@
+{
+  "format_version": 2,
+  "run_id": "2026-11-12T12-53-47-100Z-b3655841-4000-44f0-aaf1-862d382ec60e",
+  "started_at": "2026-11-12T12:53:47.101Z",
+  "result": "PASS",
+  "checks": [
+    {
+      "id": "B01",
+      "result": "PASS",
+      "source_sha256": "58c7901e26284d852062ba1ae0956da736edbf496592635362600e1499fcadf1"
+    },
+    {
+      "id": "B02",
+      "result": "PASS",
+      "source_sha256": "56cb7cdc50a29f994a9b08f9a7b7eb87c764f08469e36146fe743f253270520f"
+    },
+    {
+      "id": "B03",
+      "result": "PASS",
+      "source_sha256": "56cb7cdc50a29f994a9b08f9a7b7eb87c764f08469e36146fe743f253270520f"
+    },
+    {
+      "id": "B04",
+      "result": "PASS",
+      "source_sha256": "90364f5f0702d275754d202757492756e81440334cf215f7f652d87204914b2e"
+    },
+    {
+      "id": "B05",
+      "result": "PASS",
+      "source_sha256": "afde9a61badcb8abd629b534bb133aab02a6ea5192897a85745980175634793f"
+    },
+    {
+      "id": "B06",
+      "result": "PASS",
+      "source_sha256": "2349705b1a755b0283be467bd29234843a9accd0d9a45897137ed9d1c6378caf"
+    }
+  ],
+  "runtime_verification": "NOT_RUN",
+  "visual_verification": "NOT_RUN",
+  "finished_at": "2026-11-12T12:53:58.159Z"
+}
