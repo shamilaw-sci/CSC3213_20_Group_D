@@ -8,12 +8,11 @@ import api from './api';
 
 /**
  * Fetches all published health content from the backend.
- * Uses the /api/admin/health-content route as defined in app.js.
+ * The public endpoint returns published articles only.
  */
 export const getHealthContent = async () => {
   try {
-    // FIX: Updated URL to match app.js and added status filter
-    const response = await api.get('/api/admin/health-content?status=published');
+    const response = await api.get('/api/admin/health-content');
     return response.data.data || [];
   } catch (error) {
     console.error('Error fetching health content:', error);

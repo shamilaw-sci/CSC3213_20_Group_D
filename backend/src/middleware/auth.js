@@ -23,7 +23,7 @@ const isAuthenticated = async (req, res, next) => {
 
   try {
     const result = await pool.query(
-      `SELECT is_active FROM users WHERE id = $1`,
+      `SELECT is_active, role, verification_status FROM users WHERE id = $1`,
       [req.session.user.id]
     );
 
@@ -34,6 +34,22 @@ const isAuthenticated = async (req, res, next) => {
       return res.status(403).json({
         success: false,
         message: 'Account is deactivated. Please contact admin.'
+      });
+    }
+
+    if (user.verification_status === 'rejected') {
+      req.session.destroy(() => {});
+      return res.status(403).json({
+        success: false,
+        message: 'Account registration was not approved.'
+      });
+    }
+
+    if (user.role !== 'patient' && user.verification_status !== 'approved') {
+      req.session.destroy(() => {});
+      return res.status(403).json({
+        success: false,
+        message: 'Account requires admin approval before access.'
       });
     }
 

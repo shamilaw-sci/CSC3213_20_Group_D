@@ -536,17 +536,15 @@ export default function App() {
             email={
               pendingEmail
             }
-            onVerifySuccess={({
-              user:
-                verifiedUser,
-            }) => {
-              setUser(
-                verifiedUser
-              );
+            onVerifySuccess={({ user: verifiedUser, approvalPending }) => {
+              if (approvalPending) {
+                setPendingEmail('');
+                setAuthScreen('login');
+                return;
+              }
 
-              setActiveTab(
-                'home'
-              );
+              setUser(verifiedUser);
+              setActiveTab('home');
             }}
             onBackToRegister={() =>
               setAuthScreen(

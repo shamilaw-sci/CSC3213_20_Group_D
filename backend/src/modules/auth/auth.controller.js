@@ -177,19 +177,28 @@ const verifyOtpController = async (req, res) => {
     const user = result.user;
     const profile = result.profile;
 
-    // Save user to session
-    req.session.user = {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      profile_id: profile ? profile.id : null,
-      full_name: profile ? profile.full_name : null
-    };
+    const approvalPending = user.role !== 'patient' &&
+      user.verification_status !== 'approved';
+
+    if (!approvalPending) {
+      req.session.user = {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        profile_id: profile ? profile.id : null,
+        full_name: profile ? profile.full_name : null
+      };
+    } else if (req.session) {
+      delete req.session.user;
+    }
 
     return res.status(201).json({
       success: true,
-      message: 'Account verified and created successfully',
+      message: approvalPending
+        ? 'Account verified. Await admin approval before signing in.'
+        : 'Account verified and created successfully',
       data: {
+        approvalPending,
         user: {
           id: user.id,
           email: user.email,

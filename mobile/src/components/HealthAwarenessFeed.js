@@ -300,7 +300,7 @@ const HealthAwarenessFeed = ({
 
           const response =
             await api.get(
-              '/api/admin/health-content?status=published'
+              '/api/admin/health-content'
             );
 
           const data =

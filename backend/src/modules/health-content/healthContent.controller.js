@@ -112,6 +112,24 @@ const getAllContentController = async (req, res) => {
     }
 };
 
+/** Public feed ignores caller-supplied status and never returns drafts. */
+const getPublishedContentController = async (req, res) => {
+    try {
+        const content = await getAllContent('published');
+        return res.status(200).json({
+            success: true,
+            message: 'Content retrieved successfully',
+            data: content
+        });
+    } catch (error) {
+        console.error('getPublishedContentController error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
 /**
  * Handles PUT /api/admin/health-content/:id
  * @param {object} req - Express request
@@ -290,6 +308,7 @@ const deleteContentController = async (req, res) => {
 module.exports = {
     createContentController,
     getAllContentController,
+    getPublishedContentController,
     updateContentController,
     publishContentController,
     deleteContentController

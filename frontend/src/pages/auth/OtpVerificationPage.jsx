@@ -46,8 +46,13 @@ const OtpVerificationPage = () => {
       const data = await response.json();
 
       if (data.success) {
-        alert('Account verified successfully! Please log in.');
-        navigate('/login');
+        navigate('/login', {
+          state: {
+            message: data.data?.approvalPending
+              ? 'Account verified. An admin must approve it before you can sign in.'
+              : 'Account verified. You can sign in now.',
+          },
+        });
       } else {
         setError(data.message || 'Verification failed. Please try again.');
       }

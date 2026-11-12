@@ -3,7 +3,7 @@
  * @module  Auth
  * @desc    Premium mobile OTP verification screen shown after registration.
  *          On successful verification, the account is created and the
- *          authenticated Care4U session begins.
+ *          patient session begins, or a professional awaits approval.
  * @author  I.M.L.S. Idirisinghe (S/21/389)
  */
 
@@ -24,6 +24,7 @@ import {
   Platform,
   ScrollView,
   Image,
+  Alert,
 } from 'react-native';
 
 import {
@@ -162,6 +163,11 @@ export default function OtpVerificationScreen({
       );
 
       if (data.success) {
+        if (data.data?.approvalPending) {
+          Alert.alert('Awaiting approval', 'Account verified. An admin must approve it before you can sign in.');
+          onVerifySuccess(data.data);
+          return;
+        }
         onVerifySuccess(
           data.data
         );

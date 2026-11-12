@@ -539,27 +539,11 @@ const requestConsentAccessOtp =
           request.id
         );
 
-      console.error(
-        `[ConsentAccess] Failed to send OTP to ${patient.email}:`,
-        emailResult.error
-      );
+      console.error('[ConsentAccess] Patient consent code email delivery failed.');
 
       throw createServiceError(
         'Failed to send the patient consent access code',
         502
-      );
-    }
-
-    if (
-      process.env
-        .SHOW_AUTH_CODES_IN_CONSOLE ===
-      'true'
-    ) {
-      console.log(
-        `\n=== CONSENT ACCESS OTP FOR ${patient.email} ===\n` +
-        `${otpCode}\n` +
-        `(Expires at ${expiresAt.toISOString()})\n` +
-        `===============================================\n`
       );
     }
 

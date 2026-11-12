@@ -7,12 +7,14 @@
 import { API_BASE_URL } from '../../services/api';
 
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import Input  from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import Alert  from '../../components/common/Alert';
 import Card   from '../../components/common/Card';
 
 const LoginPage = () => {
+  const location = useLocation();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -104,6 +106,12 @@ const LoginPage = () => {
         {/* Login Card */}
         <Card>
           <h2 className="text-xl font-bold text-foreground mb-6">Sign in to your account</h2>
+
+          {location.state?.message && (
+            <div className="mb-6">
+              <Alert type="success" message={location.state.message} />
+            </div>
+          )}
 
           {/* Server Error */}
           {serverError && (

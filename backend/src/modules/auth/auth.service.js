@@ -60,20 +60,8 @@ const register = async (email, phone, password, role, profileData) => {
     const emailResult = await sendOtpEmail(email, otpCode);
 
     if (!emailResult.success) {
-        console.error(`[OTP] Failed to email ${email}:`, emailResult.error);
+        console.error('[OTP] Registration verification email delivery failed.');
         throw new Error('Failed to send OTP email');
-    }
-
-    // Optional development-only logging.
-    // Controlled separately from NODE_ENV so session/cookie settings
-    // are not affected just to hide OTP codes.
-    if (process.env.SHOW_AUTH_CODES_IN_CONSOLE === 'true') {
-        console.log(
-            `\n=== OTP CODE FOR ${email} ===\n` +
-            `${otpCode}\n` +
-            `(Expires at ${otpExpiresAt.toISOString()})\n` +
-            `=========================================\n`
-        );
     }
 
     return { email, otpExpiresAt };
@@ -103,18 +91,8 @@ const resendOtp = async (email) => {
     const emailResult = await sendOtpEmail(email, otpCode);
 
     if (!emailResult.success) {
-        console.error(`[OTP] Failed to email ${email}:`, emailResult.error);
+        console.error('[OTP] Resent verification email delivery failed.');
         throw new Error('Failed to send OTP email');
-    }
-
-    // Optional development-only logging
-    if (process.env.SHOW_AUTH_CODES_IN_CONSOLE === 'true') {
-        console.log(
-            `\n=== RESENT OTP CODE FOR ${email} ===\n` +
-            `${otpCode}\n` +
-            `(Expires at ${otpExpiresAt.toISOString()})\n` +
-            `=========================================\n`
-        );
     }
 
     return { email, otpExpiresAt };
@@ -243,12 +221,12 @@ const login = async (email, password) => {
         );
     }
 
-    if (user.verification_status === 'pending') {
-        throw new Error('Account pending admin approval');
-    }
-
     if (user.verification_status === 'rejected') {
         throw new Error('Account registration was not approved');
+    }
+
+    if (user.role !== 'patient' && user.verification_status !== 'approved') {
+        throw new Error('Account pending admin approval');
     }
 
     const isMatch = await bcrypt.compare(
@@ -299,19 +277,7 @@ const forgotPassword = async (email) => {
     );
 
     if (!emailResult.success) {
-        console.error(
-            `[PasswordReset] Failed to email ${email}:`,
-            emailResult.error
-        );
-    }
-
-    // Optional development-only logging
-    if (process.env.SHOW_AUTH_CODES_IN_CONSOLE === 'true') {
-        console.log(
-            `\n=== PASSWORD RESET TOKEN FOR ${email} ===\n` +
-            `${token}\n` +
-            `=========================================\n`
-        );
+        console.error('[PasswordReset] Reset email delivery failed.');
     }
 
     return {

@@ -140,7 +140,7 @@ const AdminHealthContentPage = () => {
 
       const res =
         await fetch(
-          `${API_URL}/api/admin/health-content?${params.toString()}`,
+          `${API_URL}/api/admin/health-content/admin?${params.toString()}`,
           {
             credentials: 'include',
           }

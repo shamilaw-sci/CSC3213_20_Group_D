@@ -2,8 +2,8 @@
  * @file healthContent.routes.js
  * @module healthContent
  * @desc Route definitions for admin health content management.
- *       Modifying routes require an authenticated user with the 'admin' role.
- *       Fetching content is public for the Patient Dashboard feed.
+ *       Admin listing and mutations require an authenticated admin.
+ *       The public feed returns published content only.
  */
 
 const express = require('express');
@@ -21,6 +21,7 @@ const {
 const {
     createContentController,
     getAllContentController,
+    getPublishedContentController,
     updateContentController,
     publishContentController,
     deleteContentController
@@ -57,10 +58,12 @@ router.delete(
     deleteContentController
 );
 
-// Public route so the Patient Dashboard can fetch the articles
+router.get('/admin', isAuthenticated, authorize('admin'), getAllContentController);
+
+// Public feed: query parameters cannot select drafts.
 router.get(
     '/',
-    getAllContentController
+    getPublishedContentController
 );
 
 module.exports = router;

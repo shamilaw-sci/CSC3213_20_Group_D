@@ -19,6 +19,7 @@ const {
 } = require('./auth.controller');
 
 const rateLimit = require('express-rate-limit');
+const { isAuthenticated } = require('../../middleware/auth');
 
 // Limits login attempts per IP, independent of the per-account lockout
 // in login() itself - this protects against distributing guesses
@@ -50,7 +51,7 @@ router.post('/login', loginRateLimiter, loginController);
 router.post('/logout', logoutController);
 
 // GET /api/auth/me
-router.get('/me', getMeController);
+router.get('/me', isAuthenticated, getMeController);
 
 // POST /api/auth/forgot-password
 router.post('/forgot-password', forgotPasswordController);
