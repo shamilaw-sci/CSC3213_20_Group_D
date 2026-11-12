@@ -410,13 +410,14 @@ const savePasswordResetToken = async (
  * @param {string} token
  * @returns {Promise<object|null>}
  */
-const getValidPasswordResetToken = async (token) => {
-    const result = await pool.query(
+const getValidPasswordResetToken = async (token, db = pool) => {
+    const result = await db.query(
         `SELECT *
          FROM password_reset_tokens
          WHERE token = $1
            AND used = false
-           AND expires_at > CURRENT_TIMESTAMP`,
+           AND expires_at > CURRENT_TIMESTAMP
+         FOR UPDATE`,
         [token]
     );
 
@@ -427,13 +428,16 @@ const getValidPasswordResetToken = async (token) => {
  * Marks a password reset token as used.
  * @param {string} token
  */
-const markTokenAsUsed = async (token) => {
-    await pool.query(
+const markTokenAsUsed = async (token, db = pool) => {
+    const result = await db.query(
         `UPDATE password_reset_tokens
          SET used = true
-         WHERE token = $1`,
+         WHERE token = $1 AND used = false
+           AND expires_at > CURRENT_TIMESTAMP
+         RETURNING token`,
         [token]
     );
+    return result.rows[0] || null;
 };
 
 /**
@@ -443,9 +447,10 @@ const markTokenAsUsed = async (token) => {
  */
 const updateUserPassword = async (
     userId,
-    newPasswordHash
+    newPasswordHash,
+    db = pool
 ) => {
-    await pool.query(
+    await db.query(
         `UPDATE users
          SET password_hash = $2
          WHERE id = $1`,
@@ -526,11 +531,12 @@ const upsertOtpVerification = async (
  * @param {string} email - Email to search for
  * @returns {Promise<object|null>} otp_verifications row or null
  */
-const findOtpByEmail = async (email) => {
-    const result = await pool.query(
+const findOtpByEmail = async (email, db = pool) => {
+    const result = await db.query(
         `SELECT *
          FROM otp_verifications
-         WHERE email = $1`,
+         WHERE email = $1
+         ${db === pool ? '' : 'FOR UPDATE'}`,
         [email]
     );
 

@@ -110,7 +110,13 @@ if (isProduction && allowedOrigins.length === 0) {
   throw new Error('CORS_ALLOWED_ORIGINS or CLIENT_URL is required in production');
 }
 
-const sessionMaxAge = parseInt(process.env.SESSION_MAX_AGE_MS, 10) || (1000 * 60 * 60 * 24);
+const sessionMaxAge = process.env.SESSION_MAX_AGE_MS
+  ? Number(process.env.SESSION_MAX_AGE_MS)
+  : 1000 * 60 * 60 * 24;
+
+if (!Number.isSafeInteger(sessionMaxAge) || sessionMaxAge <= 0) {
+  throw new Error('SESSION_MAX_AGE_MS must be a positive integer');
+}
 
 app.use(session({
 

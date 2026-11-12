@@ -5,12 +5,14 @@
  * @author  I.M.L.S. Idirisinghe (S/21/389)
  */
 
+const crypto = require('crypto');
+
 /**
  * Generates a random 6-digit numeric OTP code.
- * @returns {string} 6-digit OTP as a string (e.g. "042917")
+ * @returns {string} Six-digit OTP from a cryptographic random source.
  */
 const generateOtp = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+    return crypto.randomInt(100000, 1000000).toString();
 };
 
 /**

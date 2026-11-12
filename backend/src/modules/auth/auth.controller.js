@@ -22,17 +22,53 @@ const laboratoryRepository = require('../laboratory/laboratory.repository');
 const hospitalRepository = require('../hospital/hospital.repository');
 
 /**
+ * Rotate the anonymous session ID, assign the identity, then confirm persistence.
+ * Failed persistence removes the in-memory identity and attempts destruction.
+ * @param {Object} req - Request with express-session middleware installed.
+ * @param {Object} user - Public identity fields only; never a password hash.
+ * @returns {Promise<void>} Resolves only after the session store acknowledges save.
+ */
+const saveAuthenticatedSession = async (req, user) => {
+  try {
+    await new Promise((resolve, reject) => {
+      req.session.regenerate((error) => error ? reject(error) : resolve());
+    });
+    req.session.user = user;
+      await new Promise((resolve, reject) => {
+        req.session.save((error) => error ? reject(error) : resolve());
+      });
+  } catch (error) {
+    if (req.session) {
+      delete req.session.user;
+      req.session.destroy(() => {});
+    }
+    throw error;
+  }
+};
+
+/**
+ * Validate required JSON string fields before calling database/hash providers.
+ * @param {*} value - Untrusted request-body field.
+ * @returns {boolean} Whether it is a nonempty string (passwords are not trimmed).
+ */
+const isNonemptyString = (value) => typeof value === 'string' && value.trim().length > 0;
+
+/**
  * Handles POST /api/auth/register
  */
 const registerController = async (req, res) => {
   try {
-    const { email, phone, password, role, profileData } = req.body;
+    const { email, phone, password, role, profileData } = req.body || {};
 
-    if (!email || !phone || !password || !role) {
+    if (![email, phone, password, role].every(isNonemptyString)) {
       return res.status(400).json({
         success: false,
         message: 'Email, phone, password and role are required'
       });
+    }
+
+    if (profileData !== undefined && (profileData === null || typeof profileData !== 'object' || Array.isArray(profileData))) {
+      return res.status(400).json({ success: false, message: 'Profile data must be an object' });
     }
 
     if (
@@ -69,7 +105,7 @@ const registerController = async (req, res) => {
     return res.status(200).json({
       success: true,
       message:
-        'OTP sent to your registered contact. Please verify to complete registration.',
+        'Verification code sent by email. Enter it to complete registration.',
       data: {
         email: result.email,
         otpExpiresAt: result.otpExpiresAt
@@ -77,7 +113,7 @@ const registerController = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('registerController error:', error);
+    console.error('registerController error:', error.code || error.name);
 
     if (error.message === 'Email already registered') {
       return res.status(400).json({
@@ -113,9 +149,9 @@ const registerController = async (req, res) => {
  */
 const resendOtpController = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email } = req.body || {};
 
-    if (!email) {
+    if (!isNonemptyString(email)) {
       return res.status(400).json({
         success: false,
         message: 'Email is required'
@@ -134,7 +170,7 @@ const resendOtpController = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('resendOtpController error:', error);
+    console.error('resendOtpController error:', error.code || error.name);
 
     if (error.message === 'No pending registration found for this email') {
       return res.status(404).json({
@@ -163,12 +199,12 @@ const resendOtpController = async (req, res) => {
  */
 const verifyOtpController = async (req, res) => {
   try {
-    const { email, otpCode } = req.body;
+    const { email, otpCode } = req.body || {};
 
-    if (!email || !otpCode) {
+    if (!isNonemptyString(email) || typeof otpCode !== 'string' || !/^\d{6}$/.test(otpCode)) {
       return res.status(400).json({
         success: false,
-        message: 'Email and OTP code are required'
+        message: 'Email and a 6-digit verification code are required'
       });
     }
 
@@ -181,13 +217,13 @@ const verifyOtpController = async (req, res) => {
       user.verification_status !== 'approved';
 
     if (!approvalPending) {
-      req.session.user = {
+      await saveAuthenticatedSession(req, {
         id: user.id,
         email: user.email,
         role: user.role,
         profile_id: profile ? profile.id : null,
         full_name: profile ? profile.full_name : null
-      };
+      });
     } else if (req.session) {
       delete req.session.user;
     }
@@ -211,7 +247,7 @@ const verifyOtpController = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('verifyOtpController error:', error);
+    console.error('verifyOtpController error:', error.code || error.name);
 
     if (error.message === 'No pending registration found for this email') {
       return res.status(404).json({
@@ -250,9 +286,9 @@ const verifyOtpController = async (req, res) => {
  */
 const loginController = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body || {};
 
-    if (!email || !password) {
+    if (!isNonemptyString(email) || !isNonemptyString(password)) {
       return res.status(400).json({
         success: false,
         message: 'Email and password are required'
@@ -312,35 +348,22 @@ const loginController = async (req, res) => {
       }
     }
 
-    // Save user to session
-    req.session.user = {
+    await saveAuthenticatedSession(req, {
       id: user.id,
       email: user.email,
       role: user.role,
       profile_id: profileId,
       full_name: fullName
-    };
-
-    // Explicitly save session before responding
-    req.session.save((err) => {
-      if (err) {
-        console.error('Session save error:', err);
-
-        return res.status(500).json({
-          success: false,
-          message: 'Session save failed'
-        });
-      }
+    });
 
       return res.status(200).json({
         success: true,
         message: 'Login successful',
         data: req.session.user
       });
-    });
 
   } catch (error) {
-    console.error('loginController error:', error);
+    console.error('loginController error:', error.code || error.name);
 
     if (error.message === 'Invalid email or password') {
       return res.status(401).json({
@@ -370,7 +393,7 @@ const loginController = async (req, res) => {
       });
     }
 
-    if (error.message.startsWith('Too many failed attempts')) {
+    if (error.message?.startsWith('Too many failed attempts')) {
       return res.status(429).json({
         success: false,
         message: error.message
@@ -389,6 +412,10 @@ const loginController = async (req, res) => {
  * Handles POST /api/auth/logout
  */
 const logoutController = (req, res) => {
+  if (!req.session) {
+    res.clearCookie('connect.sid');
+    return res.status(200).json({ success: true, message: 'Logged out successfully' });
+  }
   req.session.destroy((err) => {
     if (err) {
       return res.status(500).json({
@@ -431,9 +458,9 @@ const getMeController = (req, res) => {
  */
 const forgotPasswordController = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email } = req.body || {};
 
-    if (!email) {
+    if (!isNonemptyString(email)) {
       return res.status(400).json({
         success: false,
         message: 'Email is required'
@@ -448,7 +475,7 @@ const forgotPasswordController = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('forgotPasswordController error:', error);
+    console.error('forgotPasswordController error:', error.code || error.name);
 
     return res.status(500).json({
       success: false,
@@ -463,9 +490,9 @@ const forgotPasswordController = async (req, res) => {
  */
 const resetPasswordController = async (req, res) => {
   try {
-    const { token, newPassword } = req.body;
+    const { token, newPassword } = req.body || {};
 
-    if (!token || !newPassword) {
+    if (typeof token !== 'string' || !/^[a-f0-9]{64}$/.test(token) || !isNonemptyString(newPassword)) {
       return res.status(400).json({
         success: false,
         message: 'Token and new password are required'
@@ -487,7 +514,7 @@ const resetPasswordController = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('resetPasswordController error:', error);
+    console.error('resetPasswordController error:', error.code || error.name);
 
     if (error.message === 'Invalid or expired password reset token') {
       return res.status(400).json({

@@ -14,7 +14,7 @@ const { pool } = require('../config/db');
  * @param {Function} next - Next middleware
  */
 const isAuthenticated = async (req, res, next) => {
-  if (!req.session || !req.session.user) {
+  if (!req.session?.user?.id) {
     return res.status(401).json({
       success: false,
       message: 'Not authenticated. Please log in.'
@@ -28,6 +28,15 @@ const isAuthenticated = async (req, res, next) => {
     );
 
     const user = result.rows[0];
+
+    if (user && user.role !== req.session.user.role) {
+      delete req.session.user;
+      req.session.destroy(() => {});
+      return res.status(401).json({
+        success: false,
+        message: 'Account permissions changed. Please sign in again.'
+      });
+    }
 
     if (!user || !user.is_active) {
       req.session.destroy(() => {});
@@ -72,6 +81,9 @@ const isAuthenticated = async (req, res, next) => {
  */
 const authorize = (...roles) => {
   return (req, res, next) => {
+    if (!req.session?.user) {
+      return res.status(401).json({ success: false, message: 'Not authenticated. Please log in.' });
+    }
     if (!roles.includes(req.session.user.role)) {
       return res.status(403).json({
         success: false,

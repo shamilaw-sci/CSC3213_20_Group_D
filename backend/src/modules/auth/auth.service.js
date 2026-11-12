@@ -100,21 +100,22 @@ const resendOtp = async (email) => {
 
 
 const verifyOtp = async (email, otpCode) => {
-    const pending = await findOtpByEmail(email);
-
-    if (!pending) {
-        throw new Error('No pending registration found for this email');
-    }
-
-    if (pending.otp_code !== otpCode) {
-        throw new Error('Invalid OTP');
-    }
-
-    if (new Date(pending.otp_expires_at) < new Date()) {
-        throw new Error('OTP has expired');
-    }
-
     const result = await withTransaction(async (db) => {
+        const pending = await findOtpByEmail(email, db);
+
+        if (!pending) {
+            throw new Error('No pending registration found for this email');
+        }
+
+        if (pending.otp_code !== otpCode) {
+            throw new Error('Invalid OTP');
+        }
+
+        const expiresAt = new Date(pending.otp_expires_at).getTime();
+        if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
+            throw new Error('OTP has expired');
+        }
+
         const user = await createUser(
             pending.email,
             pending.phone,
@@ -203,10 +204,6 @@ const login = async (email, password) => {
         throw new Error('Invalid email or password');
     }
 
-    if (!user.is_active) {
-        throw new Error('Account is deactivated. Please contact admin.');
-    }
-
     if (
         user.locked_until &&
         new Date(user.locked_until) > new Date()
@@ -219,14 +216,6 @@ const login = async (email, password) => {
             `Too many failed attempts. Try again in ${minutesRemaining} ` +
             `minute${minutesRemaining === 1 ? '' : 's'}.`
         );
-    }
-
-    if (user.verification_status === 'rejected') {
-        throw new Error('Account registration was not approved');
-    }
-
-    if (user.role !== 'patient' && user.verification_status !== 'approved') {
-        throw new Error('Account pending admin approval');
     }
 
     const isMatch = await bcrypt.compare(
@@ -242,6 +231,16 @@ const login = async (email, password) => {
         );
 
         throw new Error('Invalid email or password');
+    }
+
+    if (!user.is_active) {
+        throw new Error('Account is deactivated. Please contact admin.');
+    }
+    if (user.verification_status === 'rejected') {
+        throw new Error('Account registration was not approved');
+    }
+    if (user.role !== 'patient' && user.verification_status !== 'approved') {
+        throw new Error('Account pending admin approval');
     }
 
     await resetFailedLoginAttempts(user.id);
@@ -271,12 +270,12 @@ const forgotPassword = async (email) => {
         expiresAt
     );
 
-    const emailResult = await sendPasswordResetEmail(
-        email,
-        token
-    );
-
-    if (!emailResult.success) {
+    try {
+        const emailResult = await sendPasswordResetEmail(email, token);
+        if (!emailResult.success) {
+            console.error('[PasswordReset] Reset email delivery failed.');
+        }
+    } catch {
         console.error('[PasswordReset] Reset email delivery failed.');
     }
 
@@ -288,25 +287,31 @@ const forgotPassword = async (email) => {
 
 
 const resetPassword = async (token, newPassword) => {
-    const tokenRecord = await getValidPasswordResetToken(token);
+    await withTransaction(async (db) => {
+        const tokenRecord = await getValidPasswordResetToken(token, db);
 
-    if (!tokenRecord) {
-        throw new Error(
-            'Invalid or expired password reset token'
+        if (!tokenRecord) {
+            throw new Error(
+                'Invalid or expired password reset token'
+            );
+        }
+
+        const passwordHash = await bcrypt.hash(
+            newPassword,
+            12
         );
-    }
 
-    const passwordHash = await bcrypt.hash(
-        newPassword,
-        12
-    );
+        await updateUserPassword(
+            tokenRecord.user_id,
+            passwordHash,
+            db
+        );
 
-    await updateUserPassword(
-        tokenRecord.user_id,
-        passwordHash
-    );
-
-    await markTokenAsUsed(token);
+        const consumed = await markTokenAsUsed(token, db);
+        if (!consumed) {
+            throw new Error('Invalid or expired password reset token');
+        }
+    });
 };
 
 
