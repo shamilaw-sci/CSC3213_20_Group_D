@@ -1,5 +1,5 @@
 {
-  "verified_at": "2026-11-12T12:55:46.867270+00:00",
+  "verified_at": "2026-11-12T12:57:04.966708+00:00",
   "source_checkpoint": "a609f07",
   "tooling_commit": "43f0748",
   "original_head": "eeacffb0100288c7b89f5bddc33ffc917d6970b0",
@@ -8,7 +8,7 @@
   "stage1_evidence_checked": 13,
   "stage1_evidence_changed": [],
   "original_tracker_rows_preserved": 283,
-  "static_run_id": "2026-11-12T12-53-47-100Z-b3655841-4000-44f0-aaf1-862d382ec60e",
+  "static_run_id": "2026-11-12T12-56-35-709Z-e7d5f0cb-1429-4f4f-a973-da93d320cdc1",
   "static_results": {
     "B01": "PASS",
     "B02": "PASS",
@@ -30,5 +30,7 @@
   "tracker_rows": 340,
   "missing_tracker_paths": [],
   "untracked_review_deliverables": 0,
-  "application_rows_marked_reviewed": 0
+  "application_rows_marked_reviewed": 0,
+  "publication_status": "Push blocked by automatic approval review before process creation; explicit destination approval required",
+  "remote_destination": "https://github.com/shamilaw-sci/CSC3213_20_Group_D.git"
 }

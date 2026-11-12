@@ -12,6 +12,8 @@ The immutable Stage 1 snapshot remains `evidence/initial-state.json`. The inheri
 
 Next bounded batch: isolated auth/approval/session/patient-ownership policy fixtures and source-linked viva documentation. Full DB/schema and browser/device tests remain blocked by unverified prerequisites. No broad application refactor starts automatically.
 
+Publication status: **local commits only; push blocked**. Automatic approval review rejected the attempted push of this review branch to `https://github.com/shamilaw-sci/CSC3213_20_Group_D.git`, stating that the destination was not established as trusted for exporting private source/review artifacts and that this specific egress lacked explicit approval. No push process ran and no workaround was attempted. Obtain the user's explicit approval for this branch and destination before retrying; do not push develop/main. The review branch has no upstream yet.
+
 ## Documentation structure
 
 The existing `docs/` convention is retained. These files establish the proposed structure for subsequent review stages:

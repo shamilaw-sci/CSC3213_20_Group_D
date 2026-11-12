@@ -2,7 +2,7 @@
   "id": "B05",
   "kind": "whitespace",
   "required": true,
-  "run_id": "2026-11-12T12-53-47-100Z-b3655841-4000-44f0-aaf1-862d382ec60e",
+  "run_id": "2026-11-12T12-56-35-709Z-e7d5f0cb-1429-4f4f-a973-da93d320cdc1",
   "command": [
     "git",
     "-c",
@@ -14,8 +14,8 @@
   "cwd": ".",
   "result": "PASS",
   "source_snapshot": {
-    "head": "43f07480c36638245d74c32138ac9ddf4b7c944a",
-    "sha256": "afde9a61badcb8abd629b534bb133aab02a6ea5192897a85745980175634793f",
+    "head": "74384bcceead2e0b18c2f9401b8a2aa5550a4607",
+    "sha256": "d3e7dab52ec84981c8e137b10d843590e805cbaf35dbb5d59bbcdf027962518f",
     "files": [
       {
         "path": ".gitignore",
@@ -455,11 +455,11 @@
       },
       {
         "path": "docs/review/PROGRESS.md",
-        "sha256": "50ddba7c8ce2cf9d83907c6c8a93a03187c207b778a39d28196f41db716cd33b"
+        "sha256": "f3679b23cb410a83eb43f225612a40eabd9aa37354617123d6c797ee15a8c0d3"
       },
       {
         "path": "docs/review/STAGE1B.md",
-        "sha256": "b502239aed4156d45d95d5c7e461630e1a267cde2b4770baeb99c6c196b95473"
+        "sha256": "42815146700af5a4302408150cabd9acb3bb013b09cf998787756d0b076f5583"
       },
       {
         "path": "docs/review/TOOLING.md",
@@ -1236,8 +1236,8 @@
     ]
   },
   "limitations": "Combined tracked staged/unstaged whitespace only; not a behavior test",
-  "started_at": "2026-11-12T12:53:57.532Z",
-  "finished_at": "2026-11-12T12:53:57.842Z",
+  "started_at": "2026-11-12T12:56:46.078Z",
+  "finished_at": "2026-11-12T12:56:46.452Z",
   "exit_code": 0,
   "error_code": null,
   "details": {},
