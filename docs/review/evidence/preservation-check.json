@@ -1,0 +1,18 @@
+{
+  "date": "2026-11-12",
+  "original_files_checked": 290,
+  "original_files_changed": [],
+  "head_unchanged": true,
+  "branch_unchanged": true,
+  "index_still_clean": true,
+  "unstaged_path_set_unchanged": true,
+  "new_files_outside_review_docs": [],
+  "tracked_coverage": {
+    "tracked_paths": 283,
+    "tracker_rows": 283,
+    "unique_tracker_paths": 283,
+    "missing": [],
+    "extra": [],
+    "missing_required_columns": []
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "result": "PASS",
+  "env_files_loaded": false,
+  "api_origin": "https://api.example.test",
+  "write": false,
+  "artifacts": [
+    {
+      "file": "assets/index-ZmaBE6Dk.js",
+      "kind": "chunk",
+      "bytes": 1654658
+    },
+    {
+      "file": "assets/index-A8Nm6qMW.css",
+      "kind": "asset",
+      "bytes": 135160
+    },
+    {
+      "file": "index.html",
+      "kind": "asset",
+      "bytes": 460
+    }
+  ]
+}

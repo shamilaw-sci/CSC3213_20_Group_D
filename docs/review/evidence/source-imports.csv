@@ -1,0 +1,914 @@
+from_path,import_specifier,resolved_path
+backend/app.js,./src/config/db,backend/src/config/db.js
+backend/app.js,./src/modules/admin/admin.routes,backend/src/modules/admin/admin.routes.js
+backend/app.js,./src/modules/appointment/appointment.routes,backend/src/modules/appointment/appointment.routes.js
+backend/app.js,./src/modules/auth/auth.routes,backend/src/modules/auth/auth.routes.js
+backend/app.js,./src/modules/doctor/doctor.routes,backend/src/modules/doctor/doctor.routes.js
+backend/app.js,./src/modules/emergency/emergency.routes,backend/src/modules/emergency/emergency.routes.js
+backend/app.js,./src/modules/health-content/healthContent.routes,backend/src/modules/health-content/healthContent.routes.js
+backend/app.js,./src/modules/hospital/hospital.routes,backend/src/modules/hospital/hospital.routes.js
+backend/app.js,./src/modules/interaction/interaction.routes,backend/src/modules/interaction/interaction.routes.js
+backend/app.js,./src/modules/laboratory/laboratory.routes,backend/src/modules/laboratory/laboratory.routes.js
+backend/app.js,./src/modules/order/order.routes,backend/src/modules/order/order.routes.js
+backend/app.js,./src/modules/patient/patient.routes,backend/src/modules/patient/patient.routes.js
+backend/app.js,./src/modules/payment/payment.routes,backend/src/modules/payment/payment.routes.js
+backend/app.js,./src/modules/pharmacy/pharmacy.routes,backend/src/modules/pharmacy/pharmacy.routes.js
+backend/app.js,./src/modules/prescription/prescription.routes,backend/src/modules/prescription/prescription.routes.js
+backend/app.js,connect-pg-simple,external package / built-in
+backend/app.js,cors,external package / built-in
+backend/app.js,dotenv,external package / built-in
+backend/app.js,express,external package / built-in
+backend/app.js,express-session,external package / built-in
+backend/app.js,helmet,external package / built-in
+backend/app.js,morgan,external package / built-in
+backend/scripts/check-syntax.js,child_process,external package / built-in
+backend/scripts/check-syntax.js,fs,external package / built-in
+backend/scripts/check-syntax.js,path,external package / built-in
+backend/server.js,./app,backend/app.js
+backend/server.js,./src/utils/expiryJob,backend/src/utils/expiryJob.js
+backend/server.js,./src/utils/reminderJob,backend/src/utils/reminderJob.js
+backend/server.js,dotenv,external package / built-in
+backend/src/config/db.js,dotenv,external package / built-in
+backend/src/config/db.js,pg,external package / built-in
+backend/src/config/supabase.js,@supabase/supabase-js,external package / built-in
+backend/src/config/supabase.js,ws,external package / built-in
+backend/src/middleware/auditLog.js,../config/db,backend/src/config/db.js
+backend/src/middleware/auth.js,../config/db,backend/src/config/db.js
+backend/src/middleware/patientAccess.js,../modules/appointment/appointment.repository,backend/src/modules/appointment/appointment.repository.js
+backend/src/middleware/upload.js,multer,external package / built-in
+backend/src/modules/admin/admin.controller.js,./admin.service,backend/src/modules/admin/admin.service.js
+backend/src/modules/admin/admin.repository.js,../../config/db,backend/src/config/db.js
+backend/src/modules/admin/admin.routes.js,../../middleware/auth,backend/src/middleware/auth.js
+backend/src/modules/admin/admin.routes.js,./admin.controller,backend/src/modules/admin/admin.controller.js
+backend/src/modules/admin/admin.routes.js,express,external package / built-in
+backend/src/modules/admin/admin.service.js,../../config/db,backend/src/config/db.js
+backend/src/modules/admin/admin.service.js,../../utils/email,backend/src/utils/email.js
+backend/src/modules/admin/admin.service.js,../../utils/qr,backend/src/utils/qr.js
+backend/src/modules/admin/admin.service.js,./admin.repository,backend/src/modules/admin/admin.repository.js
+backend/src/modules/appointment/appointment.controller.js,../../middleware/auditLog,backend/src/middleware/auditLog.js
+backend/src/modules/appointment/appointment.controller.js,../../utils/ai.util,backend/src/utils/ai.util.js
+backend/src/modules/appointment/appointment.controller.js,../../utils/email,backend/src/utils/email.js
+backend/src/modules/appointment/appointment.controller.js,../doctor/doctor.repository,backend/src/modules/doctor/doctor.repository.js
+backend/src/modules/appointment/appointment.controller.js,../patient/patient.repository,backend/src/modules/patient/patient.repository.js
+backend/src/modules/appointment/appointment.controller.js,../patient/patient.service,backend/src/modules/patient/patient.service.js
+backend/src/modules/appointment/appointment.controller.js,./appointment.repository,backend/src/modules/appointment/appointment.repository.js
+backend/src/modules/appointment/appointment.repository.js,../../config/db,backend/src/config/db.js
+backend/src/modules/appointment/appointment.repository.js,../doctor/doctor.repository,backend/src/modules/doctor/doctor.repository.js
+backend/src/modules/appointment/appointment.routes.js,../../middleware/auditLog,backend/src/middleware/auditLog.js
+backend/src/modules/appointment/appointment.routes.js,../../middleware/auth,backend/src/middleware/auth.js
+backend/src/modules/appointment/appointment.routes.js,./appointment.controller,backend/src/modules/appointment/appointment.controller.js
+backend/src/modules/appointment/appointment.routes.js,express,external package / built-in
+backend/src/modules/auth/auth.controller.js,../doctor/doctor.repository,backend/src/modules/doctor/doctor.repository.js
+backend/src/modules/auth/auth.controller.js,../hospital/hospital.repository,backend/src/modules/hospital/hospital.repository.js
+backend/src/modules/auth/auth.controller.js,../laboratory/laboratory.repository,backend/src/modules/laboratory/laboratory.repository.js
+backend/src/modules/auth/auth.controller.js,../patient/patient.repository,backend/src/modules/patient/patient.repository.js
+backend/src/modules/auth/auth.controller.js,../pharmacy/pharmacy.repository,backend/src/modules/pharmacy/pharmacy.repository.js
+backend/src/modules/auth/auth.controller.js,./auth.service,backend/src/modules/auth/auth.service.js
+backend/src/modules/auth/auth.repository.js,../../config/db,backend/src/config/db.js
+backend/src/modules/auth/auth.routes.js,../../middleware/auth,backend/src/middleware/auth.js
+backend/src/modules/auth/auth.routes.js,./auth.controller,backend/src/modules/auth/auth.controller.js
+backend/src/modules/auth/auth.routes.js,express,external package / built-in
+backend/src/modules/auth/auth.routes.js,express-rate-limit,external package / built-in
+backend/src/modules/auth/auth.service.js,../../utils/email,backend/src/utils/email.js
+backend/src/modules/auth/auth.service.js,../../utils/otp,backend/src/utils/otp.js
+backend/src/modules/auth/auth.service.js,../../utils/qr,backend/src/utils/qr.js
+backend/src/modules/auth/auth.service.js,./auth.repository,backend/src/modules/auth/auth.repository.js
+backend/src/modules/auth/auth.service.js,bcryptjs,external package / built-in
+backend/src/modules/auth/auth.service.js,crypto,external package / built-in
+backend/src/modules/doctor/doctor.controller.js,./doctor.service,backend/src/modules/doctor/doctor.service.js
+backend/src/modules/doctor/doctor.repository.js,../../config/db,backend/src/config/db.js
+backend/src/modules/doctor/doctor.routes.js,../../middleware/auditLog,backend/src/middleware/auditLog.js
+backend/src/modules/doctor/doctor.routes.js,../../middleware/auth,backend/src/middleware/auth.js
+backend/src/modules/doctor/doctor.routes.js,../../middleware/upload,backend/src/middleware/upload.js
+backend/src/modules/doctor/doctor.routes.js,./doctor.controller,backend/src/modules/doctor/doctor.controller.js
+backend/src/modules/doctor/doctor.routes.js,express,external package / built-in
+backend/src/modules/doctor/doctor.service.js,../../config/supabase,backend/src/config/supabase.js
+backend/src/modules/doctor/doctor.service.js,../appointment/appointment.repository,backend/src/modules/appointment/appointment.repository.js
+backend/src/modules/doctor/doctor.service.js,./doctor.repository,backend/src/modules/doctor/doctor.repository.js
+backend/src/modules/emergency/emergency.controller.js,./emergency.service,backend/src/modules/emergency/emergency.service.js
+backend/src/modules/emergency/emergency.repository.js,../../config/db,backend/src/config/db.js
+backend/src/modules/emergency/emergency.routes.js,../../middleware/auth,backend/src/middleware/auth.js
+backend/src/modules/emergency/emergency.routes.js,./emergency.controller,backend/src/modules/emergency/emergency.controller.js
+backend/src/modules/emergency/emergency.routes.js,express,external package / built-in
+backend/src/modules/emergency/emergency.service.js,../../utils/email,backend/src/utils/email.js
+backend/src/modules/emergency/emergency.service.js,../../utils/sms.util,backend/src/utils/sms.util.js
+backend/src/modules/emergency/emergency.service.js,./emergency.repository,backend/src/modules/emergency/emergency.repository.js
+backend/src/modules/health-content/healthContent.controller.js,./healthContent.service,backend/src/modules/health-content/healthContent.service.js
+backend/src/modules/health-content/healthContent.repository.js,../../config/db,backend/src/config/db.js
+backend/src/modules/health-content/healthContent.routes.js,../../middleware/auth,backend/src/middleware/auth.js
+backend/src/modules/health-content/healthContent.routes.js,../../middleware/upload,backend/src/middleware/upload.js
+backend/src/modules/health-content/healthContent.routes.js,./healthContent.controller,backend/src/modules/health-content/healthContent.controller.js
+backend/src/modules/health-content/healthContent.routes.js,express,external package / built-in
+backend/src/modules/health-content/healthContent.service.js,../../config/supabase,backend/src/config/supabase.js
+backend/src/modules/health-content/healthContent.service.js,./healthContent.repository,backend/src/modules/health-content/healthContent.repository.js
+backend/src/modules/hospital/hospital.controller.js,./hospital.service,backend/src/modules/hospital/hospital.service.js
+backend/src/modules/hospital/hospital.repository.js,../../config/db,backend/src/config/db.js
+backend/src/modules/hospital/hospital.routes.js,../../middleware/auth,backend/src/middleware/auth.js
+backend/src/modules/hospital/hospital.routes.js,./hospital.controller,backend/src/modules/hospital/hospital.controller.js
+backend/src/modules/hospital/hospital.routes.js,express,external package / built-in
+backend/src/modules/hospital/hospital.service.js,../../utils/qr,backend/src/utils/qr.js
+backend/src/modules/hospital/hospital.service.js,../appointment/appointment.repository,backend/src/modules/appointment/appointment.repository.js
+backend/src/modules/hospital/hospital.service.js,./hospital.repository,backend/src/modules/hospital/hospital.repository.js
+backend/src/modules/interaction/interaction.controller.js,../../middleware/auditLog,backend/src/middleware/auditLog.js
+backend/src/modules/interaction/interaction.controller.js,./interaction.service,backend/src/modules/interaction/interaction.service.js
+backend/src/modules/interaction/interaction.repository.js,../../config/db,backend/src/config/db.js
+backend/src/modules/interaction/interaction.routes.js,../../middleware/auth,backend/src/middleware/auth.js
+backend/src/modules/interaction/interaction.routes.js,../../middleware/patientAccess,backend/src/middleware/patientAccess.js
+backend/src/modules/interaction/interaction.routes.js,./interaction.controller,backend/src/modules/interaction/interaction.controller.js
+backend/src/modules/interaction/interaction.routes.js,express,external package / built-in
+backend/src/modules/interaction/interaction.service.js,./interaction.repository,backend/src/modules/interaction/interaction.repository.js
+backend/src/modules/laboratory/laboratory.controller.js,./laboratory.service,backend/src/modules/laboratory/laboratory.service.js
+backend/src/modules/laboratory/laboratory.repository.js,../../config/db,backend/src/config/db.js
+backend/src/modules/laboratory/laboratory.routes.js,../../middleware/auth,backend/src/middleware/auth.js
+backend/src/modules/laboratory/laboratory.routes.js,./laboratory.controller,backend/src/modules/laboratory/laboratory.controller.js
+backend/src/modules/laboratory/laboratory.routes.js,express,external package / built-in
+backend/src/modules/laboratory/laboratory.service.js,../../config/db,backend/src/config/db.js
+backend/src/modules/laboratory/laboratory.service.js,../../utils/email,backend/src/utils/email.js
+backend/src/modules/laboratory/laboratory.service.js,./laboratory.repository,backend/src/modules/laboratory/laboratory.repository.js
+backend/src/modules/laboratory/laboratory.service.js,bcrypt,external package / built-in
+backend/src/modules/order/order.controller.js,./order.service,backend/src/modules/order/order.service.js
+backend/src/modules/order/order.repository.js,../../config/db,backend/src/config/db.js
+backend/src/modules/order/order.routes.js,../../middleware/auth,backend/src/middleware/auth.js
+backend/src/modules/order/order.routes.js,./order.controller,backend/src/modules/order/order.controller.js
+backend/src/modules/order/order.routes.js,express,external package / built-in
+backend/src/modules/order/order.service.js,./order.repository,backend/src/modules/order/order.repository.js
+backend/src/modules/patient/consent.controller.js,../../middleware/auditLog,backend/src/middleware/auditLog.js
+backend/src/modules/patient/consent.controller.js,./consent.service,backend/src/modules/patient/consent.service.js
+backend/src/modules/patient/consent.repository.js,../../config/db,backend/src/config/db.js
+backend/src/modules/patient/consent.service.js,../../utils/email,backend/src/utils/email.js
+backend/src/modules/patient/consent.service.js,../../utils/otp,backend/src/utils/otp.js
+backend/src/modules/patient/consent.service.js,../appointment/appointment.repository,backend/src/modules/appointment/appointment.repository.js
+backend/src/modules/patient/consent.service.js,../doctor/doctor.repository,backend/src/modules/doctor/doctor.repository.js
+backend/src/modules/patient/consent.service.js,./consent.repository,backend/src/modules/patient/consent.repository.js
+backend/src/modules/patient/consent.service.js,./patient.repository,backend/src/modules/patient/patient.repository.js
+backend/src/modules/patient/consent.service.js,bcryptjs,external package / built-in
+backend/src/modules/patient/patient.controller.js,../../middleware/auditLog,backend/src/middleware/auditLog.js
+backend/src/modules/patient/patient.controller.js,../../utils/ai.util,backend/src/utils/ai.util.js
+backend/src/modules/patient/patient.controller.js,./patient.service,backend/src/modules/patient/patient.service.js
+backend/src/modules/patient/patient.repository.js,../../config/db,backend/src/config/db.js
+backend/src/modules/patient/patient.routes.js,../../middleware/auth,backend/src/middleware/auth.js
+backend/src/modules/patient/patient.routes.js,../../middleware/patientAccess,backend/src/middleware/patientAccess.js
+backend/src/modules/patient/patient.routes.js,../../middleware/upload,backend/src/middleware/upload.js
+backend/src/modules/patient/patient.routes.js,./consent.controller,backend/src/modules/patient/consent.controller.js
+backend/src/modules/patient/patient.routes.js,./patient.controller,backend/src/modules/patient/patient.controller.js
+backend/src/modules/patient/patient.routes.js,express,external package / built-in
+backend/src/modules/patient/patient.routes.js,express-rate-limit,external package / built-in
+backend/src/modules/patient/patient.service.js,../../config/supabase,backend/src/config/supabase.js
+backend/src/modules/patient/patient.service.js,../../utils/ai.util,backend/src/utils/ai.util.js
+backend/src/modules/patient/patient.service.js,./consent.repository,backend/src/modules/patient/consent.repository.js
+backend/src/modules/patient/patient.service.js,./consent.service,backend/src/modules/patient/consent.service.js
+backend/src/modules/patient/patient.service.js,./patient.repository,backend/src/modules/patient/patient.repository.js
+backend/src/modules/payment/payment.controller.js,./payment.service,backend/src/modules/payment/payment.service.js
+backend/src/modules/payment/payment.repository.js,../../config/db,backend/src/config/db.js
+backend/src/modules/payment/payment.routes.js,../../middleware/auth,backend/src/middleware/auth.js
+backend/src/modules/payment/payment.routes.js,./payment.controller,backend/src/modules/payment/payment.controller.js
+backend/src/modules/payment/payment.routes.js,express,external package / built-in
+backend/src/modules/payment/payment.service.js,../patient/patient.repository,backend/src/modules/patient/patient.repository.js
+backend/src/modules/payment/payment.service.js,./payment.repository,backend/src/modules/payment/payment.repository.js
+backend/src/modules/pharmacy/pharmacy.controller.js,./pharmacy.service,backend/src/modules/pharmacy/pharmacy.service.js
+backend/src/modules/pharmacy/pharmacy.repository.js,../../config/db,backend/src/config/db.js
+backend/src/modules/pharmacy/pharmacy.routes.js,../../middleware/auth,backend/src/middleware/auth.js
+backend/src/modules/pharmacy/pharmacy.routes.js,./pharmacy.controller,backend/src/modules/pharmacy/pharmacy.controller.js
+backend/src/modules/pharmacy/pharmacy.routes.js,express,external package / built-in
+backend/src/modules/pharmacy/pharmacy.service.js,../../config/db,backend/src/config/db.js
+backend/src/modules/pharmacy/pharmacy.service.js,./pharmacy.repository,backend/src/modules/pharmacy/pharmacy.repository.js
+backend/src/modules/pharmacy/pharmacy.service.js,bcrypt,external package / built-in
+backend/src/modules/prescription/prescription.controller.js,../pharmacy/pharmacy.repository,backend/src/modules/pharmacy/pharmacy.repository.js
+backend/src/modules/prescription/prescription.controller.js,./prescription.service,backend/src/modules/prescription/prescription.service.js
+backend/src/modules/prescription/prescription.repository.js,../../config/db,backend/src/config/db.js
+backend/src/modules/prescription/prescription.routes.js,../../middleware/auth,backend/src/middleware/auth.js
+backend/src/modules/prescription/prescription.routes.js,./prescription.controller,backend/src/modules/prescription/prescription.controller.js
+backend/src/modules/prescription/prescription.routes.js,express,external package / built-in
+backend/src/modules/prescription/prescription.service.js,../../config/db,backend/src/config/db.js
+backend/src/modules/prescription/prescription.service.js,../../utils/qr,backend/src/utils/qr.js
+backend/src/modules/prescription/prescription.service.js,../appointment/appointment.repository,backend/src/modules/appointment/appointment.repository.js
+backend/src/modules/prescription/prescription.service.js,./prescription.repository,backend/src/modules/prescription/prescription.repository.js
+backend/src/utils/ai.util.js,@google/generative-ai,external package / built-in
+backend/src/utils/ai.util.js,groq-sdk,external package / built-in
+backend/src/utils/email.js,nodemailer,external package / built-in
+backend/src/utils/expiryJob.js,../config/db,backend/src/config/db.js
+backend/src/utils/qr.js,uuid,external package / built-in
+backend/src/utils/reminderJob.js,../config/db,backend/src/config/db.js
+backend/src/utils/reminderJob.js,./email,backend/src/utils/email.js
+frontend/eslint.config.js,@eslint/js,external package / built-in
+frontend/eslint.config.js,eslint-plugin-react-hooks,external package / built-in
+frontend/eslint.config.js,eslint-plugin-react-refresh,external package / built-in
+frontend/eslint.config.js,eslint/config,external package / built-in
+frontend/eslint.config.js,globals,external package / built-in
+frontend/src/App.jsx,./components/chat/AIChatWidget,frontend/src/components/chat/AIChatWidget.jsx
+frontend/src/App.jsx,./components/layout/AdminLayout,frontend/src/components/layout/AdminLayout.jsx
+frontend/src/App.jsx,./components/layout/DoctorLayout,frontend/src/components/layout/DoctorLayout.jsx
+frontend/src/App.jsx,./components/layout/HospitalLayout,frontend/src/components/layout/HospitalLayout.jsx
+frontend/src/App.jsx,./components/layout/LabLayout,frontend/src/components/layout/LabLayout.jsx
+frontend/src/App.jsx,./components/layout/PatientLayout,frontend/src/components/layout/PatientLayout.jsx
+frontend/src/App.jsx,./components/layout/PharmacyLayout,frontend/src/components/layout/PharmacyLayout.jsx
+frontend/src/App.jsx,./pages/admin/AdminAccountManagementPage,frontend/src/pages/admin/AdminAccountManagementPage.jsx
+frontend/src/App.jsx,./pages/admin/AdminAnalyticsPage,frontend/src/pages/admin/AdminAnalyticsPage.jsx
+frontend/src/App.jsx,./pages/admin/AdminApprovalsPage,frontend/src/pages/admin/AdminApprovalsPage.jsx
+frontend/src/App.jsx,./pages/admin/AdminAuditLogPage,frontend/src/pages/admin/AdminAuditLogPage.jsx
+frontend/src/App.jsx,./pages/admin/AdminEmergencyOversightPage,frontend/src/pages/admin/AdminEmergencyOversightPage.jsx
+frontend/src/App.jsx,./pages/admin/AdminHealthContentPage,frontend/src/pages/admin/AdminHealthContentPage.jsx
+frontend/src/App.jsx,./pages/admin/AdminOverviewPage,frontend/src/pages/admin/AdminOverviewPage.jsx
+frontend/src/App.jsx,./pages/admin/AdminQrReissuePage,frontend/src/pages/admin/AdminQrReissuePage.jsx
+frontend/src/App.jsx,./pages/admin/AdminRbacPanelPage,frontend/src/pages/admin/AdminRbacPanelPage.jsx
+frontend/src/App.jsx,./pages/admin/AdminSystemSettingsPage,frontend/src/pages/admin/AdminSystemSettingsPage.jsx
+frontend/src/App.jsx,./pages/auth/ForgotPasswordPage,frontend/src/pages/auth/ForgotPasswordPage.jsx
+frontend/src/App.jsx,./pages/auth/LoginPage,frontend/src/pages/auth/LoginPage.jsx
+frontend/src/App.jsx,./pages/auth/OtpVerificationPage,frontend/src/pages/auth/OtpVerificationPage.jsx
+frontend/src/App.jsx,./pages/auth/RegisterPage,frontend/src/pages/auth/RegisterPage.jsx
+frontend/src/App.jsx,./pages/auth/ResetPasswordPage,frontend/src/pages/auth/ResetPasswordPage.jsx
+frontend/src/App.jsx,./pages/doctor/AppointmentQueuePage,frontend/src/pages/doctor/AppointmentQueuePage.jsx
+frontend/src/App.jsx,./pages/doctor/ConsultationPage,frontend/src/pages/doctor/ConsultationPage.jsx
+frontend/src/App.jsx,./pages/doctor/DoctorDashboard,frontend/src/pages/doctor/DoctorDashboard.jsx
+frontend/src/App.jsx,./pages/doctor/DoctorProfilePage,frontend/src/pages/doctor/DoctorProfilePage.jsx
+frontend/src/App.jsx,./pages/emergency/EmergencySnapshotPage,frontend/src/pages/emergency/EmergencySnapshotPage.jsx
+frontend/src/App.jsx,./pages/hospital/HospitalEmergencyPage,frontend/src/pages/hospital/HospitalEmergencyPage.jsx
+frontend/src/App.jsx,./pages/hospital/HospitalHomePage,frontend/src/pages/hospital/HospitalHomePage.jsx
+frontend/src/App.jsx,./pages/hospital/HospitalOPDPage,frontend/src/pages/hospital/HospitalOPDPage.jsx
+frontend/src/App.jsx,./pages/laboratory/LabDashboard,frontend/src/pages/laboratory/LabDashboard.jsx
+frontend/src/App.jsx,./pages/laboratory/LabQueuePage,frontend/src/pages/laboratory/LabQueuePage.jsx
+frontend/src/App.jsx,./pages/laboratory/LabRegisterPage,frontend/src/pages/laboratory/LabRegisterPage.jsx
+frontend/src/App.jsx,./pages/laboratory/LabReportUploadPage,frontend/src/pages/laboratory/LabReportUploadPage.jsx
+frontend/src/App.jsx,./pages/patient/BookAppointmentPage,frontend/src/pages/patient/BookAppointmentPage.jsx
+frontend/src/App.jsx,./pages/patient/DoctorSearchPage,frontend/src/pages/patient/DoctorSearchPage.jsx
+frontend/src/App.jsx,./pages/patient/LabReportsPage,frontend/src/pages/patient/LabReportsPage.jsx
+frontend/src/App.jsx,./pages/patient/MedicalRecordsPage,frontend/src/pages/patient/MedicalRecordsPage.jsx
+frontend/src/App.jsx,./pages/patient/MyAppointmentsPage,frontend/src/pages/patient/MyAppointmentsPage.jsx
+frontend/src/App.jsx,./pages/patient/OrderTrackerPage,frontend/src/pages/patient/OrderTrackerPage.jsx
+frontend/src/App.jsx,./pages/patient/PatientLookupPage,frontend/src/pages/patient/PatientLookupPage.jsx
+frontend/src/App.jsx,./pages/patient/PatientProfilePage,frontend/src/pages/patient/PatientProfilePage.jsx
+frontend/src/App.jsx,./pages/patient/PaymentHistoryPage,frontend/src/pages/patient/PaymentHistoryPage.jsx
+frontend/src/App.jsx,./pages/patient/PrescriptionsPage,frontend/src/pages/patient/PrescriptionsPage.jsx
+frontend/src/App.jsx,./pages/pharmacy/PatientQRLookupPage,frontend/src/pages/pharmacy/PatientQRLookupPage.jsx
+frontend/src/App.jsx,./pages/pharmacy/PharmacyDashboard,frontend/src/pages/pharmacy/PharmacyDashboard.jsx
+frontend/src/App.jsx,./pages/pharmacy/PharmacyDispensingHistoryPage,frontend/src/pages/pharmacy/PharmacyDispensingHistoryPage.jsx
+frontend/src/App.jsx,./pages/pharmacy/PharmacyLookupPage,frontend/src/pages/pharmacy/PharmacyLookupPage.jsx
+frontend/src/App.jsx,./pages/pharmacy/PharmacyProfilePage,frontend/src/pages/pharmacy/PharmacyProfilePage.jsx
+frontend/src/App.jsx,./pages/pharmacy/PharmacyRegisterPage,frontend/src/pages/pharmacy/PharmacyRegisterPage.jsx
+frontend/src/App.jsx,./services/api,frontend/src/services/api.js
+frontend/src/App.jsx,./store/authStore,frontend/src/store/authStore.js
+frontend/src/App.jsx,react,external package / built-in
+frontend/src/App.jsx,react-router-dom,external package / built-in
+frontend/src/components/chat/AIChatWidget.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/components/chat/AIChatWidget.jsx,../../store/authStore,frontend/src/store/authStore.js
+frontend/src/components/chat/AIChatWidget.jsx,lucide-react,external package / built-in
+frontend/src/components/chat/AIChatWidget.jsx,react,external package / built-in
+frontend/src/components/chat/AIChatWidget.jsx,react-markdown,external package / built-in
+frontend/src/components/chat/AIChatWidget.jsx,remark-gfm,external package / built-in
+frontend/src/components/common/Alert.jsx,lucide-react,external package / built-in
+frontend/src/components/common/DataTable.jsx,lucide-react,external package / built-in
+frontend/src/components/common/FaqAccordion.jsx,lucide-react,external package / built-in
+frontend/src/components/common/FaqAccordion.jsx,react,external package / built-in
+frontend/src/components/common/HealthAwarenessFeed.jsx,../../services/healthContentService,frontend/src/services/healthContentService.js
+frontend/src/components/common/HealthAwarenessFeed.jsx,./Card,frontend/src/components/common/Card.jsx
+frontend/src/components/common/HealthAwarenessFeed.jsx,lucide-react,external package / built-in
+frontend/src/components/common/HealthAwarenessFeed.jsx,react,external package / built-in
+frontend/src/components/common/Modal.jsx,lucide-react,external package / built-in
+frontend/src/components/common/QRScanner.jsx,./Alert,frontend/src/components/common/Alert.jsx
+frontend/src/components/common/QRScanner.jsx,./Button,frontend/src/components/common/Button.jsx
+frontend/src/components/common/QRScanner.jsx,html5-qrcode,external package / built-in
+frontend/src/components/common/QRScanner.jsx,lucide-react,external package / built-in
+frontend/src/components/common/QRScanner.jsx,react,external package / built-in
+frontend/src/components/doctor/ConsultationNotesModal.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/components/doctor/ConsultationNotesModal.jsx,../../utils/labTestSearch,frontend/src/utils/labTestSearch.js
+frontend/src/components/doctor/ConsultationNotesModal.jsx,../common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/components/doctor/ConsultationNotesModal.jsx,../common/Badge,frontend/src/components/common/Badge.jsx
+frontend/src/components/doctor/ConsultationNotesModal.jsx,../common/Button,frontend/src/components/common/Button.jsx
+frontend/src/components/doctor/ConsultationNotesModal.jsx,../common/Input,frontend/src/components/common/Input.jsx
+frontend/src/components/doctor/ConsultationNotesModal.jsx,../common/Modal,frontend/src/components/common/Modal.jsx
+frontend/src/components/doctor/ConsultationNotesModal.jsx,lucide-react,external package / built-in
+frontend/src/components/doctor/ConsultationNotesModal.jsx,react,external package / built-in
+frontend/src/components/doctor/PatientNotesModal.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/components/doctor/PatientNotesModal.jsx,../common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/components/doctor/PatientNotesModal.jsx,../common/Modal,frontend/src/components/common/Modal.jsx
+frontend/src/components/doctor/PatientNotesModal.jsx,../common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/components/doctor/PatientNotesModal.jsx,lucide-react,external package / built-in
+frontend/src/components/doctor/PatientNotesModal.jsx,react,external package / built-in
+frontend/src/components/layout/AdminLayout.jsx,./AdminNavbar,frontend/src/components/layout/AdminNavbar.jsx
+frontend/src/components/layout/AdminLayout.jsx,react-router-dom,external package / built-in
+frontend/src/components/layout/AdminNavbar.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/components/layout/AdminNavbar.jsx,./TopNavbar,frontend/src/components/layout/TopNavbar.jsx
+frontend/src/components/layout/AdminNavbar.jsx,lucide-react,external package / built-in
+frontend/src/components/layout/DoctorLayout.jsx,./DoctorNavbar,frontend/src/components/layout/DoctorNavbar.jsx
+frontend/src/components/layout/DoctorLayout.jsx,react-router-dom,external package / built-in
+frontend/src/components/layout/DoctorNavbar.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/components/layout/DoctorNavbar.jsx,./TopNavbar,frontend/src/components/layout/TopNavbar.jsx
+frontend/src/components/layout/DoctorNavbar.jsx,lucide-react,external package / built-in
+frontend/src/components/layout/HospitalLayout.jsx,./HospitalNavbar,frontend/src/components/layout/HospitalNavbar.jsx
+frontend/src/components/layout/HospitalLayout.jsx,react-router-dom,external package / built-in
+frontend/src/components/layout/HospitalNavbar.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/components/layout/HospitalNavbar.jsx,./TopNavbar,frontend/src/components/layout/TopNavbar.jsx
+frontend/src/components/layout/HospitalNavbar.jsx,lucide-react,external package / built-in
+frontend/src/components/layout/LabLayout.jsx,./LabNavbar,frontend/src/components/layout/LabNavbar.jsx
+frontend/src/components/layout/LabLayout.jsx,react-router-dom,external package / built-in
+frontend/src/components/layout/LabNavbar.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/components/layout/LabNavbar.jsx,../../store/authStore,frontend/src/store/authStore.js
+frontend/src/components/layout/LabNavbar.jsx,./TopNavbar,frontend/src/components/layout/TopNavbar.jsx
+frontend/src/components/layout/LabNavbar.jsx,lucide-react,external package / built-in
+frontend/src/components/layout/PatientLayout.jsx,./PatientNavbar,frontend/src/components/layout/PatientNavbar.jsx
+frontend/src/components/layout/PatientLayout.jsx,react-router-dom,external package / built-in
+frontend/src/components/layout/PatientNavbar.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/components/layout/PatientNavbar.jsx,../../services/patient.service,frontend/src/services/patient.service.js
+frontend/src/components/layout/PatientNavbar.jsx,../../store/authStore,frontend/src/store/authStore.js
+frontend/src/components/layout/PatientNavbar.jsx,./TopNavbar,frontend/src/components/layout/TopNavbar.jsx
+frontend/src/components/layout/PatientNavbar.jsx,@tanstack/react-query,external package / built-in
+frontend/src/components/layout/PatientNavbar.jsx,lucide-react,external package / built-in
+frontend/src/components/layout/PharmacyLayout.jsx,./PharmacyNavbar,frontend/src/components/layout/PharmacyNavbar.jsx
+frontend/src/components/layout/PharmacyLayout.jsx,react-router-dom,external package / built-in
+frontend/src/components/layout/PharmacyNavbar.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/components/layout/PharmacyNavbar.jsx,../../store/authStore,frontend/src/store/authStore.js
+frontend/src/components/layout/PharmacyNavbar.jsx,./TopNavbar,frontend/src/components/layout/TopNavbar.jsx
+frontend/src/components/layout/PharmacyNavbar.jsx,lucide-react,external package / built-in
+frontend/src/components/layout/TopNavbar.jsx,../../store/authStore,frontend/src/store/authStore.js
+frontend/src/components/layout/TopNavbar.jsx,lucide-react,external package / built-in
+frontend/src/components/layout/TopNavbar.jsx,react,external package / built-in
+frontend/src/components/layout/TopNavbar.jsx,react-router-dom,external package / built-in
+frontend/src/main.jsx,./App.jsx,frontend/src/App.jsx
+frontend/src/main.jsx,./index.css,frontend/src/index.css
+frontend/src/main.jsx,@tanstack/react-query,external package / built-in
+frontend/src/main.jsx,react,external package / built-in
+frontend/src/main.jsx,react-dom/client,external package / built-in
+frontend/src/main.jsx,react-hot-toast,external package / built-in
+frontend/src/pages/admin/AdminAccountManagementPage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/admin/AdminAccountManagementPage.jsx,../../components/common/Badge,frontend/src/components/common/Badge.jsx
+frontend/src/pages/admin/AdminAccountManagementPage.jsx,../../components/common/Button,frontend/src/components/common/Button.jsx
+frontend/src/pages/admin/AdminAccountManagementPage.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/admin/AdminAccountManagementPage.jsx,../../components/common/DataTable,frontend/src/components/common/DataTable.jsx
+frontend/src/pages/admin/AdminAccountManagementPage.jsx,../../components/common/Input,frontend/src/components/common/Input.jsx
+frontend/src/pages/admin/AdminAccountManagementPage.jsx,../../components/common/PageHeader,frontend/src/components/common/PageHeader.jsx
+frontend/src/pages/admin/AdminAccountManagementPage.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/admin/AdminAccountManagementPage.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/admin/AdminAccountManagementPage.jsx,lucide-react,external package / built-in
+frontend/src/pages/admin/AdminAccountManagementPage.jsx,react,external package / built-in
+frontend/src/pages/admin/AdminAnalyticsPage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/admin/AdminAnalyticsPage.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/admin/AdminAnalyticsPage.jsx,../../components/common/PageHeader,frontend/src/components/common/PageHeader.jsx
+frontend/src/pages/admin/AdminAnalyticsPage.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/admin/AdminAnalyticsPage.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/admin/AdminAnalyticsPage.jsx,lucide-react,external package / built-in
+frontend/src/pages/admin/AdminAnalyticsPage.jsx,react,external package / built-in
+frontend/src/pages/admin/AdminApprovalsPage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/admin/AdminApprovalsPage.jsx,../../components/common/Badge,frontend/src/components/common/Badge.jsx
+frontend/src/pages/admin/AdminApprovalsPage.jsx,../../components/common/Button,frontend/src/components/common/Button.jsx
+frontend/src/pages/admin/AdminApprovalsPage.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/admin/AdminApprovalsPage.jsx,../../components/common/PageHeader,frontend/src/components/common/PageHeader.jsx
+frontend/src/pages/admin/AdminApprovalsPage.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/admin/AdminApprovalsPage.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/admin/AdminApprovalsPage.jsx,lucide-react,external package / built-in
+frontend/src/pages/admin/AdminApprovalsPage.jsx,react,external package / built-in
+frontend/src/pages/admin/AdminAuditLogPage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/admin/AdminAuditLogPage.jsx,../../components/common/Badge,frontend/src/components/common/Badge.jsx
+frontend/src/pages/admin/AdminAuditLogPage.jsx,../../components/common/Button,frontend/src/components/common/Button.jsx
+frontend/src/pages/admin/AdminAuditLogPage.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/admin/AdminAuditLogPage.jsx,../../components/common/DataTable,frontend/src/components/common/DataTable.jsx
+frontend/src/pages/admin/AdminAuditLogPage.jsx,../../components/common/Input,frontend/src/components/common/Input.jsx
+frontend/src/pages/admin/AdminAuditLogPage.jsx,../../components/common/PageHeader,frontend/src/components/common/PageHeader.jsx
+frontend/src/pages/admin/AdminAuditLogPage.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/admin/AdminAuditLogPage.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/admin/AdminAuditLogPage.jsx,lucide-react,external package / built-in
+frontend/src/pages/admin/AdminAuditLogPage.jsx,react,external package / built-in
+frontend/src/pages/admin/AdminEmergencyOversightPage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/admin/AdminEmergencyOversightPage.jsx,../../components/common/Badge,frontend/src/components/common/Badge.jsx
+frontend/src/pages/admin/AdminEmergencyOversightPage.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/admin/AdminEmergencyOversightPage.jsx,../../components/common/DataTable,frontend/src/components/common/DataTable.jsx
+frontend/src/pages/admin/AdminEmergencyOversightPage.jsx,../../components/common/PageHeader,frontend/src/components/common/PageHeader.jsx
+frontend/src/pages/admin/AdminEmergencyOversightPage.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/admin/AdminEmergencyOversightPage.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/admin/AdminEmergencyOversightPage.jsx,lucide-react,external package / built-in
+frontend/src/pages/admin/AdminEmergencyOversightPage.jsx,react,external package / built-in
+frontend/src/pages/admin/AdminHealthContentPage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/admin/AdminHealthContentPage.jsx,../../components/common/Badge,frontend/src/components/common/Badge.jsx
+frontend/src/pages/admin/AdminHealthContentPage.jsx,../../components/common/Button,frontend/src/components/common/Button.jsx
+frontend/src/pages/admin/AdminHealthContentPage.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/admin/AdminHealthContentPage.jsx,../../components/common/Input,frontend/src/components/common/Input.jsx
+frontend/src/pages/admin/AdminHealthContentPage.jsx,../../components/common/PageHeader,frontend/src/components/common/PageHeader.jsx
+frontend/src/pages/admin/AdminHealthContentPage.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/admin/AdminHealthContentPage.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/admin/AdminHealthContentPage.jsx,lucide-react,external package / built-in
+frontend/src/pages/admin/AdminHealthContentPage.jsx,react,external package / built-in
+frontend/src/pages/admin/AdminOverviewPage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/admin/AdminOverviewPage.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/admin/AdminOverviewPage.jsx,../../components/common/PageHeader,frontend/src/components/common/PageHeader.jsx
+frontend/src/pages/admin/AdminOverviewPage.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/admin/AdminOverviewPage.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/admin/AdminOverviewPage.jsx,lucide-react,external package / built-in
+frontend/src/pages/admin/AdminOverviewPage.jsx,react,external package / built-in
+frontend/src/pages/admin/AdminOverviewPage.jsx,react-router-dom,external package / built-in
+frontend/src/pages/admin/AdminQrReissuePage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/admin/AdminQrReissuePage.jsx,../../components/common/Button,frontend/src/components/common/Button.jsx
+frontend/src/pages/admin/AdminQrReissuePage.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/admin/AdminQrReissuePage.jsx,../../components/common/Input,frontend/src/components/common/Input.jsx
+frontend/src/pages/admin/AdminQrReissuePage.jsx,../../components/common/PageHeader,frontend/src/components/common/PageHeader.jsx
+frontend/src/pages/admin/AdminQrReissuePage.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/admin/AdminQrReissuePage.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/admin/AdminQrReissuePage.jsx,lucide-react,external package / built-in
+frontend/src/pages/admin/AdminQrReissuePage.jsx,react,external package / built-in
+frontend/src/pages/admin/AdminRbacPanelPage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/admin/AdminRbacPanelPage.jsx,../../components/common/Badge,frontend/src/components/common/Badge.jsx
+frontend/src/pages/admin/AdminRbacPanelPage.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/admin/AdminRbacPanelPage.jsx,../../components/common/DataTable,frontend/src/components/common/DataTable.jsx
+frontend/src/pages/admin/AdminRbacPanelPage.jsx,../../components/common/PageHeader,frontend/src/components/common/PageHeader.jsx
+frontend/src/pages/admin/AdminRbacPanelPage.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/admin/AdminRbacPanelPage.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/admin/AdminRbacPanelPage.jsx,lucide-react,external package / built-in
+frontend/src/pages/admin/AdminRbacPanelPage.jsx,react,external package / built-in
+frontend/src/pages/admin/AdminSystemSettingsPage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/admin/AdminSystemSettingsPage.jsx,../../components/common/Button,frontend/src/components/common/Button.jsx
+frontend/src/pages/admin/AdminSystemSettingsPage.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/admin/AdminSystemSettingsPage.jsx,../../components/common/Input,frontend/src/components/common/Input.jsx
+frontend/src/pages/admin/AdminSystemSettingsPage.jsx,../../components/common/PageHeader,frontend/src/components/common/PageHeader.jsx
+frontend/src/pages/admin/AdminSystemSettingsPage.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/admin/AdminSystemSettingsPage.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/admin/AdminSystemSettingsPage.jsx,lucide-react,external package / built-in
+frontend/src/pages/admin/AdminSystemSettingsPage.jsx,react,external package / built-in
+frontend/src/pages/auth/ForgotPasswordPage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/auth/ForgotPasswordPage.jsx,../../components/common/Button,frontend/src/components/common/Button.jsx
+frontend/src/pages/auth/ForgotPasswordPage.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/auth/ForgotPasswordPage.jsx,../../components/common/Input,frontend/src/components/common/Input.jsx
+frontend/src/pages/auth/ForgotPasswordPage.jsx,../../services/auth.service,frontend/src/services/auth.service.js
+frontend/src/pages/auth/ForgotPasswordPage.jsx,react,external package / built-in
+frontend/src/pages/auth/LoginPage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/auth/LoginPage.jsx,../../components/common/Button,frontend/src/components/common/Button.jsx
+frontend/src/pages/auth/LoginPage.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/auth/LoginPage.jsx,../../components/common/Input,frontend/src/components/common/Input.jsx
+frontend/src/pages/auth/LoginPage.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/auth/LoginPage.jsx,react,external package / built-in
+frontend/src/pages/auth/LoginPage.jsx,react-router-dom,external package / built-in
+frontend/src/pages/auth/OtpVerificationPage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/auth/OtpVerificationPage.jsx,../../components/common/Button,frontend/src/components/common/Button.jsx
+frontend/src/pages/auth/OtpVerificationPage.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/auth/OtpVerificationPage.jsx,../../components/common/Input,frontend/src/components/common/Input.jsx
+frontend/src/pages/auth/OtpVerificationPage.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/auth/OtpVerificationPage.jsx,react,external package / built-in
+frontend/src/pages/auth/OtpVerificationPage.jsx,react-router-dom,external package / built-in
+frontend/src/pages/auth/RegisterPage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/auth/RegisterPage.jsx,../../components/common/Button,frontend/src/components/common/Button.jsx
+frontend/src/pages/auth/RegisterPage.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/auth/RegisterPage.jsx,../../components/common/Input,frontend/src/components/common/Input.jsx
+frontend/src/pages/auth/RegisterPage.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/auth/RegisterPage.jsx,react,external package / built-in
+frontend/src/pages/auth/RegisterPage.jsx,react-router-dom,external package / built-in
+frontend/src/pages/auth/ResetPasswordPage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/auth/ResetPasswordPage.jsx,../../components/common/Button,frontend/src/components/common/Button.jsx
+frontend/src/pages/auth/ResetPasswordPage.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/auth/ResetPasswordPage.jsx,../../components/common/Input,frontend/src/components/common/Input.jsx
+frontend/src/pages/auth/ResetPasswordPage.jsx,../../services/auth.service,frontend/src/services/auth.service.js
+frontend/src/pages/auth/ResetPasswordPage.jsx,react,external package / built-in
+frontend/src/pages/auth/ResetPasswordPage.jsx,react-router-dom,external package / built-in
+frontend/src/pages/doctor/AppointmentQueuePage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/doctor/AppointmentQueuePage.jsx,../../components/common/Badge,frontend/src/components/common/Badge.jsx
+frontend/src/pages/doctor/AppointmentQueuePage.jsx,../../components/common/Button,frontend/src/components/common/Button.jsx
+frontend/src/pages/doctor/AppointmentQueuePage.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/doctor/AppointmentQueuePage.jsx,../../components/common/Modal,frontend/src/components/common/Modal.jsx
+frontend/src/pages/doctor/AppointmentQueuePage.jsx,../../components/common/PageHeader,frontend/src/components/common/PageHeader.jsx
+frontend/src/pages/doctor/AppointmentQueuePage.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/doctor/AppointmentQueuePage.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/doctor/AppointmentQueuePage.jsx,../../store/authStore,frontend/src/store/authStore.js
+frontend/src/pages/doctor/AppointmentQueuePage.jsx,lucide-react,external package / built-in
+frontend/src/pages/doctor/AppointmentQueuePage.jsx,react,external package / built-in
+frontend/src/pages/doctor/AppointmentQueuePage.jsx,react-hot-toast,external package / built-in
+frontend/src/pages/doctor/AppointmentQueuePage.jsx,react-router-dom,external package / built-in
+frontend/src/pages/doctor/ConsultationPage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/doctor/ConsultationPage.jsx,../../components/common/Badge,frontend/src/components/common/Badge.jsx
+frontend/src/pages/doctor/ConsultationPage.jsx,../../components/common/Button,frontend/src/components/common/Button.jsx
+frontend/src/pages/doctor/ConsultationPage.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/doctor/ConsultationPage.jsx,../../components/common/DataTable,frontend/src/components/common/DataTable.jsx
+frontend/src/pages/doctor/ConsultationPage.jsx,../../components/common/Input,frontend/src/components/common/Input.jsx
+frontend/src/pages/doctor/ConsultationPage.jsx,../../components/common/Modal,frontend/src/components/common/Modal.jsx
+frontend/src/pages/doctor/ConsultationPage.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/doctor/ConsultationPage.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/doctor/ConsultationPage.jsx,../../services/interaction.service,frontend/src/services/interaction.service.js
+frontend/src/pages/doctor/ConsultationPage.jsx,../../services/patient.service,frontend/src/services/patient.service.js
+frontend/src/pages/doctor/ConsultationPage.jsx,../../services/prescription.service,frontend/src/services/prescription.service.js
+frontend/src/pages/doctor/ConsultationPage.jsx,../../store/authStore,frontend/src/store/authStore.js
+frontend/src/pages/doctor/ConsultationPage.jsx,../../utils/medicineSearch,frontend/src/utils/medicineSearch.js
+frontend/src/pages/doctor/ConsultationPage.jsx,lucide-react,external package / built-in
+frontend/src/pages/doctor/ConsultationPage.jsx,qrcode.react,external package / built-in
+frontend/src/pages/doctor/ConsultationPage.jsx,react,external package / built-in
+frontend/src/pages/doctor/ConsultationPage.jsx,react-hot-toast,external package / built-in
+frontend/src/pages/doctor/ConsultationPage.jsx,react-markdown,external package / built-in
+frontend/src/pages/doctor/ConsultationPage.jsx,react-router-dom,external package / built-in
+frontend/src/pages/doctor/ConsultationPage.jsx,remark-gfm,external package / built-in
+frontend/src/pages/doctor/DoctorDashboard.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/doctor/DoctorDashboard.jsx,../../components/common/Badge,frontend/src/components/common/Badge.jsx
+frontend/src/pages/doctor/DoctorDashboard.jsx,../../components/common/Button,frontend/src/components/common/Button.jsx
+frontend/src/pages/doctor/DoctorDashboard.jsx,../../components/common/Input,frontend/src/components/common/Input.jsx
+frontend/src/pages/doctor/DoctorDashboard.jsx,../../components/common/Modal,frontend/src/components/common/Modal.jsx
+frontend/src/pages/doctor/DoctorDashboard.jsx,../../components/common/PageHeader,frontend/src/components/common/PageHeader.jsx
+frontend/src/pages/doctor/DoctorDashboard.jsx,../../components/common/QRScanner,frontend/src/components/common/QRScanner.jsx
+frontend/src/pages/doctor/DoctorDashboard.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/doctor/DoctorDashboard.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/doctor/DoctorDashboard.jsx,../../services/appointment.service,frontend/src/services/appointment.service.js
+frontend/src/pages/doctor/DoctorDashboard.jsx,../../store/authStore,frontend/src/store/authStore.js
+frontend/src/pages/doctor/DoctorDashboard.jsx,lucide-react,external package / built-in
+frontend/src/pages/doctor/DoctorDashboard.jsx,react,external package / built-in
+frontend/src/pages/doctor/DoctorDashboard.jsx,react-hot-toast,external package / built-in
+frontend/src/pages/doctor/DoctorDashboard.jsx,react-router-dom,external package / built-in
+frontend/src/pages/doctor/DoctorProfilePage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/doctor/DoctorProfilePage.jsx,../../components/common/Button,frontend/src/components/common/Button.jsx
+frontend/src/pages/doctor/DoctorProfilePage.jsx,../../components/common/Input,frontend/src/components/common/Input.jsx
+frontend/src/pages/doctor/DoctorProfilePage.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/doctor/DoctorProfilePage.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/doctor/DoctorProfilePage.jsx,../../services/doctor.service,frontend/src/services/doctor.service.js
+frontend/src/pages/doctor/DoctorProfilePage.jsx,../../store/authStore,frontend/src/store/authStore.js
+frontend/src/pages/doctor/DoctorProfilePage.jsx,lucide-react,external package / built-in
+frontend/src/pages/doctor/DoctorProfilePage.jsx,react,external package / built-in
+frontend/src/pages/doctor/DoctorProfilePage.jsx,react-hot-toast,external package / built-in
+frontend/src/pages/doctor/DoctorProfilePage.jsx,react-router-dom,external package / built-in
+frontend/src/pages/emergency/EmergencySnapshotPage.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/emergency/EmergencySnapshotPage.jsx,lucide-react,external package / built-in
+frontend/src/pages/emergency/EmergencySnapshotPage.jsx,react,external package / built-in
+frontend/src/pages/emergency/EmergencySnapshotPage.jsx,react-hot-toast,external package / built-in
+frontend/src/pages/emergency/EmergencySnapshotPage.jsx,react-router-dom,external package / built-in
+frontend/src/pages/hospital/HospitalEmergencyPage.jsx,../../components/common/PageHeader,frontend/src/components/common/PageHeader.jsx
+frontend/src/pages/hospital/HospitalEmergencyPage.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/hospital/HospitalEmergencyPage.jsx,lucide-react,external package / built-in
+frontend/src/pages/hospital/HospitalEmergencyPage.jsx,react,external package / built-in
+frontend/src/pages/hospital/HospitalEmergencyPage.jsx,react-hot-toast,external package / built-in
+frontend/src/pages/hospital/HospitalEmergencyPage.jsx,react-router-dom,external package / built-in
+frontend/src/pages/hospital/HospitalHomePage.jsx,../../components/common/PageHeader,frontend/src/components/common/PageHeader.jsx
+frontend/src/pages/hospital/HospitalHomePage.jsx,../../store/authStore,frontend/src/store/authStore.js
+frontend/src/pages/hospital/HospitalHomePage.jsx,lucide-react,external package / built-in
+frontend/src/pages/hospital/HospitalHomePage.jsx,react-router-dom,external package / built-in
+frontend/src/pages/hospital/HospitalOPDPage.jsx,../../components/common/Button,frontend/src/components/common/Button.jsx
+frontend/src/pages/hospital/HospitalOPDPage.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/hospital/HospitalOPDPage.jsx,../../components/common/PageHeader,frontend/src/components/common/PageHeader.jsx
+frontend/src/pages/hospital/HospitalOPDPage.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/hospital/HospitalOPDPage.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/hospital/HospitalOPDPage.jsx,lucide-react,external package / built-in
+frontend/src/pages/hospital/HospitalOPDPage.jsx,react,external package / built-in
+frontend/src/pages/hospital/HospitalOPDPage.jsx,react-hot-toast,external package / built-in
+frontend/src/pages/laboratory/LabDashboard.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/laboratory/LabDashboard.jsx,../../components/common/Button,frontend/src/components/common/Button.jsx
+frontend/src/pages/laboratory/LabDashboard.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/laboratory/LabDashboard.jsx,../../components/common/PageHeader,frontend/src/components/common/PageHeader.jsx
+frontend/src/pages/laboratory/LabDashboard.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/laboratory/LabDashboard.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/laboratory/LabDashboard.jsx,../../store/authStore,frontend/src/store/authStore.js
+frontend/src/pages/laboratory/LabDashboard.jsx,@tanstack/react-query,external package / built-in
+frontend/src/pages/laboratory/LabDashboard.jsx,lucide-react,external package / built-in
+frontend/src/pages/laboratory/LabDashboard.jsx,react,external package / built-in
+frontend/src/pages/laboratory/LabDashboard.jsx,react-router-dom,external package / built-in
+frontend/src/pages/laboratory/LabQueuePage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/laboratory/LabQueuePage.jsx,../../components/common/Button,frontend/src/components/common/Button.jsx
+frontend/src/pages/laboratory/LabQueuePage.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/laboratory/LabQueuePage.jsx,../../components/common/PageHeader,frontend/src/components/common/PageHeader.jsx
+frontend/src/pages/laboratory/LabQueuePage.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/laboratory/LabQueuePage.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/laboratory/LabQueuePage.jsx,../../store/authStore,frontend/src/store/authStore.js
+frontend/src/pages/laboratory/LabQueuePage.jsx,@tanstack/react-query,external package / built-in
+frontend/src/pages/laboratory/LabQueuePage.jsx,lucide-react,external package / built-in
+frontend/src/pages/laboratory/LabQueuePage.jsx,react,external package / built-in
+frontend/src/pages/laboratory/LabQueuePage.jsx,react-hot-toast,external package / built-in
+frontend/src/pages/laboratory/LabQueuePage.jsx,react-router-dom,external package / built-in
+frontend/src/pages/laboratory/LabRegisterPage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/laboratory/LabRegisterPage.jsx,../../components/common/Button,frontend/src/components/common/Button.jsx
+frontend/src/pages/laboratory/LabRegisterPage.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/laboratory/LabRegisterPage.jsx,../../components/common/Input,frontend/src/components/common/Input.jsx
+frontend/src/pages/laboratory/LabRegisterPage.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/laboratory/LabRegisterPage.jsx,lucide-react,external package / built-in
+frontend/src/pages/laboratory/LabRegisterPage.jsx,react,external package / built-in
+frontend/src/pages/laboratory/LabRegisterPage.jsx,react-router-dom,external package / built-in
+frontend/src/pages/laboratory/LabReportUploadPage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/laboratory/LabReportUploadPage.jsx,../../components/common/Button,frontend/src/components/common/Button.jsx
+frontend/src/pages/laboratory/LabReportUploadPage.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/laboratory/LabReportUploadPage.jsx,../../components/common/PageHeader,frontend/src/components/common/PageHeader.jsx
+frontend/src/pages/laboratory/LabReportUploadPage.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/laboratory/LabReportUploadPage.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/laboratory/LabReportUploadPage.jsx,../../store/authStore,frontend/src/store/authStore.js
+frontend/src/pages/laboratory/LabReportUploadPage.jsx,@tanstack/react-query,external package / built-in
+frontend/src/pages/laboratory/LabReportUploadPage.jsx,lucide-react,external package / built-in
+frontend/src/pages/laboratory/LabReportUploadPage.jsx,react,external package / built-in
+frontend/src/pages/laboratory/LabReportUploadPage.jsx,react-router-dom,external package / built-in
+frontend/src/pages/patient/BookAppointmentPage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/patient/BookAppointmentPage.jsx,../../components/common/Button,frontend/src/components/common/Button.jsx
+frontend/src/pages/patient/BookAppointmentPage.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/patient/BookAppointmentPage.jsx,../../components/common/PageHeader,frontend/src/components/common/PageHeader.jsx
+frontend/src/pages/patient/BookAppointmentPage.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/patient/BookAppointmentPage.jsx,../../services/appointment.service,frontend/src/services/appointment.service.js
+frontend/src/pages/patient/BookAppointmentPage.jsx,../../services/doctor.service,frontend/src/services/doctor.service.js
+frontend/src/pages/patient/BookAppointmentPage.jsx,../../store/authStore,frontend/src/store/authStore.js
+frontend/src/pages/patient/BookAppointmentPage.jsx,@tanstack/react-query,external package / built-in
+frontend/src/pages/patient/BookAppointmentPage.jsx,lucide-react,external package / built-in
+frontend/src/pages/patient/BookAppointmentPage.jsx,react,external package / built-in
+frontend/src/pages/patient/BookAppointmentPage.jsx,react-hot-toast,external package / built-in
+frontend/src/pages/patient/BookAppointmentPage.jsx,react-router-dom,external package / built-in
+frontend/src/pages/patient/DoctorSearchPage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/patient/DoctorSearchPage.jsx,../../components/common/Button,frontend/src/components/common/Button.jsx
+frontend/src/pages/patient/DoctorSearchPage.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/patient/DoctorSearchPage.jsx,../../components/common/PageHeader,frontend/src/components/common/PageHeader.jsx
+frontend/src/pages/patient/DoctorSearchPage.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/patient/DoctorSearchPage.jsx,../../services/doctor.service,frontend/src/services/doctor.service.js
+frontend/src/pages/patient/DoctorSearchPage.jsx,@tanstack/react-query,external package / built-in
+frontend/src/pages/patient/DoctorSearchPage.jsx,lucide-react,external package / built-in
+frontend/src/pages/patient/DoctorSearchPage.jsx,react,external package / built-in
+frontend/src/pages/patient/DoctorSearchPage.jsx,react-router-dom,external package / built-in
+frontend/src/pages/patient/LabReportsPage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/patient/LabReportsPage.jsx,../../components/common/PageHeader,frontend/src/components/common/PageHeader.jsx
+frontend/src/pages/patient/LabReportsPage.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/patient/LabReportsPage.jsx,../../services/patient.service,frontend/src/services/patient.service.js
+frontend/src/pages/patient/LabReportsPage.jsx,../../store/authStore,frontend/src/store/authStore.js
+frontend/src/pages/patient/LabReportsPage.jsx,@tanstack/react-query,external package / built-in
+frontend/src/pages/patient/LabReportsPage.jsx,lucide-react,external package / built-in
+frontend/src/pages/patient/LabReportsPage.jsx,react,external package / built-in
+frontend/src/pages/patient/MedicalRecordsPage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/patient/MedicalRecordsPage.jsx,../../components/common/Modal,frontend/src/components/common/Modal.jsx
+frontend/src/pages/patient/MedicalRecordsPage.jsx,../../components/common/PageHeader,frontend/src/components/common/PageHeader.jsx
+frontend/src/pages/patient/MedicalRecordsPage.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/patient/MedicalRecordsPage.jsx,../../services/patient.service,frontend/src/services/patient.service.js
+frontend/src/pages/patient/MedicalRecordsPage.jsx,../../store/authStore,frontend/src/store/authStore.js
+frontend/src/pages/patient/MedicalRecordsPage.jsx,@tanstack/react-query,external package / built-in
+frontend/src/pages/patient/MedicalRecordsPage.jsx,lucide-react,external package / built-in
+frontend/src/pages/patient/MedicalRecordsPage.jsx,react,external package / built-in
+frontend/src/pages/patient/MyAppointmentsPage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/patient/MyAppointmentsPage.jsx,../../components/common/Button,frontend/src/components/common/Button.jsx
+frontend/src/pages/patient/MyAppointmentsPage.jsx,../../components/common/PageHeader,frontend/src/components/common/PageHeader.jsx
+frontend/src/pages/patient/MyAppointmentsPage.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/patient/MyAppointmentsPage.jsx,../../services/appointment.service,frontend/src/services/appointment.service.js
+frontend/src/pages/patient/MyAppointmentsPage.jsx,../../store/authStore,frontend/src/store/authStore.js
+frontend/src/pages/patient/MyAppointmentsPage.jsx,@tanstack/react-query,external package / built-in
+frontend/src/pages/patient/MyAppointmentsPage.jsx,lucide-react,external package / built-in
+frontend/src/pages/patient/MyAppointmentsPage.jsx,react,external package / built-in
+frontend/src/pages/patient/MyAppointmentsPage.jsx,react-hot-toast,external package / built-in
+frontend/src/pages/patient/MyAppointmentsPage.jsx,react-router-dom,external package / built-in
+frontend/src/pages/patient/OrderTrackerPage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/patient/OrderTrackerPage.jsx,../../components/common/Badge,frontend/src/components/common/Badge.jsx
+frontend/src/pages/patient/OrderTrackerPage.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/patient/OrderTrackerPage.jsx,../../components/common/PageHeader,frontend/src/components/common/PageHeader.jsx
+frontend/src/pages/patient/OrderTrackerPage.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/patient/OrderTrackerPage.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/patient/OrderTrackerPage.jsx,../../store/authStore,frontend/src/store/authStore.js
+frontend/src/pages/patient/OrderTrackerPage.jsx,@tanstack/react-query,external package / built-in
+frontend/src/pages/patient/OrderTrackerPage.jsx,lucide-react,external package / built-in
+frontend/src/pages/patient/PatientLookupPage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/patient/PatientLookupPage.jsx,../../components/common/Badge,frontend/src/components/common/Badge.jsx
+frontend/src/pages/patient/PatientLookupPage.jsx,../../components/common/Button,frontend/src/components/common/Button.jsx
+frontend/src/pages/patient/PatientLookupPage.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/patient/PatientLookupPage.jsx,../../components/common/DataTable,frontend/src/components/common/DataTable.jsx
+frontend/src/pages/patient/PatientLookupPage.jsx,../../components/common/Modal,frontend/src/components/common/Modal.jsx
+frontend/src/pages/patient/PatientLookupPage.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/patient/PatientLookupPage.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/patient/PatientLookupPage.jsx,../../services/appointment.service,frontend/src/services/appointment.service.js
+frontend/src/pages/patient/PatientLookupPage.jsx,../../services/patient.service,frontend/src/services/patient.service.js
+frontend/src/pages/patient/PatientLookupPage.jsx,../../store/authStore,frontend/src/store/authStore.js
+frontend/src/pages/patient/PatientLookupPage.jsx,../../utils/dateUtils,frontend/src/utils/dateUtils.js
+frontend/src/pages/patient/PatientLookupPage.jsx,@tanstack/react-query,external package / built-in
+frontend/src/pages/patient/PatientLookupPage.jsx,lucide-react,external package / built-in
+frontend/src/pages/patient/PatientLookupPage.jsx,react,external package / built-in
+frontend/src/pages/patient/PatientLookupPage.jsx,react-hot-toast,external package / built-in
+frontend/src/pages/patient/PatientLookupPage.jsx,react-router-dom,external package / built-in
+frontend/src/pages/patient/PatientProfilePage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/patient/PatientProfilePage.jsx,../../components/common/Button,frontend/src/components/common/Button.jsx
+frontend/src/pages/patient/PatientProfilePage.jsx,../../components/common/HealthAwarenessFeed,frontend/src/components/common/HealthAwarenessFeed.jsx
+frontend/src/pages/patient/PatientProfilePage.jsx,../../components/common/Input,frontend/src/components/common/Input.jsx
+frontend/src/pages/patient/PatientProfilePage.jsx,../../components/common/Modal,frontend/src/components/common/Modal.jsx
+frontend/src/pages/patient/PatientProfilePage.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/patient/PatientProfilePage.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/patient/PatientProfilePage.jsx,../../services/patient.service,frontend/src/services/patient.service.js
+frontend/src/pages/patient/PatientProfilePage.jsx,../../utils/allergenSearch,frontend/src/utils/allergenSearch.js
+frontend/src/pages/patient/PatientProfilePage.jsx,../../utils/vaccineSearch,frontend/src/utils/vaccineSearch.js
+frontend/src/pages/patient/PatientProfilePage.jsx,@tanstack/react-query,external package / built-in
+frontend/src/pages/patient/PatientProfilePage.jsx,lucide-react,external package / built-in
+frontend/src/pages/patient/PatientProfilePage.jsx,qrcode.react,external package / built-in
+frontend/src/pages/patient/PatientProfilePage.jsx,react,external package / built-in
+frontend/src/pages/patient/PatientProfilePage.jsx,react-hook-form,external package / built-in
+frontend/src/pages/patient/PatientProfilePage.jsx,react-hot-toast,external package / built-in
+frontend/src/pages/patient/PaymentHistoryPage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/patient/PaymentHistoryPage.jsx,../../components/common/Badge,frontend/src/components/common/Badge.jsx
+frontend/src/pages/patient/PaymentHistoryPage.jsx,../../components/common/Button,frontend/src/components/common/Button.jsx
+frontend/src/pages/patient/PaymentHistoryPage.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/patient/PaymentHistoryPage.jsx,../../components/common/Modal,frontend/src/components/common/Modal.jsx
+frontend/src/pages/patient/PaymentHistoryPage.jsx,../../components/common/PageHeader,frontend/src/components/common/PageHeader.jsx
+frontend/src/pages/patient/PaymentHistoryPage.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/patient/PaymentHistoryPage.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/patient/PaymentHistoryPage.jsx,../../store/authStore,frontend/src/store/authStore.js
+frontend/src/pages/patient/PaymentHistoryPage.jsx,@tanstack/react-query,external package / built-in
+frontend/src/pages/patient/PaymentHistoryPage.jsx,lucide-react,external package / built-in
+frontend/src/pages/patient/PaymentHistoryPage.jsx,react,external package / built-in
+frontend/src/pages/patient/PrescriptionsPage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/patient/PrescriptionsPage.jsx,../../components/common/PageHeader,frontend/src/components/common/PageHeader.jsx
+frontend/src/pages/patient/PrescriptionsPage.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/patient/PrescriptionsPage.jsx,../../services/patient.service,frontend/src/services/patient.service.js
+frontend/src/pages/patient/PrescriptionsPage.jsx,../../store/authStore,frontend/src/store/authStore.js
+frontend/src/pages/patient/PrescriptionsPage.jsx,@tanstack/react-query,external package / built-in
+frontend/src/pages/patient/PrescriptionsPage.jsx,lucide-react,external package / built-in
+frontend/src/pages/patient/PrescriptionsPage.jsx,qrcode.react,external package / built-in
+frontend/src/pages/patient/PrescriptionsPage.jsx,react,external package / built-in
+frontend/src/pages/pharmacy/PatientQRLookupPage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/pharmacy/PatientQRLookupPage.jsx,../../components/common/Badge,frontend/src/components/common/Badge.jsx
+frontend/src/pages/pharmacy/PatientQRLookupPage.jsx,../../components/common/Button,frontend/src/components/common/Button.jsx
+frontend/src/pages/pharmacy/PatientQRLookupPage.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/pharmacy/PatientQRLookupPage.jsx,../../components/common/Input,frontend/src/components/common/Input.jsx
+frontend/src/pages/pharmacy/PatientQRLookupPage.jsx,../../components/common/PageHeader,frontend/src/components/common/PageHeader.jsx
+frontend/src/pages/pharmacy/PatientQRLookupPage.jsx,../../components/common/QRScanner,frontend/src/components/common/QRScanner.jsx
+frontend/src/pages/pharmacy/PatientQRLookupPage.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/pharmacy/PatientQRLookupPage.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/pharmacy/PatientQRLookupPage.jsx,@tanstack/react-query,external package / built-in
+frontend/src/pages/pharmacy/PatientQRLookupPage.jsx,lucide-react,external package / built-in
+frontend/src/pages/pharmacy/PatientQRLookupPage.jsx,react,external package / built-in
+frontend/src/pages/pharmacy/PatientQRLookupPage.jsx,react-router-dom,external package / built-in
+frontend/src/pages/pharmacy/PharmacyDashboard.jsx,../../components/common/Badge,frontend/src/components/common/Badge.jsx
+frontend/src/pages/pharmacy/PharmacyDashboard.jsx,../../components/common/Button,frontend/src/components/common/Button.jsx
+frontend/src/pages/pharmacy/PharmacyDashboard.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/pharmacy/PharmacyDashboard.jsx,../../components/common/Input,frontend/src/components/common/Input.jsx
+frontend/src/pages/pharmacy/PharmacyDashboard.jsx,../../components/common/PageHeader,frontend/src/components/common/PageHeader.jsx
+frontend/src/pages/pharmacy/PharmacyDashboard.jsx,../../components/common/QRScanner,frontend/src/components/common/QRScanner.jsx
+frontend/src/pages/pharmacy/PharmacyDashboard.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/pharmacy/PharmacyDashboard.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/pharmacy/PharmacyDashboard.jsx,../../store/authStore,frontend/src/store/authStore.js
+frontend/src/pages/pharmacy/PharmacyDashboard.jsx,@tanstack/react-query,external package / built-in
+frontend/src/pages/pharmacy/PharmacyDashboard.jsx,lucide-react,external package / built-in
+frontend/src/pages/pharmacy/PharmacyDashboard.jsx,react,external package / built-in
+frontend/src/pages/pharmacy/PharmacyDashboard.jsx,react-hot-toast,external package / built-in
+frontend/src/pages/pharmacy/PharmacyDashboard.jsx,react-router-dom,external package / built-in
+frontend/src/pages/pharmacy/PharmacyDispensingHistoryPage.jsx,../../components/common/Badge,frontend/src/components/common/Badge.jsx
+frontend/src/pages/pharmacy/PharmacyDispensingHistoryPage.jsx,../../components/common/Button,frontend/src/components/common/Button.jsx
+frontend/src/pages/pharmacy/PharmacyDispensingHistoryPage.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/pharmacy/PharmacyDispensingHistoryPage.jsx,../../components/common/Input,frontend/src/components/common/Input.jsx
+frontend/src/pages/pharmacy/PharmacyDispensingHistoryPage.jsx,../../components/common/PageHeader,frontend/src/components/common/PageHeader.jsx
+frontend/src/pages/pharmacy/PharmacyDispensingHistoryPage.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/pharmacy/PharmacyDispensingHistoryPage.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/pharmacy/PharmacyDispensingHistoryPage.jsx,../../store/authStore,frontend/src/store/authStore.js
+frontend/src/pages/pharmacy/PharmacyDispensingHistoryPage.jsx,@tanstack/react-query,external package / built-in
+frontend/src/pages/pharmacy/PharmacyDispensingHistoryPage.jsx,lucide-react,external package / built-in
+frontend/src/pages/pharmacy/PharmacyDispensingHistoryPage.jsx,react,external package / built-in
+frontend/src/pages/pharmacy/PharmacyDispensingHistoryPage.jsx,react-router-dom,external package / built-in
+frontend/src/pages/pharmacy/PharmacyLookupPage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/pharmacy/PharmacyLookupPage.jsx,../../components/common/Badge,frontend/src/components/common/Badge.jsx
+frontend/src/pages/pharmacy/PharmacyLookupPage.jsx,../../components/common/Button,frontend/src/components/common/Button.jsx
+frontend/src/pages/pharmacy/PharmacyLookupPage.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/pharmacy/PharmacyLookupPage.jsx,../../components/common/Input,frontend/src/components/common/Input.jsx
+frontend/src/pages/pharmacy/PharmacyLookupPage.jsx,../../components/common/PageHeader,frontend/src/components/common/PageHeader.jsx
+frontend/src/pages/pharmacy/PharmacyLookupPage.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/pharmacy/PharmacyLookupPage.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/pharmacy/PharmacyLookupPage.jsx,../../services/prescription.service,frontend/src/services/prescription.service.js
+frontend/src/pages/pharmacy/PharmacyLookupPage.jsx,@tanstack/react-query,external package / built-in
+frontend/src/pages/pharmacy/PharmacyLookupPage.jsx,lucide-react,external package / built-in
+frontend/src/pages/pharmacy/PharmacyLookupPage.jsx,react,external package / built-in
+frontend/src/pages/pharmacy/PharmacyLookupPage.jsx,react-router-dom,external package / built-in
+frontend/src/pages/pharmacy/PharmacyProfilePage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/pharmacy/PharmacyProfilePage.jsx,../../components/common/Button,frontend/src/components/common/Button.jsx
+frontend/src/pages/pharmacy/PharmacyProfilePage.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/pharmacy/PharmacyProfilePage.jsx,../../components/common/Input,frontend/src/components/common/Input.jsx
+frontend/src/pages/pharmacy/PharmacyProfilePage.jsx,../../components/common/PageHeader,frontend/src/components/common/PageHeader.jsx
+frontend/src/pages/pharmacy/PharmacyProfilePage.jsx,../../components/common/Spinner,frontend/src/components/common/Spinner.jsx
+frontend/src/pages/pharmacy/PharmacyProfilePage.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/pharmacy/PharmacyProfilePage.jsx,../../store/authStore,frontend/src/store/authStore.js
+frontend/src/pages/pharmacy/PharmacyProfilePage.jsx,@tanstack/react-query,external package / built-in
+frontend/src/pages/pharmacy/PharmacyProfilePage.jsx,lucide-react,external package / built-in
+frontend/src/pages/pharmacy/PharmacyProfilePage.jsx,react,external package / built-in
+frontend/src/pages/pharmacy/PharmacyRegisterPage.jsx,../../components/common/Alert,frontend/src/components/common/Alert.jsx
+frontend/src/pages/pharmacy/PharmacyRegisterPage.jsx,../../components/common/Button,frontend/src/components/common/Button.jsx
+frontend/src/pages/pharmacy/PharmacyRegisterPage.jsx,../../components/common/Card,frontend/src/components/common/Card.jsx
+frontend/src/pages/pharmacy/PharmacyRegisterPage.jsx,../../components/common/Input,frontend/src/components/common/Input.jsx
+frontend/src/pages/pharmacy/PharmacyRegisterPage.jsx,../../services/api,frontend/src/services/api.js
+frontend/src/pages/pharmacy/PharmacyRegisterPage.jsx,lucide-react,external package / built-in
+frontend/src/pages/pharmacy/PharmacyRegisterPage.jsx,react,external package / built-in
+frontend/src/pages/pharmacy/PharmacyRegisterPage.jsx,react-hook-form,external package / built-in
+frontend/src/pages/pharmacy/PharmacyRegisterPage.jsx,react-router-dom,external package / built-in
+frontend/src/services/api.js,axios,external package / built-in
+frontend/src/services/appointment.service.js,./api,frontend/src/services/api.js
+frontend/src/services/auth.service.js,./api,frontend/src/services/api.js
+frontend/src/services/doctor.service.js,./api,frontend/src/services/api.js
+frontend/src/services/healthContentService.js,./api,frontend/src/services/api.js
+frontend/src/services/interaction.service.js,./api,frontend/src/services/api.js
+frontend/src/services/patient.service.js,./api,frontend/src/services/api.js
+frontend/src/services/prescription.service.js,./api,frontend/src/services/api.js
+frontend/src/store/authStore.js,zustand,external package / built-in
+frontend/src/utils/allergenSearch.js,fuse.js,external package / built-in
+frontend/src/utils/labTestSearch.js,fuse.js,external package / built-in
+frontend/src/utils/medicineSearch.js,fuse.js,external package / built-in
+frontend/src/utils/vaccineSearch.js,fuse.js,external package / built-in
+frontend/vite.config.js,@tailwindcss/vite,external package / built-in
+frontend/vite.config.js,@vitejs/plugin-react,external package / built-in
+frontend/vite.config.js,vite,external package / built-in
+mobile/App.js,./assets/logo.png,mobile/assets/logo.png
+mobile/App.js,./src/components/EmergencySOS,mobile/src/components/EmergencySOS.js
+mobile/App.js,./src/screens/AIChatScreen,mobile/src/screens/AIChatScreen.js
+mobile/App.js,./src/screens/BookAppointmentScreen,mobile/src/screens/BookAppointmentScreen.js
+mobile/App.js,./src/screens/DoctorProfileScreen,mobile/src/screens/DoctorProfileScreen.js
+mobile/App.js,./src/screens/DoctorSearchScreen,mobile/src/screens/DoctorSearchScreen.js
+mobile/App.js,./src/screens/ForgotPasswordScreen,mobile/src/screens/ForgotPasswordScreen.js
+mobile/App.js,./src/screens/LabReportsScreen,mobile/src/screens/LabReportsScreen.js
+mobile/App.js,./src/screens/LoginScreen,mobile/src/screens/LoginScreen.js
+mobile/App.js,./src/screens/MedicalRecordsScreen,mobile/src/screens/MedicalRecordsScreen.js
+mobile/App.js,./src/screens/MyAppointmentsScreen,mobile/src/screens/MyAppointmentsScreen.js
+mobile/App.js,./src/screens/OtpVerificationScreen,mobile/src/screens/OtpVerificationScreen.js
+mobile/App.js,./src/screens/PatientHomeScreen,mobile/src/screens/PatientHomeScreen.js
+mobile/App.js,./src/screens/PatientProfileScreen,mobile/src/screens/PatientProfileScreen.js
+mobile/App.js,./src/screens/PatientQRCardScreen,mobile/src/screens/PatientQRCardScreen.js
+mobile/App.js,./src/screens/PrescriptionsScreen,mobile/src/screens/PrescriptionsScreen.js
+mobile/App.js,./src/screens/RegisterScreen,mobile/src/screens/RegisterScreen.js
+mobile/App.js,./src/screens/ResetPasswordScreen,mobile/src/screens/ResetPasswordScreen.js
+mobile/App.js,./src/services/api,mobile/src/services/api.js
+mobile/App.js,./src/store/authStore,mobile/src/store/authStore.js
+mobile/App.js,expo-status-bar,external package / built-in
+mobile/App.js,lucide-react-native,external package / built-in
+mobile/App.js,react,external package / built-in
+mobile/App.js,react-native,external package / built-in
+mobile/index.js,./App,mobile/App.js
+mobile/index.js,expo,external package / built-in
+mobile/src/components/EmergencySOS.js,../services/api,mobile/src/services/api.js
+mobile/src/components/EmergencySOS.js,expo-location,external package / built-in
+mobile/src/components/EmergencySOS.js,react,external package / built-in
+mobile/src/components/EmergencySOS.js,react-native,external package / built-in
+mobile/src/components/HealthAwarenessFeed.js,../services/api,mobile/src/services/api.js
+mobile/src/components/HealthAwarenessFeed.js,lucide-react-native,external package / built-in
+mobile/src/components/HealthAwarenessFeed.js,react,external package / built-in
+mobile/src/components/HealthAwarenessFeed.js,react-native,external package / built-in
+mobile/src/screens/AIChatScreen.js,../services/api,mobile/src/services/api.js
+mobile/src/screens/AIChatScreen.js,../store/authStore,mobile/src/store/authStore.js
+mobile/src/screens/AIChatScreen.js,lucide-react-native,external package / built-in
+mobile/src/screens/AIChatScreen.js,react,external package / built-in
+mobile/src/screens/AIChatScreen.js,react-native,external package / built-in
+mobile/src/screens/AIChatScreen.js,react-native-markdown-display,external package / built-in
+mobile/src/screens/BookAppointmentScreen.js,../services/appointment.service,mobile/src/services/appointment.service.js
+mobile/src/screens/BookAppointmentScreen.js,../services/doctor.service,mobile/src/services/doctor.service.js
+mobile/src/screens/BookAppointmentScreen.js,../store/authStore,mobile/src/store/authStore.js
+mobile/src/screens/BookAppointmentScreen.js,lucide-react-native,external package / built-in
+mobile/src/screens/BookAppointmentScreen.js,react,external package / built-in
+mobile/src/screens/BookAppointmentScreen.js,react-native,external package / built-in
+mobile/src/screens/DoctorProfileScreen.js,../services/doctor.service,mobile/src/services/doctor.service.js
+mobile/src/screens/DoctorProfileScreen.js,../store/authStore,mobile/src/store/authStore.js
+mobile/src/screens/DoctorProfileScreen.js,lucide-react-native,external package / built-in
+mobile/src/screens/DoctorProfileScreen.js,react,external package / built-in
+mobile/src/screens/DoctorProfileScreen.js,react-native,external package / built-in
+mobile/src/screens/DoctorSearchScreen.js,../services/doctor.service,mobile/src/services/doctor.service.js
+mobile/src/screens/DoctorSearchScreen.js,lucide-react-native,external package / built-in
+mobile/src/screens/DoctorSearchScreen.js,react,external package / built-in
+mobile/src/screens/DoctorSearchScreen.js,react-native,external package / built-in
+mobile/src/screens/ForgotPasswordScreen.js,../../assets/logo.png,mobile/assets/logo.png
+mobile/src/screens/ForgotPasswordScreen.js,../services/auth.service,mobile/src/services/auth.service.js
+mobile/src/screens/ForgotPasswordScreen.js,lucide-react-native,external package / built-in
+mobile/src/screens/ForgotPasswordScreen.js,react,external package / built-in
+mobile/src/screens/ForgotPasswordScreen.js,react-native,external package / built-in
+mobile/src/screens/LabReportsScreen.js,../services/patient.service,mobile/src/services/patient.service.js
+mobile/src/screens/LabReportsScreen.js,../store/authStore,mobile/src/store/authStore.js
+mobile/src/screens/LabReportsScreen.js,lucide-react-native,external package / built-in
+mobile/src/screens/LabReportsScreen.js,react,external package / built-in
+mobile/src/screens/LabReportsScreen.js,react-native,external package / built-in
+mobile/src/screens/LoginScreen.js,../../assets/logo.png,mobile/assets/logo.png
+mobile/src/screens/LoginScreen.js,../services/api,mobile/src/services/api.js
+mobile/src/screens/LoginScreen.js,lucide-react-native,external package / built-in
+mobile/src/screens/LoginScreen.js,react,external package / built-in
+mobile/src/screens/LoginScreen.js,react-native,external package / built-in
+mobile/src/screens/MedicalRecordsScreen.js,../services/patient.service,mobile/src/services/patient.service.js
+mobile/src/screens/MedicalRecordsScreen.js,../store/authStore,mobile/src/store/authStore.js
+mobile/src/screens/MedicalRecordsScreen.js,lucide-react-native,external package / built-in
+mobile/src/screens/MedicalRecordsScreen.js,react,external package / built-in
+mobile/src/screens/MedicalRecordsScreen.js,react-native,external package / built-in
+mobile/src/screens/MyAppointmentsScreen.js,../services/appointment.service,mobile/src/services/appointment.service.js
+mobile/src/screens/MyAppointmentsScreen.js,../store/authStore,mobile/src/store/authStore.js
+mobile/src/screens/MyAppointmentsScreen.js,lucide-react-native,external package / built-in
+mobile/src/screens/MyAppointmentsScreen.js,react,external package / built-in
+mobile/src/screens/MyAppointmentsScreen.js,react-native,external package / built-in
+mobile/src/screens/OtpVerificationScreen.js,../../assets/logo.png,mobile/assets/logo.png
+mobile/src/screens/OtpVerificationScreen.js,../services/auth.service,mobile/src/services/auth.service.js
+mobile/src/screens/OtpVerificationScreen.js,lucide-react-native,external package / built-in
+mobile/src/screens/OtpVerificationScreen.js,react,external package / built-in
+mobile/src/screens/OtpVerificationScreen.js,react-native,external package / built-in
+mobile/src/screens/PatientHomeScreen.js,../components/HealthAwarenessFeed,mobile/src/components/HealthAwarenessFeed.js
+mobile/src/screens/PatientHomeScreen.js,../services/api,mobile/src/services/api.js
+mobile/src/screens/PatientHomeScreen.js,../services/appointment.service,mobile/src/services/appointment.service.js
+mobile/src/screens/PatientHomeScreen.js,../services/prescription.service,mobile/src/services/prescription.service.js
+mobile/src/screens/PatientHomeScreen.js,../store/authStore,mobile/src/store/authStore.js
+mobile/src/screens/PatientHomeScreen.js,lucide-react-native,external package / built-in
+mobile/src/screens/PatientHomeScreen.js,react,external package / built-in
+mobile/src/screens/PatientHomeScreen.js,react-native,external package / built-in
+mobile/src/screens/PatientProfileScreen.js,../services/patient.service,mobile/src/services/patient.service.js
+mobile/src/screens/PatientProfileScreen.js,../store/authStore,mobile/src/store/authStore.js
+mobile/src/screens/PatientProfileScreen.js,../utils/allergenSearch,mobile/src/utils/allergenSearch.js
+mobile/src/screens/PatientProfileScreen.js,../utils/vaccineSearch,mobile/src/utils/vaccineSearch.js
+mobile/src/screens/PatientProfileScreen.js,expo-image-picker,external package / built-in
+mobile/src/screens/PatientProfileScreen.js,lucide-react-native,external package / built-in
+mobile/src/screens/PatientProfileScreen.js,react,external package / built-in
+mobile/src/screens/PatientProfileScreen.js,react-native,external package / built-in
+mobile/src/screens/PatientQRCardScreen.js,../services/patient.service,mobile/src/services/patient.service.js
+mobile/src/screens/PatientQRCardScreen.js,../store/authStore,mobile/src/store/authStore.js
+mobile/src/screens/PatientQRCardScreen.js,lucide-react-native,external package / built-in
+mobile/src/screens/PatientQRCardScreen.js,react,external package / built-in
+mobile/src/screens/PatientQRCardScreen.js,react-native,external package / built-in
+mobile/src/screens/PatientQRCardScreen.js,react-native-qrcode-svg,external package / built-in
+mobile/src/screens/PrescriptionsScreen.js,../services/prescription.service,mobile/src/services/prescription.service.js
+mobile/src/screens/PrescriptionsScreen.js,../store/authStore,mobile/src/store/authStore.js
+mobile/src/screens/PrescriptionsScreen.js,lucide-react-native,external package / built-in
+mobile/src/screens/PrescriptionsScreen.js,react,external package / built-in
+mobile/src/screens/PrescriptionsScreen.js,react-native,external package / built-in
+mobile/src/screens/PrescriptionsScreen.js,react-native-qrcode-svg,external package / built-in
+mobile/src/screens/RegisterScreen.js,../../assets/logo.png,mobile/assets/logo.png
+mobile/src/screens/RegisterScreen.js,../services/auth.service,mobile/src/services/auth.service.js
+mobile/src/screens/RegisterScreen.js,lucide-react-native,external package / built-in
+mobile/src/screens/RegisterScreen.js,react,external package / built-in
+mobile/src/screens/RegisterScreen.js,react-native,external package / built-in
+mobile/src/screens/ResetPasswordScreen.js,../services/auth.service,mobile/src/services/auth.service.js
+mobile/src/screens/ResetPasswordScreen.js,react,external package / built-in
+mobile/src/screens/ResetPasswordScreen.js,react-native,external package / built-in
+mobile/src/services/api.js,axios,external package / built-in
+mobile/src/services/appointment.service.js,./api,mobile/src/services/api.js
+mobile/src/services/auth.service.js,./api,mobile/src/services/api.js
+mobile/src/services/doctor.service.js,./api,mobile/src/services/api.js
+mobile/src/services/patient.service.js,./api,mobile/src/services/api.js
+mobile/src/services/prescription.service.js,./api,mobile/src/services/api.js
+mobile/src/store/authStore.js,zustand,external package / built-in
+mobile/src/utils/allergenSearch.js,fuse.js,external package / built-in
+mobile/src/utils/vaccineSearch.js,fuse.js,external package / built-in

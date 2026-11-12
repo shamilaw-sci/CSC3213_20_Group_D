@@ -1,0 +1,55 @@
+# branch.oid eeacffb0100288c7b89f5bddc33ffc917d6970b0
+# branch.head develop
+# branch.upstream origin/develop
+# branch.ab +0 -0
+1 .M N... 100644 100644 100644 7cb4ee3be384a9e06cc46457175ffc96ca524c82 7cb4ee3be384a9e06cc46457175ffc96ca524c82 backend/src/middleware/auth.js
+1 .M N... 100644 100644 100644 2dc3f6b8953fc8a2d43204238f653d0b21825ab5 2dc3f6b8953fc8a2d43204238f653d0b21825ab5 backend/src/modules/appointment/appointment.controller.js
+1 .M N... 100644 100644 100644 3695526105869965866cde58b9bf0047b879faa4 3695526105869965866cde58b9bf0047b879faa4 backend/src/modules/appointment/appointment.repository.js
+1 .M N... 100644 100644 100644 cf0819c7c66abb5dacf681e33621dfa13b2fb3ab cf0819c7c66abb5dacf681e33621dfa13b2fb3ab backend/src/modules/auth/auth.controller.js
+1 .M N... 100644 100644 100644 a9a6beb2616421784d8beb913429996cab287ba3 a9a6beb2616421784d8beb913429996cab287ba3 backend/src/modules/auth/auth.routes.js
+1 .M N... 100644 100644 100644 3963cf36a10b92f26449ce91817a1e796d9bfc5b 3963cf36a10b92f26449ce91817a1e796d9bfc5b backend/src/modules/auth/auth.service.js
+1 .M N... 100644 100644 100644 ef35e52835b40a6eea8f62b40754f358eb4b9958 ef35e52835b40a6eea8f62b40754f358eb4b9958 backend/src/modules/doctor/doctor.repository.js
+1 .M N... 100644 100644 100644 860e300b4ac1544656b78a01cf6223dd01f6a776 860e300b4ac1544656b78a01cf6223dd01f6a776 backend/src/modules/emergency/emergency.controller.js
+1 .M N... 100644 100644 100644 a18c95ac06d171da770c8496e14f458657a42e18 a18c95ac06d171da770c8496e14f458657a42e18 backend/src/modules/health-content/healthContent.controller.js
+1 .M N... 100644 100644 100644 c268d62b0a40f30ce28b6124022c84a74a9da8ec c268d62b0a40f30ce28b6124022c84a74a9da8ec backend/src/modules/health-content/healthContent.routes.js
+1 .M N... 100644 100644 100644 8fd38d4d6c6ae0db2503feaca1aec2b2cb98db76 8fd38d4d6c6ae0db2503feaca1aec2b2cb98db76 backend/src/modules/laboratory/laboratory.repository.js
+1 .M N... 100644 100644 100644 7868fce73e99fc57536c93d0de73aa2b9c3f7532 7868fce73e99fc57536c93d0de73aa2b9c3f7532 backend/src/modules/laboratory/laboratory.service.js
+1 .M N... 100644 100644 100644 0ff7b2ac35e5bed95da82ceaa7719807c56c0969 0ff7b2ac35e5bed95da82ceaa7719807c56c0969 backend/src/modules/patient/consent.service.js
+1 .M N... 100644 100644 100644 7c6e2fdc44f2cb09852f3ee51d2fdc5ece39941a 7c6e2fdc44f2cb09852f3ee51d2fdc5ece39941a backend/src/modules/patient/patient.controller.js
+1 .M N... 100644 100644 100644 23c6f8fbac3b15d786f5d6ba6edc5eb5e83e460a 23c6f8fbac3b15d786f5d6ba6edc5eb5e83e460a backend/src/modules/patient/patient.routes.js
+1 .M N... 100644 100644 100644 60ea68cdb8b3ec11d804c5ce7a6288da536d752a 60ea68cdb8b3ec11d804c5ce7a6288da536d752a backend/src/modules/prescription/prescription.repository.js
+1 .M N... 100644 100644 100644 9ed55182d0884e03558542b1c0296016b1cc0c4f 9ed55182d0884e03558542b1c0296016b1cc0c4f backend/src/modules/prescription/prescription.service.js
+1 .M N... 100644 100644 100644 a2348bc8acb7b6b3aec515dfee6ee0c0457b641e a2348bc8acb7b6b3aec515dfee6ee0c0457b641e backend/src/utils/expiryJob.js
+1 .M N... 100644 100644 100644 5e6558b05ab697a8db8b01c5cec1e7c413e4c83e 5e6558b05ab697a8db8b01c5cec1e7c413e4c83e backend/src/utils/reminderJob.js
+1 .M N... 100644 100644 100644 79639113ac20eeadcf02fee900a00ecf45dd3854 79639113ac20eeadcf02fee900a00ecf45dd3854 frontend/src/App.jsx
+1 .M N... 100644 100644 100644 208e607928834bd1e36dbee36e99732893f7b4c9 208e607928834bd1e36dbee36e99732893f7b4c9 frontend/src/components/common/QRScanner.jsx
+1 .M N... 100644 100644 100644 311f75e2fb70c317efd66ae5dcd683a92946e480 311f75e2fb70c317efd66ae5dcd683a92946e480 frontend/src/components/layout/PatientNavbar.jsx
+1 .M N... 100644 100644 100644 2b085c7ce647ef4f7e81adf17f652026f41cc75c 2b085c7ce647ef4f7e81adf17f652026f41cc75c frontend/src/pages/admin/AdminHealthContentPage.jsx
+1 .M N... 100644 100644 100644 f0e3d48cc69b9ec41f595afa54399fd79c56b9f8 f0e3d48cc69b9ec41f595afa54399fd79c56b9f8 frontend/src/pages/auth/LoginPage.jsx
+1 .M N... 100644 100644 100644 d08e5eb3aed343d0c11a49d74dae162919f6a99d d08e5eb3aed343d0c11a49d74dae162919f6a99d frontend/src/pages/auth/OtpVerificationPage.jsx
+1 .M N... 100644 100644 100644 7063719df211850e8799dba3bade32a154821eac 7063719df211850e8799dba3bade32a154821eac frontend/src/pages/doctor/ConsultationPage.jsx
+1 .M N... 100644 100644 100644 7e781b0753120737d05974cbe2f63a2324f75835 7e781b0753120737d05974cbe2f63a2324f75835 frontend/src/pages/doctor/DoctorDashboard.jsx
+1 .M N... 100644 100644 100644 9cf8eeaf4b3dc65fa0af6eef53b2ab47730eb1ed 9cf8eeaf4b3dc65fa0af6eef53b2ab47730eb1ed frontend/src/pages/hospital/HospitalEmergencyPage.jsx
+1 .M N... 100644 100644 100644 30b9c7466f765ad04410edcb08f543cc694519c4 30b9c7466f765ad04410edcb08f543cc694519c4 frontend/src/pages/patient/BookAppointmentPage.jsx
+1 .M N... 100644 100644 100644 f8cc458373d590304d1367ff45591e6c89b9cb1f f8cc458373d590304d1367ff45591e6c89b9cb1f frontend/src/pages/patient/PrescriptionsPage.jsx
+1 .M N... 100644 100644 100644 321d9ff53bc4397a4877f0a6735162f15a176224 321d9ff53bc4397a4877f0a6735162f15a176224 frontend/src/pages/pharmacy/PatientQRLookupPage.jsx
+1 .M N... 100644 100644 100644 35329abc5c372bb23c7861209b0b6090f7bcf2bc 35329abc5c372bb23c7861209b0b6090f7bcf2bc frontend/src/pages/pharmacy/PharmacyDashboard.jsx
+1 .M N... 100644 100644 100644 72bf912ea006e9394b59b293e3b56e80e3ea7412 72bf912ea006e9394b59b293e3b56e80e3ea7412 frontend/src/pages/pharmacy/PharmacyDispensingHistoryPage.jsx
+1 .M N... 100644 100644 100644 4fe65c325070882688ffe73bb6c619ac034e7b7e 4fe65c325070882688ffe73bb6c619ac034e7b7e frontend/src/services/appointment.service.js
+1 .M N... 100644 100644 100644 16e829101209929103155773ed3849fb7201c754 16e829101209929103155773ed3849fb7201c754 frontend/src/services/doctor.service.js
+1 .M N... 100644 100644 100644 e06b1153e5fc42ef160d6d393f15a82afd2ba2d1 e06b1153e5fc42ef160d6d393f15a82afd2ba2d1 frontend/src/services/healthContentService.js
+1 .M N... 100644 100644 100644 c73026a0a39a24792c7ed0a52fc780f2c875b8a3 c73026a0a39a24792c7ed0a52fc780f2c875b8a3 mobile/.env.example
+1 .M N... 100644 100644 100644 f9fc167f040b5a703461011fc5f5cf865520269c f9fc167f040b5a703461011fc5f5cf865520269c mobile/App.js
+1 .M N... 100644 100644 100644 2a4bf0589827793fb0dc609951139eec08a40b4c 2a4bf0589827793fb0dc609951139eec08a40b4c mobile/src/components/EmergencySOS.js
+1 .M N... 100644 100644 100644 eac9def735adf20d66f3c9be6fb9d2a97394fdc0 eac9def735adf20d66f3c9be6fb9d2a97394fdc0 mobile/src/components/HealthAwarenessFeed.js
+1 .M N... 100644 100644 100644 f6602c898a14bf9acfc227412199a50a4d620729 f6602c898a14bf9acfc227412199a50a4d620729 mobile/src/constants/theme.js
+1 .M N... 100644 100644 100644 0c3c08822edd56eb532d42acdae6ce972c9c97d8 0c3c08822edd56eb532d42acdae6ce972c9c97d8 mobile/src/screens/OtpVerificationScreen.js
+1 .M N... 100644 100644 100644 8bba28d177236cf565e6cbf15b4be9cfc441f792 8bba28d177236cf565e6cbf15b4be9cfc441f792 mobile/src/screens/PrescriptionsScreen.js
+1 .M N... 100644 100644 100644 856158851d3af40d293efe5399b89950947f5b66 856158851d3af40d293efe5399b89950947f5b66 mobile/src/screens/ResetPasswordScreen.js
+? docs/final-review/01_repository_inventory.md
+? docs/final-review/02_full_audit_report.md
+? docs/final-review/03_proposed_change_manifest.md
+? docs/final-review/04_cleanup_change_log.md
+? docs/final-review/05A_stabilization_pass1_verification.md
+? docs/final-review/05B_stabilization_pass1_corrections.md
+? docs/final-review/05_remaining_issues.md

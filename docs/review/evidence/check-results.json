@@ -1,0 +1,66 @@
+{
+  "date": "2026-11-12",
+  "timezone": "Asia/Colombo",
+  "baseline": "Pre-existing dirty working copy at eeacffb",
+  "application_changes": 0,
+  "checks": [
+    {
+      "id": "B01",
+      "result": "PASS",
+      "exit_code": 0,
+      "command": "node scripts/check-syntax.js",
+      "cwd": "backend",
+      "scope": "75 JS files; syntax only"
+    },
+    {
+      "id": "B02",
+      "result": "PASS",
+      "exit_code": 0,
+      "command": "node node_modules/eslint/bin/eslint.js . --format json --output-file ../docs/review/evidence/frontend-eslint.json",
+      "cwd": "frontend",
+      "scope": "89 files; zero errors and warnings; no fixes"
+    },
+    {
+      "id": "B03",
+      "result": "PASS",
+      "exit_code": 0,
+      "command": "node docs/review/tools/static-checks.mjs",
+      "cwd": "root",
+      "scope": "Vite 8.0.3 production graph; 2187 modules; write=false; envDir=false; synthetic API URL",
+      "warnings": [
+        "rolldown:vite-resolve plugin timing"
+      ]
+    },
+    {
+      "id": "B04",
+      "result": "PASS",
+      "exit_code": 0,
+      "command": "node docs/review/tools/static-checks.mjs",
+      "cwd": "root",
+      "scope": "30 tracked mobile JS files parsed with Babel; no runtime evaluation"
+    },
+    {
+      "id": "B05",
+      "result": "PASS",
+      "exit_code": 0,
+      "command": "git -c core.safecrlf=false diff --check; git -c core.safecrlf=false diff --cached --check",
+      "cwd": "root",
+      "scope": "Unstaged/staged whitespace only"
+    },
+    {
+      "id": "B06",
+      "result": "PASS",
+      "exit_code": 0,
+      "command": "Python JSON inspection of manifests, locks and local package.json versions",
+      "cwd": "root",
+      "scope": "4 lock roots match manifests; 62 direct installed versions match locked versions; no transitive audit"
+    }
+  ],
+  "project_check_failures": [],
+  "environment_failures": [
+    {
+      "command": "npm --version",
+      "reason": "npm not found on PATH"
+    }
+  ]
+}
