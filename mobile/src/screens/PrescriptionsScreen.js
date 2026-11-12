@@ -100,7 +100,7 @@ const STATUS_CONFIG = {
   },
 
   partially_filled: {
-    label: 'Partially Filled',
+    label: 'Partially filled',
     icon: Clock3,
     color: COLORS.amber,
     background: COLORS.amberSoft,

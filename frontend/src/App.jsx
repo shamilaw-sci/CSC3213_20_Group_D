@@ -8,7 +8,6 @@ import { API_BASE_URL } from './services/api';
 
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
 import useAuthStore from './store/authStore';
 
 import PatientLayout          from './components/layout/PatientLayout';
@@ -196,8 +195,6 @@ function App() {
 
   return (
     <BrowserRouter>
-
-      <Toaster position="top-right" />
 
       <Routes>
 

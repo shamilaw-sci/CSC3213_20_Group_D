@@ -25,12 +25,12 @@ const handleLogout = async () => {
 
 export default function PatientNavbar() {
   const user = useAuthStore((state) => state.user);
-  const TEST_PATIENT_ID = user?.profile_id || user?.id || '';
+  const patientId = user?.profile_id || user?.id || '';
 
   const { data: reports = [] } = useQuery({
-    queryKey: ['labReports', TEST_PATIENT_ID],
-    queryFn: () => getLabReports(TEST_PATIENT_ID),
-    enabled: !!TEST_PATIENT_ID,
+    queryKey: ['labReports', patientId],
+    queryFn: () => getLabReports(patientId),
+    enabled: !!patientId,
     retry: false,
   });
 

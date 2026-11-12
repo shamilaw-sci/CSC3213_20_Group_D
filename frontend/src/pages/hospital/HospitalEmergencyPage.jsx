@@ -889,7 +889,7 @@ const HospitalEmergencyPage = () => {
 
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-red-200">
-                      Break-Glass Protocol
+                      Break-Glass access
                     </p>
 
                     <h2

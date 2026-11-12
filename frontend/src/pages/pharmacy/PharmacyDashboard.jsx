@@ -396,7 +396,7 @@ const PharmacyDashboard = () => {
           />
 
           <StatCard
-            title="Partially Filled"
+            title="Partially filled"
             value={
               stats?.partiallyFilled ??
               0

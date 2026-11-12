@@ -2,7 +2,7 @@
  * @file    doctor.service.js
  * @module  Services
  * @desc    Frontend service for doctor-related API calls.
- * @author  Member 2 (S/21/081)
+ * @author  Wasana Karunanayaka (S/21/081)
  */
 
 import api from './api';

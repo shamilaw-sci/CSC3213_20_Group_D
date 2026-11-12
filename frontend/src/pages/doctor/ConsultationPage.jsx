@@ -6590,7 +6590,7 @@ const ConsultationPage = () => {
                           </p>
 
                           <p className="text-xs text-muted-foreground">
-                            Apply existing Care4U privacy restrictions.
+                            This label is informational. Patient-selected privacy categories control doctor access.
                           </p>
 
                         </div>

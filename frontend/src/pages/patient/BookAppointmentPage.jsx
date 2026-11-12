@@ -3,7 +3,7 @@
  * @module  Patient
  * @desc    Patient UI for selecting an AI-suggested appointment slot,
  *          with reschedule support.
- * @author  Member 2 (S/21/081)
+ * @author  Wasana Karunanayaka (S/21/081)
  */
 
 import {

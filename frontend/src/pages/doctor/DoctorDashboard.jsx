@@ -2957,7 +2957,7 @@ const DoctorDashboard = () => {
                 >
 
                   <Input
-                    label="Patient QR Code"
+                    label="Patient QR code"
                     value={
                       manualQrValue
                     }

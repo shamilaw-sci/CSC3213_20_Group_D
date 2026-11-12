@@ -2,7 +2,7 @@
  * @file    appointment.service.js
  * @module  Appointment
  * @desc    Frontend service for the Appointment module.
- * @author  Member 2 (S/21/081)
+ * @author  Wasana Karunanayaka (S/21/081)
  */
 
 import api from './api';

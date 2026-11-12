@@ -2,7 +2,7 @@
  * @component PharmacyDispensingHistoryPage
  * @desc      Displays dispensing history for the logged-in pharmacy.
  *            Allows pharmacists to review previous dispensing activity.
- * @author    Pamudika Abayarathna (S/21/001)
+ * @author    Wasana Karunanayaka (S/21/081)
  */
 
 import { useMemo, useState } from 'react';

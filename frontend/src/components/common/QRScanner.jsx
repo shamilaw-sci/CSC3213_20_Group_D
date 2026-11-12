@@ -3,7 +3,7 @@
  * @desc      Reusable camera-based QR scanner component.
  *            Used for prescription QR codes and
  *            patient identity QR codes.
- * @author    Pamudika Abayarathna (S/21/001)
+ * @author    Wasana Karunanayaka (S/21/081)
  */
 
 import {
@@ -29,7 +29,7 @@ import Alert from './Alert';
 const QRScanner = ({
   onScan,
   onClose,
-  title = 'Scan QR Code',
+  title = 'Scan QR code',
   description = 'Point the camera at the QR code.',
 }) => {
 

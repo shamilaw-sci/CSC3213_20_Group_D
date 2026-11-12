@@ -4,7 +4,7 @@
  * @desc    Central design tokens for the Care4U mobile app — colors, typography,
  *          spacing, and radius — mirrors the web CSS variables in index.css so
  *          both platforms stay visually identical.
- * @author  [Your Name] (S/21/XXX)
+ * @author  Wasana Karunanayaka (S/21/081)
  */
 
 export const colors = {

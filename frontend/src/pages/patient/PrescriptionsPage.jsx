@@ -59,7 +59,7 @@ const STATUS_CONFIG = {
   },
 
   partially_filled: {
-    label: 'Partially Filled',
+    label: 'Partially filled',
     icon: Clock3,
     textClass: 'text-amber-700',
     backgroundClass: 'bg-amber-50',
@@ -2060,7 +2060,7 @@ const PrescriptionsPage = () => {
           icon={
             Clock3
           }
-          label="Partially Filled"
+          label="Partially filled"
           value={
             partialCount
           }
