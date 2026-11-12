@@ -50,7 +50,17 @@ const adminRoutes = require('./src/modules/admin/admin.routes');
 const healthContentRoutes = require('./src/modules/health-content/healthContent.routes');
 
 const app = express();
-app.set('trust proxy', 1);
+const isProduction = process.env.NODE_ENV === 'production';
+// Direct development requests ignore forwarded IPs. Production retains the
+// previous one-hop assumption unless explicitly configured. A hop count is safe
+// only when deployment access is restricted to the expected trusted proxies.
+const trustProxyHops = process.env.TRUST_PROXY_HOPS === undefined
+  ? (isProduction ? 1 : 0)
+  : Number(process.env.TRUST_PROXY_HOPS);
+if (!Number.isSafeInteger(trustProxyHops) || trustProxyHops < 0) {
+  throw new Error('TRUST_PROXY_HOPS must be a non-negative integer');
+}
+app.set('trust proxy', trustProxyHops);
 
 // Security & Middleware
 
@@ -105,8 +115,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Session Setup (No JWT — Session-based as per supervisor requirement)
-
-const isProduction = process.env.NODE_ENV === 'production';
 
 if (!process.env.SESSION_SECRET) {
   throw new Error('SESSION_SECRET is required');

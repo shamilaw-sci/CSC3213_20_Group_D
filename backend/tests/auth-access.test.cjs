@@ -27,12 +27,13 @@ function service(overrides = {}, extra = {}) {
     getValidPasswordResetToken: async (_token, client) => { events.push(['read-token', client]); return { user_id: USER.id }; },
     updateUserPassword: async (_id, _hash, client) => events.push(['password', client]),
     markTokenAsUsed: async (_token, client) => { events.push(['used', client]); return { token: TOKEN }; },
-    findOtpByEmail: async (_email, client) => { events.push(['read-otp', client]); return { email: USER.email, role: 'patient', otp_code: '123456', otp_expires_at: new Date(NOW + 1000), profile_data: {} }; },
+    findOtpByEmail: async (_email, client) => { events.push(['read-otp', client]); return { id: 'pending-a', email: USER.email, role: 'patient', otp_code: '123456', otp_expires_at: new Date(NOW + 1000), profile_data: {} }; },
     createUser: async () => ({ ...USER }), createPatient: async () => ({ id: 'patient-a' }),
     createDoctor: async () => ({ id: 'doctor-a' }), createPharmacy: async () => ({ id: 'pharmacy-a' }),
     createLaboratory: async () => ({ id: 'lab-a' }), createHospital: async () => ({ id: 'hospital-a' }),
     deleteOtpByEmail: async (_email, client) => events.push(['delete-otp', client]),
     upsertOtpVerification: async () => events.push('store-otp'),
+    replacePendingOtp: async () => { events.push('replace-otp'); return { id: 'pending-a' }; },
     savePasswordResetToken: async () => events.push('store-reset'), ...overrides,
   };
   const api = load('backend/src/modules/auth/auth.service.js', {
@@ -249,7 +250,7 @@ test('registration sends only after persisting hash/code; provider failure stays
 
 test('resend requires pending registration and replaces its code before email', async () => {
   await assert.rejects(service({ findOtpByEmail: async () => null }).api.resendOtp(USER.email), /No pending registration/);
-  const good = service(); await good.api.resendOtp(USER.email); assert.ok(good.events.includes('store-otp'));
+  const good = service(); await good.api.resendOtp(USER.email); assert.ok(good.events.includes('replace-otp'));
 });
 
 test('reset sequential replay is denied by consumed-token boundary', async () => {

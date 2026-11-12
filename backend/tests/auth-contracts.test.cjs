@@ -21,6 +21,7 @@ test('auth routes keep me behind authentication and login behind its IP limiter'
   const fixture = routerFixture(); const guard = () => {}; const limiter = () => {};
   const controllers = Object.fromEntries(['register','verifyOtp','resendOtp','login','logout','getMe','forgotPassword','resetPassword'].map(name => [name + 'Controller', () => {}]));
   load('backend/src/modules/auth/auth.routes.js', { express: fixture.express, './auth.controller': controllers,
+    './auth.limits': { createAuthLimiters: () => ({}) },
     'express-rate-limit': () => limiter, '../../middleware/auth': { isAuthenticated: guard } });
   const me = fixture.records.find(row => row.args[0] === '/me');
   assert.equal(me.args[1], guard); assert.equal(me.args[2], controllers.getMeController);
@@ -63,7 +64,8 @@ test('patient routes install authentication before resource routes; UUID prescri
 function appFixture(production, env = {}) {
   let sessionOptions, corsOptions, storeOptions;
   const routes = []; const middleware = [];
-  const app = { set() {}, use: (...args) => middleware.push(args), get: (...args) => routes.push(args) };
+  const settings = {};
+  const app = { set: (name, value) => { settings[name] = value; }, use: (...args) => middleware.push(args), get: (...args) => routes.push(args) };
   const noop = () => {};
   const express = Object.assign(() => app, { json: () => noop, urlencoded: () => noop });
   const mocks = { dotenv: { config: () => ({}) }, express,
@@ -75,8 +77,40 @@ function appFixture(production, env = {}) {
   for (const module of ['patient','doctor','appointment','prescription','pharmacy','laboratory','hospital','emergency','order','payment','interaction','admin','auth']) mocks[`./src/modules/${module}/${module}.routes`] = noop;
   mocks['./src/modules/health-content/healthContent.routes'] = noop;
   load('backend/app.js', mocks, { env: { SESSION_SECRET: 'synthetic-fixture-secret', NODE_ENV: production ? 'production' : 'test', CLIENT_URL: 'https://web.example.test', ...env } });
-  return { sessionOptions, corsOptions, storeOptions, routes, middleware };
+  return { sessionOptions, corsOptions, storeOptions, routes, middleware, settings };
 }
+
+test('mocked route declarations attach IP then field budget before each OTP/recovery controller', () => {
+  const fixture = routerFixture();
+  const limits = Object.fromEntries(['emailIp', 'emailAddress', 'verifyIp', 'verifyEmail', 'resetIp', 'resetToken'].map(name => [name, () => {}]));
+  const controllers = Object.fromEntries(['register','verifyOtp','resendOtp','login','logout','getMe','forgotPassword','resetPassword'].map(name => [name + 'Controller', () => {}]));
+  load('backend/src/modules/auth/auth.routes.js', { express: fixture.express, './auth.controller': controllers,
+    './auth.limits': { createAuthLimiters: () => limits },
+    'express-rate-limit': () => () => {}, '../../middleware/auth': { isAuthenticated: () => {} } });
+  for (const [path, ip, field, handler] of [
+    ['register', 'emailIp', 'emailAddress', 'register'], ['resend-otp', 'emailIp', 'emailAddress', 'resendOtp'],
+    ['forgot-password', 'emailIp', 'emailAddress', 'forgotPassword'], ['verify-otp', 'verifyIp', 'verifyEmail', 'verifyOtp'],
+    ['reset-password', 'resetIp', 'resetToken', 'resetPassword'],
+  ]) {
+    assert.deepEqual(fixture.records.find(row => row.args[0] === '/' + path).args.slice(1),
+      [limits[ip], limits[field], controllers[handler + 'Controller']]);
+  }
+});
+
+test('mocked app assembly selects bounded proxy defaults/config and actual Express resolves IP accordingly', () => {
+  const express = require('../node_modules/express');
+  for (const [production, env, expected] of [[false, {}, 0], [true, {}, 1], [true, { TRUST_PROXY_HOPS: '0' }, 0], [false, { TRUST_PROXY_HOPS: '2' }, 2]]) {
+    const hops = appFixture(production, env).settings['trust proxy'];
+    assert.equal(hops, expected);
+    const app = express(); app.set('trust proxy', hops);
+    const req = Object.assign(Object.create(express.request), { app, socket: { remoteAddress: '203.0.113.10' },
+      headers: { 'x-forwarded-for': '198.51.100.23' } });
+    assert.equal(req.ip, hops === 0 ? '203.0.113.10' : '198.51.100.23');
+  }
+  for (const value of ['-1', '1.5', 'true', 'Infinity', 'bad']) {
+    assert.throws(() => appFixture(false, { TRUST_PROXY_HOPS: value }), /non-negative integer/);
+  }
+});
 
 for (const production of [false, true]) test(`session/CORS assembly (${production ? 'production' : 'test'}) uses documented cookie/store contract without connecting`, () => {
   const { sessionOptions: options, corsOptions, storeOptions } = appFixture(production);

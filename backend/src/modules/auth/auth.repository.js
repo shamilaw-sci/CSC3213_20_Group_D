@@ -533,6 +533,28 @@ const upsertOtpVerification = async (
 };
 
 /**
+ * Atomically replaces only the observed pending record's OTP and expiry.
+ * No insert fallback: deletion or a new row with the same email returns null.
+ * Registration identity fields are never included in this update. The single
+ * statement may wait for a database row lock; email is sent after it returns.
+ * @param {string} pendingId - ID observed by resend, not just its email key.
+ * @param {string} email - Exact pending email to constrain the intended record.
+ * @param {string} otpCode - New six-digit code.
+ * @param {Date} otpExpiresAt - New expiry.
+ * @returns {Promise<Object|null>} Updated identity/expiry or null if no match.
+ */
+const replacePendingOtp = async (pendingId, email, otpCode, otpExpiresAt) => {
+    const result = await pool.query(
+        `UPDATE otp_verifications
+         SET otp_code = $3, otp_expires_at = $4, updated_at = NOW()
+         WHERE id = $1 AND email = $2
+         RETURNING id, email, otp_expires_at`,
+        [pendingId, email, otpCode, otpExpiresAt]
+    );
+    return result.rows[0] || null;
+};
+
+/**
  * Finds pending registration data; a transaction client requests a row lock.
  * The raw OTP/password hash stay server-side and are never returned by controllers.
  * @param {string} email - Email to search for
@@ -637,6 +659,7 @@ module.exports = {
     markTokenAsUsed,
     updateUserPassword,
     upsertOtpVerification,
+    replacePendingOtp,
     findOtpByEmail,
     deleteOtpByEmail,
     incrementFailedLoginAttempts,

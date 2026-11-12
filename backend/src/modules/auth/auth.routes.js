@@ -1,8 +1,8 @@
 /**
  * @file auth.routes.js
  * @module auth
- * @desc Eight authentication routes: login is IP-limited; /me revalidates
- *       the session/account. Other routes are pre-authentication or logout.
+ * @desc Eight authentication routes: OTP/recovery have IP and field budgets;
+ *       login retains its IP limit; /me revalidates the session/account.
  *       Controllers own validation and lifecycle; this file does not send email.
  * @author I.M.L.S Idirisinghe (S/21/389)
  */
@@ -22,6 +22,8 @@ const {
 
 const rateLimit = require('express-rate-limit');
 const { isAuthenticated } = require('../../middleware/auth');
+const { createAuthLimiters } = require('./auth.limits');
+const limits = createAuthLimiters();
 
 // Limits login attempts per IP, independent of the per-account lockout
 // in login() itself - this protects against distributing guesses
@@ -38,13 +40,13 @@ const loginRateLimiter = rateLimit({
 });
 
 // POST /api/auth/register
-router.post('/register', registerController);
+router.post('/register', limits.emailIp, limits.emailAddress, registerController);
 
 // POST /api/auth/verify-otp
-router.post('/verify-otp', verifyOtpController);
+router.post('/verify-otp', limits.verifyIp, limits.verifyEmail, verifyOtpController);
 
 // POST /api/auth/resend-otp
-router.post('/resend-otp', resendOtpController);
+router.post('/resend-otp', limits.emailIp, limits.emailAddress, resendOtpController);
 
 // POST /api/auth/login
 router.post('/login', loginRateLimiter, loginController);
@@ -56,9 +58,9 @@ router.post('/logout', logoutController);
 router.get('/me', isAuthenticated, getMeController);
 
 // POST /api/auth/forgot-password
-router.post('/forgot-password', forgotPasswordController);
+router.post('/forgot-password', limits.emailIp, limits.emailAddress, forgotPasswordController);
 
 // POST /api/auth/reset-password
-router.post('/reset-password', resetPasswordController);
+router.post('/reset-password', limits.resetIp, limits.resetToken, resetPasswordController);
 
 module.exports = router;

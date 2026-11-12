@@ -29,6 +29,7 @@ const {
     markTokenAsUsed,
     updateUserPassword,
     upsertOtpVerification,
+    replacePendingOtp,
     findOtpByEmail,
     deleteOtpByEmail,
     incrementFailedLoginAttempts,
@@ -81,7 +82,10 @@ const register = async (email, phone, password, role, profileData) => {
 
 /**
  * Replace the code/expiry for an existing pending registration and send email.
- * A successful resend makes the old code unusable; it does not create a user.
+ * Update only the observed row's code/expiry; never restore stale registration
+ * fields or recreate a row consumed by verification. Only the stored code is
+ * valid: concurrent delivery may finish out of order. Provider failure leaves
+ * the replacement stored. Email submission happens after the atomic write.
  * @param {string} email - Pending registration's exact email key.
  * @returns {Promise<Object>} Email and new expiry, or rejects if missing/send fails.
  */
@@ -95,19 +99,15 @@ const resendOtp = async (email) => {
     const otpCode = generateOtp();
     const otpExpiresAt = getOtpExpiry(10);
 
-    await upsertOtpVerification(
-        pending.email,
-        pending.phone,
-        pending.password_hash,
-        pending.role,
-        otpCode,
-        otpExpiresAt,
-        pending.profile_data
-    );
+    const updated = await replacePendingOtp(pending.id, pending.email, otpCode, otpExpiresAt);
+    if (!updated) {
+        throw new Error('No pending registration found for this email');
+    }
 
-    const emailResult = await sendOtpEmail(email, otpCode);
-
-    if (!emailResult.success) {
+    try {
+        const emailResult = await sendOtpEmail(email, otpCode);
+        if (!emailResult.success) throw new Error('Provider rejected submission');
+    } catch {
         console.error('[OTP] Resent verification email delivery failed.');
         throw new Error('Failed to send OTP email');
     }
