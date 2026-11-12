@@ -122,8 +122,8 @@ const createPrescriptionItems = async (
  * @param {string} id - UUID of the prescription
  * @returns {Promise<Object|null>} Prescription object with items array, or null if not found
  */
-const getPrescriptionById = async (id) => {
-  const prescriptionResult = await pool.query(
+const getPrescriptionById = async (id, db = pool) => {
+  const prescriptionResult = await db.query(
     `SELECT *
      FROM prescriptions
      WHERE id = $1`,
@@ -140,7 +140,7 @@ const getPrescriptionById = async (id) => {
     prescriptionResult.rows[0];
 
   const itemsResult =
-    await pool.query(
+    await db.query(
       `SELECT *
        FROM prescription_items
        WHERE prescription_id = $1`,
@@ -201,9 +201,10 @@ const getPrescriptionByQrCode = async (
  */
 const updatePrescriptionStatus = async (
   id,
-  status
+  status,
+  db = pool
 ) => {
-  const result = await pool.query(
+  const result = await db.query(
     `UPDATE prescriptions
      SET status = $1,
          updated_at = NOW()
@@ -232,13 +233,15 @@ const updatePrescriptionStatus = async (
  */
 const updateQuantityDispensed = async (
   prescriptionItemId,
-  quantityDispensed
+  quantityDispensed,
+  db = pool
 ) => {
-  const result = await pool.query(
+  const result = await db.query(
     `UPDATE prescription_items
      SET quantity_dispensed =
          quantity_dispensed + $1
      WHERE id = $2
+       AND quantity_dispensed + $1 <= quantity_prescribed
      RETURNING *`,
     [
       quantityDispensed,
@@ -268,9 +271,10 @@ const updateQuantityDispensed = async (
  */
 const recordDispensing = async (
   prescriptionId,
-  pharmacyId
+  pharmacyId,
+  db = pool
 ) => {
-  const result = await pool.query(
+  const result = await db.query(
     `INSERT INTO prescription_dispensing
       (
         prescription_id,
@@ -291,6 +295,14 @@ const recordDispensing = async (
   return result.rows[0];
 };
 
+const lockPrescription = async (id, db) => {
+  const result = await db.query(
+    'SELECT id FROM prescriptions WHERE id = $1 FOR UPDATE',
+    [id]
+  );
+  return result.rows.length > 0;
+};
+
 module.exports = {
   createPrescription,
   createPrescriptionItems,
@@ -298,5 +310,6 @@ module.exports = {
   getPrescriptionByQrCode,
   updatePrescriptionStatus,
   updateQuantityDispensed,
-  recordDispensing
+  recordDispensing,
+  lockPrescription
 };

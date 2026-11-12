@@ -6,6 +6,7 @@
  */
 
 const { pool } = require('../../config/db');
+const doctorRepository = require('../doctor/doctor.repository');
 
 /**
  * Updates the status of an appointment.
@@ -348,9 +349,10 @@ const bookAppointment = async (
  */
 const checkAppointmentConflict = async (
   doctorId,
-  scheduledAt
+  scheduledAt,
+  db = pool
 ) => {
-  const result = await pool.query(
+  const result = await db.query(
     `SELECT id
      FROM appointments
      WHERE doctor_id = $1
@@ -363,6 +365,50 @@ const checkAppointmentConflict = async (
   );
 
   return result.rows.length > 0;
+};
+
+const bookAvailableAppointment = async (
+  patientId, doctorId, scheduledAt, type, notes, requireAvailableSlot
+) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const doctor = await client.query(
+      'SELECT id FROM doctors WHERE id = $1 FOR UPDATE',
+      [doctorId]
+    );
+    if (!doctor.rows.length) {
+      const error = new Error('Doctor not found');
+      error.statusCode = 404;
+      throw error;
+    }
+    if (requireAvailableSlot) {
+      const slots = await doctorRepository.getAvailableSlots(doctorId, 500, client);
+      if (!slots.includes(new Date(scheduledAt).toISOString())) {
+        const error = new Error('This doctor is unavailable at the selected time');
+        error.statusCode = 409;
+        throw error;
+      }
+    }
+    if (await checkAppointmentConflict(doctorId, scheduledAt, client)) {
+      const error = new Error('This time slot is already booked for the selected doctor');
+      error.statusCode = 409;
+      throw error;
+    }
+    const result = await client.query(
+      `INSERT INTO appointments
+        (patient_id, doctor_id, scheduled_at, status, type, notes)
+       VALUES ($1, $2, $3, 'scheduled', $4, $5) RETURNING *`,
+      [patientId, doctorId, scheduledAt, type, notes || null]
+    );
+    await client.query('COMMIT');
+    return result.rows[0];
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 };
 
 /**
@@ -470,5 +516,6 @@ module.exports = {
   bookAppointment,
   createHospitalWalkInAppointment,
   getTodayActiveAppointmentByPatientAndDoctor,
-  checkAppointmentConflict
+  checkAppointmentConflict,
+  bookAvailableAppointment
 };

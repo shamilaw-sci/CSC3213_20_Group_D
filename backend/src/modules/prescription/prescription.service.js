@@ -7,6 +7,7 @@
  */
 
 const prescriptionRepository = require('./prescription.repository');
+const { pool } = require('../../config/db');
 const appointmentRepository = require('../appointment/appointment.repository');
 const { generatePrescriptionQR } = require('../../utils/qr');
 
@@ -162,10 +163,19 @@ const dispenseMedicine = async (
     throw error;
   }
 
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    if (!await prescriptionRepository.lockPrescription(prescriptionId, client)) {
+      await client.query('ROLLBACK');
+      return null;
+    }
+
   // Step 2: Get the current prescription
   const prescription =
     await prescriptionRepository.getPrescriptionById(
-      prescriptionId
+      prescriptionId,
+      client
     );
 
   if (!prescription) {
@@ -173,10 +183,12 @@ const dispenseMedicine = async (
   }
 
   // Step 3: Check and update expiry status before dispensing
-  const checkedPrescription =
-    await isPrescriptionExpired(prescription);
+  const checkedPrescription = prescription;
 
-  if (checkedPrescription.status === 'expired') {
+  if (
+    checkedPrescription.status === 'expired' ||
+    new Date(checkedPrescription.expires_at) < new Date()
+  ) {
     const error = new Error(
       'Cannot dispense — prescription is expired'
     );
@@ -209,7 +221,14 @@ const dispenseMedicine = async (
   }
 
   // Step 5: Validate all requested quantities before changing the database
+  const requestedIds = new Set();
   for (const dispenseItem of dispenseItems) {
+    if (requestedIds.has(dispenseItem.prescriptionItemId)) {
+      const error = new Error('A medicine item may be selected only once');
+      error.statusCode = 400;
+      throw error;
+    }
+    requestedIds.add(dispenseItem.prescriptionItemId);
     // Find the matching item in the prescription
     const existingItem =
       checkedPrescription.items.find(
@@ -263,16 +282,23 @@ const dispenseMedicine = async (
 
   // Step 6: Dispense each item
   for (const dispenseItem of dispenseItems) {
-    await prescriptionRepository.updateQuantityDispensed(
+    const updatedItem = await prescriptionRepository.updateQuantityDispensed(
       dispenseItem.prescriptionItemId,
-      Number(dispenseItem.quantityDispensed)
+      Number(dispenseItem.quantityDispensed),
+      client
     );
+    if (!updatedItem) {
+      const error = new Error('Dispensing quantity exceeds the remaining balance');
+      error.statusCode = 409;
+      throw error;
+    }
   }
 
   // Step 7: Get updated prescription
   const updatedPrescription =
     await prescriptionRepository.getPrescriptionById(
-      prescriptionId
+      prescriptionId,
+      client
     );
 
   // Step 8: Check if all items are fully dispensed
@@ -300,7 +326,8 @@ const dispenseMedicine = async (
 
   await prescriptionRepository.updatePrescriptionStatus(
     prescriptionId,
-    newStatus
+    newStatus,
+    client
   );
 
   updatedPrescription.status =
@@ -309,11 +336,19 @@ const dispenseMedicine = async (
   // Step 10: Record which pharmacy performed this dispensing action
   await prescriptionRepository.recordDispensing(
     prescriptionId,
-    pharmacyId
+    pharmacyId,
+    client
   );
 
   // Step 11: Return updated prescription
+  await client.query('COMMIT');
   return updatedPrescription;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 };
 
 module.exports = {

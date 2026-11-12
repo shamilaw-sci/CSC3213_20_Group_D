@@ -11,6 +11,9 @@ const appointmentRepository =
 const patientRepository =
   require('../patient/patient.repository');
 
+const patientService =
+  require('../patient/patient.service');
+
 const doctorRepository =
   require('../doctor/doctor.repository');
 
@@ -187,9 +190,6 @@ const updateAppointmentStatusController =
               patientData.full_name
             );
 
-            console.log(
-              `[Email] Cancellation sent to ${patientData.email}`
-            );
           }
 
         } catch (emailErr) {
@@ -381,11 +381,14 @@ const getPatientConsultationNotesController =
         });
       }
 
-      const notes =
-        await appointmentRepository
-          .getConsultationNotesByPatientId(
-            patientId
-          );
+      const records = await patientService.getMedicalRecords(
+        patientId,
+        req.session.user,
+        activeAppointment.id
+      );
+      const notes = records.filter(
+        (record) => record.record_type === 'consultation'
+      );
 
       res.status(200).json({
         success: true,
@@ -958,33 +961,30 @@ if (
         });
       }
 
-      /**
-       * Existing exact-time booking conflict validation
-       * remains unchanged.
-       */
-      const conflict =
-        await appointmentRepository
-          .checkAppointmentConflict(
-            doctorId,
-            scheduledAt
-          );
-
-      if (conflict) {
+      const bookingTime = new Date(scheduledAt);
+      if (!Number.isFinite(bookingTime.getTime()) ||
+          bookingTime.getTime() < Date.now() - (isDoctorInitiated ? 5 * 60 * 1000 : 0)) {
         return res.status(400).json({
           success: false,
-          message:
-            'This time slot is already booked for the selected doctor'
+          message: 'Select a valid future appointment time'
+        });
+      }
+      if (type !== 'opd') {
+        return res.status(400).json({
+          success: false,
+          message: 'Unsupported appointment type'
         });
       }
 
       const appointment =
         await appointmentRepository
-          .bookAppointment(
+          .bookAvailableAppointment(
             patientId,
             doctorId,
             scheduledAt,
             type,
-            notes
+            notes,
+            !isDoctorInitiated
           );
 
       /* =====================================================
@@ -1054,9 +1054,6 @@ if (
             formattedDate
           );
 
-          console.log(
-            `[Email] Confirmation sent to ${patientData.email}`
-          );
         }
 
       } catch (emailErr) {
@@ -1082,10 +1079,10 @@ if (
         error
       );
 
-      res.status(500).json({
+      res.status(error.statusCode || 500).json({
         success: false,
         message:
-          'Internal server error'
+          error.statusCode ? error.message : 'Internal server error'
       });
     }
   };

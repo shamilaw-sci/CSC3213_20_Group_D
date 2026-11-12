@@ -162,11 +162,14 @@ const PatientQRLookupPage = () => {
     queryKey: [
       'patient-prescriptions-staff',
       patientData?.id,
+      lookupMode,
+      lookupValue,
     ],
 
     queryFn: async () => {
-      const res = await api.get(
-        `/api/patients/${patientData.id}/prescriptions`
+      const res = await api.post(
+        `/api/patients/qr/${encodeURIComponent(lookupValue)}/prescriptions`,
+        { staffVerified: true, patientConsented: true }
       );
 
       return res.data.data;
@@ -174,7 +177,8 @@ const PatientQRLookupPage = () => {
 
     enabled:
       !!patientData?.id &&
-      consentGiven,
+      consentGiven &&
+      lookupMode === 'qr',
 
     retry: false,
   });
@@ -839,7 +843,13 @@ const PatientQRLookupPage = () => {
             </Card>
 
             {/* Identity / consent */}
-            {!consentGiven && (
+            {lookupMode === 'nic' && (
+              <Alert
+                type="info"
+                message="Patient identity found. Scan their permanent QR card to view active prescriptions."
+              />
+            )}
+            {lookupMode === 'qr' && !consentGiven && (
               <div className="bg-urgent/10 border border-urgent/20 rounded-xl p-6">
 
                 <h2 className="flex items-center gap-2 text-base font-semibold text-urgent-foreground mb-2">
@@ -880,7 +890,7 @@ const PatientQRLookupPage = () => {
             )}
 
             {/* Consent confirmed */}
-            {consentGiven && (
+            {lookupMode === 'qr' && consentGiven && (
               <div className="border border-success/30 bg-success/10 rounded-xl p-4">
 
                 <div className="flex items-start gap-3">
@@ -908,7 +918,7 @@ const PatientQRLookupPage = () => {
             )}
 
             {/* Prescriptions */}
-            {consentGiven && (
+            {lookupMode === 'qr' && consentGiven && (
               <Card
                 title={`Active Prescriptions (${activePrescriptions.length})`}
                 icon={

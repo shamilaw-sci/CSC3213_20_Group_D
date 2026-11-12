@@ -195,7 +195,7 @@ const searchDoctors = async (specialty, hospitalName) => {
   let paramIndex = 1;
 
   if (specialty) {
-    // UPDATED: Now checks if the search term matches the specialty OR the doctor's name
+    // Search both specialization and doctor name.
     query += ` AND (
       LOWER(d.specialization) LIKE LOWER($${paramIndex})
       OR LOWER(d.full_name) LIKE LOWER($${paramIndex})
@@ -227,8 +227,8 @@ const searchDoctors = async (specialty, hospitalName) => {
  * @param {number} limit    - Number of slots to return
  * @returns {Promise<Array>} List of available slot datetime strings
  */
-const getAvailableSlots = async (doctorId, limit = 3) => {
-  const availabilityResult = await pool.query(
+const getAvailableSlots = async (doctorId, limit = 3, db = pool) => {
+  const availabilityResult = await db.query(
     `SELECT * FROM doctor_availability
      WHERE doctor_id = $1 AND is_active = true
      ORDER BY day_of_week ASC`,
@@ -238,7 +238,7 @@ const getAvailableSlots = async (doctorId, limit = 3) => {
   const availability = availabilityResult.rows;
   if (availability.length === 0) return [];
 
-  const bookedResult = await pool.query(
+  const bookedResult = await db.query(
     `SELECT scheduled_at FROM appointments
      WHERE doctor_id = $1
      AND scheduled_at > NOW()

@@ -34,6 +34,7 @@ const {
   addBulkVaccinationsController,
   deleteVaccinationController,
   getPatientPrescriptionsController,
+  getPharmacyPrescriptionsByQrController,
   getPatientByQrCodeController,
   getPatientByNicController,
   getPatientHistorySummaryController,
@@ -73,6 +74,13 @@ router.get(
   isAuthenticated,
   authorize('doctor', 'pharmacist'),
   getPatientByQrCodeController
+);
+
+router.post(
+  '/qr/:qrCodeId/prescriptions',
+  isAuthenticated,
+  authorize('pharmacist'),
+  getPharmacyPrescriptionsByQrController
 );
 
 /**
@@ -450,8 +458,7 @@ router.delete(
 router.get(
   '/:id/prescriptions',
   authorizePatientResource({
-    allowDoctor: true,
-    allowPharmacist: true
+    allowDoctor: true
   }),
   getPatientPrescriptionsController
 );

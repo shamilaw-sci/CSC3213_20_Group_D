@@ -195,6 +195,53 @@ const createLabReport = async (labRequestId, laboratoryId, patientId, reportUrl,
   return result.rows[0];
 };
 
+const createLabReportAndCompleteRequest = async (
+  labRequestId, laboratoryId, reportUrl, findings
+) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const requestResult = await client.query(
+      'SELECT * FROM lab_test_requests WHERE id = $1 FOR UPDATE',
+      [labRequestId]
+    );
+    const request = requestResult.rows[0];
+    if (!request || String(request.laboratory_id) !== String(laboratoryId) ||
+        !['in_progress', 'completed'].includes(request.status)) {
+      const error = new Error('Lab request is not available for report upload');
+      error.statusCode = 409;
+      throw error;
+    }
+    const existing = await client.query(
+      'SELECT id FROM lab_reports WHERE lab_request_id = $1',
+      [labRequestId]
+    );
+    if (existing.rows.length) {
+      const error = new Error('A report has already been uploaded for this request');
+      error.statusCode = 400;
+      throw error;
+    }
+    const reportResult = await client.query(
+      `INSERT INTO lab_reports
+        (lab_request_id, laboratory_id, patient_id, report_url, findings, is_finalized)
+       VALUES ($1, $2, $3, $4, $5, true) RETURNING *`,
+      [labRequestId, laboratoryId, request.patient_id, reportUrl || null, findings || null]
+    );
+    await client.query(
+      `UPDATE lab_test_requests SET status = 'completed', updated_at = NOW()
+       WHERE id = $1`,
+      [labRequestId]
+    );
+    await client.query('COMMIT');
+    return reportResult.rows[0];
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
 /**
  * Gets a lab report by its request ID.
  * @param {string} labRequestId - UUID of the lab test request
@@ -239,6 +286,7 @@ module.exports = {
   getLabRequestById,
   updateLabRequestStatus,
   createLabReport,
+  createLabReportAndCompleteRequest,
   getLabReportByRequestId,
   getLabReportsByPatient,
 };

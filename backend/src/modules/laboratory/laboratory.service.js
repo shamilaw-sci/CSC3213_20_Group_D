@@ -338,18 +338,11 @@ const uploadLabReport = async (
 
   // Step 4: Create the report
   const report =
-    await laboratoryRepository.createLabReport(
+    await laboratoryRepository.createLabReportAndCompleteRequest(
       labRequestId,
       request.laboratory_id,
-      request.patient_id,
       reportUrl,
       findings
-    );
-
-  // Step 5: Update request status to completed
-  await laboratoryRepository.updateLabRequestStatus(
-    labRequestId,
-    'completed'
   );
 
   // Step 6: Send email notifications (non-blocking — don't fail if email fails)

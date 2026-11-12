@@ -21,7 +21,6 @@ const getPharmacyPatientSummary = (patient) => ({
   date_of_birth: patient.date_of_birth,
   gender: patient.gender,
   blood_group: patient.blood_group,
-  qr_code_id: patient.qr_code_id,
   photo_url: patient.photo_url,
 });
 const { logAudit } = require('../../middleware/auditLog');
@@ -496,6 +495,49 @@ const getPatientPrescriptionsController = async (req, res) => {
   }
 };
 
+const getPharmacyPrescriptionsByQrController = async (req, res) => {
+  try {
+    if (req.body?.staffVerified !== true || req.body?.patientConsented !== true) {
+      return res.status(400).json({
+        success: false,
+        message: 'Staff identity verification and patient consent must be confirmed.'
+      });
+    }
+
+    const patient = await patientService.getPatientByQrCode(req.params.qrCodeId);
+    const prescriptions = await patientService.getPatientPrescriptions(patient.id);
+    const active = prescriptions
+      .filter((prescription) =>
+        ['active', 'partially_filled'].includes(prescription.status) &&
+        new Date(prescription.expires_at) > new Date()
+      )
+      .map((prescription) => ({
+        id: prescription.id,
+        qr_code_value: prescription.qr_code_value,
+        status: prescription.status,
+        expires_at: prescription.expires_at,
+        doctor_name: prescription.doctor_name,
+        items: prescription.items
+      }));
+
+    await logAudit(
+      req.session.user.id,
+      'PHARMACY_PATIENT_PRESCRIPTIONS_VIEW',
+      'patient',
+      patient.id,
+      { staffVerified: true, patientConsented: true },
+      req.ip
+    );
+
+    return res.status(200).json({ success: true, data: active });
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.statusCode ? error.message : 'Internal server error'
+    });
+  }
+};
+
 const getPatientByQrCodeController = async (req, res) => {
   try {
     const { qrCodeId } = req.params;
@@ -873,7 +915,6 @@ const generatePatientChatController = async (req, res) => {
       'patient',
       id,
       {
-        prompt: message,
         language
       },
       req.ip
@@ -1169,6 +1210,7 @@ module.exports = {
   deleteVaccinationController,
 
   getPatientPrescriptionsController,
+  getPharmacyPrescriptionsByQrController,
   getPatientByQrCodeController,
   getPatientByNicController,
   getPatientHistorySummaryController,
