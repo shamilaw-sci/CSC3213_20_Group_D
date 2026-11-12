@@ -64,9 +64,12 @@ backend/src/modules/auth/auth.controller.js,../laboratory/laboratory.repository,
 backend/src/modules/auth/auth.controller.js,../patient/patient.repository,Static literal import; does not prove runtime reachability
 backend/src/modules/auth/auth.controller.js,../pharmacy/pharmacy.repository,Static literal import; does not prove runtime reachability
 backend/src/modules/auth/auth.controller.js,./auth.service,Static literal import; does not prove runtime reachability
+backend/src/modules/auth/auth.limits.js,crypto,Static literal import; does not prove runtime reachability
+backend/src/modules/auth/auth.limits.js,express-rate-limit,Static literal import; does not prove runtime reachability
 backend/src/modules/auth/auth.repository.js,../../config/db,Static literal import; does not prove runtime reachability
 backend/src/modules/auth/auth.routes.js,../../middleware/auth,Static literal import; does not prove runtime reachability
 backend/src/modules/auth/auth.routes.js,./auth.controller,Static literal import; does not prove runtime reachability
+backend/src/modules/auth/auth.routes.js,./auth.limits,Static literal import; does not prove runtime reachability
 backend/src/modules/auth/auth.routes.js,express,Static literal import; does not prove runtime reachability
 backend/src/modules/auth/auth.routes.js,express-rate-limit,Static literal import; does not prove runtime reachability
 backend/src/modules/auth/auth.service.js,../../utils/email,Static literal import; does not prove runtime reachability

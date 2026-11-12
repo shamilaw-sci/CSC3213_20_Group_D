@@ -1,5 +1,9 @@
 # Ownership and provenance register
 
+## Stage 2B attribution decision
+
+Existing auth routes/service/repository Idirisinghe S/21/389 credits and app Wasana S/21/081 credit are retained. Stage 2B application changes are `0cd2abb`, committed as Codex Review Assistant; commit author is not original student author. New `auth.limits.js`, `auth-resend.test.cjs` and `auth-limits.test.cjs` explicitly identify review-assistant implementation. Tests/config/docs updates do not reassign source credit; `.env.example`/strict JSON gain no invented student header. Lasitha remains the Auth maintainer; the Idirisinghe/Lasitha Sanuth display-name discrepancy remains unresolved. Existing source provenance and immutable tracker baseline fields are preserved; no new ownership claim is inferred from module responsibility. See [STAGE2B.md](STAGE2B.md).
+
 Stage 1, 2026-11-12. No application headers were added or rewritten.
 
 Stage 2A update: 14 core paths were checked against their creation-candidate contents and followed Git lineage (`evidence/stage2a/ownership.json`). Existing student credits were retained, including the unresolved S/21/389 displayed-name discrepancy. New review-assistant helpers/tests and behavioral changes are identified by commits `150fec1`, `8c7908b`, `438c8a1`; they do not change original file authorship. Module maintainers remain the current user-supplied map.

@@ -1,5 +1,19 @@
 # Care4U final review progress
 
+## Current handoff: Stage 2B
+
+2026-11-12. **Stage 2B complete locally; stop for independent review.** Entry was clean at confirmed Stage 2A final `f14aee0c86178b5b14e99d367c5830203efcdd31` on the existing `codex/care4u-final-review-2026-11-12` branch. Application fix/config/tests commit: `0cd2abb`. Final documentation/evidence commit is recorded in the outside-repository archive manifest and Git log.
+
+[STAGE2B.md](STAGE2B.md) records reproduced resend stale-write/recreation races, code-only ID/email UPDATE, configurable per-process IP/email/token request budgets and explicit proxy defaults. All 89 application checks pass (original 67 retained), including real installed rate middleware/store execution; the 21 existing tooling checks pass. Current independent static reports are in `evidence/static-current/`. Controlled service interleavings and SQL mocks do not certify PG concurrency. No review tooling was expanded.
+
+Database acceptance is still PENDING: no verified base schema or identified disposable local PG environment. [AUTH_DATABASE_PREREQUISITES.md](AUTH_DATABASE_PREREQUISITES.md) lists exact objects, sanitized schema-only export instructions and focused acceptance cases. No repeated broad search, live configuration, DB connection, production access, patient data export or schema invention occurred. Browser/device/visual/provider/deployment-proxy checks remain NOT_RUN.
+
+Password reset still leaves sessions and other reset links active; legacy patient verification/approval and missing/changed profile-link rules remain unresolved. Raw OTP/reset storage and distributed/persistent limit requirements remain open. No unrelated UI/module review is marked complete. Original auth/app author credits remain; S/21/389 name mapping remains uncertain.
+
+New handoff: `C:\Users\Waasana\.codex\visualizations\2026\11\12\01a1cfb2-a394-7811-9795-1e79790000a9\Care4U-Stage2B-Handoff.zip`; Stage 2A ZIP retained. The manifest contains baseline/final commits, all included full source hashes and diff. Local commits only, no upstream; prior automatic push rejection remains in force and no retry/alternate route occurred. Next step is independent review, then verified schema/disposable DB and proxy evidence plus explicit unresolved-policy decisions. Do not begin other modules automatically.
+
+## Historical progress through Stage 2A
+
 Date: 2026-11-12 (Asia/Colombo). Stages 1/1B and the bounded Stage 2A batch are complete. **Stop for independent review.** Stage 2A adds verified isolated auth fixes, comments and the first full viva sample; live DB/browser/device acceptance remains pending.
 
 ## Resume here

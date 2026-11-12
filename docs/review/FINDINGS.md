@@ -1,5 +1,18 @@
 # Stage 1 findings
 
+## Stage 2B current update
+
+See [STAGE2B.md](STAGE2B.md) for `0cd2abb`, pre-fix reproduction and 89 passing application checks. Stage 2A notes below are historical; no inherited clinical/privacy finding is certified fully closed.
+
+| ID | Confirmed behavior / remediation | Current acceptance status |
+|---|---|---|
+| B2-01 | Resend's stale snapshot upsert overwrote newer registration fields or recreated a consumed pending row. Reproduced both before fix; code-only UPDATE now matches observed ID/email, never inserts, and gates email on matched row. Provider failure retains replacement; concurrent email order need not match writes. | SOURCE + 10 isolated resend regression/SQL contract cases PASS; actual PG row locking/rollback/interleavings PENDING. |
+| B2-02 / inherited M01 | Unbounded OTP/recovery routes now have configurable shared email-generation and independent verify/reset IP/field budgets. Actual installed middleware/MemoryStore tests cover allow/exhaustion/expiry/failure. | Focused per-process safeguard implemented/tested; global/persistent limits, raw secret storage and timing/response hardening remain OPEN. No blanket M01 closure. |
+| B2-03 | One-hop proxy trust applied in development too. Default is now direct-client (0) outside production, existing 1-hop default retained in production, configurable non-negative integer. | Captured app config and actual Express IP resolver PASS on synthetic headers/socket; real trusted proxy paths/access restrictions/session forwarded-protocol and browser checks NOT_RUN. |
+| B2-04 / S1-03 | Verified starting schema/disposable PG still unavailable; existing search reused. Exact auth/session objects and schema-only export/acceptance instructions supplied. | PENDING DB; no guessed schema, production connection or data export. |
+
+Unchanged policy consequences: password reset leaves sessions active and other unused links reusable until expiry/use; lockout remains. Legacy/unverified patient rules do not gain a blanket verification gate. Missing profile may admit a session with null profile then deny downstream ownership; same-role profile-link changes can leave stale session profile IDs. Policy decisions and DB/browser acceptance remain open. Consent, CSRF, unrelated module and visual/accessibility findings are not closed.
+
 ## Stage 2A current update
 
 See [STAGE2A.md](STAGE2A.md) for A2-01 through A2-09: stale session roles; session ID rotation/save acknowledgement; cryptographic OTP/deadlines; pending-OTP transaction read; password/token transaction consumption; typed input validation; account-state/recovery disclosure and logging; cookie-lifetime validation; absent-session logout/email wording. They have source fixes and 67 passing isolated policy/contract cases. Live DB/browser/device acceptance remains open; no inherited clinical/privacy finding is marked fully closed.

@@ -2,7 +2,7 @@
   "id": "B01",
   "kind": "syntax",
   "required": true,
-  "run_id": "2026-11-12T13-36-20-211Z-bf460bd3-07b2-44aa-8d2c-21183b5edf02",
+  "run_id": "2026-11-12T14-03-56-696Z-533367e0-de6b-48e0-827b-e259d34d4a83",
   "command": [
     "C:\\Users\\Waasana\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
     "scripts/check-syntax.js"
@@ -10,12 +10,12 @@
   "cwd": "backend",
   "result": "PASS",
   "source_snapshot": {
-    "head": "438c8a18c7dabab4f67ff358f8662497a7a8e2fe",
-    "sha256": "a685a89f66fae1c18a6fbfc7fae85251d1aea230db35f690fab4ac27598991fe",
+    "head": "0cd2abbd9b65b473e75e9e4e4d4c4df33d32f149",
+    "sha256": "ae806cbeb2874e2c6122fb808143274f2368c0c41f232b80bd95857f6d830b45",
     "files": [
       {
         "path": "backend/.env.example",
-        "sha256": "9550466e290e4842bc0184e208ba72a279fbf14d5e54dab5d39e3cbe15c5a741"
+        "sha256": "0e483a8e8a97d0ac7c06b11409b8f1d998112226e9b7d27f997e3e6e54958c0c"
       },
       {
         "path": "backend/.eslintrc.js",
@@ -35,7 +35,7 @@
       },
       {
         "path": "backend/app.js",
-        "sha256": "cb8946aa2284da3d0086f597b97cdd85fbf954d58dc21b8a9439a8d196b1f518"
+        "sha256": "0b5d704d690064402610a3399e010f86e60c44fc1dde319b63ed696d143829ed"
       },
       {
         "path": "backend/migrations/001_create_otp_verifications.sql",
@@ -67,7 +67,7 @@
       },
       {
         "path": "backend/package.json",
-        "sha256": "955b2702a6acce36eecadcb14205f94f9fd50d13915bd17c320d81a486b0f1f7"
+        "sha256": "35cf940b9d0b531d674cb8cbe02842fef4d5173e6a2425af46430cd7df8253d7"
       },
       {
         "path": "backend/scripts/check-syntax.js",
@@ -142,16 +142,20 @@
         "sha256": "039d634f35ad324dcb6eeb51684ffc26cdbe3169c3c8d56abe5aee62a24b14ca"
       },
       {
+        "path": "backend/src/modules/auth/auth.limits.js",
+        "sha256": "8ed6e9d918c07320bea6053348895f7d424798a2854368af3aa098c806fd3469"
+      },
+      {
         "path": "backend/src/modules/auth/auth.repository.js",
-        "sha256": "71c6c4dd259c9eec7266638f084bd9dc8fe0f937c3737864adb806feb9e4bc38"
+        "sha256": "333576c2116492a24117b98ec1e5911448d557499fb2a807ad332ce988bc2802"
       },
       {
         "path": "backend/src/modules/auth/auth.routes.js",
-        "sha256": "5366fb5db1604dfb87ca8967db646853f1dfa80d0e9cdadafc9c77aeb0f04643"
+        "sha256": "cc636a25b3bac2a27c34f2313512ceab456c03936424b0574bb372e820bc4d1b"
       },
       {
         "path": "backend/src/modules/auth/auth.service.js",
-        "sha256": "2ad87362df1f7980daa071898975d9f2c17331c70816c3d3688dd2fa45248fd0"
+        "sha256": "005a0d69ad00153ec47c79e775f54bb4ad0d68a7d6af7de5148a3a4e87c42703"
       },
       {
         "path": "backend/src/modules/doctor/doctor.controller.js",
@@ -375,11 +379,19 @@
       },
       {
         "path": "backend/tests/auth-access.test.cjs",
-        "sha256": "a617210319d7d65a7b9fd99012948c0a634794a0e509b6f1f470704b74f6de12"
+        "sha256": "431010416a7fee1be70ce20914a6568c1a2f1a9844a2b33e171e4540745f17bf"
       },
       {
         "path": "backend/tests/auth-contracts.test.cjs",
-        "sha256": "788b04a335d3c4e1bd695304258555677770570dcc894ddbf50404b37f48d0c7"
+        "sha256": "3c186adbc757300d5a8433893980fa414dceb99a47287bb4156fc312b7c510cd"
+      },
+      {
+        "path": "backend/tests/auth-limits.test.cjs",
+        "sha256": "ac32c2280b9de1c9689b02684b1fde788aac20d1fb0ca5ba0b1fdf8b3bfe4376"
+      },
+      {
+        "path": "backend/tests/auth-resend.test.cjs",
+        "sha256": "d60768049036b8bae7670dcc6aa843170b05b9897c2268d8ce68c714a49e4be8"
       },
       {
         "path": "backend/tests/support/isolated.cjs",
@@ -412,16 +424,16 @@
     ]
   },
   "limitations": "Node syntax only; no module evaluation, API or database assertions",
-  "started_at": "2026-11-12T13:36:20.220Z",
-  "finished_at": "2026-11-12T13:36:24.078Z",
+  "started_at": "2026-11-12T14:03:56.707Z",
+  "finished_at": "2026-11-12T14:04:00.397Z",
   "exit_code": 0,
   "error_code": null,
   "details": {
-    "files": 75
+    "files": 76
   },
   "warnings": [],
   "output": {
-    "stdout_sha256": "56e7eec05e80e3733cdc1495aa3bc983c24915b12dccdb9ad5c734a3e5ea4750",
+    "stdout_sha256": "d0fa1cbc3d140faf3a883ba790df37bab27a61f94fe022257040b4e74161800d",
     "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "stdout_bytes": 53,
     "stderr_bytes": 0,

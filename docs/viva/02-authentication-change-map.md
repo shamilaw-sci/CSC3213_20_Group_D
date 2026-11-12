@@ -1,6 +1,6 @@
 # Authentication change map
 
-Use with [the actual workflow](02-authentication-and-access.md) and [file reference](02-authentication-file-reference.md). Rows below are **proposed viva exercises**, not changes already implemented. Each needs review/testing before becoming a project change.
+Use with [the actual workflow](02-authentication-and-access.md) and [file reference](02-authentication-file-reference.md). The main table below contains **proposed viva exercises**, not changes already implemented. Each needs review/testing before becoming a project change.
 
 | Requested change | File(s) | Function/symbol | Ctrl+F phrase | Related permissions/validation | Verification needed |
 |---|---|---|---|---|---|
@@ -26,3 +26,18 @@ Use with [the actual workflow](02-authentication-and-access.md) and [file refere
 These are real changes, not exercises: cryptographic six-digit OTP generation; fail-closed OTP deadlines; pending-registration reads moved into the existing transaction; token/password/consumption on one transaction client; guarded reset-token consumption; authenticated session regeneration and acknowledged save; stale-role session invalidation; scalar/body/token shape validation; correct-password gating of restricted-account details; generic recovery response on transport exceptions; reduced raw auth-controller error logging; idempotent missing-session logout; positive session-lifetime validation; accurate email-channel registration wording; maintained test commands and source comments.
 
 No role/consent category was newly granted, no schema was invented, no session revocation policy was introduced, and no mobile restoration feature was added. See the [finding register](../review/STAGE2A.md) for evidence and remaining limitations.
+
+## Already implemented in Stage 2B
+
+Application fix/tests commit `0cd2abb`; baseline `f14aee0c86178b5b14e99d367c5830203efcdd31`. These rows describe actual implemented changes, not exercises.
+
+| Explain/change | File(s) | Function / exact Ctrl+F term | Meaning and verification boundary |
+|---|---|---|---|
+| Why resend restored stale data and could recreate a consumed row | auth service/repository, `auth-resend.test.cjs` | `resendOtp`, `replacePendingOtp`, `WHERE id = $1 AND email = $2` | Read once, update only code/expiry/timestamp for that ID/email. No upsert/identity columns. Zero matches means no email. Controlled interleavings/SQL contract PASS; actual PG pending. Registration/professional approval unchanged. |
+| What happens after a failed or overlapping email submission | auth service, resend tests | `Provider rejected submission`, `overlapping email completion` | 502 for provider false/throw; replacement stays stored. Current unexpired stored value wins. Concurrent deliveries may arrive out of order/superseded; no inbox delivery guarantee. |
+| Change email-generation budget | `auth.limits.js`, `.env.example`, auth routes | `AUTH_EMAIL_IP_LIMIT`, `AUTH_EMAIL_ADDRESS_LIMIT`, `limits.emailAddress` | Default shared register/resend/forgot budget 20/IP and 5/email per 15min; all attempts count. Changing one route must not accidentally evade the shared budget. Actual middleware/MemoryStore allow/exhaustion/expiry tests PASS. |
+| Change OTP/reset attempt budget | same plus `auth-limits.test.cjs` | `AUTH_VERIFY_EMAIL_LIMIT`, `AUTH_RESET_TOKEN_LIMIT`, `AUTH_RATE_WINDOW_MS` | Verify 30/IP + 10/email; reset 30/IP + 5/token by default. Positive integer config; per process, volatile, IPv6 /56. Store failure stops controller; global/distributed operation not proved. |
+| Diagnose forwarded-IP trust | `backend/app.js`, auth contract tests | `TRUST_PROXY_HOPS`, `trustProxyHops` | 0 default outside production, 1 in production, configurable integer. Actual Express resolver tested with synthetic socket/headers; real proxy restrictions/topology/cookie handling still pending. |
+| Prepare real SQL verification | review schema prerequisites | `AUTH_DATABASE_PREREQUISITES.md`, `Acceptance after prerequisites exist` | Obtain verified sanitized DDL/version/grants and disposable PG first. No invented schema, production connection or data dump. |
+
+For a viva, say: the old resend wrote an entire stale registration snapshot; now it updates only the observed pending row's code and expiry. A consumed row cannot be inserted again by resend. The request budgets reduce repeated guessing/email generation within one API process, and reset automatically after their window. These claims are supported by isolated service and real middleware execution, with DB/browser/deployment acceptance still pending.

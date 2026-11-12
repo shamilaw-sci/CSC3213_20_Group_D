@@ -1,5 +1,7 @@
 # Next bounded review stages
 
+Current through Stage 2B: the isolated auth/access batch and focused resend/attempt-limit follow-up are complete locally. Stop for independent review using [STAGE2B.md](STAGE2B.md). The next acceptance batch needs the [exact auth/session schema prerequisites](AUTH_DATABASE_PREREQUISITES.md), verified sanitized schema provenance, an explicitly disposable local PG target and deployment proxy evidence. No repeated broad schema search or automatic expansion to other modules is authorized. Recovery-session/other-link, legacy patient and profile-link policy decisions remain separate and open. The detailed plan below is retained as historical/planning context; completed isolated tests are not pending tasks and are not real DB/browser acceptance.
+
 Prepared in Stage 1B, 2026-11-12. No broad application refactoring begins here. The inherited runtime findings in [FINDINGS.md](FINDINGS.md) remain open; checkpoint commits preserve contents, not correctness.
 
 ## Immediate batch: shared access-control verification
