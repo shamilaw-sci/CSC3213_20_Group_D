@@ -1,16 +1,22 @@
 # Care4U final review progress
 
-Date: 2026-11-12 (Asia/Colombo). Stages 1 and 1B: **complete**. Application contents changed by these stages: **none**. Stage 1B preserved inherited changes in checkpoint commits.
+Date: 2026-11-12 (Asia/Colombo). Stages 1/1B and the bounded Stage 2A batch are complete. **Stop for independent review.** Stage 2A adds verified isolated auth fixes, comments and the first full viva sample; live DB/browser/device acceptance remains pending.
 
 ## Resume here
 
-Read this file and inspect `git status --porcelain=v2 --branch --untracked-files=all` before each stage. Use [STAGE1B.md](STAGE1B.md), [TOOLING.md](TOOLING.md) and [NEXT_STAGE_PLAN.md](NEXT_STAGE_PLAN.md) for the current handoff. Never treat historical audit reports as current runtime test evidence.
+Read this file and inspect `git status --porcelain=v2 --branch --untracked-files=all` before each stage. Current handoff: [STAGE2A.md](STAGE2A.md), [authentication viva sample](../viva/02-authentication-and-access.md), [file reference](../viva/02-authentication-file-reference.md) and [change map](../viva/02-authentication-change-map.md). [STAGE1B.md](STAGE1B.md) and [NEXT_STAGE_PLAN.md](NEXT_STAGE_PLAN.md) are previous-stage context. Never treat historical audit reports as current runtime evidence.
+
+Stage 2A entered clean at `245887bcd41b091a5375a79d7932c98c89c2f5ae`; no subsequent/unrelated changes existed. Commits: `150fec1` behavioral auth/session fixes plus 67 maintained isolated application cases; `8c7908b` test script wiring; `438c8a1` separate comments with executable AST parity on 13 files. Exact final documentation commit and included files are in the outside-repository handoff ZIP manifest. The current review branch remains `codex/care4u-final-review-2026-11-12` with no upstream/push; develop/main remain untouched.
+
+Core review covers 14 file references (13 auth source files plus partial app assembly); dependency/UI files are explicitly partial. All 67 policy/contract cases pass; they do not prove live SQL, locking, rollback, cookies or native behavior. OTP/token raw storage/attempt control, reset session revocation and legacy account/consent policies remain open. No schema was invented. Visual/accessibility/browser/native/provider acceptance is NOT_RUN.
+
+Next action is independent review using `Care4U-Stage2A-Handoff.zip` at the path in STAGE2A.md. Do not proceed into other modules automatically. After review, the next bounded batch is verified-schema/disposable DB/session-cookie acceptance, or agreed auth-policy follow-up if the schema is still missing.
 
 Current review branch is `codex/care4u-final-review-2026-11-12`, created from original HEAD `eeacffb0100288c7b89f5bddc33ffc917d6970b0`. Stage 1B entry hashes matched all 290 original files. The inherited 44 application edits were preserved in `a7c074b`, `a3bcac6`, `cc499f3` and `a609f07`; the original Stage 1 tracker/tooling/evidence and historical reports were preserved in `ad3b2fd`. Exact paths/scopes are in `evidence/stage1b/preservation-commits.json`. Source-file authorship remains separate from neutral review-assistant commit authorship.
 
 The immutable Stage 1 snapshot remains `evidence/initial-state.json`. The inherited application source checkpoint is `a609f07`; later review-only commits build on it. Use `git log --oneline` for the latest review-tooling/evidence commits. Current static reports are under `evidence/static-current/` and must match their manifest run ID and source hashes. B01–B06 passed; runtime/visual verification remains NOT_RUN. Twenty-one maintained tooling regression fixtures passed. Application files still await individual behavioral/commenting/UI review.
 
-Next bounded batch: isolated auth/approval/session/patient-ownership policy fixtures and source-linked viva documentation. Full DB/schema and browser/device tests remain blocked by unverified prerequisites. No broad application refactor starts automatically.
+The Stage 1B next batch (isolated auth/access fixtures and viva documentation) has now been completed in Stage 2A. Full DB/schema and browser/device acceptance remain blocked by unverified prerequisites. No broad application refactor starts automatically.
 
 Publication status: **local commits only; push blocked**. Automatic approval review rejected the attempted push of this review branch to `https://github.com/shamilaw-sci/CSC3213_20_Group_D.git`, stating that the destination was not established as trusted for exporting private source/review artifacts and that this specific egress lacked explicit approval. No push process ran and no workaround was attempted. Obtain the user's explicit approval for this branch and destination before retrying; do not push develop/main. The review branch has no upstream yet.
 

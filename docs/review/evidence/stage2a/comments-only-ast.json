@@ -1,0 +1,70 @@
+{
+  "against_commit": "150fec10376e290d06367a302e370346ca01e58b",
+  "files": [
+    {
+      "path": "backend/app.js",
+      "result": "PASS",
+      "check": "Executable AST unchanged after removing comments and source positions"
+    },
+    {
+      "path": "backend/src/middleware/auth.js",
+      "result": "PASS",
+      "check": "Executable AST unchanged after removing comments and source positions"
+    },
+    {
+      "path": "backend/src/middleware/patientAccess.js",
+      "result": "PASS",
+      "check": "Executable AST unchanged after removing comments and source positions"
+    },
+    {
+      "path": "backend/src/modules/auth/auth.controller.js",
+      "result": "PASS",
+      "check": "Executable AST unchanged after removing comments and source positions"
+    },
+    {
+      "path": "backend/src/modules/auth/auth.repository.js",
+      "result": "PASS",
+      "check": "Executable AST unchanged after removing comments and source positions"
+    },
+    {
+      "path": "backend/src/modules/auth/auth.routes.js",
+      "result": "PASS",
+      "check": "Executable AST unchanged after removing comments and source positions"
+    },
+    {
+      "path": "backend/src/modules/auth/auth.service.js",
+      "result": "PASS",
+      "check": "Executable AST unchanged after removing comments and source positions"
+    },
+    {
+      "path": "frontend/src/services/api.js",
+      "result": "PASS",
+      "check": "Executable AST unchanged after removing comments and source positions"
+    },
+    {
+      "path": "frontend/src/services/auth.service.js",
+      "result": "PASS",
+      "check": "Executable AST unchanged after removing comments and source positions"
+    },
+    {
+      "path": "frontend/src/store/authStore.js",
+      "result": "PASS",
+      "check": "Executable AST unchanged after removing comments and source positions"
+    },
+    {
+      "path": "mobile/src/services/api.js",
+      "result": "PASS",
+      "check": "Executable AST unchanged after removing comments and source positions"
+    },
+    {
+      "path": "mobile/src/services/auth.service.js",
+      "result": "PASS",
+      "check": "Executable AST unchanged after removing comments and source positions"
+    },
+    {
+      "path": "mobile/src/store/authStore.js",
+      "result": "PASS",
+      "check": "Executable AST unchanged after removing comments and source positions"
+    }
+  ]
+}

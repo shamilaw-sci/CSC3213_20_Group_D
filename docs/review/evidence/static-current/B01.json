@@ -2,7 +2,7 @@
   "id": "B01",
   "kind": "syntax",
   "required": true,
-  "run_id": "2026-11-12T12-56-35-709Z-e7d5f0cb-1429-4f4f-a973-da93d320cdc1",
+  "run_id": "2026-11-12T13-36-20-211Z-bf460bd3-07b2-44aa-8d2c-21183b5edf02",
   "command": [
     "C:\\Users\\Waasana\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
     "scripts/check-syntax.js"
@@ -10,8 +10,8 @@
   "cwd": "backend",
   "result": "PASS",
   "source_snapshot": {
-    "head": "74384bcceead2e0b18c2f9401b8a2aa5550a4607",
-    "sha256": "58c7901e26284d852062ba1ae0956da736edbf496592635362600e1499fcadf1",
+    "head": "438c8a18c7dabab4f67ff358f8662497a7a8e2fe",
+    "sha256": "a685a89f66fae1c18a6fbfc7fae85251d1aea230db35f690fab4ac27598991fe",
     "files": [
       {
         "path": "backend/.env.example",
@@ -35,7 +35,7 @@
       },
       {
         "path": "backend/app.js",
-        "sha256": "4a79887edaa1348cd54b63cb5378b3879efc5ef7c946611c571e4cbf54aa3866"
+        "sha256": "cb8946aa2284da3d0086f597b97cdd85fbf954d58dc21b8a9439a8d196b1f518"
       },
       {
         "path": "backend/migrations/001_create_otp_verifications.sql",
@@ -67,7 +67,7 @@
       },
       {
         "path": "backend/package.json",
-        "sha256": "8178f15dc9cab124e150223340487b770874a5b149c982d8492ef21dfa905ab9"
+        "sha256": "955b2702a6acce36eecadcb14205f94f9fd50d13915bd17c320d81a486b0f1f7"
       },
       {
         "path": "backend/scripts/check-syntax.js",
@@ -99,11 +99,11 @@
       },
       {
         "path": "backend/src/middleware/auth.js",
-        "sha256": "f517e8696b471a55ae4ca5ce11005fc1186805fe8dfdd37fb5f2c1851cbf5064"
+        "sha256": "584677e78f5d242fba8f3530b4d0899787872d30afdbf06d5f40d856c2e1c9bc"
       },
       {
         "path": "backend/src/middleware/patientAccess.js",
-        "sha256": "b998d1159e5d81a39326a5f289f2c943155e1daf2e67eb801959e02711b3dd17"
+        "sha256": "13702c87b4ea5ceb09daf7e127c11389b1b815f371381396d6ad35a43043a6b1"
       },
       {
         "path": "backend/src/middleware/upload.js",
@@ -139,19 +139,19 @@
       },
       {
         "path": "backend/src/modules/auth/auth.controller.js",
-        "sha256": "03eab69907d63d282b7e7c218d5ceb1ce78c69c1398ae5d7d98805fa84e6ed24"
+        "sha256": "039d634f35ad324dcb6eeb51684ffc26cdbe3169c3c8d56abe5aee62a24b14ca"
       },
       {
         "path": "backend/src/modules/auth/auth.repository.js",
-        "sha256": "cfc742f1efe9025257d080075872e8016e8c71aa67574db687c6b0d95846289a"
+        "sha256": "71c6c4dd259c9eec7266638f084bd9dc8fe0f937c3737864adb806feb9e4bc38"
       },
       {
         "path": "backend/src/modules/auth/auth.routes.js",
-        "sha256": "a5116bbbfee687b2dd5d645608ce5cd50a3a60b1ff80a951a28ccadd69026e6f"
+        "sha256": "5366fb5db1604dfb87ca8967db646853f1dfa80d0e9cdadafc9c77aeb0f04643"
       },
       {
         "path": "backend/src/modules/auth/auth.service.js",
-        "sha256": "48dbc485486b18d75152b8b33ce4913f19f0cf13291562d9be9ece37ee14f7d0"
+        "sha256": "2ad87362df1f7980daa071898975d9f2c17331c70816c3d3688dd2fa45248fd0"
       },
       {
         "path": "backend/src/modules/doctor/doctor.controller.js",
@@ -359,7 +359,7 @@
       },
       {
         "path": "backend/src/utils/otp.js",
-        "sha256": "b5c21d941ca1db76035723402bcac07d51a4939ea3d79242d528da47c83e9891"
+        "sha256": "b12e186bed525af935c91c9400df4ce2fe4798c4dd807a4a85155ca80bcff346"
       },
       {
         "path": "backend/src/utils/qr.js",
@@ -372,6 +372,18 @@
       {
         "path": "backend/src/utils/sms.util.js",
         "sha256": "97d494b2cc8918fedcbd7c9177d95011d527e4a871120f1bd24c20b5371b05ea"
+      },
+      {
+        "path": "backend/tests/auth-access.test.cjs",
+        "sha256": "a617210319d7d65a7b9fd99012948c0a634794a0e509b6f1f470704b74f6de12"
+      },
+      {
+        "path": "backend/tests/auth-contracts.test.cjs",
+        "sha256": "788b04a335d3c4e1bd695304258555677770570dcc894ddbf50404b37f48d0c7"
+      },
+      {
+        "path": "backend/tests/support/isolated.cjs",
+        "sha256": "cd49be059f94ae06a797415162727aeb2c858dc9fe00615f4850467a36e2ede1"
       },
       {
         "path": "docs/review/tools/check-evidence.mjs",
@@ -400,8 +412,8 @@
     ]
   },
   "limitations": "Node syntax only; no module evaluation, API or database assertions",
-  "started_at": "2026-11-12T12:56:35.719Z",
-  "finished_at": "2026-11-12T12:56:39.275Z",
+  "started_at": "2026-11-12T13:36:20.220Z",
+  "finished_at": "2026-11-12T13:36:24.078Z",
   "exit_code": 0,
   "error_code": null,
   "details": {

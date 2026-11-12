@@ -187,6 +187,7 @@ backend/src/utils/ai.util.js,@google/generative-ai,Static literal import; does n
 backend/src/utils/ai.util.js,groq-sdk,Static literal import; does not prove runtime reachability
 backend/src/utils/email.js,nodemailer,Static literal import; does not prove runtime reachability
 backend/src/utils/expiryJob.js,../config/db,Static literal import; does not prove runtime reachability
+backend/src/utils/otp.js,crypto,Static literal import; does not prove runtime reachability
 backend/src/utils/qr.js,uuid,Static literal import; does not prove runtime reachability
 backend/src/utils/reminderJob.js,../config/db,Static literal import; does not prove runtime reachability
 backend/src/utils/reminderJob.js,./email,Static literal import; does not prove runtime reachability

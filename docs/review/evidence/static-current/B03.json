@@ -2,7 +2,7 @@
   "id": "B03",
   "kind": "compilation",
   "required": true,
-  "run_id": "2026-11-12T12-56-35-709Z-e7d5f0cb-1429-4f4f-a973-da93d320cdc1",
+  "run_id": "2026-11-12T13-36-20-211Z-bf460bd3-07b2-44aa-8d2c-21183b5edf02",
   "command": [
     "C:\\Users\\Waasana\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
     "D:\\Projects\\Care4U - Healthcare Project\\codes\\CSC3213_20_Group_D\\docs\\review\\tools\\static-worker.mjs",
@@ -12,8 +12,8 @@
   "cwd": ".",
   "result": "PASS",
   "source_snapshot": {
-    "head": "74384bcceead2e0b18c2f9401b8a2aa5550a4607",
-    "sha256": "56cb7cdc50a29f994a9b08f9a7b7eb87c764f08469e36146fe743f253270520f",
+    "head": "438c8a18c7dabab4f67ff358f8662497a7a8e2fe",
+    "sha256": "9b18dbe2093c8d3717a50455b9f55669bc1f9816b527d8e4c9ff3174630af2c1",
     "files": [
       {
         "path": "docs/review/tools/check-evidence.mjs",
@@ -401,7 +401,7 @@
       },
       {
         "path": "frontend/src/services/api.js",
-        "sha256": "7e12ca231d4c3b0e536ae07248a39a851ca722fbcd46273debf100d3474c7c93"
+        "sha256": "ed04c8ca5ade50685fdf1a0bb635effbc2e49ae475cb020d729e0064c253d8a3"
       },
       {
         "path": "frontend/src/services/appointment.service.js",
@@ -409,7 +409,7 @@
       },
       {
         "path": "frontend/src/services/auth.service.js",
-        "sha256": "a08974c1c20ed8be43a0ab116bd379e69fb4ff6ef9628c640209c15e99771e08"
+        "sha256": "d6f872fa24563f2c7944a957b196657563a0ed918dbc5c50d698bc69fb740aa3"
       },
       {
         "path": "frontend/src/services/doctor.service.js",
@@ -437,7 +437,7 @@
       },
       {
         "path": "frontend/src/store/authStore.js",
-        "sha256": "6181790991b2b3e74e2ea0bf7ac2f09e2216b62903a30542e7992b2cb4ba4704"
+        "sha256": "bfb1b926b0ebfb0a7fb5cfb75addeda719a51dd8cfa07469253e296a471083b4"
       },
       {
         "path": "frontend/src/utils/allergenSearch.js",
@@ -470,21 +470,21 @@
     ]
   },
   "limitations": "Production graph in memory, .env disabled, synthetic origin; no deployed/browser verification",
-  "started_at": "2026-11-12T12:56:44.165Z",
-  "finished_at": "2026-11-12T12:56:45.560Z",
+  "started_at": "2026-11-12T13:36:29.024Z",
+  "finished_at": "2026-11-12T13:36:30.603Z",
   "exit_code": 0,
   "error_code": null,
   "details": {
     "artifacts": [
       {
-        "file": "assets/index-ZmaBE6Dk.js",
+        "file": "assets/index-D8d6UJUu.js",
         "kind": "chunk",
         "bytes": 1654658
       },
       {
-        "file": "assets/index-A8Nm6qMW.css",
+        "file": "assets/index-DSF0wbdX.css",
         "kind": "asset",
-        "bytes": 135160
+        "bytes": 135187
       },
       {
         "file": "index.html",
@@ -499,7 +499,7 @@
   },
   "warnings": [],
   "output": {
-    "stdout_sha256": "2feb76304eabc4aedaba1ec3845ca4db35cb2df5aacd2007e026bc41b3d93a75",
+    "stdout_sha256": "4ea23338a178028d679e56aa12779e822e43318e3eafaba37c5dff23fd03d07e",
     "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "stdout_bytes": 445,
     "stderr_bytes": 0,

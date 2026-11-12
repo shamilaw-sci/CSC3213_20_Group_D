@@ -1,0 +1,23 @@
+{
+  "baseline_commit": "245887bcd41b091a5375a79d7932c98c89c2f5ae",
+  "branch": "codex/care4u-final-review-2026-11-12",
+  "entry_clean": true,
+  "subsequent_changes": [],
+  "source_sha256": {
+    "backend/app.js": "4a79887edaa1348cd54b63cb5378b3879efc5ef7c946611c571e4cbf54aa3866",
+    "backend/src/modules/auth/auth.routes.js": "a5116bbbfee687b2dd5d645608ce5cd50a3a60b1ff80a951a28ccadd69026e6f",
+    "backend/src/modules/auth/auth.controller.js": "03eab69907d63d282b7e7c218d5ceb1ce78c69c1398ae5d7d98805fa84e6ed24",
+    "backend/src/modules/auth/auth.service.js": "48dbc485486b18d75152b8b33ce4913f19f0cf13291562d9be9ece37ee14f7d0",
+    "backend/src/modules/auth/auth.repository.js": "cfc742f1efe9025257d080075872e8016e8c71aa67574db687c6b0d95846289a",
+    "backend/src/middleware/auth.js": "f517e8696b471a55ae4ca5ce11005fc1186805fe8dfdd37fb5f2c1851cbf5064",
+    "backend/src/middleware/patientAccess.js": "b998d1159e5d81a39326a5f289f2c943155e1daf2e67eb801959e02711b3dd17",
+    "backend/src/utils/otp.js": "b5c21d941ca1db76035723402bcac07d51a4939ea3d79242d528da47c83e9891",
+    "frontend/src/services/api.js": "7e12ca231d4c3b0e536ae07248a39a851ca722fbcd46273debf100d3474c7c93",
+    "frontend/src/services/auth.service.js": "a08974c1c20ed8be43a0ab116bd379e69fb4ff6ef9628c640209c15e99771e08",
+    "frontend/src/store/authStore.js": "6181790991b2b3e74e2ea0bf7ac2f09e2216b62903a30542e7992b2cb4ba4704",
+    "mobile/src/services/api.js": "2e5c58cb4c83368bbd6589d7df45393ad0efd6f53cbae8605ed5f2ff506575c8",
+    "mobile/src/services/auth.service.js": "88569b053daf3bb81cedc3e064a5f53621ea73d2f764ab7088f2653101ca4915",
+    "mobile/src/store/authStore.js": "d82eb252f44cd85f4c638447840b8653be47dfb09c6ad39faa77b56b10323dba"
+  },
+  "push_status": "Prior automatic rejection remains; no new explicit destination approval; do not retry"
+}

@@ -1,0 +1,33 @@
+{
+  "source_commit": "245887bcd41b091a5375a79d7932c98c89c2f5ae",
+  "command": "node --test --test-reporter=tap backend/tests/auth-access.test.cjs",
+  "started_at": "2026-11-12T13:14:15.6585037Z",
+  "finished_at": "2026-11-12T13:14:15.8599686Z",
+  "exit_code": 1,
+  "cases": 48,
+  "passed": 28,
+  "failed": 20,
+  "failing_cases": [
+    "not ok 9 - role changed after login invalidates stale admin session before authorization",
+    "not ok 10 - role/profile guards fail closed for absent session, wrong role and wrong profile",
+    "not ok 23 - login policy: inactive incorrect credentials",
+    "not ok 29 - registration OTP denies exact expiry",
+    "not ok 30 - registration OTP denies malformed expiry",
+    "not ok 32 - OTP is read/consumed through the same transaction; sequential replay is denied",
+    "not ok 33 - password reset uses one transaction client for locked token/password/consumption",
+    "not ok 35 - recovery does not disclose email provider errors or account existence",
+    "not ok 36 - loginController rotates and saves session before success",
+    "not ok 37 - verifyOtpController rotates and saves session before success",
+    "not ok 38 - session regenerate failure cannot return login success",
+    "not ok 39 - session save failure cannot return login success",
+    "not ok 41 - logout acknowledges destruction only on success and handles missing session",
+    "not ok 42 - registerController rejects malformed scalar input as validation, not server failure",
+    "not ok 43 - loginController rejects malformed scalar input as validation, not server failure",
+    "not ok 44 - forgotPasswordController rejects malformed scalar input as validation, not server failure",
+    "not ok 45 - resetPasswordController rejects malformed scalar input as validation, not server failure",
+    "not ok 46 - verifyOtpController rejects malformed scalar input as validation, not server failure",
+    "not ok 47 - resendOtpController rejects malformed scalar input as validation, not server failure",
+    "not ok 48 - OTP utility uses cryptographic integer source with unchanged six-digit contract"
+  ],
+  "limits": "New regression expectations run against unmodified Stage 1B source; isolated mocks, no DB/runtime acceptance."
+}

@@ -1,0 +1,412 @@
+TAP version 13
+# Subtest: isolation refuses live config, unlisted imports and network-capable dependencies
+ok 1 - isolation refuses live config, unlisted imports and network-capable dependencies
+  ---
+  duration_ms: 5.5578
+  type: 'test'
+  ...
+# Subtest: authentication account state: approved patient
+ok 2 - authentication account state: approved patient
+  ---
+  duration_ms: 1.3693
+  type: 'test'
+  ...
+# Subtest: authentication account state: approved doctor
+ok 3 - authentication account state: approved doctor
+  ---
+  duration_ms: 1.1788
+  type: 'test'
+  ...
+# Subtest: authentication account state: inactive
+ok 4 - authentication account state: inactive
+  ---
+  duration_ms: 0.9624
+  type: 'test'
+  ...
+# Subtest: authentication account state: rejected patient
+ok 5 - authentication account state: rejected patient
+  ---
+  duration_ms: 0.9667
+  type: 'test'
+  ...
+# Subtest: authentication account state: pending doctor
+ok 6 - authentication account state: pending doctor
+  ---
+  duration_ms: 0.9632
+  type: 'test'
+  ...
+# Subtest: authentication account state: deleted account
+ok 7 - authentication account state: deleted account
+  ---
+  duration_ms: 0.9142
+  type: 'test'
+  ...
+# Subtest: missing session denies before DB access and repository failures deny safely
+ok 8 - missing session denies before DB access and repository failures deny safely
+  ---
+  duration_ms: 1.2014
+  type: 'test'
+  ...
+# Subtest: role changed after login invalidates stale admin session before authorization
+ok 9 - role changed after login invalidates stale admin session before authorization
+  ---
+  duration_ms: 1.0816
+  type: 'test'
+  ...
+# Subtest: role/profile guards fail closed for absent session, wrong role and wrong profile
+ok 10 - role/profile guards fail closed for absent session, wrong role and wrong profile
+  ---
+  duration_ms: 1.191
+  type: 'test'
+  ...
+# Subtest: patient resource boundary: patient owns profile
+ok 11 - patient resource boundary: patient owns profile
+  ---
+  duration_ms: 1.2006
+  type: 'test'
+  ...
+# Subtest: patient resource boundary: patient requests other profile
+ok 12 - patient resource boundary: patient requests other profile
+  ---
+  duration_ms: 0.7872
+  type: 'test'
+  ...
+# Subtest: patient resource boundary: assigned active doctor
+ok 13 - patient resource boundary: assigned active doctor
+  ---
+  duration_ms: 1.0671
+  type: 'test'
+  ...
+# Subtest: patient resource boundary: other doctor
+ok 14 - patient resource boundary: other doctor
+  ---
+  duration_ms: 0.9582
+  type: 'test'
+  ...
+# Subtest: patient resource boundary: other patient appointment
+ok 15 - patient resource boundary: other patient appointment
+  ---
+  duration_ms: 0.7766
+  type: 'test'
+  ...
+# Subtest: patient resource boundary: completed appointment
+ok 16 - patient resource boundary: completed appointment
+  ---
+  duration_ms: 0.8212
+  type: 'test'
+  ...
+# Subtest: patient resource boundary: missing appointment
+ok 17 - patient resource boundary: missing appointment
+  ---
+  duration_ms: 1.0208
+  type: 'test'
+  ...
+# Subtest: patient resource boundary: pharmacist not enabled
+ok 18 - patient resource boundary: pharmacist not enabled
+  ---
+  duration_ms: 1.2169
+  type: 'test'
+  ...
+# Subtest: patient resource DB failure is 500 and does not pass access
+ok 19 - patient resource DB failure is 500 and does not pass access
+  ---
+  duration_ms: 1.4217
+  type: 'test'
+  ...
+# Subtest: login policy: unknown
+ok 20 - login policy: unknown
+  ---
+  duration_ms: 3.6668
+  type: 'test'
+  ...
+# Subtest: login policy: wrong password
+ok 21 - login policy: wrong password
+  ---
+  duration_ms: 1.8747
+  type: 'test'
+  ...
+# Subtest: login policy: inactive valid credentials
+ok 22 - login policy: inactive valid credentials
+  ---
+  duration_ms: 1.5309
+  type: 'test'
+  ...
+# Subtest: login policy: inactive incorrect credentials
+ok 23 - login policy: inactive incorrect credentials
+  ---
+  duration_ms: 1.5185
+  type: 'test'
+  ...
+# Subtest: login policy: pending doctor
+ok 24 - login policy: pending doctor
+  ---
+  duration_ms: 1.619
+  type: 'test'
+  ...
+# Subtest: login policy: rejected
+ok 25 - login policy: rejected
+  ---
+  duration_ms: 1.1694
+  type: 'test'
+  ...
+# Subtest: login policy: locked
+ok 26 - login policy: locked
+  ---
+  duration_ms: 1.1698
+  type: 'test'
+  ...
+# Subtest: valid login clears failure count and expired lockout can recover
+ok 27 - valid login clears failure count and expired lockout can recover
+  ---
+  duration_ms: 1.144
+  type: 'test'
+  ...
+# Subtest: registration OTP denies expired
+ok 28 - registration OTP denies expired
+  ---
+  duration_ms: 1.1481
+  type: 'test'
+  ...
+# Subtest: registration OTP denies exact expiry
+ok 29 - registration OTP denies exact expiry
+  ---
+  duration_ms: 2.0467
+  type: 'test'
+  ...
+# Subtest: registration OTP denies malformed expiry
+ok 30 - registration OTP denies malformed expiry
+  ---
+  duration_ms: 1.6299
+  type: 'test'
+  ...
+# Subtest: registration OTP denies wrong code
+ok 31 - registration OTP denies wrong code
+  ---
+  duration_ms: 1.2593
+  type: 'test'
+  ...
+# Subtest: OTP is read/consumed through the same transaction; sequential replay is denied
+ok 32 - OTP is read/consumed through the same transaction; sequential replay is denied
+  ---
+  duration_ms: 1.254
+  type: 'test'
+  ...
+# Subtest: password reset uses one transaction client for locked token/password/consumption
+ok 33 - password reset uses one transaction client for locked token/password/consumption
+  ---
+  duration_ms: 1.1532
+  type: 'test'
+  ...
+# Subtest: reset refuses missing/expired/used token and password-write failure never consumes it
+ok 34 - reset refuses missing/expired/used token and password-write failure never consumes it
+  ---
+  duration_ms: 2.2579
+  type: 'test'
+  ...
+# Subtest: recovery does not disclose email provider errors or account existence
+ok 35 - recovery does not disclose email provider errors or account existence
+  ---
+  duration_ms: 3.5726
+  type: 'test'
+  ...
+# Subtest: loginController rotates and saves session before success
+ok 36 - loginController rotates and saves session before success
+  ---
+  duration_ms: 3.5709
+  type: 'test'
+  ...
+# Subtest: verifyOtpController rotates and saves session before success
+ok 37 - verifyOtpController rotates and saves session before success
+  ---
+  duration_ms: 1.758
+  type: 'test'
+  ...
+# Subtest: session regenerate failure cannot return login success
+ok 38 - session regenerate failure cannot return login success
+  ---
+  duration_ms: 1.1855
+  type: 'test'
+  ...
+# Subtest: session save failure cannot return login success
+ok 39 - session save failure cannot return login success
+  ---
+  duration_ms: 0.842
+  type: 'test'
+  ...
+# Subtest: pending professional OTP cannot retain another authenticated identity
+ok 40 - pending professional OTP cannot retain another authenticated identity
+  ---
+  duration_ms: 1.0119
+  type: 'test'
+  ...
+# Subtest: logout acknowledges destruction only on success and handles missing session
+ok 41 - logout acknowledges destruction only on success and handles missing session
+  ---
+  duration_ms: 1.1115
+  type: 'test'
+  ...
+# Subtest: registerController rejects malformed scalar input as validation, not server failure
+ok 42 - registerController rejects malformed scalar input as validation, not server failure
+  ---
+  duration_ms: 1.3671
+  type: 'test'
+  ...
+# Subtest: loginController rejects malformed scalar input as validation, not server failure
+ok 43 - loginController rejects malformed scalar input as validation, not server failure
+  ---
+  duration_ms: 0.7058
+  type: 'test'
+  ...
+# Subtest: forgotPasswordController rejects malformed scalar input as validation, not server failure
+ok 44 - forgotPasswordController rejects malformed scalar input as validation, not server failure
+  ---
+  duration_ms: 1.531
+  type: 'test'
+  ...
+# Subtest: resetPasswordController rejects malformed scalar input as validation, not server failure
+ok 45 - resetPasswordController rejects malformed scalar input as validation, not server failure
+  ---
+  duration_ms: 0.7831
+  type: 'test'
+  ...
+# Subtest: verifyOtpController rejects malformed scalar input as validation, not server failure
+ok 46 - verifyOtpController rejects malformed scalar input as validation, not server failure
+  ---
+  duration_ms: 0.6125
+  type: 'test'
+  ...
+# Subtest: resendOtpController rejects malformed scalar input as validation, not server failure
+ok 47 - resendOtpController rejects malformed scalar input as validation, not server failure
+  ---
+  duration_ms: 0.6934
+  type: 'test'
+  ...
+# Subtest: OTP utility uses cryptographic integer source with unchanged six-digit contract
+ok 48 - OTP utility uses cryptographic integer source with unchanged six-digit contract
+  ---
+  duration_ms: 0.8135
+  type: 'test'
+  ...
+# Subtest: OTP creates the matching profile for patient
+ok 49 - OTP creates the matching profile for patient
+  ---
+  duration_ms: 0.8087
+  type: 'test'
+  ...
+# Subtest: OTP creates the matching profile for doctor
+ok 50 - OTP creates the matching profile for doctor
+  ---
+  duration_ms: 0.6836
+  type: 'test'
+  ...
+# Subtest: OTP creates the matching profile for pharmacist
+ok 51 - OTP creates the matching profile for pharmacist
+  ---
+  duration_ms: 0.6758
+  type: 'test'
+  ...
+# Subtest: OTP creates the matching profile for lab_technician
+ok 52 - OTP creates the matching profile for lab_technician
+  ---
+  duration_ms: 0.9085
+  type: 'test'
+  ...
+# Subtest: OTP creates the matching profile for hospital_staff
+ok 53 - OTP creates the matching profile for hospital_staff
+  ---
+  duration_ms: 0.8309
+  type: 'test'
+  ...
+# Subtest: registration sends only after persisting hash/code; provider failure stays a registration error
+ok 54 - registration sends only after persisting hash/code; provider failure stays a registration error
+  ---
+  duration_ms: 1.4837
+  type: 'test'
+  ...
+# Subtest: resend requires pending registration and replaces its code before email
+ok 55 - resend requires pending registration and replaces its code before email
+  ---
+  duration_ms: 1.4081
+  type: 'test'
+  ...
+# Subtest: reset sequential replay is denied by consumed-token boundary
+ok 56 - reset sequential replay is denied by consumed-token boundary
+  ---
+  duration_ms: 0.865
+  type: 'test'
+  ...
+# Subtest: hydration exposes public session identity and missing session is 401
+ok 57 - hydration exposes public session identity and missing session is 401
+  ---
+  duration_ms: 0.684
+  type: 'test'
+  ...
+# Subtest: auth routes keep me behind authentication and login behind its IP limiter
+ok 58 - auth routes keep me behind authentication and login behind its IP limiter
+  ---
+  duration_ms: 3.2003
+  type: 'test'
+  ...
+# Subtest: patient routes install authentication before resource routes; UUID prescription reads never enable pharmacists
+ok 59 - patient routes install authentication before resource routes; UUID prescription reads never enable pharmacists
+  ---
+  duration_ms: 1.6942
+  type: 'test'
+  ...
+# Subtest: session/CORS assembly (test) uses documented cookie/store contract without connecting
+ok 60 - session/CORS assembly (test) uses documented cookie/store contract without connecting
+  ---
+  duration_ms: 1.5863
+  type: 'test'
+  ...
+# Subtest: session/CORS assembly (production) uses documented cookie/store contract without connecting
+ok 61 - session/CORS assembly (production) uses documented cookie/store contract without connecting
+  ---
+  duration_ms: 1.1126
+  type: 'test'
+  ...
+# Subtest: session assembly rejects missing secret/origins and invalid cookie lifetimes
+ok 62 - session assembly rejects missing secret/origins and invalid cookie lifetimes
+  ---
+  duration_ms: 8.6546
+  type: 'test'
+  ...
+# Subtest: repository token/OTP reads and writes honor the supplied transaction client and guarded consumption
+ok 63 - repository token/OTP reads and writes honor the supplied transaction client and guarded consumption
+  ---
+  duration_ms: 2.0609
+  type: 'test'
+  ...
+# Subtest: transaction helper requests BEGIN/COMMIT/release or ROLLBACK/release on callback failure
+ok 64 - transaction helper requests BEGIN/COMMIT/release or ROLLBACK/release on callback failure
+  ---
+  duration_ms: 2.9416
+  type: 'test'
+  ...
+# Subtest: consent status validates doctor, patient and active consultation before asking for a grant
+ok 65 - consent status validates doctor, patient and active consultation before asking for a grant
+  ---
+  duration_ms: 7.7059
+  type: 'test'
+  ...
+# Subtest: consent repository contract scopes grant by patient/doctor/appointment and excludes expired/revoked rows
+ok 66 - consent repository contract scopes grant by patient/doctor/appointment and excludes expired/revoked rows
+  ---
+  duration_ms: 1.4393
+  type: 'test'
+  ...
+# Subtest: medical-record filter hides locked categories on missing/failed grant and requires every matched category
+ok 67 - medical-record filter hides locked categories on missing/failed grant and requires every matched category
+  ---
+  duration_ms: 5.259
+  type: 'test'
+  ...
+1..67
+# tests 67
+# suites 0
+# pass 67
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 192.9298

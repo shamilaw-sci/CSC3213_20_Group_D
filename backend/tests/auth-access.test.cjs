@@ -11,7 +11,11 @@ const USER = { id: 'user-a', role: 'patient', email: 'patient@example.test', is_
   verification_status: 'approved', password_hash: 'synthetic-hash', profile_id: 'patient-a' };
 const TOKEN = 'a'.repeat(64);
 
-/** Construct actual auth service with strict synthetic repository/provider boundaries. */
+/** Construct actual auth service with strict synthetic repository/provider boundaries.
+ * @param {Object} overrides Repository substitutes for the case.
+ * @param {Object} extra Email helper substitutes.
+ * @returns {Object} Actual service exports, event log and shared fixture client.
+ */
 function service(overrides = {}, extra = {}) {
   const events = [];
   const db = { fixture: 'transaction-client' };
@@ -41,7 +45,10 @@ function service(overrides = {}, extra = {}) {
   return { api, events, db };
 }
 
-/** Load the real controller with only the five profile lookups and service mocked. */
+/** Load the real controller with only the five profile lookups and service mocked.
+ * @param {Object} overrides Service behavior for the case.
+ * @returns {Object} Actual HTTP controller exports; no server is started.
+ */
 function controller(overrides = {}) {
   const api = { login: async () => ({ ...USER }), verifyOtp: async () => ({ user: { ...USER }, profile: { id: 'patient-a', full_name: 'Synthetic Person' } }),
     register: async () => ({ email: USER.email }), resendOtp: async () => ({ email: USER.email }),
@@ -183,6 +190,8 @@ for (const handler of ['loginController', 'verifyOtpController']) test(`${handle
   req.body = handler === 'loginController' ? { email: USER.email, password: 'correct-password' } : { email: USER.email, otpCode: '123456' };
   await api[handler](req, res);
   assert.deepEqual(events.slice(0, 2), ['regenerate', 'save']); assert.equal(res.body.success, true); assert.equal(req.session.user.id, USER.id);
+  const identity = handler === 'loginController' ? res.body.data : res.body.data.user;
+  assert.equal(identity.password_hash, undefined);
 });
 
 for (const phase of ['regenerate', 'save']) test(`session ${phase} failure cannot return login success`, async () => {
@@ -252,6 +261,8 @@ test('reset sequential replay is denied by consumed-token boundary', async () =>
 });
 
 test('hydration exposes public session identity and missing session is 401', () => {
-  const api = controller(); const good = response(); api.getMeController({ session: { user: USER } }, good);
-  assert.equal(good.body.data, USER); const absent = response(); api.getMeController({}, absent); assert.equal(absent.statusCode, 401);
+  const publicUser = { id: USER.id, email: USER.email, role: USER.role, profile_id: USER.profile_id };
+  const api = controller(); const good = response(); api.getMeController({ session: { user: publicUser } }, good);
+  assert.equal(good.body.data, publicUser); assert.equal(good.body.data.password_hash, undefined);
+  const absent = response(); api.getMeController({}, absent); assert.equal(absent.statusCode, 401);
 });

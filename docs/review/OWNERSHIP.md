@@ -2,6 +2,10 @@
 
 Stage 1, 2026-11-12. No application headers were added or rewritten.
 
+Stage 2A update: 14 core paths were checked against their creation-candidate contents and followed Git lineage (`evidence/stage2a/ownership.json`). Existing student credits were retained, including the unresolved S/21/389 displayed-name discrepancy. New review-assistant helpers/tests and behavioral changes are identified by commits `150fec1`, `8c7908b`, `438c8a1`; they do not change original file authorship. Module maintainers remain the current user-supplied map.
+
+The mobile auth-store introduction candidate was clarified: `8447c1a` has an exact `C100` copy from `frontend/src/store/authStore.js`, whose source was introduced at `17f18c0`. The mobile path did not exist at that older source commit. Retain the Wasana credit with this copy lineage instead of claiming a literal mobile-file creation there. No sole-author claim was inferred. Comments/source reference were completed for the core auth scope; uncertain human identity/co-credit decisions remain open.
+
 ## Module responsibility
 
 The current user-supplied map governs maintenance responsibility for this review:

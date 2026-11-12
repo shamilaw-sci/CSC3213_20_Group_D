@@ -1,5 +1,7 @@
 # Care4U viva preparation
 
+The first completed Stage 2A sample is [Authentication and access](02-authentication-and-access.md), with a [file-by-file reference](02-authentication-file-reference.md) and [change map](02-authentication-change-map.md). It documents source-inspected behavior, 67 isolated checks, partial dependency/UI traces and outstanding runtime/policy limits. Independent review is the next step; other module pages remain pending.
+
 Stage 1 scaffold, 2026-11-12. This page records source-backed entry points and the proposed documentation order. It is not a claim that every workflow is verified.
 
 Stage 1B preserved the inherited application baseline and added [an actionable review/test/documentation plan](../review/NEXT_STAGE_PLAN.md). Begin with isolated auth/session/ownership fixtures and the corresponding viva page. The review-tooling fixtures pass, while application runtime/visual journeys remain unverified.
@@ -33,7 +35,7 @@ Paths in this table are relative to their relevant `backend/src/modules`, client
 
 ## Proposed pages for later stages
 
-Create these only as their implementations are individually reviewed; they do not exist yet:
+Create remaining pages only as their implementations are individually reviewed. The authentication page and its linked references now exist; other proposed pages below remain pending:
 
 1. `01-architecture-and-setup.md`: packages, runtime, complete schema prerequisites, environments and start/check commands.
 2. `02-authentication-and-access.md`: registration/OTP/approval/login/logout, sessions, role matrix, object ownership and audit semantics.

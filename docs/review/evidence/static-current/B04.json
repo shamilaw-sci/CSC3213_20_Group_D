@@ -2,7 +2,7 @@
   "id": "B04",
   "kind": "parser",
   "required": true,
-  "run_id": "2026-11-12T12-56-35-709Z-e7d5f0cb-1429-4f4f-a973-da93d320cdc1",
+  "run_id": "2026-11-12T13-36-20-211Z-bf460bd3-07b2-44aa-8d2c-21183b5edf02",
   "command": [
     "C:\\Users\\Waasana\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
     "D:\\Projects\\Care4U - Healthcare Project\\codes\\CSC3213_20_Group_D\\docs\\review\\tools\\static-worker.mjs",
@@ -12,8 +12,8 @@
   "cwd": ".",
   "result": "PASS",
   "source_snapshot": {
-    "head": "74384bcceead2e0b18c2f9401b8a2aa5550a4607",
-    "sha256": "90364f5f0702d275754d202757492756e81440334cf215f7f652d87204914b2e",
+    "head": "438c8a18c7dabab4f67ff358f8662497a7a8e2fe",
+    "sha256": "f6082a31c1c0e2e99466b85e79bfbd67ce5460634ef2e887978da1d09072e4b8",
     "files": [
       {
         "path": "docs/review/tools/check-evidence.mjs",
@@ -177,7 +177,7 @@
       },
       {
         "path": "mobile/src/services/api.js",
-        "sha256": "2e5c58cb4c83368bbd6589d7df45393ad0efd6f53cbae8605ed5f2ff506575c8"
+        "sha256": "7740912172206c21fbab008c9d918ef6db14f2e80432e846d6c9e88d6d9b3b1c"
       },
       {
         "path": "mobile/src/services/appointment.service.js",
@@ -185,7 +185,7 @@
       },
       {
         "path": "mobile/src/services/auth.service.js",
-        "sha256": "88569b053daf3bb81cedc3e064a5f53621ea73d2f764ab7088f2653101ca4915"
+        "sha256": "e5dba7e2d25bbcde30ca8aa9de0f547967dd2c9ca834442b92ebd09540afc0fa"
       },
       {
         "path": "mobile/src/services/doctor.service.js",
@@ -201,7 +201,7 @@
       },
       {
         "path": "mobile/src/store/authStore.js",
-        "sha256": "d82eb252f44cd85f4c638447840b8653be47dfb09c6ad39faa77b56b10323dba"
+        "sha256": "70adfb9501396605e60ff8fc2d6dd785c3d749ce2a819efff66110e751a1cf3f"
       },
       {
         "path": "mobile/src/utils/allergenSearch.js",
@@ -214,8 +214,8 @@
     ]
   },
   "limitations": "Tracked JS/JSX parsing only; no Metro/native/device behavior or API calls",
-  "started_at": "2026-11-12T12:56:45.563Z",
-  "finished_at": "2026-11-12T12:56:46.077Z",
+  "started_at": "2026-11-12T13:36:30.606Z",
+  "finished_at": "2026-11-12T13:36:31.143Z",
   "exit_code": 0,
   "error_code": null,
   "details": {

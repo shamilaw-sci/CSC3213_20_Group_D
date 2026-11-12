@@ -8,7 +8,9 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { load, NOW, sessionRequest, response } = require('./support/isolated.cjs');
 
-/** Record Express registration order without binding/listening or running services. */
+/** Record Express registration order without binding/listening or running services.
+ * @returns {Object} Fake router, ordered declarations and Express constructor stub.
+ */
 function routerFixture() {
   const records = [], router = {};
   for (const method of ['get', 'post', 'put', 'delete', 'use']) router[method] = (...args) => records.push({ method, args });
@@ -53,7 +55,11 @@ test('patient routes install authentication before resource routes; UUID prescri
   }
 });
 
-/** Load actual app assembly while replacing every side-effectful integration. */
+/** Load actual app assembly while replacing every side-effectful integration.
+ * @param {boolean} production Whether to select production cookie rules.
+ * @param {Object} env Synthetic environment overrides only.
+ * @returns {Object} Recorded session/store/CORS configuration and routes.
+ */
 function appFixture(production, env = {}) {
   let sessionOptions, corsOptions, storeOptions;
   const routes = []; const middleware = [];
@@ -116,7 +122,10 @@ test('transaction helper requests BEGIN/COMMIT/release or ROLLBACK/release on ca
   assert.deepEqual(calls, ['BEGIN','ROLLBACK','release']);
 });
 
-/** Consent status uses actual service validation; the repository remains a boundary. */
+/** Consent status uses actual service validation; the repository remains a boundary.
+ * @param {Object} options Synthetic appointment overrides and optional grant.
+ * @returns {Object} Actual consent-service exports with closed dependencies.
+ */
 function consentFixture({ appointment = {}, grant = null } = {}) {
   return load('backend/src/modules/patient/consent.service.js', {
     bcryptjs: {}, './consent.repository': { getConsentSettings: async () => ({ locked_categories: ['mental health'] }), getActiveConsentAccessGrant: async () => grant },

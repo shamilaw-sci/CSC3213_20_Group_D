@@ -183,13 +183,16 @@ No credentials are published in this repository. Create/seed reviewer accounts t
 cd backend
 npm run check
 
+npm run test:auth
+
 cd ../frontend
 npm run build
 ```
 
-There is currently no automated application test suite. Manual role/ownership and deployed cross-origin session smoke tests remain required; the deployment checklist lists them explicitly.
+Authentication/session/patient-access regression checks are maintained in `backend/tests` and run with `npm run test:auth`; `npm test` runs syntax plus those checks. They use synthetic mocks and do not verify PostgreSQL constraints, persistence, locking, rollback, browser cookies or native devices. Manual role/ownership and deployed cross-origin session smoke tests remain required.
 
 ## Additional documentation
 
 - [Viva code guide](CARE4U_VIVA_CODE_GUIDE.md)
+- [Authentication and access viva sample](docs/viva/02-authentication-and-access.md)
 - [Deployment checklist](CARE4U_DEPLOYMENT_CHECKLIST.md)
