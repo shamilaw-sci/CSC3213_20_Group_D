@@ -57,10 +57,8 @@ const sendAppointmentReminders = async () => {
         appointmentDate
       );
 
-      if (emailResult.success) {
-        console.log(`[ReminderJob] Reminder sent to ${appt.patient_email} for appointment at ${appointmentDate}`);
-      } else {
-        console.error(`[ReminderJob] Failed to send reminder to ${appt.patient_email}:`, emailResult.error);
+      if (!emailResult.success) {
+        console.error('[ReminderJob] Failed to send an appointment reminder.');
       }
     }
 

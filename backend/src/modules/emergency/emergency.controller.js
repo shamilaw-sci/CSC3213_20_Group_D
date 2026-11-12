@@ -41,7 +41,7 @@ const triggerSosController = async (req, res) => {
     res.status(201).json({
       success: true,
       message:
-        'SOS alert triggered and location logged successfully',
+        'SOS alert saved to the hospital dashboard. Contact notification is not confirmed.',
       data: alert
     });
 

@@ -24,7 +24,7 @@ const runExpiryJob = async () => {
            updated_at = NOW()
        WHERE status    = 'active'
          AND expires_at < NOW()
-       RETURNING id, qr_code_value, expires_at`,
+       RETURNING id`,
       []
     );
 
@@ -33,10 +33,7 @@ const runExpiryJob = async () => {
     if (expired.length === 0) {
       console.log('[ExpiryJob] No prescriptions to expire.');
     } else {
-      console.log(`[ExpiryJob] Expired ${expired.length} prescription(s):`);
-      expired.forEach(p => {
-        console.log(`  - ${p.qr_code_value} (expired at ${p.expires_at})`);
-      });
+      console.log(`[ExpiryJob] Expired ${expired.length} prescription(s).`);
     }
 
     console.log('[ExpiryJob] Done.');

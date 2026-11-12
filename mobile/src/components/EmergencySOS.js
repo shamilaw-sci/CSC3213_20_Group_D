@@ -11,9 +11,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Modal, Alert, Linking } from 
 import * as Location from 'expo-location';
 import api from '../services/api';
 
-// For testing, we use a dummy number. 
-// On deployment, this is changed to '1990' via environment variables.
-const EMERGENCY_NUMBER = process.env.EXPO_PUBLIC_EMERGENCY_PHONE || '0771679225'; 
+const EMERGENCY_NUMBER = '1990';
 
 const EmergencySOS = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -46,7 +44,7 @@ const EmergencySOS = () => {
   const triggerEmergency = async () => {
     setIsModalVisible(false); // Hide the modal immediately
 
-    // 1. Instantly trigger the native phone dialer (bypassing canOpenURL check)
+    // Open the phone dialer; the user must place the call there.
     const telUrl = `tel:${EMERGENCY_NUMBER}`;
     try {
       await Linking.openURL(telUrl);
@@ -55,7 +53,7 @@ const EmergencySOS = () => {
       Alert.alert('Error', 'Could not open the phone dialer.');
     }
 
-    // 2. Silently capture GPS and notify the backend
+    // Save an alert for the hospital dashboard, with location if available.
     try {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
@@ -75,12 +73,14 @@ const EmergencySOS = () => {
         longitude: location.coords.longitude,
       });
 
-      console.log('SOS Alert successfully sent to hospital dashboard with GPS data.');
-
     } catch (error) {
-      console.error('Failed to send SOS API request:', error);
-      // Fallback: Ensure backend is notified even if GPS completely fails
-      await api.post('/api/emergencies/sos', { latitude: null, longitude: null }).catch(e => console.log(e));
+      // A location failure may be retried without GPS; an API failure must
+      // never be presented as a delivered alert.
+      try {
+        await api.post('/api/emergencies/sos', { latitude: null, longitude: null });
+      } catch {
+        Alert.alert('Hospital alert not saved', 'Please place the 1990 call in your phone dialer. The hospital dashboard alert could not be confirmed.');
+      }
     }
   };
 
@@ -95,7 +95,7 @@ const EmergencySOS = () => {
       <Modal visible={isModalVisible} animationType="slide" transparent={false}>
         <View style={styles.modalContainer}>
           <Text style={styles.warningText}>EMERGENCY ALERT</Text>
-          <Text style={styles.subText}>Notifying hospital and emergency services in...</Text>
+          <Text style={styles.subText}>Opening your phone dialer for 1990 and attempting to save a hospital dashboard alert in...</Text>
           
           <View style={styles.countdownCircle}>
             <Text style={styles.countdownText}>{countdown}</Text>
@@ -106,7 +106,7 @@ const EmergencySOS = () => {
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.callNowButton} onPress={triggerEmergency}>
-            <Text style={styles.callNowButtonText}>CALL NOW</Text>
+            <Text style={styles.callNowButtonText}>OPEN DIALER NOW</Text>
           </TouchableOpacity>
         </View>
       </Modal>
