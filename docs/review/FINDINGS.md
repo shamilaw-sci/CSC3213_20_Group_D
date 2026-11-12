@@ -2,6 +2,8 @@
 
 2026-11-12. Discovery findings only; no application fixes applied. Static check results are in [BASELINE.md](BASELINE.md). No executed project check failed, and there are no Stage 1 application regressions.
 
+Stage 1B update: S1-01 preservation is complete through explicit checkpoints on the review branch. Tracker-refresh loss and stale-PASS tooling risks were addressed with 21 maintained regression fixtures and independent static reports. These tooling resolutions do not close H/M runtime findings. S1-02 still applies to application tests/CI; the new fixtures test review tooling only. The searched material did not provide a verified complete base schema; see [NEXT_STAGE_PLAN.md](NEXT_STAGE_PLAN.md). No application behavior or disputed source author was changed in Stage 1B.
+
 ## Confirmed discovery findings
 
 | ID | Finding / evidence | Implication / next action |

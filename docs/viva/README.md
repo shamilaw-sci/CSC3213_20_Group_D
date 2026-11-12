@@ -2,6 +2,8 @@
 
 Stage 1 scaffold, 2026-11-12. This page records source-backed entry points and the proposed documentation order. It is not a claim that every workflow is verified.
 
+Stage 1B preserved the inherited application baseline and added [an actionable review/test/documentation plan](../review/NEXT_STAGE_PLAN.md). Begin with isolated auth/session/ownership fixtures and the corresponding viva page. The review-tooling fixtures pass, while application runtime/visual journeys remain unverified.
+
 Start with the existing [viva code guide](../../CARE4U_VIVA_CODE_GUIDE.md), then read the current [baseline](../review/BASELINE.md), [findings](../review/FINDINGS.md) and [ownership register](../review/OWNERSHIP.md). Older guides and audit notes must be reconciled with the current dirty working copy before final viva answers are certified.
 
 ## Implemented shape

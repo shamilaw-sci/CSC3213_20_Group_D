@@ -1,12 +1,16 @@
 # Care4U final review progress
 
-Date: 2026-11-12 (Asia/Colombo). Stage 1: **complete**. Application changes: **none**.
+Date: 2026-11-12 (Asia/Colombo). Stages 1 and 1B: **complete**. Application contents changed by these stages: **none**. Stage 1B preserved inherited changes in checkpoint commits.
 
 ## Resume here
 
-Read this file and inspect `git status --porcelain=v2 --branch --untracked-files=all` before each stage. The baseline is the **existing working copy**, not a clean checkout of HEAD. Do not treat the previous untracked audit reports as current test evidence.
+Read this file and inspect `git status --porcelain=v2 --branch --untracked-files=all` before each stage. Use [STAGE1B.md](STAGE1B.md), [TOOLING.md](TOOLING.md) and [NEXT_STAGE_PLAN.md](NEXT_STAGE_PLAN.md) for the current handoff. Never treat historical audit reports as current runtime test evidence.
 
-HEAD is `eeacffb0100288c7b89f5bddc33ffc917d6970b0`, branch `develop`, upstream `origin/develop`. At entry: 44 unstaged tracked files, zero staged files, seven untracked documents in `docs/final-review/`. No branch, worktree, commit, stash, reset, fetch, push, deployment, database connection, or application server was created/run in Stage 1.
+Current review branch is `codex/care4u-final-review-2026-11-12`, created from original HEAD `eeacffb0100288c7b89f5bddc33ffc917d6970b0`. Stage 1B entry hashes matched all 290 original files. The inherited 44 application edits were preserved in `a7c074b`, `a3bcac6`, `cc499f3` and `a609f07`; the original Stage 1 tracker/tooling/evidence and historical reports were preserved in `ad3b2fd`. Exact paths/scopes are in `evidence/stage1b/preservation-commits.json`. Source-file authorship remains separate from neutral review-assistant commit authorship.
+
+The immutable Stage 1 snapshot remains `evidence/initial-state.json`. The inherited application source checkpoint is `a609f07`; later review-only commits build on it. Use `git log --oneline` for the latest review-tooling/evidence commits. Current static reports are under `evidence/static-current/` and must match their manifest run ID and source hashes. B01–B06 passed; runtime/visual verification remains NOT_RUN. Twenty-one maintained tooling regression fixtures passed. Application files still await individual behavioral/commenting/UI review.
+
+Next bounded batch: isolated auth/approval/session/patient-ownership policy fixtures and source-linked viva documentation. Full DB/schema and browser/device tests remain blocked by unverified prerequisites. No broad application refactor starts automatically.
 
 ## Documentation structure
 
@@ -23,7 +27,7 @@ The existing `docs/` convention is retained. These files establish the proposed 
 | `evidence/` | Machine-readable hashes, refs, versions, check results, dependencies and ownership |
 | `tools/` | Review-only inventory and safe static-check helpers; no student authorship claimed |
 
-Existing `docs/final-review/01_*` through `05B_*` documents are pre-existing, untracked reference material. They were read selectively for scope/history and were not overwritten. Existing root README, viva guide, deployment checklist, and epic notes remain unchanged.
+Existing `docs/final-review/01_*` through `05B_*` documents are now tracked historical evidence, unchanged and labelled by their directory README. Root README, root viva guide, deployment checklist and epic notes remain unchanged. Review documentation and fixtures were added/updated in Stage 1B.
 
 ## Stage 1 completed
 
@@ -34,13 +38,13 @@ Existing `docs/final-review/01_*` through `05B_*` documents are pre-existing, un
 - Executed backend syntax, frontend lint, production web compilation, mobile parsing, diff whitespace checks and direct-dependency consistency checks. All executed project checks passed; see [BASELINE.md](BASELINE.md).
 - Recorded original file hashes for all 283 tracked and seven pre-existing untracked files. Final preservation verification is recorded in `evidence/preservation-check.json`.
 
-## Protecting the dirty working copy
+## Stage 1 protection decision (historical; superseded by Stage 1B authorization)
 
-Continue analysis here without switching branches. `evidence/preexisting-work.csv` lists each dirty/untracked path and its likely scope; `evidence/initial-state.json` records SHA-256 values. These hashes are identification evidence, **not a recoverable backup**. No patch containing potentially sensitive source/environment values was exported.
+Stage 1 continued analysis without switching branches. `evidence/preexisting-work.csv` lists each original dirty/untracked path and its likely scope; `evidence/initial-state.json` records SHA-256 values. Hashes alone were not a recoverable backup. Stage 1B subsequently created explicit authorized checkpoints, including the original tracker and tools, before refreshing them.
 
-Before implementation, have the existing work explicitly attributed and assigned to coherent batches. The preferred isolation is for its owner to preserve it in reviewed commits on the intended development branch, then start `codex/care4u-final-review-2026-11-12` from that agreed baseline. Alternatively, an explicitly chosen review branch in this same checkout would carry the dirty work, but would also mix it into the review until separated deliberately. Do not automatically stage, stash, commit or push it. A clean worktree at HEAD would omit all 44 local edits and seven documents and therefore is not the current system baseline.
+Stage 1B created the review branch in the same checkout while carrying all local work. Concern-based checkpoints preserve those exact contents without claiming runtime correctness or resolving all attribution. No blanket staging, stash, reset, cleanup, history rewrite, pull or merge into develop/main occurred. No relevant application work was excluded by creating a clean worktree.
 
-If a separate copy is later needed, first preserve and verify all relevant tracked modifications and untracked project files against the snapshot, then use synthetic test configuration; do not silently review only committed files. Nothing was copied or isolated during Stage 1.
+Keep checkpoints and source hashes as the unambiguous review baseline. Use only synthetic configuration for future isolated tests. Full commit scopes and the schema-search/publication-inspection limits are in the Stage 1B report.
 
 ## Dependency-aware module order
 

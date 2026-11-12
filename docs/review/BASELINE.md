@@ -2,6 +2,8 @@
 
 Assessed 2026-11-12, Asia/Colombo. Scope: local working copy including pre-existing uncommitted changes. No application code was edited.
 
+Stage 1B note: the facts below describe the original Stage 1 snapshot. The 44 edits and seven reports are now preserved on the final-review branch. See [STAGE1B.md](STAGE1B.md) for commit scopes/current status and [TOOLING.md](TOOLING.md) for refreshed evidence semantics. Original Stage 1 evidence files remain immutable; latest independent static reports live under `evidence/static-current/`. Maintained review-tooling tests now exist; an application regression suite remains future work.
+
 ## Git and preservation
 
 | Item | Observed state |
