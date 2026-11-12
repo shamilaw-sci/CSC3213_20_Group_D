@@ -6,9 +6,8 @@
  */
 import axios from 'axios';
 
-// Reads from mobile/.env's EXPO_PUBLIC_API_URL - each teammate sets their
-// own local IP there (gitignored), so this file never needs manual edits
-// or fights between teammates' machines again. See .env.example.
+// Public API origin only. withCredentials requests cookie handling; native
+// persistence/restore still needs device verification. No token is stored here.
 const API_BASE_URL =
   process.env.EXPO_PUBLIC_API_URL ||
   (__DEV__ ? 'http://localhost:5000' : '');

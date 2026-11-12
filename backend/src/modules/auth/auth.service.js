@@ -36,6 +36,17 @@ const {
 } = require('./auth.repository');
 
 
+/**
+ * Hash a registration password, replace the pending record and email its code.
+ * Account/profile creation happens only in verifyOtp; email failure leaves a
+ * pending record so the user can request another code. Never log the code.
+ * @param {string} email - Exact email lookup key (no case normalization here).
+ * @param {string} phone - Registration contact value.
+ * @param {string} password - Plain password validated by the HTTP controller.
+ * @param {string} role - One of the five public registration roles.
+ * @param {Object} profileData - Role-specific fields consumed after verification.
+ * @returns {Promise<Object>} Email and expiry; rejects on duplicate/provider/DB failure.
+ */
 const register = async (email, phone, password, role, profileData) => {
     const existingUser = await findUserByEmail(email);
 
@@ -68,6 +79,12 @@ const register = async (email, phone, password, role, profileData) => {
 };
 
 
+/**
+ * Replace the code/expiry for an existing pending registration and send email.
+ * A successful resend makes the old code unusable; it does not create a user.
+ * @param {string} email - Pending registration's exact email key.
+ * @returns {Promise<Object>} Email and new expiry, or rejects if missing/send fails.
+ */
 const resendOtp = async (email) => {
     const pending = await findOtpByEmail(email);
 
@@ -99,6 +116,14 @@ const resendOtp = async (email) => {
 };
 
 
+/**
+ * Lock and validate a pending code, create its user/profile and delete it using
+ * one transaction client. Exact expiry and invalid expiry fail closed. The
+ * requested SQL locking/rollback still requires disposable PostgreSQL testing.
+ * @param {string} email - Pending registration key.
+ * @param {string} otpCode - Six digits, validated at the HTTP boundary.
+ * @returns {Promise<Object>} Created user/profile, with professional approval pending.
+ */
 const verifyOtp = async (email, otpCode) => {
     const result = await withTransaction(async (db) => {
         const pending = await findOtpByEmail(email, db);
@@ -197,6 +222,15 @@ const verifyOtp = async (email, otpCode) => {
 };
 
 
+/**
+ * Validate credentials with persisted account lockout and approval restrictions.
+ * Locked accounts are rejected before hashing; otherwise account-state details
+ * are returned only after a correct password. This function does not create a
+ * session: the controller resolves the profile and rotates/saves the session.
+ * @param {string} email - Exact email key.
+ * @param {string} password - Plain password to compare with the stored hash.
+ * @returns {Promise<Object>} User row; failed passwords increment the stored count.
+ */
 const login = async (email, password) => {
     const user = await findUserByEmail(email);
 
@@ -249,6 +283,13 @@ const login = async (email, password) => {
 };
 
 
+/**
+ * Store a random, one-hour reset token and attempt email for an existing user.
+ * Unknown accounts and transport failures use the same public response. DB
+ * failures still propagate. Tokens are currently stored raw (documented risk).
+ * @param {string} email - Exact account email key.
+ * @returns {Promise<Object>} Generic response; not proof of provider delivery.
+ */
 const forgotPassword = async (email) => {
     const user = await findUserByEmail(email);
 
@@ -286,6 +327,14 @@ const forgotPassword = async (email) => {
 };
 
 
+/**
+ * Lock an unused/unexpired token and update password/consume token on one client.
+ * A write/consumption failure rejects and asks withTransaction to roll back.
+ * Other sessions, other reset tokens and login lockout are not changed here.
+ * @param {string} token - Raw 64-character lowercase hex reset token.
+ * @param {string} newPassword - Controller-validated plain password (8+ characters).
+ * @returns {Promise<void>} Resolves after transaction commit is acknowledged.
+ */
 const resetPassword = async (token, newPassword) => {
     await withTransaction(async (db) => {
         const tokenRecord = await getValidPasswordResetToken(token, db);

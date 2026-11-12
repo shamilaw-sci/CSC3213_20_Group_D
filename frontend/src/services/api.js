@@ -17,6 +17,8 @@ export const API_BASE_URL = (
   configuredApiUrl || 'http://localhost:5000'
 ).replace(/\/$/, '');
 
+// Cookie contents are HTTP-only; this client requests browser-managed credentials.
+// The server still validates account state, roles and resource ownership.
 const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,

@@ -16,7 +16,10 @@ const appointmentRepository =
  * @param {Object} options
  * @param {boolean} [options.allowDoctor=false]
  * @param {boolean} [options.allowPharmacist=false]
- * @returns {Function} Express middleware
+ * @returns {Function} Async middleware using req.session.user, route patient ID and
+ * query/body appointmentId. Owning patient or matching in-progress doctor may
+ * proceed; otherwise 403. Repository errors return a generic 500. This guard
+ * does not unlock consent categories; the record service applies that filter.
  */
 const authorizePatientResource = ({
   allowDoctor = false,

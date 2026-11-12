@@ -7,11 +7,14 @@
 
 const { pool } = require('../config/db');
 /**
- * Checks if the user is logged in via session.
- * Blocks request with 401 if no session exists.
+ * Require a session ID, then re-read account active/approval/role state.
+ * A role change destroys the stale identity instead of combining a new role
+ * with an old profile_id. Cookie expiry/store lookup occurs before this guard.
+ * DB errors deny access with 500; restricted accounts with 403.
  * @param {Object} req - Express request
  * @param {Object} res - Express response
- * @param {Function} next - Next middleware
+ * @param {Function} next - Called only after the fresh account checks pass.
+ * @returns {Promise<Object|void>} JSON failure response or next middleware.
  */
 const isAuthenticated = async (req, res, next) => {
   if (!req.session?.user?.id) {
@@ -77,7 +80,7 @@ const isAuthenticated = async (req, res, next) => {
  * Middleware to check if user has the required role.
  * Must be used AFTER isAuthenticated.
  * @param {...string} roles - Allowed roles (e.g. 'patient', 'doctor')
- * @returns {Function} Express middleware
+ * @returns {Function} Middleware reading session.user.role; returns 401/403 or next.
  */
 const authorize = (...roles) => {
   return (req, res, next) => {
@@ -99,7 +102,7 @@ const authorize = (...roles) => {
  * Must be used after isAuthenticated.
  *
  * @param {string} [paramName='id'] - Route parameter containing the profile ID
- * @returns {Function} Express middleware
+ * @returns {Function} Middleware comparing req.params[paramName] with session profile_id. No DB lookup.
  */
 const authorizeOwnProfile = (paramName = 'id') => {
   return (req, res, next) => {

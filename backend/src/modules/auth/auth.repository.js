@@ -406,9 +406,11 @@ const savePasswordResetToken = async (
 };
 
 /**
- * Retrieves a valid, unused, unexpired password reset token.
- * @param {string} token
- * @returns {Promise<object|null>}
+ * Retrieves and locks an unused/unexpired reset token. Call inside withTransaction
+ * to retain the row lock through password update and token consumption.
+ * @param {string} token - Raw reset token.
+ * @param {Object} [db=pool] - Transaction client for atomic consumption.
+ * @returns {Promise<object|null>} Valid token row or null.
  */
 const getValidPasswordResetToken = async (token, db = pool) => {
     const result = await db.query(
@@ -425,8 +427,10 @@ const getValidPasswordResetToken = async (token, db = pool) => {
 };
 
 /**
- * Marks a password reset token as used.
- * @param {string} token
+ * Marks a still-usable reset token as used on the supplied client.
+ * @param {string} token - Raw token key.
+ * @param {Object} [db=pool] - Shared transaction client.
+ * @returns {Promise<Object|null>} Consumed token row, or null if unavailable.
  */
 const markTokenAsUsed = async (token, db = pool) => {
     const result = await db.query(
@@ -443,7 +447,9 @@ const markTokenAsUsed = async (token, db = pool) => {
 /**
  * Updates a user's password.
  * @param {string} userId
- * @param {string} newPasswordHash
+ * @param {string} newPasswordHash - Already-hashed replacement password.
+ * @param {Object} [db=pool] - Shared transaction client.
+ * @returns {Promise<void>} Resolves after the UPDATE; errors propagate.
  */
 const updateUserPassword = async (
     userId,
@@ -527,8 +533,10 @@ const upsertOtpVerification = async (
 };
 
 /**
- * Finds a pending OTP verification record by email.
+ * Finds pending registration data; a transaction client requests a row lock.
+ * The raw OTP/password hash stay server-side and are never returned by controllers.
  * @param {string} email - Email to search for
+ * @param {Object} [db=pool] - Transaction client to lock through verification/deletion.
  * @returns {Promise<object|null>} otp_verifications row or null
  */
 const findOtpByEmail = async (email, db = pool) => {
@@ -547,6 +555,7 @@ const findOtpByEmail = async (email, db = pool) => {
  * Deletes a pending OTP verification record by email.
  * @param {string} email - Email to delete the pending record for
  * @param {Object} db - PostgreSQL pool or transaction client
+ * @returns {Promise<void>} Resolves after deletion on the supplied client.
  */
 const deleteOtpByEmail = async (
     email,
@@ -600,8 +609,9 @@ const incrementFailedLoginAttempts = async (
 };
 
 /**
- * Resets a user's failed login attempt count and clears any lockout.
+ * Resets a user's failed login attempt count and clears lockout after valid login.
  * @param {string} userId - UUID of the user
+ * @returns {Promise<void>} Resolves after the update; errors propagate.
  */
 const resetFailedLoginAttempts = async (userId) => {
     await pool.query(

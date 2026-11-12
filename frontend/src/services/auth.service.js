@@ -1,7 +1,7 @@
 /**
  * @file auth.service.js
  * @module Services
- * @description Frontend service function for the auth module.
+ * @desc Frontend service function for the auth module.
  * Calls the Care4U backend authentication API endpoints.
  * @author I.M.L.S. Idirisinghe (S/21/389)
  */
@@ -9,11 +9,11 @@
 import api from './api';
 
 /**
- * Request a password reset token for the given  email.
- * Backend always return a generic success message, whether or not
+ * Request a password reset email without revealing whether the account exists.
+ * Backend returns a generic success message, whether or not
  * the email exists, to prevent email enumeration.
  * @param {string} email - The user's email address
- * @returns {Promise<Object>} The response data ({ success, message })
+ * @returns {Promise<Object>} Public response envelope; errors reject via Axios (delivery is not confirmed).
  */
 
 export const forgotPassword = async (email) => {

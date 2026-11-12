@@ -1,7 +1,9 @@
 /**
  * @file auth.routes.js
  * @module auth
- * @desc Route definitions for authentication endpoints.
+ * @desc Eight authentication routes: login is IP-limited; /me revalidates
+ *       the session/account. Other routes are pre-authentication or logout.
+ *       Controllers own validation and lifecycle; this file does not send email.
  * @author I.M.L.S Idirisinghe (S/21/389)
  */
 

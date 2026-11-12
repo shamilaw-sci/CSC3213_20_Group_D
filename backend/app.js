@@ -74,6 +74,12 @@ const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || process.env.CLIENT_U
 
 app.use(cors({
 
+  /**
+   * @param {string|undefined} origin Browser Origin header; native clients may omit it.
+   * @param {Function} callback CORS decision callback.
+   * @returns {void} Allow an exact configured origin or no-origin client; deny others.
+   * This is browser CORS configuration, not a complete CSRF policy.
+   */
   origin: (origin, callback) => {
 
     // Allow non-browser requests (no Origin header, e.g. Postman/curl) and
@@ -159,12 +165,14 @@ app.use('/api/auth', authRoutes);
 
 // Health Check route
 
+/** @param {Object} req Request. @param {Object} res Response. @returns {void} Process liveness JSON; no DB check. */
 app.get('/', (req, res) => {
 
   res.json({ status: 'Care4U API is running' });
 
 });
 
+/** @param {Object} req Request. @param {Object} res Response. @returns {void} Process health envelope; not schema/provider readiness. */
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     success: true,
@@ -207,6 +215,13 @@ app.use('/api/admin/health-content', healthContentRoutes);
 
 // returns a generic message, never the raw error, regardless of NODE_ENV.
 
+/**
+ * @param {Error} err Escaped route/middleware error.
+ * @param {Object} req Request.
+ * @param {Object} res Response.
+ * @param {Function} next Express error-handler arity marker (unused).
+ * @returns {void} Generic 500; current logger receives the error object.
+ */
 app.use((err, req, res, next) => {
 
   console.error('Unhandled error:', err);

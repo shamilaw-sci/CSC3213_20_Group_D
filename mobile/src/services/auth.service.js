@@ -38,11 +38,12 @@ export const register = async (email, phone, password, role, profileData) => {
 
 /**
  * Verifies the OTP for a pending registration. On success, the backend
- * creates the user account and starts the session (cookie is set
- * automatically by the api client's session handling).
+ * creates the account. Patients receive a saved session; professionals get
+ * approvalPending and must await admin approval. Native cookie persistence
+ * depends on the runtime and is not established by withCredentials alone.
  * @param {string} email   - Email being verified
  * @param {string} otpCode - 6-digit OTP entered by the user
- * @returns {Promise<Object>} The response data ({ success, message, data: { user, profile } })
+ * @returns {Promise<Object>} The response data ({ success, message, data: { user, profile, approvalPending } })
  */
 export const verifyOtp = async (email, otpCode) => {
   const response = await api.post('/api/auth/verify-otp', { email, otpCode });
