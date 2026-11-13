@@ -10,6 +10,8 @@ const pharmacyService = require('./pharmacy.service');
 /**
  * Handles POST /api/pharmacies/register
  * Registers a new pharmacy with a linked user account.
+ * Unexpected failures return generic public text; known business errors retain their status/reason.
+ * @returns {Promise<void>} Registration acknowledgement or public failure envelope.
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
@@ -72,13 +74,12 @@ const registerPharmacyController = async (req, res) => {
       error
     );
 
-    res.status(
-      error.statusCode || 500
-    ).json({
+    const status = error.statusCode || 500;
+    res.status(status).json({
       success: false,
-      message:
-        error.message ||
-        'Internal server error',
+      message: status >= 500
+        ? 'Registration could not be completed. Please try again.'
+        : (error.message || 'Registration could not be completed. Please try again.'),
     });
   }
 };

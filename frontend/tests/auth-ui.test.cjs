@@ -104,7 +104,8 @@ for (const platform of ['frontend','mobile']) {
     assert.match(api.authErrorMessage(failure(429, 'Too many requests.', '90')), /Try again in 90 seconds/);
     assert.match(api.authErrorMessage(failure(429, 'Too many requests.', 'invalid')), /Wait before trying/);
     assert.match(api.authErrorMessage(new Error('secret transport details')), /Cannot connect to Care4U/);
-    assert.equal(api.authErrorMessage(failure(502, 'Could not submit email.')), 'Could not submit email.');
+    assert.equal(api.authErrorMessage(failure(502, 'Failed to send verification email. Please try again.')), 'Failed to send verification email. Please try again.');
+    for (const status of [500, 502]) assert.equal(api.authErrorMessage(failure(status, 'Synthetic internal database marker')), 'Care4U could not complete the request. Please try again.');
     assert.match(api.authErrorMessage(failure(400, 'OTP has expired')), /expired.*Request a new code/);
     assert.match(api.authErrorMessage(failure(400, 'Invalid OTP')), /incorrect or has been replaced/);
     assert.match(api.authErrorMessage(failure(400, 'Invalid or expired password reset token')), /already used.*Request a new link/);
@@ -172,7 +173,7 @@ for (const firstAction of ['verify','resend']) test(`web OTP ${firstAction} supp
   pending.resolve({ status: 502, data: { success: false, message: 'Failed to submit email.' } });
   await Promise.all([first, second]); h.render();
   assert.equal(h.find(n => n.type === 'form').props['aria-busy'], false);
-  assert.match(h.find(n => n.type === 'Alert').props.message, /Failed to submit email/);
+  assert.match(h.find(n => n.type === 'Alert').props.message, /could not complete/);
 });
 
 for (const [name, stateName] of [['ForgotPassword','submitted'],['ResetPassword','success']]) test(`web ${name} retains rate retry guidance without showing success`, async () => {
@@ -289,3 +290,20 @@ for (const approvalPending of [false,true]) test(`mobile actual OTP parent ${app
   assert.equal(identities.length, approvalPending ? 0 : 1);
   if (approvalPending) assert.equal(h.nodes().some(n => typeof n.props.onLoginSuccess === 'function'), true);
 });
+
+for (const [moduleName, handler] of [['pharmacy', 'registerPharmacyController'], ['laboratory', 'registerLaboratoryController']]) {
+  test(`${moduleName} public registration hides unexpected failures and preserves expected business errors`, async () => {
+    for (const statusCode of [500, 400]) {
+      const controllers = load(`backend/src/modules/${moduleName}/${moduleName}.controller.js`, {
+        [`./${moduleName}.service`]: { [moduleName === 'pharmacy' ? 'registerPharmacy' : 'registerLaboratory']: async () => {
+          throw Object.assign(new Error(statusCode === 500 ? 'Synthetic internal database marker' : 'Synthetic duplicate licence'), { statusCode });
+        } },
+      });
+      const response = { status(code) { this.code = code; return this; }, json(body) { this.body = body; return this; } };
+      await controllers[handler]({ body: { email: USER.email, password: 'fixture-pass', phone: '0700000000', name: 'Fixture Facility', license_number: 'FIXTURE', address: 'Fixture address' } }, response);
+      assert.equal(response.code, statusCode);
+      assert.equal(response.body.success, false);
+      assert.equal(response.body.message, statusCode === 500 ? 'Registration could not be completed. Please try again.' : 'Synthetic duplicate licence');
+    }
+  });
+}

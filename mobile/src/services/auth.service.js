@@ -32,6 +32,12 @@ export const authErrorMessage = (error, fallback = 'The request failed. Please t
   const response = error?.response;
   if (!response) return 'Cannot connect to Care4U. Check your connection and try again.';
   const serverMessage = typeof response.data?.message === 'string' ? response.data.message : fallback;
+  // Only the known provider-submission message is public on a 5xx response.
+  if (response.status >= 500) {
+    return response.status === 502 && serverMessage === 'Failed to send verification email. Please try again.'
+      ? serverMessage
+      : 'Care4U could not complete the request. Please try again.';
+  }
   const messages = {
     'Internal server error': 'Care4U could not complete the request. Please try again.',
     'Invalid OTP': 'The code is incorrect or has been replaced. Check your email or request a new code after waiting.',

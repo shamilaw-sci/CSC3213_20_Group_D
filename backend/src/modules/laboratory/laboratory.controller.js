@@ -10,6 +10,8 @@ const laboratoryService = require('./laboratory.service');
 /**
  * Handles POST /api/laboratories/register
  * Registers a new laboratory with a linked user account.
+ * Unexpected failures use public wording; expected business errors retain their status/message.
+ * @returns {Promise<void>} Acknowledged application or public failure response.
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
@@ -49,9 +51,12 @@ const registerLaboratoryController = async (req, res) => {
 
   } catch (error) {
     console.error('registerLaboratoryController error:', error);
-    res.status(error.statusCode || 500).json({
+    const status = error.statusCode || 500;
+    res.status(status).json({
       success: false,
-      message: error.message || 'Internal server error',
+      message: status >= 500
+        ? 'Registration could not be completed. Please try again.'
+        : (error.message || 'Registration could not be completed. Please try again.'),
     });
   }
 };
