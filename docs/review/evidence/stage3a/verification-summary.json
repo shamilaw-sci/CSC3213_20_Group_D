@@ -1,0 +1,218 @@
+{
+  "date": "2026-11-13",
+  "recorded_at_utc": "2026-11-13T07:56:46.946233+00:00",
+  "baseline_commit": "8c06a83a15bb502da04f987c7dbc8f58deedabcc",
+  "application_source_commit": "d78465bef5ebd231690700b2c6e7dafdb51aa5e9",
+  "application_results": {
+    "backend": {
+      "command": "node --test --test-reporter=tap backend/tests/auth-access.test.cjs backend/tests/auth-contracts.test.cjs backend/tests/auth-resend.test.cjs backend/tests/auth-limits.test.cjs",
+      "result": "PASS",
+      "cases": 89,
+      "exit_code": 0,
+      "tap": "backend-tests.tap"
+    },
+    "ui_source": {
+      "command": "node --test --test-reporter=tap frontend/tests/auth-ui.test.cjs",
+      "result": "PASS",
+      "cases": 56,
+      "exit_code": 0,
+      "tap": "ui-source-tests.tap",
+      "boundary": "Actual source with mocked hook/API/native/navigation boundaries; no native rendering"
+    },
+    "total_application_cases": 145
+  },
+  "review_tooling_results": [
+    {
+      "command": "python -B -m unittest discover -s docs/review/tools/tests -p 'test_*.py' -v",
+      "cases": 12,
+      "result": "PASS",
+      "exit_code": 0,
+      "output": "inventory-tests.txt"
+    },
+    {
+      "command": "node --test --test-reporter=tap docs/review/tools/tests/static-checks.test.mjs",
+      "cases": 9,
+      "result": "PASS",
+      "exit_code": 0,
+      "output": "static-tooling-tests.tap"
+    }
+  ],
+  "browser": {
+    "result": "PASS for exact listed fixture states",
+    "matrix_rows": 18,
+    "screenshots": 30,
+    "matrix": "browser-matrix.json",
+    "source_snapshot_verification": [
+      {
+        "path": "frontend/src/components/auth/AuthLayout.jsx",
+        "result": "Exact current bytes",
+        "current_sha256": "8dac575e92e8f6e14df327029543cf2c9e2d36dc0fae2ba5f0c49c4b45a9716f"
+      },
+      {
+        "path": "frontend/src/components/auth/auth.css",
+        "result": "Exact current bytes",
+        "current_sha256": "623bd8efb06a8b0f9ea647fc4d4ca72598257450496537e25c88e0c0fd0df93d"
+      },
+      {
+        "path": "frontend/src/components/common/Input.jsx",
+        "result": "Exact current bytes",
+        "current_sha256": "cef300fad8f1a034ea975c79b83295bb0044d8b5f20bc1d13ebba7b1c2e212ab"
+      },
+      {
+        "path": "frontend/src/components/common/Button.jsx",
+        "result": "Exact current bytes",
+        "current_sha256": "9db7c662178c1c036e7594d44612a459eba551f88af01390349325fe11d00283"
+      },
+      {
+        "path": "frontend/src/components/common/Alert.jsx",
+        "result": "Exact current bytes",
+        "current_sha256": "ae5d3a7b045094fb9ea2dfa5fd5287c5f3929f0025e909d0e73c4d90955c09d7"
+      },
+      {
+        "path": "frontend/src/components/common/Card.jsx",
+        "result": "Final comments differ; executable AST parity verified",
+        "current_sha256": "a8bc2be88cbbf971dba00b622cc1137deb48abd0281ffe468912ace56bf29b72"
+      },
+      {
+        "path": "frontend/src/pages/auth/LoginPage.jsx",
+        "result": "Exact current bytes",
+        "current_sha256": "837f8a31fd955942e9b593108cbfa2021a04b8956afc18e4bc0e9c29d0dd8ee7"
+      },
+      {
+        "path": "frontend/src/pages/auth/RegisterPage.jsx",
+        "result": "Exact current bytes",
+        "current_sha256": "4fecf7aadb1a21ad2178339ac0d007a23985f90f8dcb45327c386f3f9574cb4e"
+      },
+      {
+        "path": "frontend/src/pages/auth/OtpVerificationPage.jsx",
+        "result": "Exact current bytes",
+        "current_sha256": "5945f6dded545102a38728164718e7c6e62c735fe596274c14be65ab585d3640"
+      },
+      {
+        "path": "frontend/src/pages/auth/ForgotPasswordPage.jsx",
+        "result": "Exact current bytes",
+        "current_sha256": "1eae1d75238e03cf6cc2b57e2b1d21309cd51602c8fdc9da5d5840c71952910f"
+      },
+      {
+        "path": "frontend/src/pages/auth/ResetPasswordPage.jsx",
+        "result": "Exact current bytes",
+        "current_sha256": "e70d1c04415d42c573b5fbf56ce266ac9297ede94d6f46e027c8d72cfa0850d9"
+      },
+      {
+        "path": "frontend/src/pages/pharmacy/PharmacyRegisterPage.jsx",
+        "result": "Final comments differ; executable AST parity verified",
+        "current_sha256": "8c8247392292b005f0d33eddc4b92312315c590b8d1d1b774794882ce27b5b9e"
+      },
+      {
+        "path": "frontend/src/pages/laboratory/LabRegisterPage.jsx",
+        "result": "Exact current bytes",
+        "current_sha256": "ebac187cdfa01ab3f2179eb008491434f60ad73021ce57e51d174bf95d6fe7fa"
+      },
+      {
+        "path": "frontend/src/services/api.js",
+        "result": "Exact current bytes",
+        "current_sha256": "ed04c8ca5ade50685fdf1a0bb635effbc2e49ae475cb020d729e0064c253d8a3"
+      },
+      {
+        "path": "frontend/src/services/auth.service.js",
+        "result": "Functional 5xx hardening after capture; source tests PASS. Captured fixture 500 and known-safe 502 wording unchanged; extra unexpected-body branch not browser-rerun.",
+        "current_sha256": "30de52fbec06c893a58d098470bb6217229d0045072f35af5897f1df38d8c180",
+        "captured_sha256": "f426f75098529685dc71037a89a9130d12c099c47078a89266facc8dfd1f94cd"
+      },
+      {
+        "path": "frontend/src/store/authStore.js",
+        "result": "Exact current bytes",
+        "current_sha256": "bfb1b926b0ebfb0a7fb5cfb75addeda719a51dd8cfa07469253e296a471083b4"
+      },
+      {
+        "path": "frontend/src/index.css",
+        "result": "Exact current bytes",
+        "current_sha256": "c781a0daba93e2779a6c56a8779e8fff5ae67268f755dac764836d5121f0b1c8"
+      },
+      {
+        "path": "frontend/tests/auth-fixture.jsx",
+        "result": "Exact current bytes",
+        "current_sha256": "d2c8c65709db0961e296fec8ddb0038fe34291b307bc3dd38ce0c75852259033"
+      },
+      {
+        "path": "frontend/tests/auth-fixture.html",
+        "result": "Exact current bytes",
+        "current_sha256": "6068aecc7e5bb11ae2c49e6f02236ddd1dc00c9c51921d320116751ee0abe8b1"
+      },
+      {
+        "path": "frontend/tests/serve-auth-fixture.mjs",
+        "result": "Exact current bytes",
+        "current_sha256": "34313e80a4bca1c8baf2e29517ce38a3703f9ff5d374a8174c1c16a881d39af2"
+      }
+    ],
+    "not_proved": "Real app bootstrap/session cookies/DB/provider/deployment or native execution"
+  },
+  "native": {
+    "result": "NOT_RUN",
+    "observed": "Android SDK emulator executable lists Pixel_6; adb devices/version fail initialization: Cannot mkdir \\.android: Permission denied",
+    "actions": "No emulator launch, installation or device action; task-local preference overrides did not resolve initialization"
+  },
+  "static": {
+    "result": "PASS",
+    "checks": [
+      "B01",
+      "B02",
+      "B03",
+      "B04",
+      "B05",
+      "B06"
+    ],
+    "run_id": "2026-11-13T07-57-48-711Z-057952db-1223-4d0e-bcd6-dcb9fb149897",
+    "source_snapshot_entries_revalidated": 977
+  },
+  "baseline_failures": "No pre-existing executed project check failure. Supplied independent 67-case backend review passed; Stage 2B local 89-case baseline passed. Stage 3A confirmed UI source defects are distinct from deliberately failing new fixtures.",
+  "development_fixture_notes": [
+    "Undefined child traversal / unstable mock action / package cwd assumption / native stub and fixture-export setup corrected; final 56 PASS",
+    "IAB date fill unsupported; keyboard entry committed 2000-01-01",
+    "A held fixture request recovered after its client wait elapsed; separate controlled 502 verified",
+    "Two registration controllers change public unexpected-error text only; no review-tooling source changed",
+    "Python subprocess could not launch node under restricted PATH; PowerShell direct Node commands reran both suites successfully. No application failure."
+  ],
+  "pending": [
+    "Native runtime/layout/insets/font scaling/keyboard/hardware back/URL host implementation/TalkBack/VoiceOver",
+    "Other browser engines, remote font loading and exhaustive accessibility",
+    "Real App bootstrap, cookies/session store/DB/provider/deployment/proxy",
+    "Verified schema/disposable PostgreSQL and actual transactions/concurrency",
+    "Separate direct enrollment/limits/atomicity and recovery/legacy/profile policies"
+  ],
+  "publication": "Local only; no push or merge attempted; prior upstream absent",
+  "source_scope": "42 files; review-scope.csv and source-symbols.json; partial shared/backend contracts explicit",
+  "preservation": {
+    "stage2b_tracker_rows_with_immutable_fields_preserved": 367,
+    "immutable_columns": [
+      "git_state_at_start",
+      "sha256_at_start",
+      "baseline_path",
+      "original_author_evidence_status"
+    ],
+    "current_tracker_exact_path_coverage": "418/418",
+    "initial_state_content_unchanged_in_git": true,
+    "backend_source_unchanged_in_stage3a": false,
+    "source_commit": "d78465bef5ebd231690700b2c6e7dafdb51aa5e9",
+    "working_line_endings_note": "File hashes cover exact on-disk bytes; Git may normalize CRLF/LF",
+    "backend_changes": "Only pharmacy/laboratory register-controller public 5xx failure text/comments; SQL/enrollment/session rules unchanged"
+  },
+  "final_scope_hashes_revalidated": 42,
+  "application_source_commits": [
+    "57e6d2c9ef83db0632b31f8ceda7e9308f5b0018",
+    "d78465bef5ebd231690700b2c6e7dafdb51aa5e9"
+  ],
+  "post_browser_hardening": {
+    "commit": "d78465bef5ebd231690700b2c6e7dafdb51aa5e9",
+    "source_test_cases": 56,
+    "paths": [
+      "backend/src/modules/pharmacy/pharmacy.controller.js",
+      "backend/src/modules/laboratory/laboratory.controller.js",
+      "frontend/src/services/auth.service.js",
+      "mobile/src/services/auth.service.js",
+      "frontend/tests/auth-ui.test.cjs"
+    ],
+    "browser_rerun": false,
+    "scope": "Unexpected public 5xx bodies only; original capture hashes retained; known fixture wording unchanged"
+  }
+}

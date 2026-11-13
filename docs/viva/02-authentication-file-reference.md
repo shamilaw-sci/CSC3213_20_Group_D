@@ -1,12 +1,14 @@
 # Authentication file reference
 
+Current through Stage 3A: use [the complete UI file reference](03-authentication-ui-file-reference.md) for every scoped web/mobile screen, shared control, request wrapper and parent auth callback. Backend entries below retain their scoped evidence; native/real DB/session acceptance is still pending.
+
 Companion to [the workflow explanation](02-authentication-and-access.md). Repository-relative paths below are exact Ctrl+F/navigation keys. **Core** means the file's authentication logic was inspected function by function; it does not mean DB/browser/device acceptance passed. **Dependency trace** means only the named access path was followed; the remainder is pending. [The change map](02-authentication-change-map.md) lists proposed exercises separately from implemented fixes.
 
 ## Ownership key
 
 - **A:** Existing credit is I.M.L.S. Idirisinghe (S/21/389); Git introduction is `lasitha`. The registration number/history support continuity, but the displayed name differs from current maintainer Lasitha Sanuth. Keep the original credit; name reconciliation remains unresolved.
 - **W:** Existing Wasana Karunanayaka (S/21/081) header and Wasana Git identity corroborate original work; this is not a claim of sole authorship. Later contributions stay distinct.
-- Creation candidates, original header contents and lineage checks are in `docs/review/evidence/stage2a/ownership.json`. Review-assistant changes are identified by the Stage 2A commits, without transferring student authorship. Module maintainer and original author are separate.
+- Creation candidates, original header contents and lineage checks are in `docs/review/evidence/stage2a/ownership.json`. Review-assistant changes are identified by the Stage 2A/2B/3A commits, without transferring student authorship. Module maintainer and original author are separate.
 
 ## 1. `backend/src/modules/auth/auth.routes.js` — core
 
@@ -116,17 +118,15 @@ Initialization reads synthetic-or-runtime env via dotenv, loads routers, install
 
 ## 9. `frontend/src/services/api.js` — core client configuration
 
-[Source](../../frontend/src/services/api.js). Purpose: create the web Axios client and export its origin. Ownership **W**, introduction `98a9ea121e3a`. No custom functions are declared. Initialization reads `VITE_API_URL`, requires it in production, falls back to localhost in development, removes one trailing slash and calls `axios.create` with credentials/JSON headers. Exported `API_BASE_URL` is also used by direct-fetch auth screens/App. No password/cookie is stored in this module and no request occurs at construction. Errors from requests reject to callers. Search `API_BASE_URL`, `withCredentials`. Exercise: change deployment origin in env, not each screen; verify credentialed requests/CORS in browser. Compilation/lint pass does not prove cookie acceptance.
+[Source](../../frontend/src/services/api.js). Purpose: create the web Axios client and export its origin. Ownership **W**, introduction `98a9ea121e3a`. No custom functions are declared. Initialization reads `VITE_API_URL`, requires it in production, falls back to localhost in development, removes one trailing slash and calls `axios.create` with credentials/JSON headers. Exported `API_BASE_URL` is used by App session bootstrap; Stage 3A auth screens use the centralized acknowledged Axios helpers. No password/cookie is stored in this module and no request occurs at construction. Errors from requests reject to callers. Search `API_BASE_URL`, `withCredentials`. Exercise: change deployment origin in env, not each screen; verify credentialed requests/CORS in browser. Compilation/lint pass does not prove cookie acceptance.
 
 ## 10. `frontend/src/services/auth.service.js` — core client helpers
 
-[Source](../../frontend/src/services/auth.service.js). Purpose: wrap the two web recovery requests. Ownership **A**, introduction `75f59e8c1b30`. Called by forgot/reset pages; uses shared Axios client; no direct SQL/store changes.
-
-**`forgotPassword(email)`** posts `{email}` to `/api/auth/forgot-password`, returns `response.data`, and lets Axios reject failures. It does not check inbox delivery. **`resetPassword(token,newPassword)`** posts those two fields to `/api/auth/reset-password`, returns the public envelope, rejects transport/non-2xx failures; no session creation. Exact names are Ctrl+F keys. Exercises: improve failure copy in consuming page, or add a new validated reset field at server and both clients together. Live/browser execution was NOT_RUN.
+[Source](../../frontend/src/services/auth.service.js). Ownership **A**, introduction `75f59e8c1b30`, original credit retained. Stage 3A consolidates six main auth calls plus the two existing public pharmacy/laboratory application paths. `postAuth` bounds requests and requires success acknowledgement; `authErrorMessage` formats public/retry/expiry/network feedback. `login`, `register`, `verifyOtp`, `resendOtp`, `forgotPassword`, `resetPassword`, `registerPharmacy`, `registerLaboratory` are exact Ctrl+F keys. No local persistence/SQL or inbox/session guarantee. [Full function/input/output/error reference](03-authentication-ui-file-reference.md#1-shared-request-and-response-model); actual web fixture transport ran, real cookies/providers remain pending.
 
 ## 11. `frontend/src/store/authStore.js` — core UI state
 
-[Source](../../frontend/src/store/authStore.js). Purpose: keep current public user in web memory. Ownership **W**, introduction `17f18c07d518`. The Zustand initializer (search `create((set)`) returns `user:null` and two actions. **`setUser(user)`** calls Zustand `set({user})`; **`clearUser()`** sets null. No persistence middleware, token storage or logout HTTP call is present. App hydration and layout/logout clients call these actions; the store does not enforce authorization or touch DB. Exercise: add a derived UI label without treating it as authority; persistence would require an intentional session-restoration/security decision and tests. Source/lint/build inspected; browser behavior NOT_RUN.
+[Source](../../frontend/src/store/authStore.js). Purpose: keep current public user in web memory. Ownership **W**, introduction `17f18c07d518`. The Zustand initializer (search `create((set)`) returns `user:null` and two actions. **`setUser(user)`** calls Zustand `set({user})`; **`clearUser()`** sets null. No persistence middleware, token storage or logout HTTP call is present. App hydration and layout/logout clients call these actions; the store does not enforce authorization or touch DB. Exercise: add a derived UI label without treating it as authority; persistence would require an intentional session-restoration/security decision and tests. Source/lint/build and Stage 3A synthetic browser identity/navigation inspected; real cookie/bootstrap acceptance remains pending.
 
 ## 12. `mobile/src/services/api.js` — core client configuration
 
@@ -134,17 +134,7 @@ Initialization reads synthetic-or-runtime env via dotenv, loads routers, install
 
 ## 13. `mobile/src/services/auth.service.js` — core client helpers
 
-[Source](../../mobile/src/services/auth.service.js). Purpose: wrap mobile registration/verification/recovery requests. Ownership **A**, introduction `d9c11832fba4`. Uses shared Axios; supported registration UI currently presents patient/doctor, while backend supports more public roles. Client role comments do not define server authority.
-
-| Function | Inputs -> output and responsibility |
-|---|---|
-| `forgotPassword` | email -> POST forgot-password -> public response data; generic response, no delivery proof. |
-| `register` | email, phone, password, role, profileData -> POST register -> pending email/expiry response; caller then shows OTP screen, not authenticated workspace. |
-| `verifyOtp` | email, otpCode -> POST verify-otp -> `{user,profile,approvalPending}` envelope; App must respect pending professional status instead of setting authenticated UI. |
-| `resendOtp` | email -> POST resend-otp -> replacement code/expiry response; no account creation. |
-| `resetPassword` | token, newPassword -> POST reset-password -> confirmation; does not sign in. |
-
-All functions return `response.data`; Axios rejects failures to screens. No wrapper retries, no local validation guarantees and no DB access are implemented here. Each function name and endpoint path is a Ctrl+F term. Exercise: alter user-facing error wording in the screen after preserving server status distinctions. Native transport/cookie tests are pending.
+[Source](../../mobile/src/services/auth.service.js). Ownership **A**, introduction `d9c11832fba4`, existing credit retained. `postAuth`, `authErrorMessage`, `login`, `register`, `verifyOtp`, `resendOtp`, `forgotPassword`, `resetPassword` now share strict acknowledgement, 15000 ms request bounds and useful public/retry feedback. The mobile UI still registers only patient/doctor; the server has more public roles. [Full function/input/output reference](03-authentication-ui-file-reference.md#1-shared-request-and-response-model). Actual source tests run with synthetic Axios/native host boundaries; native transport/cookies/devices remain NOT_RUN.
 
 ## 14. `mobile/src/store/authStore.js` — core UI state
 
@@ -152,9 +142,9 @@ All functions return `response.data`; Axios rejects failures to screens. No wrap
 
 Called by mobile App/login/OTP/logout. It has no startup `/me` call or persistent storage. Search `create((set)`, `setUser`, `clearUser`. Exercise: add startup hydration only as a separate designed feature with loading/network-expiry/device-cookie tests; it is not implemented in this batch.
 
-## Access dependencies and UI traces — partial, not complete file reviews
+## Access dependencies and current UI reference scope
 
-The files below are included **in full** in the handoff ZIP so the reviewer can inspect the actual context. Only the listed functions/paths were evaluated in Stage 2A. Their unrelated functions/features are not marked reviewed, and their existing authorship remains the Stage 1 register's provisional evidence. This distinction prevents a route trace from being counted as a completed clinical/UI module.
+The files below are included **in full** in the handoff ZIP so the reviewer can inspect the actual context. The backend/dependency entries remain partial Stage 2A traces; Stage 3A promoted the scoped auth screen reviews and documents them in the linked UI reference. Their unrelated functions/features are not marked reviewed, and their existing authorship remains the Stage 1 register's provisional evidence. This distinction prevents a route trace from being counted as a completed clinical/UI module.
 
 | Exact repository-relative path | Inspected symbols and logic / caller / output |
 |---|---|
@@ -162,18 +152,18 @@ The files below are included **in full** in the handoff ZIP so the reviewer can 
 | `backend/src/modules/patient/consent.service.js` | `createServiceError` builds status errors; `resolveDoctorProfile` requires doctor/user and resolves doctor row; `validateDoctorConsultationContext` checks patient/appointment presence, both assignments and in-progress status; `getLockedCategories` loads current categories; `getConsentAccessStatus` returns scoped active-grant state. Remaining `getPatientConsentSettings`, `updatePatientConsentSettings`, `ensurePatientOwnsConsentSettings`, `requestConsentAccessOtp`, `verifyConsentAccessOtp`, `hasTemporaryCategoryAccess` were dependency-read for boundaries, not individually certified or changed. |
 | `backend/src/modules/patient/consent.repository.js` | `getConsentSettings` defaults to empty locked list; `getActiveConsentAccessGrant` binds three IDs and filters expiry/revocation. Other request/grant mutation helpers remain pending transaction/concurrency review. SQL predicate check is not proof of DB filtering. |
 | `backend/src/modules/patient/patient.service.js` | `getMedicalRecords`: patient existence -> load records -> owning patient return; for doctor normalize locked category strings, optionally obtain grant, hide every matched locked category not granted; grant failure remains closed. Other patients/roles depend on caller guards. All non-record features remain pending. |
-| `frontend/src/App.jsx` | `ProtectedRoute` checks local identity/role; `App` initializes, and inner `checkSession` calls credentialed `/me`, sets/clears store and ends loading. Other route destinations/clinical UI are referenced, not full module review. |
-| `mobile/App.js` | `App` receives login/OTP results and routes pending professionals correctly; `handleLogout` posts logout but clears local state in finally even on failure; there is no `/me` initialization. `MobileHeader`, bottom tabs, `manualNavigate` and unrelated overlay/navigation behavior remain pending full UI review. |
-| `frontend/src/pages/auth/RegisterPage.jsx` | Registration submit/role/profile data and navigation to verification were traced; full form/accessibility/role-specific validation review remains pending. Uses direct fetch and credential option. |
-| `frontend/src/pages/auth/LoginPage.jsx` | `LoginPage`, `handleChange`, `validate`, `handleSubmit`: update fields/errors, require email/password and length, post credentialed login, redirect by returned role; failures show server/generic message and clear loading. Full visual/shared-input behavior NOT_RUN. |
-| `frontend/src/pages/auth/OtpVerificationPage.jsx` | `OtpVerificationPage`, `handleVerify`, `handleResend`, input-change callback: collect code/email from navigation state, call verify/resend, show errors; successful verify goes to login with patient/pending copy. Patient cookie may already be authenticated, so App can redirect immediately. Missing navigation email prompts registration. Source copy inspected; no visual/browser test. |
-| `frontend/src/pages/auth/ForgotPasswordPage.jsx` | `ForgotPasswordPage`, `handleChange`, `handleSubmit`: request reset, show same generic result, failure message/loading. Existing controls are not wrapped in a form; keyboard submission/accessibility needs independent verification. |
-| `frontend/src/pages/auth/ResetPasswordPage.jsx` | `ResetPasswordPage`, `handleChange`, `validate`, `handleSubmit`: extract URL token, validate password/confirmation, post reset, show confirmed success or errors. Backend independently checks token shape/length. Controls/form semantics remain pending visual/accessibility review. |
-| `mobile/src/screens/LoginScreen.js` | `LoginScreen`, `validate`, `handleLogin` and input/password-visibility callbacks: trim email, check password, call Axios, pass public user to parent; failures show message. Native cookie/accessibility behavior NOT_RUN. |
-| `mobile/src/screens/RegisterScreen.js` | Registration role/profile submit and parent verification transition traced only. Rest of component, styles and detailed credential validation remain pending. |
-| `mobile/src/screens/OtpVerificationScreen.js` | Component verification/resend/input/timer callbacks; successful pending professional shows native alert and parent returns to login, patient sets user. Countdown is client UX, not OTP expiry authority. Full native execution NOT_RUN. |
-| `mobile/src/screens/ForgotPasswordScreen.js` | `ForgotPasswordScreen`, `validate`, `handleSubmit`: trim email, request generic recovery, expose manual reset navigation; UI memory only. Response is not delivery proof. |
-| `mobile/src/screens/ResetPasswordScreen.js` | `extractToken`, `ResetPasswordScreen`, `handleReset`: accept 64-hex string or HTTP(S) URL token, validate confirmation, submit, show success/error. Wrong/missing token prevents request. No auto deep-link import and no device URL-parser test. |
+| `frontend/src/App.jsx` | Partial auth bootstrap/ProtectedRoute review; store invalidation moved from render to effect. Other route/module UI remains pending. See [UI reference](03-authentication-ui-file-reference.md). |
+| `mobile/App.js` | Partial auth callbacks/logout review; failure now preserves a retry path and public warning. No startup /me restoration; clinical/tab/overlay presentation remains pending. See [UI reference](03-authentication-ui-file-reference.md). |
+| `frontend/src/pages/auth/RegisterPage.jsx` | Stage 3A full scoped screen source/comments/wording/viva review; bounded browser fixture checks. [Complete state/function/validation/API/navigation reference](03-authentication-ui-file-reference.md). |
+| `frontend/src/pages/auth/LoginPage.jsx` | Stage 3A full scoped screen source/comments/wording/viva review; bounded browser fixture checks. [Complete state/function/validation/API/navigation reference](03-authentication-ui-file-reference.md). |
+| `frontend/src/pages/auth/OtpVerificationPage.jsx` | Stage 3A full scoped screen source/comments/wording/viva review; bounded browser fixture checks. [Complete state/function/validation/API/navigation reference](03-authentication-ui-file-reference.md). |
+| `frontend/src/pages/auth/ForgotPasswordPage.jsx` | Stage 3A full scoped screen source/comments/wording/viva review; bounded browser fixture checks. [Complete state/function/validation/API/navigation reference](03-authentication-ui-file-reference.md). |
+| `frontend/src/pages/auth/ResetPasswordPage.jsx` | Stage 3A full scoped screen source/comments/wording/viva review; bounded browser fixture checks. [Complete state/function/validation/API/navigation reference](03-authentication-ui-file-reference.md). |
+| `mobile/src/screens/LoginScreen.js` | Stage 3A full scoped screen source/comments/wording/viva review; source-handler tests; native rendering/device NOT_RUN. [Complete state/function/validation/API/navigation reference](03-authentication-ui-file-reference.md). |
+| `mobile/src/screens/RegisterScreen.js` | Stage 3A full scoped screen source/comments/wording/viva review; source-handler tests; native rendering/device NOT_RUN. [Complete state/function/validation/API/navigation reference](03-authentication-ui-file-reference.md). |
+| `mobile/src/screens/OtpVerificationScreen.js` | Stage 3A full scoped screen source/comments/wording/viva review; source-handler tests; native rendering/device NOT_RUN. [Complete state/function/validation/API/navigation reference](03-authentication-ui-file-reference.md). |
+| `mobile/src/screens/ForgotPasswordScreen.js` | Stage 3A full scoped screen source/comments/wording/viva review; source-handler tests; native rendering/device NOT_RUN. [Complete state/function/validation/API/navigation reference](03-authentication-ui-file-reference.md). |
+| `mobile/src/screens/ResetPasswordScreen.js` | Stage 3A full scoped screen source/comments/wording/viva review; source-handler tests; native rendering/device NOT_RUN. [Complete state/function/validation/API/navigation reference](03-authentication-ui-file-reference.md). |
 
 Dependency paths such as `utils/email.js`, profile repository lookup functions and `appointmentRepository.getAppointmentById` define external/SQL boundaries. They were identified as callers/callees but are not newly declared complete reviews. The profile repositories and provider implementations remain outside this batch's file-completion scope.
 
@@ -198,3 +188,5 @@ Ctrl+F `AUTH_EMAIL_ADDRESS_LIMIT`, `fieldKey`, `createAuthLimiters`, `passOnStor
 ## Stage 2B app/config update - partial assembly scope
 
 `backend/app.js` now validates `trustProxyHops` from `TRUST_PROXY_HOPS`: default 0 non-production, 1 production; non-negative safe integers only. Source and captured assembly settings plus real Express IP getter were exercised. Verified deployment paths/access restrictions, production forwarded-protocol session handling and browser cookies remain pending. `.env.example` documents these non-secret options; live configuration was not read. Existing app Wasana credit remains. Unrelated module assembly is not declared fully reviewed.
+
+Stage 3A also fully reviews the two public professional application screens (`PharmacyRegisterPage`, `LabRegisterPage`) and adds `AuthLayout`/scoped styles; shared controls/root apps remain partial to auth consumers. Their complete function/state references are in the UI companion. Stage 3A source/UI tests and browser fixture do not replace the original backend/session/consent acceptance gaps.

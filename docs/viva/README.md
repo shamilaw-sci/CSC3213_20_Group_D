@@ -1,12 +1,16 @@
 # Care4U viva preparation
 
+Current authentication sample: [backend/session workflow](02-authentication-and-access.md), [backend file reference](02-authentication-file-reference.md), [complete web/mobile UI file reference](03-authentication-ui-file-reference.md) and [Ctrl+F change map](02-authentication-change-map.md). [Stage 3A](../review/STAGE3A.md) adds 56 source/UI checks to the retained 89 backend checks, plus exact synthetic-browser states/screenshots. Native/device, real DB/cookies/provider/deployment acceptance remains pending. Shared files and other modules are explicitly partial; stop for independent review.
+
+## Earlier scaffold and stage context
+
 The first completed Stage 2A sample is [Authentication and access](02-authentication-and-access.md), with a [file-by-file reference](02-authentication-file-reference.md) and [change map](02-authentication-change-map.md). It is now updated through [Stage 2B](../review/STAGE2B.md): 89 application checks including actual rate middleware execution, resend integrity, partial dependency/UI traces and outstanding runtime/policy limits. Independent review is the next step; other module pages remain pending.
 
 Stage 1 scaffold, 2026-11-12. This page records source-backed entry points and the proposed documentation order. It is not a claim that every workflow is verified.
 
 Stage 1B preserved the inherited application baseline and added [an actionable review/test/documentation plan](../review/NEXT_STAGE_PLAN.md). Begin with isolated auth/session/ownership fixtures and the corresponding viva page. The review-tooling fixtures pass, while application runtime/visual journeys remain unverified.
 
-Start with the existing [viva code guide](../../CARE4U_VIVA_CODE_GUIDE.md), then read the current [baseline](../review/BASELINE.md), [findings](../review/FINDINGS.md) and [ownership register](../review/OWNERSHIP.md). Older guides and audit notes must be reconciled with the current dirty working copy before final viva answers are certified.
+Start with the existing [viva code guide](../../CARE4U_VIVA_CODE_GUIDE.md), then read the current [baseline](../review/BASELINE.md), [findings](../review/FINDINGS.md) and [ownership register](../review/OWNERSHIP.md). Older guides and audit notes must be reconciled with the preserved working copy before final viva answers are certified.
 
 ## Implemented shape
 

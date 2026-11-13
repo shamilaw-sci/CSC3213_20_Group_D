@@ -1,0 +1,64 @@
+TAP version 13
+# Subtest: creates output directory and records command, times, snapshot and limitations
+ok 1 - creates output directory and records command, times, snapshot and limitations
+  ---
+  duration_ms: 9.5362
+  type: 'test'
+  ...
+# Subtest: failed rerun invalidates old PASS; independent later check still runs
+ok 2 - failed rerun invalidates old PASS; independent later check still runs
+  ---
+  duration_ms: 16.1612
+  type: 'test'
+  ...
+# Subtest: snapshot exception replaces old PASS and does not prevent independent checks
+ok 3 - snapshot exception replaces old PASS and does not prevent independent checks
+  ---
+  duration_ms: 13.2139
+  type: 'test'
+  ...
+# Subtest: changed input during a check invalidates a successful process
+ok 4 - changed input during a check invalidates a successful process
+  ---
+  duration_ms: 5.6709
+  type: 'test'
+  ...
+# Subtest: before executing first check every previous report is invalidated
+ok 5 - before executing first check every previous report is invalidated
+  ---
+  duration_ms: 14.2337
+  type: 'test'
+  ...
+# Subtest: real command failure yields nonzero CLI status without raw output leakage
+ok 6 - real command failure yields nonzero CLI status without raw output leakage
+  ---
+  duration_ms: 140.0014
+  type: 'test'
+  ...
+# Subtest: missing check executable is a reported failure
+ok 7 - missing check executable is a reported failure
+  ---
+  duration_ms: 2.5347
+  type: 'test'
+  ...
+# Subtest: missing tracked inputs cannot yield PASS from a process that skips them
+ok 8 - missing tracked inputs cannot yield PASS from a process that skips them
+  ---
+  duration_ms: 8.0213
+  type: 'test'
+  ...
+# Subtest: source snapshots include untracked source and exclude self-generated reports and live env
+ok 9 - source snapshots include untracked source and exclude self-generated reports and live env
+  ---
+  duration_ms: 457.8074
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 750.552

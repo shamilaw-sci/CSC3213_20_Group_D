@@ -1,5 +1,22 @@
 # Stage 1 findings
 
+## Stage 3A current update
+
+See [STAGE3A.md](STAGE3A.md), source/UI commit `57e6d2c` and response-safety commit `d78465b`, and [complete UI reference](../viva/03-authentication-ui-file-reference.md). Earlier stage sections remain historical. All 89 backend and 56 new source/UI cases pass; exact web fixture coverage is separate from native/real DB/session acceptance.
+
+| ID / scope | Implemented or observed | Current status |
+|---|---|---|
+| C3-01–C3-03 | Real web forms/error associations; acknowledged bounded client requests; duplicate and OTP competing-action guards | Source/tests PASS; representative web browser states PASS. Native render/runtime NOT_RUN. |
+| C3-04 | Approved OTP identity navigates directly; pending professionals receive approval guidance and no admitted UI identity | Web fixture and parent/source contracts PASS; real cookies/DB/approval administration pending. |
+| C3-05–C3-06 | Scoped control/contrast/wording/visibility changes; expired/replaced-code and reset recovery; generic non-delivery recovery acknowledgement | Selected narrow/desktop web checks PASS; no full WCAG, native, other browser or real provider claim. |
+| C3-07–C3-08 | Mobile logout no longer silently clears UI on failure; web store mutation moved out of route-guard render | Source contracts PASS. Real session store/logout/whole-app bootstrap and native behavior pending. |
+| C3-09 | Direct professional application negative envelopes/disabled states, lab confirmation/false pre-verification badges, keyboard link corrected | Actual RHF/public-form browser fixtures PASS; module backend/DB acceptance not closed. |
+| C3-10 | Comments/ownership uncertainty, full scoped UI viva and category-specific tracker updated | Source documentation complete for scoped screens; partial shared/module reviews explicit. |
+| C3-12 | Generic unexpected registration-controller failures and web/mobile 5xx filtering; safe known provider wording retained | Actual controller/client source tests PASS after browser capture. Raw server logging and whole-module privacy remain OPEN. |
+| C3-11 / M01 | Existing direct `/api/pharmacies/register` and `/api/laboratories/register` create pending users without main OTP, set user is_verified=true, and do not install Stage 2B auth-router budgets; inspected service creation steps are not one demonstrated shared transaction | SOURCE-confirmed separate contracts/absence; policy/security/transaction follow-up OPEN. Only unexpected registration failure text changed; schema, enrollment and approval rules remain unchanged. Do not call all public registration globally limited/email-verified. |
+
+Unchanged open policies: reset leaves sessions/other unused links and lockout intact; legacy/unverified patient and missing/same-role profile-link rules remain. Native/assistive technology/hardware back/insets/font scaling/URL host behavior remain NOT_RUN because adb initialization fails. Verified schema/disposable PG and deployed cookie/proxy evidence remain missing. Shared-control changes are additive/scoped, but unrelated consumers, full app/session integration and inherited clinical/privacy findings are not certified complete.
+
 ## Stage 2B current update
 
 See [STAGE2B.md](STAGE2B.md) for `0cd2abb`, pre-fix reproduction and 89 passing application checks. Stage 2A notes below are historical; no inherited clinical/privacy finding is certified fully closed.

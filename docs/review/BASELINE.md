@@ -1,5 +1,7 @@
 # Care4U repository baseline
 
+Current stage pointer: [Stage 3A](STAGE3A.md), 2026-11-13, entered clean at `8c06a83`. The original Stage 1 baseline below remains historical and its immutable evidence is retained. Stage 3A local application checks and bounded synthetic web-browser evidence are separate from real DB/cookie/native/provider/deployment acceptance. See the current stage report and evidence matrix; do not interpret the historical baseline's NOT_RUN labels as the whole current verification scope.
+
 Assessed 2026-11-12, Asia/Colombo. Scope: local working copy including pre-existing uncommitted changes. No application code was edited.
 
 Stage 1B note: the facts below describe the original Stage 1 snapshot. The 44 edits and seven reports are now preserved on the final-review branch. See [STAGE1B.md](STAGE1B.md) for commit scopes/current status and [TOOLING.md](TOOLING.md) for refreshed evidence semantics. Original Stage 1 evidence files remain immutable; latest independent static reports live under `evidence/static-current/`. Maintained review-tooling tests now exist; an application regression suite remains future work.

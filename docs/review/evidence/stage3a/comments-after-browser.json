@@ -1,0 +1,30 @@
+{
+  "result": "PASS",
+  "scope": "Purpose/parameter/return comments added after UI capture; executable AST parity only, not runtime acceptance",
+  "files": [
+    {
+      "path": "frontend/src/components/common/Card.jsx",
+      "before_sha256": "22e77d93226f8b72bb0013f19b88ba9244727373c2d26793509b3146e7a8cb2e",
+      "after_sha256": "a8bc2be88cbbf971dba00b622cc1137deb48abd0281ffe468912ace56bf29b72",
+      "executable_ast_equal": true
+    },
+    {
+      "path": "frontend/src/pages/pharmacy/PharmacyRegisterPage.jsx",
+      "before_sha256": "0fb1cb8336550fef2da8b15c77af8c0a573258831a7711f0a999c5e67f32f131",
+      "after_sha256": "8c8247392292b005f0d33eddc4b92312315c590b8d1d1b774794882ce27b5b9e",
+      "executable_ast_equal": true
+    },
+    {
+      "path": "frontend/src/App.jsx",
+      "before_sha256": "1d43876fdbf4c224e34ac967b216e6c3c3a4be5a3766ef81ac5e2e30d84a50ea",
+      "after_sha256": "83203405e2c563b4c0ca66eb3aea7f92d0dc9c1823e518129794d6c9bd95abdb",
+      "executable_ast_equal": true
+    },
+    {
+      "path": "mobile/App.js",
+      "before_sha256": "dcc888520de0ae8b672c1c891c36f20afb4958255e894b270c81136023244f9e",
+      "after_sha256": "03bf383c876c75bd54ecaac2b698217115410487016ff5a693d416fd63ea4cca",
+      "executable_ast_equal": true
+    }
+  ]
+}

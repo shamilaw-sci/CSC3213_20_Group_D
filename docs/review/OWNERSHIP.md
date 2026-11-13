@@ -1,5 +1,19 @@
 # Ownership and provenance register
 
+## Stage 3A attribution decision
+
+Source/UI changes are `57e6d2c` and response-safety commit `d78465b`, committed as Codex Review Assistant, separate from original student authorship. Existing auth Idirisinghe S/21/389, root/shared Wasana S/21/081 and PharmacyRegisterPage Pamudika S/21/001 headers remain. New AuthLayout/styles/application tests/fixtures name review-assistant implementation; strict JSON/config receives no invented student header. No author was replaced with a current module maintainer.
+
+| Case | Evidence and decision |
+|---|---|
+| Existing web/mobile auth screens/services | Existing S/21/389 credits and lasitha introduction evidence retained. The Idirisinghe/Lasitha Sanuth display-name reconciliation remains unresolved; no sole-author certification. |
+| Web OTP page | Previously no author header; introduction `5aaea4b` by lasitha. New header explicitly says original author unconfirmed and records Git introduction, rather than inventing a personal identity. |
+| Public pharmacy application | Existing Pamudika S/21/001 header; introduction `1dae2df` by S/21/001 supports the original feature credit. Retained regardless of Auth maintenance. Later contributions remain separate. |
+| Public laboratory application | Previously no author header; introduction `71cdfdd` by S/21/001. New header records uncertainty and points here. Git introduction supports lineage, not a declaration of sole/human authorship; current Wasana Lab maintenance is not substituted as original author. |
+| Shared controls/root apps | Existing Wasana credit retained. Scope is auth consumers/callbacks; unrelated file features/consumers are not marked fully reviewed. |
+
+Per-file source hashes/symbols and tracker decisions separate these claims from Git uploader, later contributor and maintainer roles. Four final contract-comment edits are AST-identical to the browser-captured executable source. No disputed student name/credit was silently resolved.
+
 ## Stage 2B attribution decision
 
 Existing auth routes/service/repository Idirisinghe S/21/389 credits and app Wasana S/21/081 credit are retained. Stage 2B application changes are `0cd2abb`, committed as Codex Review Assistant; commit author is not original student author. New `auth.limits.js`, `auth-resend.test.cjs` and `auth-limits.test.cjs` explicitly identify review-assistant implementation. Tests/config/docs updates do not reassign source credit; `.env.example`/strict JSON gain no invented student header. Lasitha remains the Auth maintainer; the Idirisinghe/Lasitha Sanuth display-name discrepancy remains unresolved. Existing source provenance and immutable tracker baseline fields are preserved; no new ownership claim is inferred from module responsibility. See [STAGE2B.md](STAGE2B.md).

@@ -1,8 +1,8 @@
 # Authentication, sessions and patient access
 
-Current through Stage 2B, 2026-11-12. Stage 2B baseline: `f14aee0c86178b5b14e99d367c5830203efcdd31`; application fix/tests: `0cd2abb`. See [Stage 2B report](../review/STAGE2B.md) for limits, evidence and schema prerequisites. Stage 2A sample history: Baseline: `245887bcd41b091a5375a79d7932c98c89c2f5ae`. Behavioral fixes: `150fec1`; test commands: `8c7908b`; separate source comments: `438c8a1`. Read the [file-by-file reference](02-authentication-file-reference.md), [change map](02-authentication-change-map.md) and [Stage 2A report](../review/STAGE2A.md) together.
+Current through Stage 3A, 2026-11-13. UI/source commit: `57e6d2c` and response-safety commit `d78465b`. Use the [complete web/mobile UI file reference](03-authentication-ui-file-reference.md), [Stage 3A report](../review/STAGE3A.md) and [change map](02-authentication-change-map.md). Backend foundation history and original baseline/fix commits remain in the [Stage 2A](../review/STAGE2A.md) and [Stage 2B](../review/STAGE2B.md) reports.
 
-**Evidence labels:** **SOURCE** means inspected implementation. **ISOLATED** means actual source executed with synthetic mocks. **MIDDLEWARE** means installed rate-limit/MemoryStore or Express IP-resolution code executed with synthetic requests/time, without a listening API. **PENDING DB** means PostgreSQL behavior has not been tested. **NOT_RUN** applies to browser/device/visual/provider delivery checks. None of these notes certifies production behavior.
+**Evidence labels:** **SOURCE** means inspected implementation. **ISOLATED** means actual source executed with synthetic mocks. **MIDDLEWARE** means installed rate-limit/MemoryStore or Express IP-resolution code executed with synthetic requests/time, without a listening API. **PENDING DB** means PostgreSQL behavior has not been tested. **BROWSER FIXTURE** means actual web UI against synthetic loopback responses in Stage 3A. **NOT_RUN** still applies to device, real session-cookie/provider/deployment and unlisted browser/visual checks. None of these notes certifies production behavior.
 
 ## Terms to explain first
 
@@ -20,7 +20,7 @@ Production uses `HttpOnly`, `Secure` and `SameSite=None`; non-production uses `H
 
 CORS allows exact configured origins and origin-less clients, and enables credentials. An Origin header is a browser boundary signal, not proof of a user's identity. CORS is not a complete CSRF defense. The inherited CSRF/origin concern remains open; Stage 2A does not invent a deployment policy.
 
-The [web API client](../../frontend/src/services/api.js) uses `VITE_API_URL` and `withCredentials:true`. Some screens and web session restoration use `fetch` directly with `credentials:'include'`. On startup, `frontend/src/App.jsx` calls `/api/auth/me` before rendering role routes, updates the Zustand store on success and clears it on failure. A `ProtectedRoute` is a navigation guard; the server is still authoritative. Its current wrong-role branch clears local state during render; this UI implementation was traced, not redesigned.
+The [web API client](../../frontend/src/services/api.js) uses `VITE_API_URL` and `withCredentials:true`. Main auth screens now use acknowledged Axios helpers; web session restoration still uses `fetch` with `credentials:'include'`. Other module clients remain outside this UI review. On startup, `frontend/src/App.jsx` calls `/api/auth/me` before rendering role routes, updates the Zustand store on success and clears it on failure. A `ProtectedRoute` is a navigation guard; the server is still authoritative. Its wrong-role branch now clears local state in an effect rather than during render, preserving the existing denial rule. Stage 3A reviewed this auth dependency only; other route/portal behavior remains partial.
 
 The [mobile API client](../../mobile/src/services/api.js) uses `EXPO_PUBLIC_API_URL`, a development-only localhost fallback and `withCredentials:true`. Native cookie handling depends on the runtime and was NOT_RUN. `mobile/App.js` currently has **no startup `/me` restoration**; its in-memory store starts with `user:null`. Login and patient OTP success populate it. Doctors have a profile-only fallback; other staff roles are directed to the web. Do not claim web/mobile session-restoration parity or persistent mobile login from source inspection.
 
@@ -44,7 +44,7 @@ The read now uses the same transaction client as creation/deletion and requests 
 
 `createUser` sets `is_verified:true` after OTP validation. This email-verification flag differs from **professional approval**: patients are `approved`; doctors/pharmacies/labs/hospitals start `pending`. Their professional profile `is_verified` values are initially false. Admin approval lives outside this reviewed implementation; its effect is consumed by the auth gates, not independently certified here.
 
-For an approved patient, `saveAuthenticatedSession` regenerates the anonymous session ID, assigns the limited identity, and waits for `save` before returning 201. Pending professionals receive `approvalPending:true`, an account/profile response, and no authenticated `session.user`; returning their identity in JSON does not authorize them. The web shows an approval/sign-in message; mobile returns professionals to login instead of setting its auth store.
+For an approved patient, `saveAuthenticatedSession` regenerates the anonymous session ID, assigns the limited identity, and waits for `save` before returning 201. Pending professionals receive `approvalPending:true`, an account/profile response, and no authenticated `session.user`; returning their identity in JSON does not authorize them. Web and mobile return pending professionals to approval/sign-in guidance without setting an admitted UI identity. Acknowledged approved web OTP identities now go directly to the role destination instead of another sign-in form.
 
 Account creation commits before session persistence. If that later persistence fails, the account/code transaction is not undone; the response is an error and the user may need to sign in after the store recovers. An OTP retry can then find no pending registration. This recovery UX remains a limitation, not a claim that the registration was rolled back.
 
@@ -98,7 +98,7 @@ Only the access-status and record-filter dependencies were reviewed in those lar
 
 ## Logout and password recovery
 
-`POST /api/auth/logout` destroys the server session before acknowledging success and clearing the default cookie. Store destruction failure returns 500. No session is handled idempotently. Web role navigation and mobile local-store clearing are client behaviors, not proof of store deletion; mobile currently clears local state in `finally` even when logout fails. No native/server-cookie end-to-end logout test ran.
+`POST /api/auth/logout` destroys the server session before acknowledging success and clearing the default cookie. Store destruction failure returns 500. No session is handled idempotently. Web role navigation and mobile local-store clearing are client behaviors, not proof of store deletion; Stage 3A mobile logout clears local identity only after an acknowledged successful response; failure alerts that the session may still be active and preserves a retry path. No native/server-cookie end-to-end logout test ran.
 
 Forgot-password UI -> client `forgotPassword` -> `/forgot-password` -> controller -> service -> exact account lookup -> `crypto.randomBytes(32)` -> 64-character lowercase hexadecimal token -> one-hour expiry -> `password_reset_tokens` -> email link -> generic response. Unknown accounts and email transport rejection/exception produce the same public message; DB failures still produce 500. A generic message does not prove delivery, and timing differences are not equalized. Stage 2B applies the shared email-generation IP/address budgets before forgot-password and separate IP/token budgets before reset. These do not change the token/session revocation policy.
 
@@ -129,6 +129,12 @@ Web reset reads `token` from the URL. Mobile accepts a pasted raw token or HTTP(
 | Does clearing the UI store log out the server? | No. The logout endpoint must successfully destroy the server session. |
 | Does resetting the password revoke all sessions? | No. That is an open hardening/policy requirement, documented honestly. |
 | What does `/api/health` prove? | The process handler responds. It does not query the DB or prove schema/provider readiness. |
-| What was actually executed? | 89 checks: the original 67 plus resend, route/proxy and actual middleware/store checks. Also static checks and 21 separate review-tooling checks. No live DB/browser/device/provider acceptance. |
+| What was actually executed? | 143 checks: 89 retained backend cases plus 54 UI/source cases. Also static checks, 21 separate tooling cases and bounded web browser fixtures. No real DB/session-cookie/provider/deployment or native device acceptance. |
 
 Small change exercises are proposals in the [change map](02-authentication-change-map.md), not additional changes already implemented. Explain the permission boundary and required verification before making a viva change.
+
+## Stage 3A client scope and separate application paths
+
+The [UI file reference](03-authentication-ui-file-reference.md) owns current screen state/handler/effect/validation/API/navigation details rather than duplicating them here. Main web auth now uses shared real forms, associated feedback, strict acknowledged Axios wrappers, bounded requests and distinct patient/professional outcomes. Browser fixture checks at 320/390/1280 widths are separate from real session acceptance. Mobile has source/handler checks only; adb initialization failed, so emulator/device/accessibility/cookie acceptance remains NOT_RUN.
+
+Two additional existing public web applications are mounted at `/pharmacy/register` and `/laboratory/register`. Their module APIs directly create pending professional accounts/profiles without main-auth OTP, and do not install the Stage 2B auth-router budgets. The UI preserves those contracts and reports pending approval, not email verification/authentication. Enrollment/limit/atomicity unification is an open separate backend/policy batch. No Stage 3A backend source, DB schema, reset-session/other-link, legacy patient or profile-link policy changed.

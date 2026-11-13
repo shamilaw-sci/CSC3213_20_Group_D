@@ -2,7 +2,7 @@
   "id": "B04",
   "kind": "parser",
   "required": true,
-  "run_id": "2026-11-12T14-03-56-696Z-533367e0-de6b-48e0-827b-e259d34d4a83",
+  "run_id": "2026-11-13T07-57-48-711Z-057952db-1223-4d0e-bcd6-dcb9fb149897",
   "command": [
     "C:\\Users\\Waasana\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
     "D:\\Projects\\Care4U - Healthcare Project\\codes\\CSC3213_20_Group_D\\docs\\review\\tools\\static-worker.mjs",
@@ -12,8 +12,8 @@
   "cwd": ".",
   "result": "PASS",
   "source_snapshot": {
-    "head": "0cd2abbd9b65b473e75e9e4e4d4c4df33d32f149",
-    "sha256": "f6082a31c1c0e2e99466b85e79bfbd67ce5460634ef2e887978da1d09072e4b8",
+    "head": "d78465bef5ebd231690700b2c6e7dafdb51aa5e9",
+    "sha256": "bd7167ee75eddf071b73d79642de31e2c4164f3a61c5afdda796ce3bd5ee87bd",
     "files": [
       {
         "path": "docs/review/tools/check-evidence.mjs",
@@ -49,7 +49,7 @@
       },
       {
         "path": "mobile/App.js",
-        "sha256": "7c507dd7f5c96b8f493053cd29c72db2a4b72b2edb9aca28b1adb606bec7f1c9"
+        "sha256": "03bf383c876c75bd54ecaac2b698217115410487016ff5a693d416fd63ea4cca"
       },
       {
         "path": "mobile/app.json",
@@ -125,7 +125,7 @@
       },
       {
         "path": "mobile/src/screens/ForgotPasswordScreen.js",
-        "sha256": "4c8b29fe487ae0bfb75023574fd2610cbbb52c7a6d8fc0b40faa5a91c0ccaf8c"
+        "sha256": "8b0af04c7dc5d048a813d490489b72d060886fce15d6a08fc28196ece19a1b6f"
       },
       {
         "path": "mobile/src/screens/LabReportsScreen.js",
@@ -133,7 +133,7 @@
       },
       {
         "path": "mobile/src/screens/LoginScreen.js",
-        "sha256": "bcfa5ecc4ca0de64b2d8cf768d2e3dbe77b1d7a6155709f85373f3c493dd872e"
+        "sha256": "5f163451e02a866b0e01e2618b3adcf64f39217d903fb0c2db1d7e99dfc5213a"
       },
       {
         "path": "mobile/src/screens/MedicalRecordsScreen.js",
@@ -145,7 +145,7 @@
       },
       {
         "path": "mobile/src/screens/OtpVerificationScreen.js",
-        "sha256": "03339035821810bac2e6d1687b4b08d7afab6db1bf511416e5cc0d946b4f6735"
+        "sha256": "5375ef0a4296086862cf417bf58cd7c474c025e4374d7352c3f744b4ee2ab6a4"
       },
       {
         "path": "mobile/src/screens/PatientHomeScreen.js",
@@ -165,11 +165,11 @@
       },
       {
         "path": "mobile/src/screens/RegisterScreen.js",
-        "sha256": "d2579f911d56e103fdeb16cd12503406164d7b527325b5dd1ffd73774d188f70"
+        "sha256": "ba329e062b2c019d203a24145a4561abb67c9f5b5cfebb5faabe156af2fdc54f"
       },
       {
         "path": "mobile/src/screens/ResetPasswordScreen.js",
-        "sha256": "aa7634f56514c117c052171e2686529337a87ec76273ffc69d78f1690071af0c"
+        "sha256": "66efc3f1ae713410d6973a51b1a3be6043f707a3c90efbfd735c67af5609d245"
       },
       {
         "path": "mobile/src/services/.gitkeep",
@@ -185,7 +185,7 @@
       },
       {
         "path": "mobile/src/services/auth.service.js",
-        "sha256": "e5dba7e2d25bbcde30ca8aa9de0f547967dd2c9ca834442b92ebd09540afc0fa"
+        "sha256": "f8f3ac677edc1fdbff4b4f1ca1f895f1f55ce3c7d2aa8688bd0c470829e4bb84"
       },
       {
         "path": "mobile/src/services/doctor.service.js",
@@ -214,8 +214,8 @@
     ]
   },
   "limitations": "Tracked JS/JSX parsing only; no Metro/native/device behavior or API calls",
-  "started_at": "2026-11-12T14:04:07.165Z",
-  "finished_at": "2026-11-12T14:04:07.714Z",
+  "started_at": "2026-11-13T07:57:59.444Z",
+  "finished_at": "2026-11-13T07:57:59.987Z",
   "exit_code": 0,
   "error_code": null,
   "details": {

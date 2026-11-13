@@ -2,7 +2,7 @@
   "id": "B02",
   "kind": "lint",
   "required": true,
-  "run_id": "2026-11-12T14-03-56-696Z-533367e0-de6b-48e0-827b-e259d34d4a83",
+  "run_id": "2026-11-13T07-57-48-711Z-057952db-1223-4d0e-bcd6-dcb9fb149897",
   "command": [
     "C:\\Users\\Waasana\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
     "node_modules/eslint/bin/eslint.js",
@@ -13,8 +13,8 @@
   "cwd": "frontend",
   "result": "PASS",
   "source_snapshot": {
-    "head": "0cd2abbd9b65b473e75e9e4e4d4c4df33d32f149",
-    "sha256": "9b18dbe2093c8d3717a50455b9f55669bc1f9816b527d8e4c9ff3174630af2c1",
+    "head": "d78465bef5ebd231690700b2c6e7dafdb51aa5e9",
+    "sha256": "323ecc98894254c7976d60b5dd7649a9f3c7d460f761c6ed49f221ea99393038",
     "files": [
       {
         "path": "docs/review/tools/check-evidence.mjs",
@@ -66,7 +66,7 @@
       },
       {
         "path": "frontend/package.json",
-        "sha256": "2303fb4355a2302380b59b9008838c84426ab932691a32727001158ac157a4ee"
+        "sha256": "73903a90a2a1302c241cf7fd37017f2817a26ee8f01b8bdef9a00da116d88740"
       },
       {
         "path": "frontend/public/favicon.svg",
@@ -86,7 +86,7 @@
       },
       {
         "path": "frontend/src/App.jsx",
-        "sha256": "96ca15989e224c01603061a91417c0487125b7b9a71ed03102c9258efa417c71"
+        "sha256": "83203405e2c563b4c0ca66eb3aea7f92d0dc9c1823e518129794d6c9bd95abdb"
       },
       {
         "path": "frontend/src/assets/hero.png",
@@ -101,6 +101,14 @@
         "sha256": "2f1f6c6f90a0ef7422cbb4cfafcd8ad329c507a18afdc34cc21fa72179b9c54a"
       },
       {
+        "path": "frontend/src/components/auth/AuthLayout.jsx",
+        "sha256": "8dac575e92e8f6e14df327029543cf2c9e2d36dc0fae2ba5f0c49c4b45a9716f"
+      },
+      {
+        "path": "frontend/src/components/auth/auth.css",
+        "sha256": "623bd8efb06a8b0f9ea647fc4d4ca72598257450496537e25c88e0c0fd0df93d"
+      },
+      {
         "path": "frontend/src/components/chat/AIChatWidget.jsx",
         "sha256": "d52c3ab6a4ae0b7b382550198ef3f8d8728e05b551daa78c9d22d45830cdf0e8"
       },
@@ -110,7 +118,7 @@
       },
       {
         "path": "frontend/src/components/common/Alert.jsx",
-        "sha256": "ddba8e7a00ef137a0898e1b8bc436440387e7a75c08ee69910bc8241a00cf0fc"
+        "sha256": "ae5d3a7b045094fb9ea2dfa5fd5287c5f3929f0025e909d0e73c4d90955c09d7"
       },
       {
         "path": "frontend/src/components/common/Badge.jsx",
@@ -118,11 +126,11 @@
       },
       {
         "path": "frontend/src/components/common/Button.jsx",
-        "sha256": "e6e25db87717466408ef3ecec8e1337541b731da87499b2c8063a07b8b0d6a50"
+        "sha256": "9db7c662178c1c036e7594d44612a459eba551f88af01390349325fe11d00283"
       },
       {
         "path": "frontend/src/components/common/Card.jsx",
-        "sha256": "9b8b3453d3370aa725241df927d2814910c64828ff09e8ae63d9c7b60cbb440f"
+        "sha256": "a8bc2be88cbbf971dba00b622cc1137deb48abd0281ffe468912ace56bf29b72"
       },
       {
         "path": "frontend/src/components/common/DataTable.jsx",
@@ -138,7 +146,7 @@
       },
       {
         "path": "frontend/src/components/common/Input.jsx",
-        "sha256": "db213a794b3dda541607de9a9883b0af0be3535aa56e7abffce662dd5e086506"
+        "sha256": "cef300fad8f1a034ea975c79b83295bb0044d8b5f20bc1d13ebba7b1c2e212ab"
       },
       {
         "path": "frontend/src/components/common/Modal.jsx",
@@ -266,23 +274,23 @@
       },
       {
         "path": "frontend/src/pages/auth/ForgotPasswordPage.jsx",
-        "sha256": "99950001d3d7e0602fed53a1920af2c8e9c1d3cc2bf80370ab80d2e5588e0eb8"
+        "sha256": "1eae1d75238e03cf6cc2b57e2b1d21309cd51602c8fdc9da5d5840c71952910f"
       },
       {
         "path": "frontend/src/pages/auth/LoginPage.jsx",
-        "sha256": "06724f8283b7b20d48c8fe207962abe85060fb604ee3d9fd2c7dc9c370489d02"
+        "sha256": "837f8a31fd955942e9b593108cbfa2021a04b8956afc18e4bc0e9c29d0dd8ee7"
       },
       {
         "path": "frontend/src/pages/auth/OtpVerificationPage.jsx",
-        "sha256": "fe544b67c63c5e379a562895a98540e562e258952a7b2f85bc8821b5290dedc0"
+        "sha256": "5945f6dded545102a38728164718e7c6e62c735fe596274c14be65ab585d3640"
       },
       {
         "path": "frontend/src/pages/auth/RegisterPage.jsx",
-        "sha256": "4370b1f7c75023c8d2d2ac19fae2acb48abaddcade31baa097730d9b78abfbaa"
+        "sha256": "4fecf7aadb1a21ad2178339ac0d007a23985f90f8dcb45327c386f3f9574cb4e"
       },
       {
         "path": "frontend/src/pages/auth/ResetPasswordPage.jsx",
-        "sha256": "ae9075044f5af094f5c4deb859ce4a1cd564c19e53429672f98a1e1f8a918a71"
+        "sha256": "e70d1c04415d42c573b5fbf56ce266ac9297ede94d6f46e027c8d72cfa0850d9"
       },
       {
         "path": "frontend/src/pages/doctor/AppointmentQueuePage.jsx",
@@ -326,7 +334,7 @@
       },
       {
         "path": "frontend/src/pages/laboratory/LabRegisterPage.jsx",
-        "sha256": "eb9e9b57fdae4a7345a30946e6511eb8d2f88b337d3b80ba05472356f49bc3a9"
+        "sha256": "ebac187cdfa01ab3f2179eb008491434f60ad73021ce57e51d174bf95d6fe7fa"
       },
       {
         "path": "frontend/src/pages/laboratory/LabReportUploadPage.jsx",
@@ -394,7 +402,7 @@
       },
       {
         "path": "frontend/src/pages/pharmacy/PharmacyRegisterPage.jsx",
-        "sha256": "e74172cfc2b539d33b4ab5d8158e59d74331839d193cc389b25006727917bd7d"
+        "sha256": "8c8247392292b005f0d33eddc4b92312315c590b8d1d1b774794882ce27b5b9e"
       },
       {
         "path": "frontend/src/services/.gitkeep",
@@ -410,7 +418,7 @@
       },
       {
         "path": "frontend/src/services/auth.service.js",
-        "sha256": "d6f872fa24563f2c7944a957b196657563a0ed918dbc5c50d698bc69fb740aa3"
+        "sha256": "30de52fbec06c893a58d098470bb6217229d0045072f35af5897f1df38d8c180"
       },
       {
         "path": "frontend/src/services/doctor.service.js",
@@ -461,6 +469,26 @@
         "sha256": "9f181137953e070f783c4157c9a6d772ee76f7b9581545fdb21c3b4d822ec990"
       },
       {
+        "path": "frontend/tests/auth-fixture.html",
+        "sha256": "6068aecc7e5bb11ae2c49e6f02236ddd1dc00c9c51921d320116751ee0abe8b1"
+      },
+      {
+        "path": "frontend/tests/auth-fixture.jsx",
+        "sha256": "d2c8c65709db0961e296fec8ddb0038fe34291b307bc3dd38ce0c75852259033"
+      },
+      {
+        "path": "frontend/tests/auth-ui.test.cjs",
+        "sha256": "42c61ca993948411561e6f1dd5a01a807a40d9825f657117b261bc2e8e0dcc96"
+      },
+      {
+        "path": "frontend/tests/serve-auth-fixture.mjs",
+        "sha256": "34313e80a4bca1c8baf2e29517ce38a3703f9ff5d374a8174c1c16a881d39af2"
+      },
+      {
+        "path": "frontend/tests/support/source-ui.cjs",
+        "sha256": "e5282144422c3362d3bb771947719fa1281870775f41f4b3c0cae7d586369c10"
+      },
+      {
         "path": "frontend/vercel.json",
         "sha256": "14b95599e5dca449bd7efdf5cf240c91dca33418b6beb8e0f4bb0774ecf64e44"
       },
@@ -471,21 +499,21 @@
     ]
   },
   "limitations": "Configured web ESLint scope only; no fixes, typecheck or runtime verification",
-  "started_at": "2026-11-12T14:04:00.400Z",
-  "finished_at": "2026-11-12T14:04:05.705Z",
+  "started_at": "2026-11-13T07:57:52.757Z",
+  "finished_at": "2026-11-13T07:57:57.808Z",
   "exit_code": 0,
   "error_code": null,
   "details": {
-    "files": 89,
+    "files": 94,
     "errors": 0,
     "warnings": 0,
     "diagnostics": []
   },
   "warnings": [],
   "output": {
-    "stdout_sha256": "a77e5643d8262d166be10716c92dc9b556f00ce5d3b0bd8e2dd0adfb9685377a",
+    "stdout_sha256": "339ae82620c38b6d390bb6b9f64f4a64746dabebab9e39f84131ee1f47566295",
     "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "stdout_bytes": 36037,
+    "stdout_bytes": 37463,
     "stderr_bytes": 0,
     "policy": "Raw output not persisted; no source snippets or environment values in evidence"
   }

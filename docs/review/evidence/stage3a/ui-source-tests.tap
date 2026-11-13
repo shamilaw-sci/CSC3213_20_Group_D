@@ -1,0 +1,346 @@
+TAP version 13
+# Subtest: web registerPharmacy preserves its separate pending-approval API contract
+ok 1 - web registerPharmacy preserves its separate pending-approval API contract
+  ---
+  duration_ms: 103.7336
+  type: 'test'
+  ...
+# Subtest: web registerLaboratory preserves its separate pending-approval API contract
+ok 2 - web registerLaboratory preserves its separate pending-approval API contract
+  ---
+  duration_ms: 15.5272
+  type: 'test'
+  ...
+# Subtest: pharmacy application callback suppresses duplicates and never reports a negative envelope as pending approval
+ok 3 - pharmacy application callback suppresses duplicates and never reports a negative envelope as pending approval
+  ---
+  duration_ms: 36.2739
+  type: 'test'
+  ...
+# Subtest: laboratory application validates confirmation, maps selected tests and waits for acknowledgement
+ok 4 - laboratory application validates confirmation, maps selected tests and waits for acknowledgement
+  ---
+  duration_ms: 33.7854
+  type: 'test'
+  ...
+# Subtest: frontend actual login wrapper requires acknowledgement and bounds request wait
+ok 5 - frontend actual login wrapper requires acknowledgement and bounds request wait
+  ---
+  duration_ms: 9.8869
+  type: 'test'
+  ...
+# Subtest: frontend actual register wrapper requires acknowledgement and bounds request wait
+ok 6 - frontend actual register wrapper requires acknowledgement and bounds request wait
+  ---
+  duration_ms: 14.2641
+  type: 'test'
+  ...
+# Subtest: frontend actual verifyOtp wrapper requires acknowledgement and bounds request wait
+ok 7 - frontend actual verifyOtp wrapper requires acknowledgement and bounds request wait
+  ---
+  duration_ms: 9.4446
+  type: 'test'
+  ...
+# Subtest: frontend actual resendOtp wrapper requires acknowledgement and bounds request wait
+ok 8 - frontend actual resendOtp wrapper requires acknowledgement and bounds request wait
+  ---
+  duration_ms: 8.8098
+  type: 'test'
+  ...
+# Subtest: frontend actual forgotPassword wrapper requires acknowledgement and bounds request wait
+ok 9 - frontend actual forgotPassword wrapper requires acknowledgement and bounds request wait
+  ---
+  duration_ms: 12.9338
+  type: 'test'
+  ...
+# Subtest: frontend actual resetPassword wrapper requires acknowledgement and bounds request wait
+ok 10 - frontend actual resetPassword wrapper requires acknowledgement and bounds request wait
+  ---
+  duration_ms: 10.4774
+  type: 'test'
+  ...
+# Subtest: frontend actual error formatter preserves rate guidance and hides transport details
+ok 11 - frontend actual error formatter preserves rate guidance and hides transport details
+  ---
+  duration_ms: 4.8124
+  type: 'test'
+  ...
+# Subtest: mobile actual login wrapper requires acknowledgement and bounds request wait
+ok 12 - mobile actual login wrapper requires acknowledgement and bounds request wait
+  ---
+  duration_ms: 7.7387
+  type: 'test'
+  ...
+# Subtest: mobile actual register wrapper requires acknowledgement and bounds request wait
+ok 13 - mobile actual register wrapper requires acknowledgement and bounds request wait
+  ---
+  duration_ms: 8.3245
+  type: 'test'
+  ...
+# Subtest: mobile actual verifyOtp wrapper requires acknowledgement and bounds request wait
+ok 14 - mobile actual verifyOtp wrapper requires acknowledgement and bounds request wait
+  ---
+  duration_ms: 8.9511
+  type: 'test'
+  ...
+# Subtest: mobile actual resendOtp wrapper requires acknowledgement and bounds request wait
+ok 15 - mobile actual resendOtp wrapper requires acknowledgement and bounds request wait
+  ---
+  duration_ms: 12.1374
+  type: 'test'
+  ...
+# Subtest: mobile actual forgotPassword wrapper requires acknowledgement and bounds request wait
+ok 16 - mobile actual forgotPassword wrapper requires acknowledgement and bounds request wait
+  ---
+  duration_ms: 8.4583
+  type: 'test'
+  ...
+# Subtest: mobile actual resetPassword wrapper requires acknowledgement and bounds request wait
+ok 17 - mobile actual resetPassword wrapper requires acknowledgement and bounds request wait
+  ---
+  duration_ms: 8.5661
+  type: 'test'
+  ...
+# Subtest: mobile actual error formatter preserves rate guidance and hides transport details
+ok 18 - mobile actual error formatter preserves rate guidance and hides transport details
+  ---
+  duration_ms: 4.7487
+  type: 'test'
+  ...
+# Subtest: web sign-in form handler preserves existing password compatibility and suppresses same-tick duplicates
+ok 19 - web sign-in form handler preserves existing password compatibility and suppresses same-tick duplicates
+  ---
+  duration_ms: 10.911
+  type: 'test'
+  ...
+# Subtest: web sign-in required errors prevent API calls and associate a field error
+ok 20 - web sign-in required errors prevent API calls and associate a field error
+  ---
+  duration_ms: 15.7669
+  type: 'test'
+  ...
+# Subtest: web registration Patient: both steps submit and only selected role fields reach API
+ok 21 - web registration Patient: both steps submit and only selected role fields reach API
+  ---
+  duration_ms: 27.4322
+  type: 'test'
+  ...
+# Subtest: web registration Doctor: both steps submit and only selected role fields reach API
+ok 22 - web registration Doctor: both steps submit and only selected role fields reach API
+  ---
+  duration_ms: 22.945
+  type: 'test'
+  ...
+# Subtest: web registration Pharmacist: both steps submit and only selected role fields reach API
+ok 23 - web registration Pharmacist: both steps submit and only selected role fields reach API
+  ---
+  duration_ms: 25.162
+  type: 'test'
+  ...
+# Subtest: web registration Lab Technician: both steps submit and only selected role fields reach API
+ok 24 - web registration Lab Technician: both steps submit and only selected role fields reach API
+  ---
+  duration_ms: 17.3745
+  type: 'test'
+  ...
+# Subtest: web registration Hospital Staff: both steps submit and only selected role fields reach API
+ok 25 - web registration Hospital Staff: both steps submit and only selected role fields reach API
+  ---
+  duration_ms: 26.6542
+  type: 'test'
+  ...
+# Subtest: web registration whitespace-only role details never submit
+ok 26 - web registration whitespace-only role details never submit
+  ---
+  duration_ms: 17.6798
+  type: 'test'
+  ...
+# Subtest: web OTP patient goes directly to signed-in destination after acknowledgement
+ok 27 - web OTP patient goes directly to signed-in destination after acknowledgement
+  ---
+  duration_ms: 9.6875
+  type: 'test'
+  ...
+# Subtest: web OTP pending professional clears stale UI identity and returns to approval guidance
+ok 28 - web OTP pending professional clears stale UI identity and returns to approval guidance
+  ---
+  duration_ms: 11.5513
+  type: 'test'
+  ...
+# Subtest: web OTP missing context and malformed code do not call API
+ok 29 - web OTP missing context and malformed code do not call API
+  ---
+  duration_ms: 24.6442
+  type: 'test'
+  ...
+# Subtest: web OTP verify suppresses competing action and releases after provider failure
+ok 30 - web OTP verify suppresses competing action and releases after provider failure
+  ---
+  duration_ms: 13.9594
+  type: 'test'
+  ...
+# Subtest: web OTP resend suppresses competing action and releases after provider failure
+ok 31 - web OTP resend suppresses competing action and releases after provider failure
+  ---
+  duration_ms: 11.9563
+  type: 'test'
+  ...
+# Subtest: web ForgotPassword retains rate retry guidance without showing success
+ok 32 - web ForgotPassword retains rate retry guidance without showing success
+  ---
+  duration_ms: 9.4962
+  type: 'test'
+  ...
+# Subtest: web ResetPassword retains rate retry guidance without showing success
+ok 33 - web ResetPassword retains rate retry guidance without showing success
+  ---
+  duration_ms: 11.7585
+  type: 'test'
+  ...
+# Subtest: web reset invalid token offers recovery and mismatched passwords never call API
+ok 34 - web reset invalid token offers recovery and mismatched passwords never call API
+  ---
+  duration_ms: 37.1946
+  type: 'test'
+  ...
+# Subtest: web acknowledged recovery stays generic and acknowledged reset clears passwords
+ok 35 - web acknowledged recovery stays generic and acknowledged reset clears passwords
+  ---
+  duration_ms: 17.4575
+  type: 'test'
+  ...
+# Subtest: mobile sign-in accepts existing short passwords and suppresses rapid duplicate taps
+ok 36 - mobile sign-in accepts existing short passwords and suppresses rapid duplicate taps
+  ---
+  duration_ms: 36.9307
+  type: 'test'
+  ...
+# Subtest: mobile registration patient maps supported role fields without exposing password in success callback
+ok 37 - mobile registration patient maps supported role fields without exposing password in success callback
+  ---
+  duration_ms: 29.9992
+  type: 'test'
+  ...
+# Subtest: mobile registration doctor maps supported role fields without exposing password in success callback
+ok 38 - mobile registration doctor maps supported role fields without exposing password in success callback
+  ---
+  duration_ms: 27.4028
+  type: 'test'
+  ...
+# Subtest: mobile registration rejects impossible dates before requesting email
+ok 39 - mobile registration rejects impossible dates before requesting email
+  ---
+  duration_ms: 22.2452
+  type: 'test'
+  ...
+# Subtest: mobile ForgotPassword does not report a rejected 200 envelope as success and restores editing
+ok 40 - mobile ForgotPassword does not report a rejected 200 envelope as success and restores editing
+  ---
+  duration_ms: 15.6819
+  type: 'test'
+  ...
+# Subtest: mobile ResetPassword does not report a rejected 200 envelope as success and restores editing
+ok 41 - mobile ResetPassword does not report a rejected 200 envelope as success and restores editing
+  ---
+  duration_ms: 22.3748
+  type: 'test'
+  ...
+# Subtest: mobile reset refuses malformed link/token javascript:fixture
+ok 42 - mobile reset refuses malformed link/token javascript:fixture
+  ---
+  duration_ms: 16.4293
+  type: 'test'
+  ...
+# Subtest: mobile reset refuses malformed link/token https://example.test
+ok 43 - mobile reset refuses malformed link/token https://example.test
+  ---
+  duration_ms: 15.2768
+  type: 'test'
+  ...
+# Subtest: mobile reset refuses malformed link/token AAAAAAAAAAAAAAAAAAAA
+ok 44 - mobile reset refuses malformed link/token AAAAAAAAAAAAAAAAAAAA
+  ---
+  duration_ms: 23.5492
+  type: 'test'
+  ...
+# Subtest: mobile reset accepts a raw token and clears secrets only after acknowledgement
+ok 45 - mobile reset accepts a raw token and clears secrets only after acknowledgement
+  ---
+  duration_ms: 16.8319
+  type: 'test'
+  ...
+# Subtest: mobile OTP missing context presents recovery without accepting verification
+ok 46 - mobile OTP missing context presents recovery without accepting verification
+  ---
+  duration_ms: 24.6469
+  type: 'test'
+  ...
+# Subtest: mobile OTP verify excludes competing request
+ok 47 - mobile OTP verify excludes competing request
+  ---
+  duration_ms: 38.0299
+  type: 'test'
+  ...
+# Subtest: mobile OTP resend excludes competing request
+ok 48 - mobile OTP resend excludes competing request
+  ---
+  duration_ms: 16.2422
+  type: 'test'
+  ...
+# Subtest: shared Input associates required/error text and visibility toggle never submits the form
+ok 49 - shared Input associates required/error text and visibility toggle never submits the form
+  ---
+  duration_ms: 5.9778
+  type: 'test'
+  ...
+# Subtest: mobile actual logout failure preserves local identity
+ok 50 - mobile actual logout failure preserves local identity
+  ---
+  duration_ms: 17.6523
+  type: 'test'
+  ...
+# Subtest: mobile actual logout success clears local identity
+ok 51 - mobile actual logout success clears local identity
+  ---
+  duration_ms: 13.972
+  type: 'test'
+  ...
+# Subtest: web wrong-role guard preserves denial without updating store during render
+ok 52 - web wrong-role guard preserves denial without updating store during render
+  ---
+  duration_ms: 13.1905
+  type: 'test'
+  ...
+# Subtest: mobile actual OTP parent admits acknowledged patient
+ok 53 - mobile actual OTP parent admits acknowledged patient
+  ---
+  duration_ms: 15.7607
+  type: 'test'
+  ...
+# Subtest: mobile actual OTP parent awaits approval
+ok 54 - mobile actual OTP parent awaits approval
+  ---
+  duration_ms: 28.7772
+  type: 'test'
+  ...
+# Subtest: pharmacy public registration hides unexpected failures and preserves expected business errors
+ok 55 - pharmacy public registration hides unexpected failures and preserves expected business errors
+  ---
+  duration_ms: 8.8373
+  type: 'test'
+  ...
+# Subtest: laboratory public registration hides unexpected failures and preserves expected business errors
+ok 56 - laboratory public registration hides unexpected failures and preserves expected business errors
+  ---
+  duration_ms: 12.6533
+  type: 'test'
+  ...
+1..56
+# tests 56
+# suites 0
+# pass 56
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1377.973

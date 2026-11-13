@@ -1,0 +1,385 @@
+{
+  "date": "2026-11-13",
+  "baseline_commit": "8c06a83a15bb502da04f987c7dbc8f58deedabcc",
+  "environment": "IAB browser; synthetic loopback API; Vite in-memory build with configFile/envDir/publicDir disabled; remote fonts blocked by CSP",
+  "checks": [
+    {
+      "screen": "Login",
+      "viewport": "1280x900",
+      "states": [
+        "default",
+        "required errors"
+      ],
+      "result": "PASS",
+      "evidence": "web-login-desktop.jpg",
+      "proof": "Actual browser with synthetic API; one real form, focus moved to Email; no overflow."
+    },
+    {
+      "screen": "Login",
+      "viewport": "1280x900",
+      "states": [
+        "Tab email to password",
+        "Enter submits",
+        "pending disables credentials/submit"
+      ],
+      "result": "PASS",
+      "evidence": "web-login-loading-desktop.jpg"
+    },
+    {
+      "screen": "Login",
+      "viewport": "390x844",
+      "states": [
+        "default",
+        "password Show/Hide via keyboard",
+        "Enter submission",
+        "429 Retry-After=90"
+      ],
+      "result": "PASS",
+      "evidence": [
+        "web-login-narrow.jpg",
+        "web-login-rate-limit-narrow.jpg"
+      ],
+      "proof": "No horizontal overflow; inputs measured above 44px. Synthetic 429, not real middleware exhaustion."
+    },
+    {
+      "screen": "Login",
+      "viewport": "390x844",
+      "states": [
+        "network connection closed",
+        "editing/submit recovered"
+      ],
+      "result": "PASS",
+      "proof": "Actual browser; fixture closes the HTTP socket, no external API."
+    },
+    {
+      "screen": "Registration account step and Patient details",
+      "viewport": "320x740",
+      "states": [
+        "required errors",
+        "keyboard Enter advances",
+        "step focus",
+        "role fields"
+      ],
+      "result": "PASS",
+      "evidence": "web-register-patient-320.jpg",
+      "proof": "Four associated required errors; focus to email then fullName; no horizontal overflow."
+    },
+    {
+      "screen": "Registration Doctor details",
+      "viewport": "320x740",
+      "states": [
+        "required profile fields",
+        "approval explanation",
+        "Back preserves account fields"
+      ],
+      "result": "PASS",
+      "evidence": "web-register-doctor-320.jpg"
+    },
+    {
+      "screen": "Registration Pharmacist details",
+      "viewport": "320x740",
+      "states": [
+        "selected role fields",
+        "approval explanation",
+        "Back/Continue"
+      ],
+      "result": "PASS",
+      "evidence": "web-register-pharmacist-320.jpg",
+      "metrics": {
+        "focused": "pharmacyName",
+        "overflow": false
+      }
+    },
+    {
+      "screen": "Registration Lab Technician details",
+      "viewport": "320x740",
+      "states": [
+        "selected role fields",
+        "approval explanation",
+        "Back/Continue"
+      ],
+      "result": "PASS",
+      "evidence": "web-register-lab-technician-320.jpg",
+      "metrics": {
+        "focused": "laboratoryName",
+        "overflow": false
+      }
+    },
+    {
+      "screen": "Registration Hospital Staff details",
+      "viewport": "320x740",
+      "states": [
+        "selected role fields",
+        "approval explanation",
+        "Back/Continue"
+      ],
+      "result": "PASS",
+      "evidence": "web-register-hospital-staff-320.jpg",
+      "metrics": {
+        "focused": "hospitalName",
+        "overflow": false
+      }
+    },
+    {
+      "screen": "Hospital OTP registration/verification",
+      "viewport": "1280x900",
+      "states": [
+        "request acknowledged",
+        "OTP Enter submit",
+        "pending professional returns to sign-in guidance"
+      ],
+      "result": "PASS",
+      "evidence": [
+        "web-register-hospital-desktop.jpg",
+        "web-otp-desktop.jpg",
+        "web-professional-approval-desktop.jpg"
+      ],
+      "proof": "Synthetic API approvalPending=true; no claim of real account/session persistence."
+    },
+    {
+      "screen": "OTP verification/resend",
+      "viewport": "390x844",
+      "states": [
+        "expired code",
+        "incorrect/replaced code",
+        "resend clears old input",
+        "resend disables verify/back",
+        "provider 502 recovers controls"
+      ],
+      "result": "PASS",
+      "evidence": [
+        "web-otp-replaced-narrow.jpg",
+        "web-otp-resend-loading-narrow.jpg",
+        "web-otp-provider-failure-narrow.jpg"
+      ],
+      "proof": "Synthetic status/messages; no actual OTP expiry, SQL race or email delivery acceptance."
+    },
+    {
+      "screen": "Patient registration/OTP",
+      "viewport": "390x844",
+      "states": [
+        "patient date committed with keyboard",
+        "expired-code 400 guidance",
+        "resend acknowledgement",
+        "patient goes directly to signed-in destination"
+      ],
+      "result": "PASS",
+      "evidence": "web-otp-expired-narrow.jpg",
+      "proof": "Actual browser routing with synthetic API; direct date fill was unsupported, keyboard entry committed 2000-01-01."
+    },
+    {
+      "screen": "OTP missing navigation context",
+      "viewport": "390x844",
+      "states": [
+        "direct visit without email state",
+        "recoverable registration/sign-in links"
+      ],
+      "result": "PASS",
+      "evidence": "web-otp-missing-context-narrow.jpg"
+    },
+    {
+      "screen": "Direct pharmacy application",
+      "viewport": [
+        "1280x900",
+        "390x844"
+      ],
+      "states": [
+        "seven RHF required errors and focus",
+        "keyboard Enter",
+        "negative 200 envelope rejected",
+        "fieldset disabled during request",
+        "acknowledged pending approval"
+      ],
+      "result": "PASS",
+      "evidence": [
+        "web-pharmacy-negative-desktop.jpg",
+        "web-pharmacy-narrow.jpg",
+        "web-pharmacy-pending-narrow.jpg"
+      ],
+      "proof": "Actual react-hook-form in browser; separate existing /api/pharmacies/register contract simulated."
+    },
+    {
+      "screen": "Direct laboratory application",
+      "viewport": [
+        "1280x900",
+        "390x844"
+      ],
+      "states": [
+        "required fields/focus",
+        "textarea error association",
+        "password mismatch",
+        "Space toggles diagnostic option",
+        "429 retry guidance",
+        "acknowledged pending approval"
+      ],
+      "result": "PASS",
+      "evidence": [
+        "web-laboratory-desktop.jpg",
+        "web-laboratory-narrow.jpg",
+        "web-laboratory-pending-narrow.jpg"
+      ],
+      "proof": "Actual browser and synthetic /api/laboratories/register; no horizontal overflow; narrow textarea 16px."
+    },
+    {
+      "screen": "Forgot password",
+      "viewport": [
+        "1280x900",
+        "390x844"
+      ],
+      "states": [
+        "required field/focus/description",
+        "keyboard Enter",
+        "429 retry guidance",
+        "generic acknowledged recovery"
+      ],
+      "result": "PASS",
+      "evidence": [
+        "web-forgot-desktop.jpg",
+        "web-forgot-rate-narrow.jpg",
+        "web-forgot-acknowledged-narrow.jpg"
+      ],
+      "proof": "Generic result does not assert account existence or email delivery."
+    },
+    {
+      "screen": "Reset password",
+      "viewport": [
+        "1280x900",
+        "390x844"
+      ],
+      "states": [
+        "missing/invalid token recovery",
+        "confirmation mismatch and focus",
+        "expired/used-token 400 guidance and recovery link",
+        "generic 500 recovery",
+        "acknowledged completion"
+      ],
+      "result": "PASS",
+      "evidence": [
+        "web-reset-missing-token-narrow.jpg",
+        "web-reset-desktop.jpg",
+        "web-reset-expired-narrow.jpg",
+        "web-reset-acknowledged-narrow.jpg"
+      ],
+      "proof": "Synthetic token/API only; successful reset removes form/password fields; no real credential or session changed."
+    },
+    {
+      "screen": "Final web fixture checks",
+      "viewport": [
+        "1280x900",
+        "390x844"
+      ],
+      "result": "PASS",
+      "states": [
+        "final sign-in layout rechecked",
+        "selected text contrast samples"
+      ],
+      "evidence": [
+        "web-login-desktop.jpg",
+        "web-login-narrow.jpg"
+      ],
+      "contrast_samples": [
+        {
+          "bg": "rgb(11, 111, 105)",
+          "contrast": 5.75,
+          "fg": "rgb(248, 250, 252)",
+          "name": "primary button"
+        },
+        {
+          "bg": "rgb(255,255,255)",
+          "contrast": 7.15,
+          "fg": "rgb(73, 89, 110)",
+          "name": "field label on card"
+        }
+      ]
+    }
+  ],
+  "final_fixture_source_hashes": [
+    {
+      "path": "frontend/src/components/auth/AuthLayout.jsx",
+      "sha256": "8dac575e92e8f6e14df327029543cf2c9e2d36dc0fae2ba5f0c49c4b45a9716f"
+    },
+    {
+      "path": "frontend/src/components/auth/auth.css",
+      "sha256": "623bd8efb06a8b0f9ea647fc4d4ca72598257450496537e25c88e0c0fd0df93d"
+    },
+    {
+      "path": "frontend/src/components/common/Input.jsx",
+      "sha256": "cef300fad8f1a034ea975c79b83295bb0044d8b5f20bc1d13ebba7b1c2e212ab"
+    },
+    {
+      "path": "frontend/src/components/common/Button.jsx",
+      "sha256": "9db7c662178c1c036e7594d44612a459eba551f88af01390349325fe11d00283"
+    },
+    {
+      "path": "frontend/src/components/common/Alert.jsx",
+      "sha256": "ae5d3a7b045094fb9ea2dfa5fd5287c5f3929f0025e909d0e73c4d90955c09d7"
+    },
+    {
+      "path": "frontend/src/components/common/Card.jsx",
+      "sha256": "22e77d93226f8b72bb0013f19b88ba9244727373c2d26793509b3146e7a8cb2e"
+    },
+    {
+      "path": "frontend/src/pages/auth/LoginPage.jsx",
+      "sha256": "837f8a31fd955942e9b593108cbfa2021a04b8956afc18e4bc0e9c29d0dd8ee7"
+    },
+    {
+      "path": "frontend/src/pages/auth/RegisterPage.jsx",
+      "sha256": "4fecf7aadb1a21ad2178339ac0d007a23985f90f8dcb45327c386f3f9574cb4e"
+    },
+    {
+      "path": "frontend/src/pages/auth/OtpVerificationPage.jsx",
+      "sha256": "5945f6dded545102a38728164718e7c6e62c735fe596274c14be65ab585d3640"
+    },
+    {
+      "path": "frontend/src/pages/auth/ForgotPasswordPage.jsx",
+      "sha256": "1eae1d75238e03cf6cc2b57e2b1d21309cd51602c8fdc9da5d5840c71952910f"
+    },
+    {
+      "path": "frontend/src/pages/auth/ResetPasswordPage.jsx",
+      "sha256": "e70d1c04415d42c573b5fbf56ce266ac9297ede94d6f46e027c8d72cfa0850d9"
+    },
+    {
+      "path": "frontend/src/pages/pharmacy/PharmacyRegisterPage.jsx",
+      "sha256": "0fb1cb8336550fef2da8b15c77af8c0a573258831a7711f0a999c5e67f32f131"
+    },
+    {
+      "path": "frontend/src/pages/laboratory/LabRegisterPage.jsx",
+      "sha256": "ebac187cdfa01ab3f2179eb008491434f60ad73021ce57e51d174bf95d6fe7fa"
+    },
+    {
+      "path": "frontend/src/services/api.js",
+      "sha256": "ed04c8ca5ade50685fdf1a0bb635effbc2e49ae475cb020d729e0064c253d8a3"
+    },
+    {
+      "path": "frontend/src/services/auth.service.js",
+      "sha256": "f426f75098529685dc71037a89a9130d12c099c47078a89266facc8dfd1f94cd"
+    },
+    {
+      "path": "frontend/src/store/authStore.js",
+      "sha256": "bfb1b926b0ebfb0a7fb5cfb75addeda719a51dd8cfa07469253e296a471083b4"
+    },
+    {
+      "path": "frontend/src/index.css",
+      "sha256": "c781a0daba93e2779a6c56a8779e8fff5ae67268f755dac764836d5121f0b1c8"
+    },
+    {
+      "path": "frontend/tests/auth-fixture.jsx",
+      "sha256": "d2c8c65709db0961e296fec8ddb0038fe34291b307bc3dd38ce0c75852259033"
+    },
+    {
+      "path": "frontend/tests/auth-fixture.html",
+      "sha256": "6068aecc7e5bb11ae2c49e6f02236ddd1dc00c9c51921d320116751ee0abe8b1"
+    },
+    {
+      "path": "frontend/tests/serve-auth-fixture.mjs",
+      "sha256": "34313e80a4bca1c8baf2e29517ce38a3703f9ff5d374a8174c1c16a881d39af2"
+    }
+  ],
+  "limitations": [
+    "Screenshots captured during iterative verification; final login/public forms/reset rechecked after changes",
+    "Selected text contrast samples only; not full WCAG conformance",
+    "No real session/cookie/database/provider/deployment acceptance",
+    "No emulator/device/TalkBack/VoiceOver or other browser engines"
+  ],
+  "native_status": "NOT_RUN: adb fails initialization (Cannot mkdir \\.android: Permission denied); Pixel_6 AVD listed but not launched"
+}

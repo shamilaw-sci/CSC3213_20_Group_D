@@ -1,5 +1,19 @@
 # Care4U final review progress
 
+## Current handoff: Stage 3A
+
+2026-11-13 (Asia/Colombo). **Stage 3A complete locally; stop for independent review.** Entry was clean at confirmed Stage 2B final `8c06a83a15bb502da04f987c7dbc8f58deedabcc` on the same `codex/care4u-final-review-2026-11-12` branch. Application/UI/tests/comments commit: `57e6d2c` and response-safety commit `d78465b`. Final documentation/evidence commit is in Git and the outside-repository manifest.
+
+[STAGE3A.md](STAGE3A.md) records seven web auth/application screens, five mobile screens, every supported role form, scoped shared controls/calls/navigation and preserved ownership. Local results: 89 retained backend + 56 new source/UI cases PASS; six static checks and 21 existing review-tooling cases PASS. Eighteen browser-matrix rows and 30 JPEGs record actual web fixtures at exact narrow/desktop widths/states. Source, synthetic browser, native, DB, provider and deployment evidence stay separate. No review-tooling source changed. Two direct registration controllers now hide unexpected server errors; database/session/enrollment policy is unchanged.
+
+[The complete UI viva reference](../viva/03-authentication-ui-file-reference.md) explains each screen's state, handlers/effects, validation, API calls, navigation, failures and exact Ctrl+F symbols. Shared/root/style/config/backend dependencies remain partial to the auth contract; no unrelated consuming module is marked complete. Original tracker baseline/provenance fields are preserved.
+
+Native device/emulator, screen-reader execution, real session/cookie/provider/deployment and DB acceptance remain NOT_RUN/PENDING. adb cannot initialize despite an installed Pixel_6 AVD; no native app/device action ran. Existing schema/disposable-PG/proxy prerequisites and reset-session/other-link, legacy patient/profile-link policies remain open. Direct pharmacy/lab application APIs differ from main OTP enrollment and lack those auth-router budgets; any unification/atomicity/limit change is a separate backend/policy batch.
+
+New archive: `C:\Users\Waasana\.codex\visualizations\2026\11\12\01a1cfb2-a394-7811-9795-1e79790000a9\Care4U-Stage3A-Handoff.zip`; previous archives retained. Source/diff/tests/screenshots/matrix/tracker/viva/ownership and baseline/final/hash manifest are included. Local commits only, no upstream; no push or merge attempted. Next action is independent review, then supported native and existing DB/deployment acceptance prerequisites. Do not start another stage automatically.
+
+## Historical handoffs through Stage 2B
+
 ## Current handoff: Stage 2B
 
 2026-11-12. **Stage 2B complete locally; stop for independent review.** Entry was clean at confirmed Stage 2A final `f14aee0c86178b5b14e99d367c5830203efcdd31` on the existing `codex/care4u-final-review-2026-11-12` branch. Application fix/config/tests commit: `0cd2abb`. Final documentation/evidence commit is recorded in the outside-repository archive manifest and Git log.
