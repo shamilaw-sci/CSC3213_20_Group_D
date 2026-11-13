@@ -1,11 +1,11 @@
 /**
  * @file    ForgotPasswordScreen.js
  * @module  Auth
- * @desc    Premium mobile screen for requesting a Care4U password reset.
+ * @desc    Mobile screen for requesting a Care4U password reset.
  * @author  I.M.L.S. Idirisinghe (S/21/389)
  */
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 
 import {
   View,
@@ -32,25 +32,30 @@ import {
 
 import {
   forgotPassword,
+  authErrorMessage,
 } from '../services/auth.service';
 
 const COLORS = {
   background: '#F6F8FA',
   surface: '#FFFFFF',
   navy: '#12344D',
-  teal: '#0F8B83',
+  teal: '#0B6F69',
   tealDark: '#0B6F69',
   tealSoft: '#E7F7F5',
   text: '#102331',
-  muted: '#718096',
-  subtle: '#9AA8B6',
+  muted: '#526575',
+  subtle: '#526575',
   border: '#E3E9ED',
-  danger: '#C94C4C',
+  danger: '#AD3030',
   dangerSoft: '#FFF1F1',
   green: '#2F855A',
   greenSoft: '#EDF9F2',
 };
 
+/** @component ForgotPasswordScreen
+ * @param {Object} props Parent navigation/success callbacks; no credentials persist in props.
+ * @returns {JSX.Element} Scrollable keyboard-aware auth UI. Input callbacks update local state and clear errors; visibility callbacks only toggle masking.
+ */
 export default function ForgotPasswordScreen({
   onBackToLogin,
   onResetPassword,
@@ -58,9 +63,11 @@ export default function ForgotPasswordScreen({
   const [email, setEmail] = useState('');
 
   const [loading, setLoading] = useState(false);
+  const inFlight = useRef(false);
   const [error, setError] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
+  /** @returns {boolean} Required-field/new-password checks; server remains authoritative. */
   const validate = () => {
     if (!email.trim()) {
       setError('Email is required');
@@ -70,11 +77,14 @@ export default function ForgotPasswordScreen({
     return true;
   };
 
+  /** @returns {Promise<void>} Validate and submit once; release busy state on every outcome. */
   const handleSubmit = async () => {
+    if (inFlight.current) return;
     if (!validate()) {
       return;
     }
 
+    inFlight.current = true;
     setLoading(true);
     setError('');
 
@@ -85,12 +95,11 @@ export default function ForgotPasswordScreen({
 
       setSubmitted(true);
 
-    } catch {
-      setError(
-        'Something went wrong. Please try again.'
-      );
+    } catch (requestError) {
+      setError(authErrorMessage(requestError, 'Could not request a reset link. Please try again.'));
 
     } finally {
+      inFlight.current = false;
       setLoading(false);
     }
   };
@@ -157,7 +166,7 @@ export default function ForgotPasswordScreen({
           {submitted ? (
             <>
 
-              <View style={styles.successBox}>
+              <View style={styles.successBox} accessibilityLiveRegion="polite">
 
                 <CheckCircle2
                   size={20}
@@ -171,21 +180,21 @@ export default function ForgotPasswordScreen({
                   </Text>
 
                   <Text style={styles.successText}>
-                    If an account exists for this email, the password reset request has been processed.
+                    If an account exists for this email, the reset request has been processed. Check your inbox and spam folder for a link.
                   </Text>
 
                 </View>
 
               </View>
 
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button" disabled={loading} accessibilityState={{ disabled: Boolean(loading) }}
                 style={styles.primaryButton}
                 activeOpacity={0.85}
                 onPress={onResetPassword}
               >
 
                 <Text style={styles.primaryButtonText}>
-                  Continue to Reset Password
+                  Use a reset link
                 </Text>
 
                 <ArrowRight
@@ -200,7 +209,7 @@ export default function ForgotPasswordScreen({
             <>
 
               {error !== '' && (
-                <View style={styles.errorBox}>
+                <View style={styles.errorBox} accessibilityRole="alert" accessibilityLiveRegion="polite">
 
                   <AlertCircle
                     size={17}
@@ -228,10 +237,15 @@ export default function ForgotPasswordScreen({
                   />
 
                   <TextInput
+                accessibilityLabel="Email address"
+                editable={!loading}
                     style={styles.input}
                     placeholder="you@example.com"
                     placeholderTextColor={COLORS.subtle}
                     keyboardType="email-address"
+                autoComplete="email"
+                returnKeyType="done"
+                onSubmitEditing={handleSubmit}
                     autoCapitalize="none"
                     autoCorrect={false}
                     value={email}
@@ -245,7 +259,7 @@ export default function ForgotPasswordScreen({
 
               </View>
 
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: Boolean(loading) }}
                 style={[
                   styles.primaryButton,
                   loading && styles.buttonDisabled,
@@ -260,7 +274,7 @@ export default function ForgotPasswordScreen({
                 ) : (
                   <>
                     <Text style={styles.primaryButtonText}>
-                      Request Password Reset
+                      Request reset link
                     </Text>
 
                     <ArrowRight
@@ -275,10 +289,11 @@ export default function ForgotPasswordScreen({
             </>
           )}
 
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: Boolean(loading) }}
             style={styles.backButton}
             activeOpacity={0.75}
             onPress={onBackToLogin}
+            disabled={loading}
           >
 
             <ArrowLeft
@@ -287,7 +302,7 @@ export default function ForgotPasswordScreen({
             />
 
             <Text style={styles.backText}>
-              Back to Login
+              Back to sign in
             </Text>
 
           </TouchableOpacity>
@@ -302,7 +317,7 @@ export default function ForgotPasswordScreen({
           />
 
           <Text style={styles.securityFooterText}>
-            Secure Care4U account recovery
+            Care4U account recovery
           </Text>
 
         </View>
@@ -366,7 +381,7 @@ const styles = StyleSheet.create({
 
   heroText: {
     color: 'rgba(255,255,255,0.65)',
-    fontSize: 10,
+    fontSize: 12,
     marginTop: 4,
   },
 
@@ -400,7 +415,7 @@ const styles = StyleSheet.create({
 
   eyebrow: {
     color: COLORS.teal,
-    fontSize: 8,
+    fontSize: 12,
     fontWeight: '800',
     letterSpacing: 1,
   },
@@ -414,7 +429,7 @@ const styles = StyleSheet.create({
 
   subtitle: {
     color: COLORS.muted,
-    fontSize: 10,
+    fontSize: 12,
     lineHeight: 16,
     marginTop: 6,
     marginBottom: 19,
@@ -426,7 +441,7 @@ const styles = StyleSheet.create({
 
   label: {
     color: COLORS.muted,
-    fontSize: 8,
+    fontSize: 12,
     fontWeight: '800',
     letterSpacing: 0.7,
     marginBottom: 7,
@@ -447,7 +462,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     color: COLORS.text,
-    fontSize: 12,
+    fontSize: 14,
   },
 
   errorBox: {
@@ -464,7 +479,7 @@ const styles = StyleSheet.create({
   errorText: {
     flex: 1,
     color: COLORS.danger,
-    fontSize: 10,
+    fontSize: 12,
     lineHeight: 15,
   },
 
@@ -486,13 +501,13 @@ const styles = StyleSheet.create({
 
   successTitle: {
     color: COLORS.green,
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '800',
   },
 
   successText: {
     color: COLORS.green,
-    fontSize: 9,
+    fontSize: 12,
     lineHeight: 14,
     marginTop: 3,
   },
@@ -509,7 +524,7 @@ const styles = StyleSheet.create({
 
   primaryButtonText: {
     color: '#FFFFFF',
-    fontSize: 11,
+    fontSize: 14,
     fontWeight: '800',
   },
 
@@ -518,6 +533,7 @@ const styles = StyleSheet.create({
   },
 
   backButton: {
+    minHeight: 44,
     flexDirection: 'row',
     gap: 6,
     alignItems: 'center',
@@ -527,7 +543,7 @@ const styles = StyleSheet.create({
 
   backText: {
     color: COLORS.teal,
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '800',
   },
 
@@ -541,6 +557,6 @@ const styles = StyleSheet.create({
 
   securityFooterText: {
     color: COLORS.subtle,
-    fontSize: 8,
+    fontSize: 12,
   },
 });

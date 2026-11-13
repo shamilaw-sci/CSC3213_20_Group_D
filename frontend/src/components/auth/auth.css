@@ -1,0 +1,24 @@
+/**
+ * @file auth.css
+ * @module Authentication UI
+ * @desc Auth-only contrast, focus, wrapping and minimum control sizes. Portal themes stay separate.
+ * @author Codex Review Assistant (Stage 3A)
+ */
+.auth-page {
+  --primary: 176 82% 24%;
+  --ring: 176 82% 24%;
+  --destructive: 4 76% 36%;
+  --success: 142 65% 27%;
+  --muted-foreground: 215 20% 36%;
+}
+.auth-page input, .auth-controls input:not([type='checkbox']) { min-height: 44px; min-width: 0; }
+.auth-page button, .auth-controls button { min-height: 44px; }
+.auth-page a, .auth-controls a { display: inline-flex; min-height: 44px; align-items: center; }
+.auth-page a:focus-visible, .auth-controls a:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 3px; border-radius: 3px; }
+.auth-page [role='alert'], .auth-page [role='status'], .auth-controls [role='alert'], .auth-controls [role='status'] { overflow-wrap: anywhere; }
+@media (max-width: 480px) { .auth-page input, .auth-controls input:not([type='checkbox']), .auth-controls textarea { font-size: 16px; } }
+
+.auth-controls { --ring: var(--brand-deep); --destructive: 4 76% 36%; --muted-foreground: 215 20% 36%; }
+.auth-controls button[type='submit'] { background-color: hsl(var(--brand-deep)); color: hsl(var(--brand-deep-foreground)); }
+.auth-controls .text-primary, .auth-controls a { color: hsl(var(--brand-deep)); }
+.auth-controls button.bg-primary { background-color: hsl(var(--brand-deep)); }

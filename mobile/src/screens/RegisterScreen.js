@@ -1,13 +1,13 @@
 /**
  * @file    RegisterScreen.js
  * @module  Auth
- * @desc    Premium mobile registration screen for Care4U patients and doctors.
+ * @desc    Mobile registration screen for Care4U patients and doctors.
  *          On success, navigates to OTP verification. The account is not
  *          created until OTP verification is completed.
  * @author  I.M.L.S. Idirisinghe (S/21/389)
  */
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 
 import {
   View,
@@ -38,23 +38,28 @@ import {
 
 import {
   register,
+  authErrorMessage,
 } from '../services/auth.service';
 
 const COLORS = {
   background: '#F6F8FA',
   surface: '#FFFFFF',
   navy: '#12344D',
-  teal: '#0F8B83',
+  teal: '#0B6F69',
   tealDark: '#0B6F69',
   tealSoft: '#E7F7F5',
   text: '#102331',
-  muted: '#718096',
-  subtle: '#9AA8B6',
+  muted: '#526575',
+  subtle: '#526575',
   border: '#E3E9ED',
-  danger: '#C94C4C',
+  danger: '#AD3030',
   dangerSoft: '#FFF1F1',
 };
 
+/** @component RegisterScreen
+ * @param {Object} props Parent navigation/success callbacks; no credentials persist in props.
+ * @returns {JSX.Element} Scrollable keyboard-aware auth UI. Input callbacks update local state and clear errors; visibility callbacks only toggle masking.
+ */
 export default function RegisterScreen({
   onRegisterSuccess,
   onBackToLogin,
@@ -79,8 +84,10 @@ export default function RegisterScreen({
   const [specialization, setSpecialization] = useState('');
 
   const [loading, setLoading] = useState(false);
+  const inFlight = useRef(false);
   const [error, setError] = useState('');
 
+  /** @returns {boolean} Required-field/new-password checks; server remains authoritative. */
   const validate = () => {
     if (!email.trim()) {
       setError('Email is required');
@@ -128,6 +135,15 @@ export default function RegisterScreen({
       return false;
     }
 
+    if (role === 'patient') {
+      const value = dateOfBirth.trim();
+      const date = new Date(`${value}T00:00:00.000Z`);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || !Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== value) {
+        setError('Enter date of birth as YYYY-MM-DD');
+        return false;
+      }
+    }
+
     if (
       role === 'doctor' &&
       (
@@ -145,11 +161,14 @@ export default function RegisterScreen({
     return true;
   };
 
+  /** @returns {Promise<void>} Validate and submit once; release busy state on every outcome. */
   const handleRegister = async () => {
+    if (inFlight.current) return;
     if (!validate()) {
       return;
     }
 
+    inFlight.current = true;
     setLoading(true);
     setError('');
 
@@ -188,11 +207,11 @@ export default function RegisterScreen({
 
     } catch (err) {
       setError(
-        err.response?.data?.message ||
-        'Cannot connect to server. Please check your connection.'
+        authErrorMessage(err, 'Registration failed. Please try again.')
       );
 
     } finally {
+      inFlight.current = false;
       setLoading(false);
     }
   };
@@ -236,7 +255,7 @@ export default function RegisterScreen({
               </Text>
 
               <Text style={styles.heroText}>
-                Create your secure healthcare account
+                Create your Care4U account
               </Text>
 
             </View>
@@ -260,7 +279,7 @@ export default function RegisterScreen({
           </Text>
 
           {error !== '' && (
-            <View style={styles.errorBox}>
+            <View style={styles.errorBox} accessibilityRole="alert" accessibilityLiveRegion="polite">
 
               <AlertCircle
                 size={17}
@@ -289,6 +308,9 @@ export default function RegisterScreen({
                     styles.roleButtonActive,
                 ]}
                 activeOpacity={0.8}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: role === 'patient', disabled: loading }}
+                disabled={loading}
                 onPress={() => {
                   setRole('patient');
                   setError('');
@@ -323,6 +345,9 @@ export default function RegisterScreen({
                     styles.roleButtonActive,
                 ]}
                 activeOpacity={0.8}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: role === 'doctor', disabled: loading }}
+                disabled={loading}
                 onPress={() => {
                   setRole('doctor');
                   setError('');
@@ -376,6 +401,8 @@ export default function RegisterScreen({
               />
 
               <TextInput
+                accessibilityLabel="Full name"
+                editable={!loading}
                 style={styles.input}
                 placeholder="Enter your full name"
                 placeholderTextColor={COLORS.subtle}
@@ -404,6 +431,8 @@ export default function RegisterScreen({
               />
 
               <TextInput
+                accessibilityLabel="Email address"
+                editable={!loading}
                 style={styles.input}
                 placeholder="you@example.com"
                 placeholderTextColor={COLORS.subtle}
@@ -435,6 +464,8 @@ export default function RegisterScreen({
               />
 
               <TextInput
+                accessibilityLabel="Phone number"
+                editable={!loading}
                 style={styles.input}
                 placeholder="07XXXXXXXX"
                 placeholderTextColor={COLORS.subtle}
@@ -475,6 +506,8 @@ export default function RegisterScreen({
                   />
 
                   <TextInput
+                accessibilityLabel="NIC number"
+                editable={!loading}
                     style={styles.input}
                     placeholder="200012345678"
                     placeholderTextColor={COLORS.subtle}
@@ -504,6 +537,8 @@ export default function RegisterScreen({
                   />
 
                   <TextInput
+                accessibilityLabel="Date of birth, YYYY-MM-DD"
+                editable={!loading}
                     style={styles.input}
                     placeholder="YYYY-MM-DD"
                     placeholderTextColor={COLORS.subtle}
@@ -544,6 +579,8 @@ export default function RegisterScreen({
                   />
 
                   <TextInput
+                accessibilityLabel="SLMC registration number"
+                editable={!loading}
                     style={styles.input}
                     placeholder="SLMC12345"
                     placeholderTextColor={COLORS.subtle}
@@ -573,6 +610,8 @@ export default function RegisterScreen({
                   />
 
                   <TextInput
+                accessibilityLabel="Specialization"
+                editable={!loading}
                     style={styles.input}
                     placeholder="e.g. Cardiology"
                     placeholderTextColor={COLORS.subtle}
@@ -612,10 +651,15 @@ export default function RegisterScreen({
               />
 
               <TextInput
+                accessibilityLabel="Password"
+                editable={!loading}
                 style={styles.input}
                 placeholder="At least 8 characters"
                 placeholderTextColor={COLORS.subtle}
                 secureTextEntry={!showPassword}
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="new-password"
                 value={password}
                 onChangeText={(text) => {
                   setPassword(text);
@@ -623,8 +667,11 @@ export default function RegisterScreen({
                 }}
               />
 
-              <TouchableOpacity
+              <TouchableOpacity accessibilityState={{ disabled: Boolean(loading) }}
                 style={styles.eyeButton}
+                accessibilityRole="button"
+                accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                disabled={loading}
                 onPress={() =>
                   setShowPassword(
                     previous => !previous
@@ -662,10 +709,17 @@ export default function RegisterScreen({
               />
 
               <TextInput
+                accessibilityLabel="Confirm password"
+                editable={!loading}
                 style={styles.input}
                 placeholder="Re-enter your password"
                 placeholderTextColor={COLORS.subtle}
                 secureTextEntry={!showConfirmPassword}
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="new-password"
+                returnKeyType="done"
+                onSubmitEditing={handleRegister}
                 value={confirmPassword}
                 onChangeText={(text) => {
                   setConfirmPassword(text);
@@ -673,8 +727,11 @@ export default function RegisterScreen({
                 }}
               />
 
-              <TouchableOpacity
+              <TouchableOpacity accessibilityState={{ disabled: Boolean(loading) }}
                 style={styles.eyeButton}
+                accessibilityRole="button"
+                accessibilityLabel={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                disabled={loading}
                 onPress={() =>
                   setShowConfirmPassword(
                     previous => !previous
@@ -698,7 +755,7 @@ export default function RegisterScreen({
 
           </View>
 
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: Boolean(loading) }}
             style={[
               styles.primaryButton,
               loading && styles.buttonDisabled,
@@ -712,7 +769,7 @@ export default function RegisterScreen({
               <ActivityIndicator color="#FFFFFF" />
             ) : (
               <Text style={styles.primaryButtonText}>
-                Create Account
+                Request verification code
               </Text>
             )}
 
@@ -722,7 +779,8 @@ export default function RegisterScreen({
             Already have an account?{' '}
             <Text
               style={styles.signInLink}
-              onPress={onBackToLogin}
+              onPress={loading ? undefined : onBackToLogin}
+              accessibilityRole="link"
             >
               Sign in
             </Text>
@@ -738,7 +796,7 @@ export default function RegisterScreen({
           />
 
           <Text style={styles.securityFooterText}>
-            Account activation requires OTP verification
+            Email verification completes registration. Doctors also need admin approval.
           </Text>
 
         </View>
@@ -807,7 +865,7 @@ const styles = StyleSheet.create({
 
   heroText: {
     color: 'rgba(255,255,255,0.65)',
-    fontSize: 9,
+    fontSize: 12,
     marginTop: 3,
   },
 
@@ -831,7 +889,7 @@ const styles = StyleSheet.create({
 
   eyebrow: {
     color: COLORS.teal,
-    fontSize: 8,
+    fontSize: 12,
     fontWeight: '800',
     letterSpacing: 1,
   },
@@ -845,7 +903,7 @@ const styles = StyleSheet.create({
 
   subtitle: {
     color: COLORS.muted,
-    fontSize: 10,
+    fontSize: 12,
     lineHeight: 16,
     marginTop: 5,
     marginBottom: 19,
@@ -865,7 +923,7 @@ const styles = StyleSheet.create({
   errorText: {
     flex: 1,
     color: COLORS.danger,
-    fontSize: 10,
+    fontSize: 12,
     lineHeight: 15,
   },
 
@@ -875,7 +933,7 @@ const styles = StyleSheet.create({
 
   sectionLabel: {
     color: COLORS.muted,
-    fontSize: 8,
+    fontSize: 12,
     fontWeight: '800',
     letterSpacing: 0.7,
     marginBottom: 8,
@@ -906,7 +964,7 @@ const styles = StyleSheet.create({
 
   roleButtonText: {
     color: COLORS.tealDark,
-    fontSize: 11,
+    fontSize: 14,
     fontWeight: '800',
   },
 
@@ -927,7 +985,7 @@ const styles = StyleSheet.create({
     paddingRight: 8,
     marginBottom: -5,
     color: COLORS.subtle,
-    fontSize: 7,
+    fontSize: 12,
     fontWeight: '800',
     letterSpacing: 0.75,
   },
@@ -938,7 +996,7 @@ const styles = StyleSheet.create({
 
   label: {
     color: COLORS.muted,
-    fontSize: 8,
+    fontSize: 12,
     fontWeight: '800',
     letterSpacing: 0.7,
     marginBottom: 7,
@@ -959,12 +1017,12 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     color: COLORS.text,
-    fontSize: 12,
+    fontSize: 14,
   },
 
   eyeButton: {
-    width: 34,
-    height: 34,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -980,7 +1038,7 @@ const styles = StyleSheet.create({
 
   primaryButtonText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '800',
   },
 
@@ -991,7 +1049,7 @@ const styles = StyleSheet.create({
   signInText: {
     textAlign: 'center',
     color: COLORS.muted,
-    fontSize: 10,
+    fontSize: 12,
     marginTop: 18,
   },
 
@@ -1011,6 +1069,6 @@ const styles = StyleSheet.create({
 
   securityFooterText: {
     color: COLORS.subtle,
-    fontSize: 8,
+    fontSize: 12,
   },
 });

@@ -1,7 +1,7 @@
 /**
  * @file    OtpVerificationScreen.js
  * @module  Auth
- * @desc    Premium mobile OTP verification screen shown after registration.
+ * @desc    Mobile OTP verification screen shown after registration.
  *          On successful verification, the account is created and the
  *          patient session begins, or a professional awaits approval.
  * @author  I.M.L.S. Idirisinghe (S/21/389)
@@ -40,6 +40,7 @@ import {
 import {
   verifyOtp,
   resendOtp,
+  authErrorMessage,
 } from '../services/auth.service';
 
 /* =========================================================
@@ -52,17 +53,17 @@ const COLORS = {
 
   navy: '#12344D',
 
-  teal: '#0F8B83',
+  teal: '#0B6F69',
   tealDark: '#0B6F69',
   tealSoft: '#E7F7F5',
 
   text: '#102331',
-  muted: '#718096',
-  subtle: '#9AA8B6',
+  muted: '#526575',
+  subtle: '#526575',
 
   border: '#E3E9ED',
 
-  danger: '#C94C4C',
+  danger: '#AD3030',
   dangerSoft: '#FFF1F1',
 
   green: '#2F855A',
@@ -73,6 +74,10 @@ const COLORS = {
    SCREEN
 ========================================================= */
 
+/** @component OtpVerificationScreen
+ * @param {Object} props Pending email and parent success/back callbacks.
+ * @returns {JSX.Element} Code entry with mutually exclusive verify/resend, recoverable missing context and an advisory countdown.
+ */
 export default function OtpVerificationScreen({
   email,
   onVerifySuccess,
@@ -91,11 +96,11 @@ export default function OtpVerificationScreen({
   const [resendMessage, setResendMessage] = useState('');
 
   const otpInputRef = useRef(null);
+  const inFlight = useRef(false);
+  const verifyDisabled = loading || resending || otpCode.length !== 6;
+  const resendDisabled = loading || resending || resendCooldown > 0;
 
-  /* =======================================================
-     FOCUS OTP INPUT
-  ======================================================= */
-
+  /** Focus after mount; cancel the focus timer on unmount. */
   useEffect(() => {
     const timer = setTimeout(() => {
       otpInputRef.current?.focus();
@@ -104,10 +109,7 @@ export default function OtpVerificationScreen({
     return () => clearTimeout(timer);
   }, []);
 
-  /* =======================================================
-     RESEND COUNTDOWN
-  ======================================================= */
-
+  /** Advisory resend countdown only; server limits and code expiry remain authoritative. Cleanup cancels each interval. */
   useEffect(() => {
     if (resendCooldown <= 0) {
       return;
@@ -125,17 +127,15 @@ export default function OtpVerificationScreen({
     return () => clearInterval(timer);
   }, [resendCooldown]);
 
-  /* =======================================================
-     VALIDATION
-  ======================================================= */
-
+  /** @returns {boolean} Require pending context and exactly six digits before requesting verification. */
   const validate = () => {
+    if (!email) { setError('No registration in progress. Return to registration.'); return false; }
     if (!otpCode) {
       setError('OTP code is required');
       return false;
     }
 
-    if (otpCode.length !== 6) {
+    if (!/^\d{6}$/.test(otpCode)) {
       setError('OTP must be 6 digits');
       return false;
     }
@@ -143,15 +143,14 @@ export default function OtpVerificationScreen({
     return true;
   };
 
-  /* =======================================================
-     VERIFY OTP
-  ======================================================= */
-
+  /** @returns {Promise<void>} Verify once, preserving the professional-approval branch; never overlap resend. */
   const handleVerify = async () => {
+    if (inFlight.current) return;
     if (!validate()) {
       return;
     }
 
+    inFlight.current = true;
     setLoading(true);
     setError('');
     setResendMessage('');
@@ -164,13 +163,12 @@ export default function OtpVerificationScreen({
 
       if (data.success) {
         if (data.data?.approvalPending) {
-          Alert.alert('Awaiting approval', 'Account verified. An admin must approve it before you can sign in.');
+          Alert.alert('Awaiting approval', 'Email verified. Your account is awaiting admin approval. Sign in after approval.');
           onVerifySuccess(data.data);
           return;
         }
-        onVerifySuccess(
-          data.data
-        );
+        if (!data.data?.user?.id || !data.data?.user?.role) throw new Error('Invalid identity response');
+        onVerifySuccess(data.data);
 
       } else {
         setError(
@@ -181,20 +179,18 @@ export default function OtpVerificationScreen({
 
     } catch (err) {
       setError(
-        err.response?.data?.message ||
-        'Cannot connect to server. Please check your connection.'
+        authErrorMessage(err, 'Could not verify the code. Check the code or request a new one.')
       );
 
     } finally {
+      inFlight.current = false;
       setLoading(false);
     }
   };
 
-  /* =======================================================
-     RESEND OTP
-  ======================================================= */
-
+  /** @returns {Promise<void>} Request replacement outside verification; even a delivery failure may supersede the old code. */
   const handleResend = async () => {
+    if (inFlight.current || !email) return;
     if (
       resendCooldown > 0 ||
       resending
@@ -202,6 +198,8 @@ export default function OtpVerificationScreen({
       return;
     }
 
+    inFlight.current = true;
+    setOtpCode('');
     setResending(true);
 
     setError('');
@@ -214,7 +212,7 @@ export default function OtpVerificationScreen({
 
       if (data.success) {
         setResendMessage(
-          'A new verification code has been sent.'
+          'A new code was submitted by email. Check your inbox and spam folder.'
         );
 
         setResendCooldown(
@@ -236,19 +234,16 @@ export default function OtpVerificationScreen({
 
     } catch (err) {
       setError(
-        err.response?.data?.message ||
-        'Cannot connect to server. Please check your connection.'
+        authErrorMessage(err, 'Could not resend the code. Please try again.')
       );
 
     } finally {
+      inFlight.current = false;
       setResending(false);
     }
   };
 
-  /* =======================================================
-     OTP INPUT
-  ======================================================= */
-
+  /** @param {string} text Entered/pasted text. @returns {void} Keep at most six digits and clear stale errors. */
   const handleOtpChange = (
     text
   ) => {
@@ -273,6 +268,18 @@ export default function OtpVerificationScreen({
   /* =======================================================
      PAGE
   ======================================================= */
+
+  if (!email) return (
+    <View style={[styles.container, { justifyContent: 'center' }]}>
+      <View style={[styles.card, { marginTop: 0 }]}>
+        <Text style={styles.title}>No registration in progress</Text>
+        <Text style={styles.helperText}>Your registration email is missing. Start registration again.</Text>
+        <TouchableOpacity disabled={loading || resending} accessibilityState={{ disabled: Boolean(loading || resending) }} style={styles.primaryButton} accessibilityRole="button" onPress={onBackToRegister}>
+          <Text style={styles.primaryButtonText}>Back to registration</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 
   return (
     <KeyboardAvoidingView
@@ -340,7 +347,7 @@ export default function OtpVerificationScreen({
           </Text>
 
           <Text style={styles.title}>
-            Verify your account
+            Verify your email
           </Text>
 
           <Text style={styles.subtitle}>
@@ -356,7 +363,6 @@ export default function OtpVerificationScreen({
 
             <Text
               style={styles.emailText}
-              numberOfLines={1}
             >
               {email}
             </Text>
@@ -368,7 +374,7 @@ export default function OtpVerificationScreen({
           ================================================ */}
 
           {error !== '' && (
-            <View style={styles.errorBox}>
+            <View style={styles.errorBox} accessibilityRole="alert" accessibilityLiveRegion="polite">
 
               <AlertCircle
                 size={17}
@@ -387,7 +393,7 @@ export default function OtpVerificationScreen({
           ================================================ */}
 
           {resendMessage !== '' && (
-            <View style={styles.successBox}>
+            <View style={styles.successBox} accessibilityLiveRegion="polite">
 
               <CheckCircle2
                 size={17}
@@ -420,7 +426,12 @@ export default function OtpVerificationScreen({
               maxLength={6}
               value={otpCode}
               onChangeText={handleOtpChange}
-              editable={!loading}
+              editable={!loading && !resending}
+              accessibilityLabel="Verification code"
+              autoComplete="one-time-code"
+              textContentType="oneTimeCode"
+              returnKeyType="done"
+              onSubmitEditing={handleVerify}
               selectionColor={COLORS.teal}
             />
 
@@ -449,7 +460,7 @@ export default function OtpVerificationScreen({
             </View>
 
             <Text style={styles.helperText}>
-              Enter the code exactly as shown in your verification message.
+              Codes expire after 10 minutes. If resending fails, the previous code may no longer work. Wait before requesting another.
             </Text>
 
           </View>
@@ -458,22 +469,11 @@ export default function OtpVerificationScreen({
               VERIFY
           ================================================ */}
 
-          <TouchableOpacity
-            style={[
-              styles.primaryButton,
-
-              (
-                loading ||
-                otpCode.length !== 6
-              ) &&
-                styles.buttonDisabled,
-            ]}
+          <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: verifyDisabled }}
+            style={[styles.primaryButton, verifyDisabled && styles.buttonDisabled]}
             activeOpacity={0.85}
             onPress={handleVerify}
-            disabled={
-              loading ||
-              otpCode.length !== 6
-            }
+            disabled={verifyDisabled}
           >
 
             {loading ? (
@@ -484,7 +484,7 @@ export default function OtpVerificationScreen({
               <>
 
                 <Text style={styles.primaryButtonText}>
-                  Verify & Continue
+                  Verify email
                 </Text>
 
                 <ArrowRight
@@ -507,22 +507,11 @@ export default function OtpVerificationScreen({
               Didn't receive the code?
             </Text>
 
-            <TouchableOpacity
-              style={[
-                styles.resendButton,
-
-                (
-                  resending ||
-                  resendCooldown > 0
-                ) &&
-                  styles.resendButtonDisabled,
-              ]}
+            <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: resendDisabled }}
+              style={[styles.resendButton, resendDisabled && styles.resendButtonDisabled]}
               activeOpacity={0.75}
               onPress={handleResend}
-              disabled={
-                resending ||
-                resendCooldown > 0
-              }
+              disabled={resendDisabled}
             >
 
               {resending ? (
@@ -553,7 +542,7 @@ export default function OtpVerificationScreen({
                   ? 'Sending...'
                   : resendCooldown > 0
                     ? `Resend in ${resendCooldown}s`
-                    : 'Resend Code'}
+                    : 'Resend code'}
               </Text>
 
             </TouchableOpacity>
@@ -566,10 +555,11 @@ export default function OtpVerificationScreen({
 
           <View style={styles.divider} />
 
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: Boolean(loading || resending) }}
             style={styles.backButton}
             activeOpacity={0.75}
             onPress={onBackToRegister}
+            disabled={loading || resending}
           >
 
             <ArrowLeft
@@ -732,7 +722,7 @@ const styles =
       color:
         'rgba(255,255,255,0.65)',
 
-      fontSize: 10,
+      fontSize: 12,
 
       marginTop: 4,
     },
@@ -795,7 +785,7 @@ const styles =
       color:
         COLORS.teal,
 
-      fontSize: 8,
+      fontSize: 12,
 
       fontWeight: '800',
 
@@ -819,7 +809,7 @@ const styles =
       color:
         COLORS.muted,
 
-      fontSize: 10,
+      fontSize: 12,
 
       lineHeight: 16,
 
@@ -858,7 +848,7 @@ const styles =
       color:
         COLORS.tealDark,
 
-      fontSize: 9,
+      fontSize: 12,
 
       fontWeight: '800',
     },
@@ -896,7 +886,7 @@ const styles =
       color:
         COLORS.danger,
 
-      fontSize: 10,
+      fontSize: 12,
 
       lineHeight: 15,
 
@@ -932,7 +922,7 @@ const styles =
       color:
         COLORS.green,
 
-      fontSize: 9,
+      fontSize: 12,
 
       lineHeight: 14,
 
@@ -951,7 +941,7 @@ const styles =
       color:
         COLORS.muted,
 
-      fontSize: 8,
+      fontSize: 12,
 
       fontWeight: '800',
 
@@ -1019,7 +1009,7 @@ const styles =
       color:
         COLORS.subtle,
 
-      fontSize: 8,
+      fontSize: 12,
 
       lineHeight: 12,
 
@@ -1053,7 +1043,7 @@ const styles =
     primaryButtonText: {
       color: '#FFFFFF',
 
-      fontSize: 11,
+      fontSize: 14,
 
       fontWeight: '800',
     },
@@ -1076,7 +1066,7 @@ const styles =
       color:
         COLORS.muted,
 
-      fontSize: 9,
+      fontSize: 12,
     },
 
     resendButton: {
@@ -1104,7 +1094,7 @@ const styles =
       color:
         COLORS.teal,
 
-      fontSize: 9,
+      fontSize: 12,
 
       fontWeight: '800',
     },
@@ -1126,6 +1116,7 @@ const styles =
     },
 
     backButton: {
+      minHeight: 44,
       flexDirection: 'row',
 
       alignItems: 'center',
@@ -1140,7 +1131,7 @@ const styles =
       color:
         COLORS.teal,
 
-      fontSize: 9,
+      fontSize: 12,
 
       fontWeight: '800',
     },
@@ -1168,7 +1159,7 @@ const styles =
       color:
         COLORS.subtle,
 
-      fontSize: 8,
+      fontSize: 12,
 
       textAlign: 'center',
     },
@@ -1177,7 +1168,7 @@ const styles =
       color:
         COLORS.subtle,
 
-      fontSize: 8,
+      fontSize: 12,
 
       textAlign: 'center',
 

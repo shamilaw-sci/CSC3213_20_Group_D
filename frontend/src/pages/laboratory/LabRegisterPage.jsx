@@ -1,10 +1,12 @@
 /**
  * @file    LabRegisterPage.jsx
+ * @module Public laboratory application
+ * @author Original author unconfirmed; creation history is recorded in OWNERSHIP.md.
  * @desc    Public laboratory account application using the existing
  *          laboratory registration API contract and approval workflow.
  */
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -24,7 +26,8 @@ import Alert from '../../components/common/Alert';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
 import Input from '../../components/common/Input';
-import api from '../../services/api';
+import { registerLaboratory, authErrorMessage } from '../../services/auth.service';
+import '../../components/auth/auth.css';
 
 const AVAILABLE_TESTS = [
   'Blood Test',
@@ -50,9 +53,12 @@ const INITIAL_FORM = {
   phone: '',
   email: '',
   password: '',
+  confirmPassword: '',
 };
 
+/** @component LabRegisterPage @returns {JSX.Element} Module-branded facility application, selected tests and acknowledged pending approval. */
 const LabRegisterPage = () => {
+  const inFlight = useRef(false);
   const navigate = useNavigate();
   const [form, setForm] = useState(INITIAL_FORM);
   const [selectedTests, setSelectedTests] = useState([]);
@@ -61,12 +67,15 @@ const LabRegisterPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
 
+  /** @param {Object} event Input/textarea event. @returns {void} Update one field and clear stale field/request errors. */
   const handleChange = (event) => {
+    setSubmitError('');
     const { name, value } = event.target;
     setForm((current) => ({ ...current, [name]: value }));
     setFieldErrors((current) => ({ ...current, [name]: '' }));
   };
 
+  /** @param {string} test Existing catalogue option. @returns {void} Toggle selected service without duplicate entries. */
   const toggleTest = (test) => {
     setSelectedTests((current) => (
       current.includes(test)
@@ -75,6 +84,7 @@ const LabRegisterPage = () => {
     ));
   };
 
+  /** @returns {boolean} Required facility/contact fields, existing formats and new-password confirmation. */
   const validate = () => {
     const errors = {};
 
@@ -99,20 +109,26 @@ const LabRegisterPage = () => {
       errors.password = 'Password must contain at least 8 characters.';
     }
 
+    if (!form.confirmPassword) errors.confirmPassword = 'Please confirm your password.';
+    else if (form.confirmPassword !== form.password) errors.confirmPassword = 'Passwords do not match.';
     setFieldErrors(errors);
+    if (Object.keys(errors).length) document.getElementById(Object.keys(errors)[0])?.focus();
     return Object.keys(errors).length === 0;
   };
 
+  /** @param {Object} event Form event. @returns {Promise<void>} Submit current facility/test payload once; require acknowledgement. */
   const handleSubmit = async (event) => {
+    if (inFlight.current) { event.preventDefault(); return; }
     event.preventDefault();
 
     if (!validate()) return;
 
+    inFlight.current = true;
     setIsSubmitting(true);
     setSubmitError('');
 
     try {
-      await api.post('/api/laboratories/register', {
+      await registerLaboratory({
         name: form.name.trim(),
         license_number: form.license_number.trim(),
         address: form.address.trim(),
@@ -122,18 +138,20 @@ const LabRegisterPage = () => {
         available_tests: selectedTests,
       });
       setIsComplete(true);
+      setForm(INITIAL_FORM);
     } catch (error) {
       setSubmitError(
-        error.response?.data?.message || 'Registration could not be submitted. Please try again.'
+        authErrorMessage(error, 'Registration could not be submitted. Please try again.')
       );
     } finally {
+      inFlight.current = false;
       setIsSubmitting(false);
     }
   };
 
   if (isComplete) {
     return (
-      <main data-module="laboratory" className="min-h-screen bg-muted/30 flex items-center justify-center px-4 py-12">
+      <main data-module="laboratory" className="auth-controls min-h-screen bg-muted/30 flex items-center justify-center px-4 py-12">
         <Card className="w-full max-w-xl">
           <div className="text-center py-6 sm:py-10">
             <span className="w-20 h-20 rounded-full bg-emerald-50 text-emerald-600 inline-flex items-center justify-center">
@@ -147,9 +165,9 @@ const LabRegisterPage = () => {
             </p>
             <Button
               className="mt-7"
-              onClick={() => navigate('/login')}
+              disabled={isSubmitting} onClick={() => navigate('/login')}
             >
-              Return to login
+              Back to sign in
             </Button>
           </div>
         </Card>
@@ -158,17 +176,17 @@ const LabRegisterPage = () => {
   }
 
   return (
-    <main data-module="laboratory" className="min-h-screen bg-muted/30">
+    <main data-module="laboratory" className="auth-controls min-h-screen bg-muted/30">
       {/* Public registration header */}
       <header className="care4u-page-hero">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
           <button
             type="button"
-            onClick={() => navigate('/login')}
+            disabled={isSubmitting} onClick={() => navigate('/login')}
             className="inline-flex items-center gap-2 text-sm font-semibold text-white/80 hover:text-white transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to login
+            Back to sign in
           </button>
 
           <div className="mt-7 max-w-3xl">
@@ -182,7 +200,7 @@ const LabRegisterPage = () => {
               Register your laboratory
             </h1>
             <p className="text-white/80 leading-relaxed mt-3 max-w-2xl">
-              Submit your verified facility details and diagnostic services. A Care4U administrator will review the account before access is enabled.
+              Enter your facility details and available diagnostic services. A Care4U administrator will review the account before access is enabled.
             </p>
           </div>
         </div>
@@ -195,7 +213,8 @@ const LabRegisterPage = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} noValidate className="space-y-6">
+        <form onSubmit={handleSubmit} noValidate aria-busy={isSubmitting} className="space-y-6">
+          <fieldset disabled={isSubmitting} className="space-y-6 min-w-0">
           {/* Facility details */}
           <Card
             title="Facility details"
@@ -251,20 +270,22 @@ const LabRegisterPage = () => {
                   rows={3}
                   placeholder="Street, city, and postal code"
                   autoComplete="street-address"
+                  required
                   aria-invalid={Boolean(fieldErrors.address)}
+                  aria-describedby={fieldErrors.address ? 'address-error' : undefined}
                   className={`w-full px-3.5 py-2.5 text-sm text-foreground bg-white border rounded-lg resize-y placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring ${fieldErrors.address ? 'border-destructive' : 'border-input'}`}
                 />
                 {fieldErrors.address && (
-                  <p className="text-xs text-destructive">{fieldErrors.address}</p>
+                  <p id="address-error" className="text-xs text-destructive">{fieldErrors.address}</p>
                 )}
               </div>
             </div>
 
             <div className="grid sm:grid-cols-3 gap-3 mt-6 pt-6 border-t border-border">
               {[
-                { icon: ShieldCheck, text: 'Admin verified' },
+                { icon: ShieldCheck, text: 'Admin review required' },
                 { icon: MapPin, text: 'Facility based' },
-                { icon: Phone, text: 'Contact confirmed' },
+                { icon: Phone, text: 'Contact details' },
               ].map(({ icon: Icon, text }) => (
                 <div key={text} className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
                   <Icon className="w-4 h-4 text-primary" />
@@ -301,6 +322,7 @@ const LabRegisterPage = () => {
                 label="Password"
                 name="password"
                 type="password"
+                revealPassword
                 value={form.password}
                 onChange={handleChange}
                 error={fieldErrors.password}
@@ -309,6 +331,8 @@ const LabRegisterPage = () => {
                 minLength={8}
                 autoComplete="new-password"
               />
+              <Input label="Confirm password" name="confirmPassword" type="password" revealPassword autoComplete="new-password"
+                value={form.confirmPassword} onChange={handleChange} error={fieldErrors.confirmPassword} required />
             </div>
           </Card>
 
@@ -367,7 +391,7 @@ const LabRegisterPage = () => {
               <div className="flex flex-col-reverse sm:flex-row gap-3 shrink-0">
                 <Button
                   variant="ghost"
-                  onClick={() => navigate('/login')}
+                  disabled={isSubmitting} onClick={() => navigate('/login')}
                 >
                   Cancel
                 </Button>
@@ -381,6 +405,7 @@ const LabRegisterPage = () => {
               </div>
             </div>
           </Card>
+          </fieldset>
         </form>
       </div>
     </main>

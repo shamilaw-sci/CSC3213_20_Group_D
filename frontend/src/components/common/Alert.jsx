@@ -15,6 +15,7 @@ import { CheckCircle2, XCircle, AlertTriangle, Info } from 'lucide-react';
  * @author    Wasana Karunanayaka (S/21/081)
  * @param {string} type    - success | error | warning | info
  * @param {string} message - The message text to display
+ * @returns {JSX.Element|null} Icon plus text; errors announce as alerts, other feedback as status.
  */
 const Alert = ({ type = 'info', message }) => {
   if (!message) return null;
@@ -36,8 +37,8 @@ const Alert = ({ type = 'info', message }) => {
   const Icon = icons[type] || Info;
 
   return (
-    <div className={`flex items-start gap-3 px-4 py-3 rounded-lg border text-sm font-medium ${styles[type]}`}>
-      <Icon className="w-5 h-5 flex-shrink-0 mt-0.5" strokeWidth={2.5} />
+    <div role={type === 'error' ? 'alert' : 'status'} aria-atomic="true" className={`flex items-start gap-3 px-4 py-3 rounded-lg border text-sm font-medium ${styles[type]}`}>
+      <Icon aria-hidden="true" className="w-5 h-5 flex-shrink-0 mt-0.5" strokeWidth={2.5} />
       <p>{message}</p>
     </div>
   );

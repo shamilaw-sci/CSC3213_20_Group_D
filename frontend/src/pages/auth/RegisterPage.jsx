@@ -1,17 +1,18 @@
 /**
  * @file    RegisterPage.jsx
- * @desc    Registration page for patients and doctors in Care4U.
+ * @module Authentication UI
+ * @desc Two-step registration for all five public web roles; email verification precedes account creation.
  * @author  I.M.L.S. Idirisinghe (S/21/389)
  */
 
-import { API_BASE_URL } from '../../services/api';
+import { register, authErrorMessage } from '../../services/auth.service';
+import AuthLayout from '../../components/auth/AuthLayout';
 
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import Input  from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import Alert  from '../../components/common/Alert';
-import Card   from '../../components/common/Card';
 
 const ROLE_OPTIONS = [
   { value: 'patient', label: 'Patient' },
@@ -21,7 +22,10 @@ const ROLE_OPTIONS = [
   { value: 'hospital_staff', label: 'Hospital Staff' },
 ];
 
+/** @component RegisterPage @returns {JSX.Element} Two forms with role-specific required details; server validates independently. */
 const RegisterPage = () => {
+  const inFlight = useRef(false);
+  const formRef = useRef(null);
   const navigate = useNavigate();
   const [step, setStep] = useState(1); // Step 1: Basic info, Step 2: Role info
 
@@ -57,22 +61,25 @@ const RegisterPage = () => {
   const [loading, setLoading]     = useState(false);
   const [serverError, setServerError] = useState('');
 
-  // Handle input changes
+  /** Focus the first account/profile field after a step transition; cleanup is unnecessary (no timer). */
+  useEffect(() => { formRef.current?.querySelector('input')?.focus(); }, [step]);
+
+  /** @param {Object} e Input event. @returns {void} Update field and clear stale feedback. */
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setErrors({ ...errors, [e.target.name]: '' });
     setServerError('');
   };
 
-  // Validate Step 1
+  /** @returns {Object} Required credentials/confirmation and new-password length errors. */
   const validateStep1 = () => {
     const newErrors = {};
 
-    if (!formData.email) {
+    if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
     }
 
-    if (!formData.phone) {
+    if (!formData.phone.trim()) {
       newErrors.phone = 'Phone number is required';
     }
 
@@ -105,20 +112,20 @@ const RegisterPage = () => {
     return newErrors;
   };
 
-  // Validate Step 2
+  /** @returns {Object} Required profile fields for only the selected role; no invented credential policy. */
   const validateStep2 = () => {
     const newErrors = {};
 
     if (
       ['patient', 'doctor'].includes(formData.role) &&
-      !formData.fullName
+      !formData.fullName.trim()
     ) {
       newErrors.fullName = 'Full name is required';
     }
 
     if (
       formData.role === 'patient' &&
-      !formData.nic
+      !formData.nic.trim()
     ) {
       newErrors.nic =
         'NIC is required for patients';
@@ -126,85 +133,85 @@ const RegisterPage = () => {
 
     if (
       formData.role === 'patient' &&
-      !formData.dateOfBirth
+      !formData.dateOfBirth.trim()
     ) {
       newErrors.dateOfBirth =
         'Date of birth is required for patients';
     }
 
     if (formData.role === 'doctor') {
-      if (!formData.slmcRegNumber) {
+      if (!formData.slmcRegNumber.trim()) {
         newErrors.slmcRegNumber =
           'SLMC number is required';
       }
 
-      if (!formData.specialization) {
+      if (!formData.specialization.trim()) {
         newErrors.specialization =
           'Specialization is required';
       }
     }
 
     if (formData.role === 'pharmacist') {
-      if (!formData.pharmacyName) {
+      if (!formData.pharmacyName.trim()) {
         newErrors.pharmacyName =
           'Pharmacy name is required';
       }
 
-      if (!formData.licenseNumber) {
+      if (!formData.licenseNumber.trim()) {
         newErrors.licenseNumber =
           'License number is required';
       }
 
-      if (!formData.pharmacyAddress) {
+      if (!formData.pharmacyAddress.trim()) {
         newErrors.pharmacyAddress =
           'Address is required';
       }
 
-      if (!formData.pharmacyPhone) {
+      if (!formData.pharmacyPhone.trim()) {
         newErrors.pharmacyPhone =
           'Pharmacy phone is required';
       }
     }
 
     if (formData.role === 'lab_technician') {
-      if (!formData.laboratoryName) {
+      if (!formData.laboratoryName.trim()) {
         newErrors.laboratoryName =
           'Laboratory name is required';
       }
 
-      if (!formData.laboratoryLicenseNumber) {
+      if (!formData.laboratoryLicenseNumber.trim()) {
         newErrors.laboratoryLicenseNumber =
           'License number is required';
       }
 
-      if (!formData.laboratoryAddress) {
+      if (!formData.laboratoryAddress.trim()) {
         newErrors.laboratoryAddress =
           'Laboratory address is required';
       }
 
-      if (!formData.laboratoryPhone) {
+      if (!formData.laboratoryPhone.trim()) {
         newErrors.laboratoryPhone =
           'Laboratory phone is required';
       }
     }
 
     if (formData.role === 'hospital_staff') {
-      if (!formData.hospitalName) {
+      if (!formData.hospitalName.trim()) {
         newErrors.hospitalName =
           'Hospital name is required';
       }
 
-      if (!formData.hospitalType) {
+      if (!formData.hospitalType.trim()) {
         newErrors.hospitalType =
           'Hospital type is required';
       }
 
-      if (!formData.hospitalLocation) {
+      if (!formData.hospitalLocation.trim()) {
         newErrors.hospitalLocation =
           'Hospital location is required';
       }
 
-      if (!formData.hospitalDepartments) {
+      if (!formData.hospitalDepartments.trim()) {
         newErrors.hospitalDepartments =
           'At least one department is required';
       }
@@ -213,31 +220,38 @@ const RegisterPage = () => {
     return newErrors;
   };
 
-  // Go to step 2
-  const handleNext = () => {
+  /** @param {Object} event Step-one form event. @returns {void} Advance only after account validation. */
+  const handleNext = event => {
+    event.preventDefault();
     const validationErrors = validateStep1();
 
     if (
       Object.keys(validationErrors).length > 0
     ) {
       setErrors(validationErrors);
+      document.getElementById(Object.keys(validationErrors)[0])?.focus();
       return;
     }
 
+    setErrors({}); setServerError('');
     setStep(2);
   };
 
-  // Submit registration
-  const handleSubmit = async () => {
+  /** @param {Object} event Profile form event. @returns {Promise<void>} Build selected role payload and request pending verification once. */
+  const handleSubmit = async event => {
+    event.preventDefault();
+    if (inFlight.current) return;
     const validationErrors = validateStep2();
 
     if (
       Object.keys(validationErrors).length > 0
     ) {
       setErrors(validationErrors);
+      document.getElementById(Object.keys(validationErrors)[0])?.focus();
       return;
     }
 
+    inFlight.current = true;
     setLoading(true);
     setServerError('');
 
@@ -259,9 +273,7 @@ const RegisterPage = () => {
         };
 
       } else if (formData.role === 'pharmacist') {
-        // Pharmacy business profile - creates a matching row in the
-        // pharmacies table during OTP verification, so the pharmacy
-        // dashboard has real data immediately after registration.
+        // The pharmacy profile is created at verification; access still needs admin approval.
         profileData = {
           name: formData.pharmacyName,
           licenseNumber: formData.licenseNumber,
@@ -285,41 +297,16 @@ const RegisterPage = () => {
           departments: formData.hospitalDepartments,
         };
 
-      } else {
-        // lab_technician, hospital_staff — only fullName is collected
-        // here; these roles have no dedicated business profile table
-        // yet (no dashboard exists either - see mobile App.js placeholder).
-        profileData = {
-          fullName: formData.fullName
-        };
       }
+      const data = await register(formData.email.trim(), formData.phone.trim(), formData.password, formData.role, profileData);
 
-      const response = await fetch(
-        `${API_BASE_URL}/api/auth/register`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            email: formData.email,
-            phone: formData.phone,
-            password: formData.password,
-            role: formData.role,
-            profileData,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
+      if (typeof data.data?.email !== 'string' || !data.data.email.trim()) throw new Error('Invalid registration response');
       if (data.success) {
         navigate(
           '/verify-otp',
           {
             state: {
-              email: formData.email
+              email: data.data.email
             }
           }
         );
@@ -331,12 +318,11 @@ const RegisterPage = () => {
         );
       }
 
-    } catch {
-      setServerError(
-        'Cannot connect to server. Please try again.'
-      );
+    } catch (error) {
+      setServerError(authErrorMessage(error, 'Registration failed. Please try again.'));
 
     } finally {
+      inFlight.current = false;
       setLoading(false);
     }
   };
@@ -347,26 +333,7 @@ const RegisterPage = () => {
     )?.label ?? '';
 
   return (
-    <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-
-        {/* Logo & Title */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-brand-deep">
-            Care4U
-          </h1>
-
-          <p className="text-muted-foreground mt-1 font-medium">
-            Centralized Healthcare Ecosystem
-          </p>
-        </div>
-
-        {/* Register Card */}
-        <Card>
-          <h2 className="text-xl font-bold text-foreground mb-2">
-            Create your account
-          </h2>
-
+    <AuthLayout title="Create your account">
           {/* Step indicator */}
           <div className="flex items-center gap-2 mb-6">
             <div
@@ -398,7 +365,7 @@ const RegisterPage = () => {
 
           {/* Step 1 — Basic Info */}
           {step === 1 && (
-            <div className="flex flex-col gap-4">
+            <form ref={formRef} onSubmit={handleNext} noValidate className="flex flex-col gap-4">
               <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                 Step 1 of 2 — Account Details
               </p>
@@ -409,12 +376,8 @@ const RegisterPage = () => {
                   <button
                     key={r.value}
                     type="button"
-                    onClick={() =>
-                      setFormData({
-                        ...formData,
-                        role: r.value
-                      })
-                    }
+                    aria-pressed={formData.role === r.value}
+                    onClick={() => { setFormData({ ...formData, role: r.value }); setErrors({}); setServerError(''); }}
                     className={`py-2.5 px-2 rounded-lg text-xs font-semibold border transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1
                       ${
                         formData.role === r.value
@@ -428,8 +391,10 @@ const RegisterPage = () => {
               </div>
 
               <Input
+                disabled={loading}
                 label="Email Address"
                 name="email"
+                autoComplete="email"
                 type="email"
                 value={formData.email}
                 onChange={handleChange}
@@ -439,9 +404,11 @@ const RegisterPage = () => {
               />
 
               <Input
+                disabled={loading}
                 label="Phone Number"
                 name="phone"
-                type="text"
+                autoComplete="tel"
+                type="tel"
                 value={formData.phone}
                 onChange={handleChange}
                 placeholder="07XXXXXXXX"
@@ -450,9 +417,12 @@ const RegisterPage = () => {
               />
 
               <Input
+                disabled={loading}
                 label="Password"
                 name="password"
                 type="password"
+                autoComplete="new-password"
+                revealPassword
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="Minimum 8 characters"
@@ -461,9 +431,12 @@ const RegisterPage = () => {
               />
 
               <Input
+                disabled={loading}
                 label="Confirm Password"
                 name="confirmPassword"
                 type="password"
+                autoComplete="new-password"
+                revealPassword
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 placeholder="Re-enter your password"
@@ -474,23 +447,26 @@ const RegisterPage = () => {
               <Button
                 variant="primary"
                 size="lg"
-                onClick={handleNext}
+                type="submit"
                 className="w-full mt-2"
               >
-                Next →
+                Continue
               </Button>
-            </div>
+            </form>
           )}
 
           {/* Step 2 — Role Info */}
           {step === 2 && (
-            <div className="flex flex-col gap-4">
+            <form ref={formRef} onSubmit={handleSubmit} noValidate aria-busy={loading} className="flex flex-col gap-4">
               <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                 Step 2 of 2 — {roleLabel} Details
               </p>
 
+              {formData.role !== 'patient' && <Alert type="info" message="Email verification creates your account. Admin approval is required before you can sign in." />}
+
               {['patient', 'doctor'].includes(formData.role) && (
                 <Input
+                disabled={loading}
                   label="Full Name"
                   name="fullName"
                   type="text"
@@ -505,6 +481,7 @@ const RegisterPage = () => {
               {formData.role === 'patient' && (
                 <>
                   <Input
+                disabled={loading}
                     label="NIC Number"
                     name="nic"
                     type="text"
@@ -516,6 +493,7 @@ const RegisterPage = () => {
                   />
 
                   <Input
+                disabled={loading}
                     label="Date of Birth"
                     name="dateOfBirth"
                     type="date"
@@ -530,6 +508,7 @@ const RegisterPage = () => {
               {formData.role === 'doctor' && (
                 <>
                   <Input
+                disabled={loading}
                     label="SLMC Registration Number"
                     name="slmcRegNumber"
                     type="text"
@@ -541,6 +520,7 @@ const RegisterPage = () => {
                   />
 
                   <Input
+                disabled={loading}
                     label="Specialization"
                     name="specialization"
                     type="text"
@@ -556,6 +536,7 @@ const RegisterPage = () => {
               {formData.role === 'pharmacist' && (
                 <>
                   <Input
+                disabled={loading}
                     label="Pharmacy Name"
                     name="pharmacyName"
                     type="text"
@@ -567,6 +548,7 @@ const RegisterPage = () => {
                   />
 
                   <Input
+                disabled={loading}
                     label="License Number"
                     name="licenseNumber"
                     type="text"
@@ -578,6 +560,7 @@ const RegisterPage = () => {
                   />
 
                   <Input
+                disabled={loading}
                     label="Pharmacy Address"
                     name="pharmacyAddress"
                     type="text"
@@ -589,6 +572,7 @@ const RegisterPage = () => {
                   />
 
                   <Input
+                disabled={loading}
                     label="Pharmacy Phone"
                     name="pharmacyPhone"
                     type="text"
@@ -604,6 +588,7 @@ const RegisterPage = () => {
               {formData.role === 'lab_technician' && (
                 <>
                   <Input
+                disabled={loading}
                     label="Laboratory Name"
                     name="laboratoryName"
                     type="text"
@@ -615,6 +600,7 @@ const RegisterPage = () => {
                   />
 
                   <Input
+                disabled={loading}
                     label="License Number"
                     name="laboratoryLicenseNumber"
                     type="text"
@@ -626,6 +612,7 @@ const RegisterPage = () => {
                   />
 
                   <Input
+                disabled={loading}
                     label="Laboratory Address"
                     name="laboratoryAddress"
                     type="text"
@@ -637,6 +624,7 @@ const RegisterPage = () => {
                   />
 
                   <Input
+                disabled={loading}
                     label="Laboratory Phone"
                     name="laboratoryPhone"
                     type="text"
@@ -652,6 +640,7 @@ const RegisterPage = () => {
               {formData.role === 'hospital_staff' && (
                 <>
                   <Input
+                disabled={loading}
                     label="Hospital Name"
                     name="hospitalName"
                     type="text"
@@ -663,6 +652,7 @@ const RegisterPage = () => {
                   />
 
                   <Input
+                disabled={loading}
                     label="Hospital Type"
                     name="hospitalType"
                     type="text"
@@ -674,6 +664,7 @@ const RegisterPage = () => {
                   />
 
                   <Input
+                disabled={loading}
                     label="Hospital Location"
                     name="hospitalLocation"
                     type="text"
@@ -685,6 +676,7 @@ const RegisterPage = () => {
                   />
 
                   <Input
+                disabled={loading}
                     label="Departments"
                     name="hospitalDepartments"
                     type="text"
@@ -701,48 +693,42 @@ const RegisterPage = () => {
                 <Button
                   variant="secondary"
                   size="lg"
-                  onClick={() => setStep(1)}
-                  className="flex-1"
+                  onClick={() => { setStep(1); setErrors({}); setServerError(''); }}
+                  disabled={loading}
+                  className="flex-1 min-w-0 px-3"
                 >
-                  ← Back
+                  Back
                 </Button>
 
                 <Button
                   variant="primary"
                   size="lg"
                   loading={loading}
-                  onClick={handleSubmit}
-                  className="flex-1"
+                  type="submit"
+                  className="flex-1 min-w-0 px-3"
                 >
                   {loading
-                    ? 'Registering...'
-                    : 'Register'}
+                    ? 'Requesting code...'
+                    : 'Request code'}
                 </Button>
               </div>
-            </div>
+            </form>
           )}
 
           {/* Login Link */}
           <p className="text-center text-sm text-muted-foreground mt-6">
             Already have an account?{' '}
-            <a
-              href="/login"
+            <Link
+              to="/login"
+              aria-disabled={loading}
+              onClick={event => { if (loading) event.preventDefault(); }}
               className="text-primary font-semibold hover:underline"
             >
-              Sign in here
-            </a>
+              Back to sign in
+            </Link>
           </p>
 
-        </Card>
-
-        {/* Footer */}
-        <p className="text-center text-xs font-medium text-muted-foreground mt-6">
-          © 2026 Care4U — Group D | CSC3213
-        </p>
-
-      </div>
-    </div>
+    </AuthLayout>
   );
 };
-
 export default RegisterPage;

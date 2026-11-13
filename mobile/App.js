@@ -9,10 +9,12 @@
 
 import React, {
   useState,
+  useRef,
 } from 'react';
 
 import {
   View,
+  Alert,
   Text,
   Image,
   TouchableOpacity,
@@ -321,7 +323,9 @@ const PatientTabBar = ({
    ROOT APPLICATION
 ========================================================= */
 
+/** @component App @returns {JSX.Element} Existing app/navigation shell; Stage 3A review covers auth screens, public identity and logout only. */
 export default function App() {
+  const logoutInFlight = useRef(false);
   const user =
     useAuthStore(
       (state) =>
@@ -379,41 +383,24 @@ export default function App() {
      AUTHENTICATION
   ======================================================= */
 
-  const handleLogout =
-    async () => {
-      try {
-        await api.post(
-          '/api/auth/logout'
-        );
-
-      } catch (
-        error
-      ) {
-        console.error(
-          'Mobile logout error:',
-          error
-        );
-
-      } finally {
-        clearUser();
-
-        setAuthScreen(
-          'login'
-        );
-
-        setActiveTab(
-          'home'
-        );
-
-        setOverlayScreen(
-          null
-        );
-
-        setBookingParams(
-          {}
-        );
-      }
-    };
+  /** @returns {Promise<void>} Clear local identity only after acknowledged server logout; failure keeps a retry path. */
+  const handleLogout = async () => {
+    if (logoutInFlight.current) return;
+    logoutInFlight.current = true;
+    try {
+      const response = await api.post('/api/auth/logout', {}, { timeout: 15000 });
+      if (response.data?.success !== true) throw new Error('Logout not acknowledged');
+      clearUser();
+      setAuthScreen('login');
+      setActiveTab('home');
+      setOverlayScreen(null);
+      setBookingParams({});
+    } catch {
+      Alert.alert('Sign-out not confirmed', 'Your session may still be active. Check your connection and try signing out again.');
+    } finally {
+      logoutInFlight.current = false;
+    }
+  };
 
   /* =======================================================
      NAVIGATION
@@ -483,6 +470,9 @@ export default function App() {
      AUTH SCREENS
   ======================================================= */
 
+  // Auth callbacks carry pending email to OTP, return pending professionals to sign-in,
+  // and admit acknowledged public identities. Screen selection changes UI state only;
+  // it does not restore native cookies or grant backend permissions.
   if (!user) {
     if (
       authScreen ===

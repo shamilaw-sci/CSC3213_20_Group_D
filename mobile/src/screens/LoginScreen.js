@@ -1,11 +1,11 @@
 /**
  * @file    LoginScreen.js
  * @module  Auth
- * @desc    Premium mobile login screen for Care4U patients and doctors.
+ * @desc    Mobile sign-in; the parent provides patient/doctor views and web guidance for other roles.
  * @author  I.M.L.S. Idirisinghe (S/21/389)
  */
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 
 import {
   View,
@@ -30,37 +30,44 @@ import {
   ShieldCheck,
 } from 'lucide-react-native';
 
-import api from '../services/api';
+import { login, authErrorMessage } from '../services/auth.service';
 
 const COLORS = {
   background: '#F6F8FA',
   surface: '#FFFFFF',
   navy: '#12344D',
-  teal: '#0F8B83',
+  teal: '#0B6F69',
   tealDark: '#0B6F69',
   tealSoft: '#E7F7F5',
   text: '#102331',
   textSoft: '#334155',
-  muted: '#718096',
-  subtle: '#9AA8B6',
+  muted: '#526575',
+  subtle: '#526575',
   border: '#E3E9ED',
-  danger: '#C94C4C',
+  danger: '#AD3030',
   dangerSoft: '#FFF1F1',
 };
 
+/** @component LoginScreen
+ * @param {Object} props Parent navigation/success callbacks; no credentials persist in props.
+ * @returns {JSX.Element} Scrollable keyboard-aware auth UI. Input callbacks update local state and clear errors; visibility callbacks only toggle masking.
+ */
 export default function LoginScreen({
   onLoginSuccess,
   onForgotPassword,
   onRegister,
 }) {
+  const passwordInputRef = useRef(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const [showPassword, setShowPassword] = useState(false);
 
   const [loading, setLoading] = useState(false);
+  const inFlight = useRef(false);
   const [error, setError] = useState('');
 
+  /** @returns {boolean} Required-field/new-password checks; server remains authoritative. */
   const validate = () => {
     if (!email.trim()) {
       setError('Email is required');
@@ -72,29 +79,23 @@ export default function LoginScreen({
       return false;
     }
 
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters');
-      return false;
-    }
-
     return true;
   };
 
+  /** @returns {Promise<void>} Validate and submit once; release busy state on every outcome. */
   const handleLogin = async () => {
+    if (inFlight.current) return;
     if (!validate()) {
       return;
     }
 
+    inFlight.current = true;
     setLoading(true);
     setError('');
 
     try {
-      const response = await api.post('/api/auth/login', {
-        email: email.trim(),
-        password,
-      });
-
-      const data = response.data;
+      const data = await login(email.trim(), password);
+      if (!data.data?.id || !data.data?.role) throw new Error('Invalid identity response');
 
       if (data.success) {
         onLoginSuccess(data.data);
@@ -107,11 +108,11 @@ export default function LoginScreen({
 
     } catch (err) {
       setError(
-        err.response?.data?.message ||
-        'Cannot connect to server. Please check your connection.'
+        authErrorMessage(err, 'Sign-in failed. Please try again.')
       );
 
     } finally {
+      inFlight.current = false;
       setLoading(false);
     }
   };
@@ -151,7 +152,7 @@ export default function LoginScreen({
             </Text>
 
             <Text style={styles.brandTagline}>
-              Connected care. One secure place.
+              Connected care. One place.
             </Text>
 
           </View>
@@ -163,7 +164,7 @@ export default function LoginScreen({
           <View style={styles.cardHeader}>
 
             <Text style={styles.eyebrow}>
-              SECURE ACCESS
+              ACCOUNT ACCESS
             </Text>
 
             <Text style={styles.title}>
@@ -177,7 +178,7 @@ export default function LoginScreen({
           </View>
 
           {error !== '' && (
-            <View style={styles.errorBox}>
+            <View style={styles.errorBox} accessibilityRole="alert" accessibilityLiveRegion="polite">
 
               <AlertCircle
                 size={17}
@@ -205,10 +206,15 @@ export default function LoginScreen({
               />
 
               <TextInput
+                accessibilityLabel="Email address"
+                editable={!loading}
                 style={styles.input}
                 placeholder="you@example.com"
                 placeholderTextColor={COLORS.subtle}
                 keyboardType="email-address"
+                autoComplete="username"
+                returnKeyType="next"
+                onSubmitEditing={() => passwordInputRef.current?.focus()}
                 autoCapitalize="none"
                 autoCorrect={false}
                 value={email}
@@ -230,9 +236,11 @@ export default function LoginScreen({
                 PASSWORD
               </Text>
 
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: Boolean(loading) }}
                 activeOpacity={0.7}
                 onPress={onForgotPassword}
+                disabled={loading}
+                style={styles.textButton}
               >
                 <Text style={styles.forgotInline}>
                   Forgot password?
@@ -249,10 +257,18 @@ export default function LoginScreen({
               />
 
               <TextInput
+                accessibilityLabel="Password"
+                editable={!loading}
                 style={styles.input}
                 placeholder="Enter your password"
                 placeholderTextColor={COLORS.subtle}
                 secureTextEntry={!showPassword}
+                ref={passwordInputRef}
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="current-password"
+                returnKeyType="done"
+                onSubmitEditing={handleLogin}
                 value={password}
                 onChangeText={(text) => {
                   setPassword(text);
@@ -262,6 +278,10 @@ export default function LoginScreen({
 
               <TouchableOpacity
                 style={styles.eyeButton}
+                accessibilityRole="button"
+                accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                accessibilityState={{ expanded: showPassword, disabled: loading }}
+                disabled={loading}
                 activeOpacity={0.7}
                 onPress={() =>
                   setShowPassword(
@@ -286,7 +306,7 @@ export default function LoginScreen({
 
           </View>
 
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: Boolean(loading) }}
             style={[
               styles.primaryButton,
               loading && styles.buttonDisabled,
@@ -301,7 +321,7 @@ export default function LoginScreen({
             ) : (
               <>
                 <Text style={styles.primaryButtonText}>
-                  Sign In
+                  Sign in
                 </Text>
 
                 <ArrowRight
@@ -325,13 +345,14 @@ export default function LoginScreen({
 
           </View>
 
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: Boolean(loading) }}
             style={styles.secondaryButton}
             activeOpacity={0.8}
             onPress={onRegister}
+            disabled={loading}
           >
             <Text style={styles.secondaryButtonText}>
-              Create an Account
+              Create an account
             </Text>
           </TouchableOpacity>
 
@@ -345,7 +366,7 @@ export default function LoginScreen({
           />
 
           <Text style={styles.securityFooterText}>
-            Secure healthcare access protected by Care4U
+            Sign in to access your Care4U account.
           </Text>
 
         </View>
@@ -435,7 +456,7 @@ const styles = StyleSheet.create({
 
   brandTagline: {
     color: 'rgba(255,255,255,0.66)',
-    fontSize: 11,
+    fontSize: 14,
     marginTop: 4,
   },
 
@@ -463,7 +484,7 @@ const styles = StyleSheet.create({
 
   eyebrow: {
     color: COLORS.teal,
-    fontSize: 8,
+    fontSize: 12,
     fontWeight: '800',
     letterSpacing: 1,
   },
@@ -478,7 +499,7 @@ const styles = StyleSheet.create({
 
   subtitle: {
     color: COLORS.muted,
-    fontSize: 11,
+    fontSize: 14,
     lineHeight: 17,
     marginTop: 5,
   },
@@ -498,7 +519,7 @@ const styles = StyleSheet.create({
   errorText: {
     flex: 1,
     color: COLORS.danger,
-    fontSize: 10,
+    fontSize: 12,
     lineHeight: 15,
     fontWeight: '600',
   },
@@ -516,7 +537,7 @@ const styles = StyleSheet.create({
 
   label: {
     color: COLORS.muted,
-    fontSize: 8,
+    fontSize: 12,
     fontWeight: '800',
     letterSpacing: 0.7,
     marginBottom: 7,
@@ -526,9 +547,11 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
 
+  textButton: { minHeight: 44, justifyContent: 'center' },
+
   forgotInline: {
     color: COLORS.teal,
-    fontSize: 9,
+    fontSize: 12,
     fontWeight: '800',
   },
 
@@ -548,13 +571,13 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 48,
     color: COLORS.text,
-    fontSize: 12,
+    fontSize: 14,
     paddingVertical: 0,
   },
 
   eyeButton: {
-    width: 34,
-    height: 34,
+    width: 44,
+    height: 44,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
@@ -573,7 +596,7 @@ const styles = StyleSheet.create({
 
   primaryButtonText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '800',
   },
 
@@ -596,7 +619,7 @@ const styles = StyleSheet.create({
 
   dividerText: {
     color: COLORS.subtle,
-    fontSize: 7,
+    fontSize: 12,
     fontWeight: '800',
     letterSpacing: 0.75,
   },
@@ -613,7 +636,7 @@ const styles = StyleSheet.create({
 
   secondaryButtonText: {
     color: COLORS.tealDark,
-    fontSize: 11,
+    fontSize: 14,
     fontWeight: '800',
   },
 
@@ -628,13 +651,13 @@ const styles = StyleSheet.create({
 
   securityFooterText: {
     color: COLORS.subtle,
-    fontSize: 8,
+    fontSize: 12,
   },
 
   footer: {
     textAlign: 'center',
     color: COLORS.subtle,
-    fontSize: 8,
+    fontSize: 12,
     marginTop: 8,
   },
 });

@@ -1,182 +1,88 @@
 /**
- * @file    LoginPage.jsx
- * @desc    Login page for all Care4U users (patient, doctor, admin).
- * @author  I.M.L.S. Idirisinghe (S/21/389)
+ * @file LoginPage.jsx
+ * @module Authentication UI
+ * @desc Signs in any supported web role after acknowledged server session creation.
+ * @author I.M.L.S. Idirisinghe (S/21/389)
  */
-
-import { API_BASE_URL } from '../../services/api';
-
-import { useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import Input  from '../../components/common/Input';
+import { useRef, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
-import Alert  from '../../components/common/Alert';
-import Card   from '../../components/common/Card';
+import Alert from '../../components/common/Alert';
+import AuthLayout from '../../components/auth/AuthLayout';
+import { login, authErrorMessage } from '../../services/auth.service';
+import useAuthStore from '../../store/authStore';
 
+/** @component LoginPage
+ * @returns {JSX.Element} Keyboard-submittable sign-in form; API remains authoritative.
+ * Controlled credentials/errors stay local. The ref prevents same-tick duplicate requests.
+ */
 const LoginPage = () => {
   const location = useLocation();
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
-
-  const [errors, setErrors]   = useState({});
+  const navigate = useNavigate();
+  const setUser = useAuthStore(state => state.setUser);
+  const inFlight = useRef(false);
+  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
 
-  // Handle input changes
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    setErrors({ ...errors, [e.target.name]: '' });
+  /** @param {Object} event Input event. @returns {void} Update value and clear stale feedback. */
+  const handleChange = event => {
+    setFormData({ ...formData, [event.target.name]: event.target.value });
+    setErrors({ ...errors, [event.target.name]: '' });
     setServerError('');
   };
-
-  // Validate form before submitting
+  /** @returns {Object} Required-field errors; existing passwords are not subjected to new-password length rules. */
   const validate = () => {
-    const newErrors = {};
-    if (!formData.email)    newErrors.email    = 'Email is required';
-    if (!formData.password) newErrors.password = 'Password is required';
-    if (formData.password && formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
-    }
-    return newErrors;
+    const next = {};
+    if (!formData.email.trim()) next.email = 'Email is required';
+    if (!formData.password) next.password = 'Password is required';
+    return next;
   };
-
-  // Handle form submit
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const validationErrors = validate();
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
+  /** @param {Object} event Form event. @returns {Promise<void>} Validate, request session, set public identity and navigate. */
+  const handleSubmit = async event => {
+    event.preventDefault();
+    if (inFlight.current) return;
+    const next = validate();
+    setErrors(next);
+    if (Object.keys(next).length) {
+      document.getElementById(Object.keys(next)[0])?.focus();
       return;
     }
-
+    inFlight.current = true;
     setLoading(true);
     setServerError('');
-
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        // Redirect based on role
-        if (data.data.role === 'patient') {
-          window.location.href = '/patient/profile';
-        } else if (data.data.role === 'doctor') {
-          window.location.href = '/doctor/dashboard';
-        } else if (data.data.role === 'admin') {
-          window.location.href = '/admin';
-        } else if (data.data.role === 'pharmacist') {
-          window.location.href = '/pharmacy/dashboard';
-        } else if (data.data.role === 'hospital_staff') {
-          window.location.href = '/hospital/dashboard';
-        } else if (data.data.role === 'lab_technician') {
-          window.location.href = '/laboratory/dashboard';
-        } else {
-          window.location.href = '/';
-        }
-      } else {
-        setServerError(data.message || 'Login failed. Please try again.');
-      }
-
-    } catch {
-      setServerError('Cannot connect to server. Please try again.');
+      const data = await login(formData.email.trim(), formData.password);
+      if (!data.data?.id || !data.data?.role) throw new Error('Invalid identity response');
+      const destinations = { patient: '/patient/profile', doctor: '/doctor/dashboard', admin: '/admin',
+        pharmacist: '/pharmacy/dashboard', hospital_staff: '/hospital/dashboard', lab_technician: '/laboratory/dashboard' };
+      setUser(data.data);
+      navigate(destinations[data.data.role] || '/', { replace: true });
+    } catch (error) {
+      setServerError(authErrorMessage(error, 'Sign-in failed. Please try again.'));
     } finally {
+      inFlight.current = false;
       setLoading(false);
     }
   };
-
   return (
-    <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-
-        {/* Logo & Title */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-brand-deep">Care4U</h1>
-          <p className="text-muted-foreground mt-1 font-medium">Centralized Healthcare Ecosystem</p>
-        </div>
-
-        {/* Login Card */}
-        <Card>
-          <h2 className="text-xl font-bold text-foreground mb-6">Sign in to your account</h2>
-
-          {location.state?.message && (
-            <div className="mb-6">
-              <Alert type="success" message={location.state.message} />
-            </div>
-          )}
-
-          {/* Server Error */}
-          {serverError && (
-            <div className="mb-6">
-              <Alert type="error" message={serverError} />
-            </div>
-          )}
-
-          {/* Form */}
-          <div className="flex flex-col gap-4">
-            <Input
-              label="Email Address"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="you@example.com"
-              error={errors.email}
-              required
-            />
-
-            <Input
-              label="Password"
-              name="password"
-              type="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Enter your password"
-              error={errors.password}
-              required
-            />
-
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              loading={loading}
-              onClick={handleSubmit}
-              className="w-full mt-2"
-            >
-              {loading ? 'Signing in...' : 'Sign In'}
-            </Button>
-            
-            <a href="/forgot-password" className="text-sm text-primary font-semibold hover:underline text-center">
-              Forgot your password?
-            </a>
-          </div>
-
-          {/* Register Link */}
-          <p className="text-center text-sm text-muted-foreground mt-6">
-            Don't have an account?{' '}
-            <a href="/register" className="text-primary font-semibold hover:underline">
-              Register here
-            </a>
-          </p>
-        </Card>
-
-        {/* Footer */}
-        <p className="text-center text-xs font-medium text-muted-foreground mt-6">
-          © 2026 Care4U — Group D | CSC3213
-        </p>
-
-      </div>
-    </div>
+    <AuthLayout title="Sign in to your account">
+      {location.state?.message && <div className="mt-4"><Alert type="success" message={location.state.message} /></div>}
+      {serverError && <div className="mt-4"><Alert type="error" message={serverError} /></div>}
+      <form onSubmit={handleSubmit} noValidate aria-busy={loading} className="flex flex-col gap-4 mt-6">
+        <Input label="Email address" name="email" type="email" autoComplete="username" value={formData.email}
+          onChange={handleChange} placeholder="you@example.com" error={errors.email} disabled={loading} required />
+        <Input label="Password" name="password" type="password" autoComplete="current-password" revealPassword
+          value={formData.password} onChange={handleChange} error={errors.password} disabled={loading} required />
+        <Button type="submit" size="lg" loading={loading} className="w-full mt-2">{loading ? 'Signing in...' : 'Sign in'}</Button>
+        <Link aria-disabled={loading} onClick={event => { if (loading) event.preventDefault(); }} to="/forgot-password" className="text-sm text-primary font-semibold hover:underline justify-center">Forgot your password?</Link>
+      </form>
+      <p className="text-center text-sm text-muted-foreground mt-4">New to Care4U?{' '}
+        <Link aria-disabled={loading} onClick={event => { if (loading) event.preventDefault(); }} to="/register" className="text-primary font-semibold hover:underline">Create an account</Link>
+      </p>
+    </AuthLayout>
   );
 };
-
 export default LoginPage;

@@ -1,9 +1,13 @@
 /**
+ * @file Card.jsx
+ * @module Shared controls (Stage 3A review limited to auth consumers)
  * @component Card
  * @desc      Shared Care4U content card used across authenticated modules.
  *            Provides consistent spacing, module-aware accent styling,
  *            soft elevation, optional title, icon, and numbered feature state.
  * @author    Wasana Karunanayaka (S/21/081)
+ * @param {Object} props Optional title, number, icon, className and child content.
+ * @returns {JSX.Element} Visual card only; caller owns permissions, state and requests.
  */
 
 const Card = ({

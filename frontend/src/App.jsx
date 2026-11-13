@@ -72,7 +72,10 @@ import AdminAnalyticsPage from './pages/admin/AdminAnalyticsPage';
 import AdminQrReissuePage from './pages/admin/AdminQrReissuePage';
 import AdminSystemSettingsPage from './pages/admin/AdminSystemSettingsPage';
 
-// Simple Route Guard using Zustand
+/** @component ProtectedRoute
+ * @param {Object} props Children and allowed roles. @returns {JSX.Element} Admitted children or sign-in redirect.
+ * Zustand changes run after render; UI role checks do not replace backend authorization.
+ */
 const ProtectedRoute = ({
   children,
   allowedRoles
@@ -86,6 +89,10 @@ const ProtectedRoute = ({
     useAuthStore(
       state => state.clearUser
     );
+
+  const roleMismatch = Boolean(user && allowedRoles && !allowedRoles.includes(user.role));
+  // Preserve the current wrong-role invalidation rule without updating Zustand during render.
+  useEffect(() => { if (roleMismatch) clearUser(); }, [roleMismatch, clearUser]);
 
   if (!user) {
     return (
@@ -103,8 +110,6 @@ const ProtectedRoute = ({
     // Do not guess another role destination here. Clear a mismatched
     // session to avoid redirect loops with the login route's own
     // role-based redirect handling.
-    clearUser();
-
     return (
       <Navigate
         to="/login"
@@ -116,6 +121,7 @@ const ProtectedRoute = ({
   return children;
 };
 
+/** @component App @returns {JSX.Element} Session-initialized web routing; Stage 3A review covers auth initialization/guards only. */
 function App() {
   const {
     user,
@@ -130,6 +136,7 @@ function App() {
 
   // Check backend for active session cookie on app load
   useEffect(() => {
+    /** @returns {Promise<void>} Restore UI identity only after /me acknowledgement; clear on denial/network failure and finish initialization. */
     const checkSession = async () => {
       try {
         const response = await fetch(

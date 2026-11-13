@@ -1,168 +1,75 @@
 /**
- * @file    ResetPasswordPage.jsx
- * @desc    Lets a user set a new password using a valid reset token
- *          (read from the URL query string, e.g. ?token=abc123).
- * @author  I.M.L.S. Idirisinghe (S/21/389)
+ * @file ResetPasswordPage.jsx
+ * @module Authentication UI
+ * @desc Validates the emailed token and new password, then waits for update acknowledgement.
+ * @author I.M.L.S. Idirisinghe (S/21/389)
  */
-
-import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import Input  from '../../components/common/Input';
+import { useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
-import Alert  from '../../components/common/Alert';
-import Card   from '../../components/common/Card';
-import { resetPassword } from '../../services/auth.service';
+import Alert from '../../components/common/Alert';
+import AuthLayout from '../../components/auth/AuthLayout';
+import { resetPassword, authErrorMessage } from '../../services/auth.service';
 
+/** @component ResetPasswordPage @returns {JSX.Element} Valid-token form, invalid-link recovery, or confirmed completion. */
 const ResetPasswordPage = () => {
   const [searchParams] = useSearchParams();
-  const token = searchParams.get('token');
-
-  const [formData, setFormData] = useState({
-    newPassword: '',
-    confirmPassword: '',
-  });
-
-  const [errors, setErrors]   = useState({});
+  const token = searchParams.get('token') || '';
+  const validToken = /^[a-f0-9]{64}$/.test(token);
+  const [formData, setFormData] = useState({ newPassword: '', confirmPassword: '' });
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
   const [success, setSuccess] = useState(false);
-
-  // Handle input changes
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    setErrors({ ...errors, [e.target.name]: '' });
-    setServerError('');
+  const inFlight = useRef(false);
+  /** @param {Object} event Input event. @returns {void} Update unchanged password characters and clear stale errors. */
+  const handleChange = event => {
+    setFormData({ ...formData, [event.target.name]: event.target.value });
+    setErrors({ ...errors, [event.target.name]: '' }); setServerError('');
   };
-
-  // Validate form before submitting
+  /** @returns {Object} New-password length and confirmation errors, independently of client token validation. */
   const validate = () => {
-    const newErrors = {};
-    if (!formData.newPassword) {
-      newErrors.newPassword = 'New password is required';
-    } else if (formData.newPassword.length < 8) {
-      newErrors.newPassword = 'Password must be at least 8 characters';
-    }
-    if (formData.confirmPassword !== formData.newPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-    return newErrors;
+    const next = {};
+    if (formData.newPassword.length < 8) next.newPassword = 'Password must be at least 8 characters';
+    if (!formData.confirmPassword) next.confirmPassword = 'Please confirm your password';
+    else if (formData.newPassword !== formData.confirmPassword) next.confirmPassword = 'Passwords do not match';
+    return next;
   };
-
-  // Handle form submit
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!token) {
-      setServerError('Missing or invalid reset link.');
-      return;
-    }
-
-    const validationErrors = validate();
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
-    }
-
-    setLoading(true);
-    setServerError('');
-
+  /** @param {Object} event Form event. @returns {Promise<void>} Guard token/duplicates, submit, clear secrets only on acknowledgement. */
+  const handleSubmit = async event => {
+    event.preventDefault();
+    if (inFlight.current || !validToken) return;
+    const next = validate(); setErrors(next);
+    if (Object.keys(next).length) { document.getElementById(Object.keys(next)[0])?.focus(); return; }
+    inFlight.current = true; setLoading(true); setServerError('');
     try {
-      const data = await resetPassword(token, formData.newPassword);
-
-      if (data.success) {
-        setSuccess(true);
-      } else {
-        setServerError(data.message || 'Something went wrong. Please try again.');
-      }
-    } catch (error) {
-      const message = error.response?.data?.message || 'Something went wrong. Please try again.';
-      setServerError(message);
-    } finally {
-      setLoading(false);
-    }
+      await resetPassword(token, formData.newPassword);
+      setSuccess(true); setFormData({ newPassword: '', confirmPassword: '' });
+    } catch (error) { setServerError(authErrorMessage(error, 'Could not reset your password. Request a new link if it has expired.')); }
+    finally { inFlight.current = false; setLoading(false); }
   };
-
   return (
-    <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-
-        {/* Logo & Title */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-brand-deep">Care4U</h1>
-          <p className="text-muted-foreground mt-1 font-medium">Centralized Healthcare Ecosystem</p>
-        </div>
-
-        {/* Card */}
-        <Card>
-          <h2 className="text-xl font-bold text-foreground mb-6">Set a new password</h2>
-
-          {!token && (
-            <div className="mb-4">
-              <Alert type="error" message="This reset link is missing or invalid. Please request a new one." />
-            </div>
-          )}
-
-          {serverError && (
-            <div className="mb-4">
-              <Alert type="error" message={serverError} />
-            </div>
-          )}
-
-          {success ? (
-            <div className="flex flex-col gap-4 text-center">
-              <Alert type="success" message="Your password has been reset successfully." />
-              <a href="/login" className="text-sm text-primary font-semibold hover:underline mt-2 inline-block">
-                Go to Login
-              </a>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-4">
-              <Input
-                label="New Password"
-                name="newPassword"
-                type="password"
-                value={formData.newPassword}
-                onChange={handleChange}
-                placeholder="Enter your new password"
-                error={errors.newPassword}
-                required
-              />
-
-              <Input
-                label="Confirm New Password"
-                name="confirmPassword"
-                type="password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                placeholder="Re-enter your new password"
-                error={errors.confirmPassword}
-                required
-              />
-
-              <Button
-                type="submit"
-                variant="primary"
-                size="lg"
-                loading={loading}
-                onClick={handleSubmit}
-                disabled={!token}
-                className="w-full mt-2"
-              >
-                {loading ? 'Resetting...' : 'Reset Password'}
-              </Button>
-            </div>
-          )}
-
-        </Card>
-
-        {/* Footer */}
-        <p className="text-center text-xs font-medium text-muted-foreground mt-6">
-          © 2026 Care4U — Group D | CSC3213
-        </p>
-
-      </div>
-    </div>
+    <AuthLayout title="Set a new password" description="Use at least 8 characters. Resetting your password does not sign you in.">
+      {!validToken ? <Alert type="error" message="This reset link is missing or invalid. Request a new link to continue." /> : success ? (
+        <Alert type="success" message="Your password has been reset. You can sign in now." />
+      ) : (
+        <form onSubmit={handleSubmit} noValidate aria-busy={loading} className="flex flex-col gap-4">
+          {serverError && <div>
+            <Alert type="error" message={serverError} />
+            <Link aria-disabled={loading} onClick={event => { if (loading) event.preventDefault(); }} to="/forgot-password"
+              className="text-sm text-primary font-semibold hover:underline">Request a new reset link</Link>
+          </div>}
+          <Input label="New password" name="newPassword" type="password" autoComplete="new-password" revealPassword
+            value={formData.newPassword} onChange={handleChange} error={errors.newPassword} disabled={loading} required />
+          <Input label="Confirm password" name="confirmPassword" type="password" autoComplete="new-password" revealPassword
+            value={formData.confirmPassword} onChange={handleChange} error={errors.confirmPassword} disabled={loading} required />
+          <Button type="submit" size="lg" loading={loading} className="w-full mt-2">{loading ? 'Resetting...' : 'Reset password'}</Button>
+        </form>
+      )}
+      <p className="text-center mt-4"><Link aria-disabled={loading} onClick={event => { if (loading) event.preventDefault(); }} to={validToken ? '/login' : '/forgot-password'} className="text-sm text-primary font-semibold hover:underline">
+        {validToken ? 'Back to sign in' : 'Request a new reset link'}</Link></p>
+    </AuthLayout>
   );
 };
-
 export default ResetPasswordPage;
