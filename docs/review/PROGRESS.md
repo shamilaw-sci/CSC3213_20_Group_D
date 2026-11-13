@@ -100,3 +100,7 @@ The import evidence is in `evidence/source-imports.csv`. This is a static import
 Stage 2 should reconcile the existing stabilization diff and establish a disposable database/schema plus regression fixtures for auth/approval/session, patient consent, booking concurrency, dispensing rollback and lab completion. Begin with shared foundations and the coordinated patient/doctor/appointment contracts. Resolve attribution independently where possible; keep uncertain original authors in the register. No application implementation is authorized by completion of this Stage 1 report alone.
 
 For every later batch, update tracker review/verification status and findings, keep comment-only work separate where practical, and compare with this baseline. Never label a runtime journey passed from lint/build/parser results.
+
+## Read-only database/hosting discovery — 2026-11-13
+
+[Discovery report](DATABASE_HOSTING_DISCOVERY.md): Supabase confirmed; Render is the documented/configured backend target, deployed topology unverified. PostgreSQL 18.3 export tools found outside PATH. Trusted-TLS metadata connection failed before queries; CA certificate/verified schema export required. No live records/tests/writes, export or disposable database creation. Stage 3A remains complete and paused for independent review; only discovery documentation follows it.

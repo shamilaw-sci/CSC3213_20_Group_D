@@ -40,3 +40,7 @@ Use the guardrails in [NEXT_STAGE_PLAN.md](NEXT_STAGE_PLAN.md): loopback, review
 - Persist/load/rotate/save/destroy sessions and exercise store failure/expiry with synthetic cookies. Separately test actual browser cross-origin/Secure/SameSite behavior and verified reverse-proxy access paths. Memory limiter tests do not prove these contracts or multi-process global limits.
 
 Until executed on the verified disposable environment, schema compatibility, actual persistence, rollback and concurrency acceptance remain **PENDING DB**, regardless of passing query mocks or controlled interleavings.
+
+## Discovery update — 2026-11-13
+
+See [database/hosting discovery](DATABASE_HOSTING_DISCOVERY.md). PostgreSQL 18.3 client/server tools were found outside PATH; the earlier PATH-only result is historical. Supabase hosting is user-confirmed. Live metadata/export remains unavailable because trusted TLS fails before queries; a verified CA/connection or existing sanitized verified export is required. No live records/tests/writes or disposable database creation occurred.
