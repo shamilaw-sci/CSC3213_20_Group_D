@@ -90,5 +90,25 @@
     "produced": false,
     "reason": "No verified schema export and no authenticated trusted-TLS metadata connection; no reconstructed SQL emitted"
   },
-  "scope": "Read-only discovery; documentation changes only. No app/server startup, deployment, push, merge, migration or disposable database creation."
+  "scope": "Read-only discovery; documentation changes only. No app/server startup, deployment, push, merge, migration or disposable database creation.",
+  "supplied_catalog_update": {
+    "received_date": "2026-11-13",
+    "source": "User-supplied SQL Editor result; not independently connected",
+    "path": "docs/review/evidence/supabase-catalog-2026-11-13.csv",
+    "sha256": "5d2655c5b1e5f3fdd988c7acd2cad269965636d5d80da40d6a23806680429aca",
+    "rows": 535,
+    "category_counts": {
+      "column": 312,
+      "constraint": 114,
+      "environment": 1,
+      "extension": 5,
+      "index": 68,
+      "relation": 35
+    },
+    "server_version": "17.6",
+    "captured_at_utc": "2026-11-13T08:29:51.271191",
+    "report": "docs/review/SUPABASE_CATALOG_ASSESSMENT.md",
+    "applied_migrations": "No ledger supplied; matching object states only",
+    "restore_ready_export": false
+  }
 }

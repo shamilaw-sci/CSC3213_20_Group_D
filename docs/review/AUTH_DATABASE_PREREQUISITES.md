@@ -1,5 +1,7 @@
 # Auth/session database verification prerequisites
 
+**Update, 2026-11-13:** User-supplied catalog results now report PostgreSQL 17.6, 35 public tables and auth/session definitions. See [catalog assessment](SUPABASE_CATALOG_ASSESSMENT.md). Original connection/discovery notes below remain historical; no restore-ready export or applied migration history is available.
+
 2026-11-12, Stage 2B. **PENDING DB**. No verified executable base schema or identified disposable local PostgreSQL was available. `psql`, `pg_ctl`, `initdb` and `docker` were not found on PATH. That is not proof that PostgreSQL is absent everywhere. No live `.env`, database connection or data export was used. The [Stage 1B search](evidence/stage1b/schema-search.json) is retained; no new lead justified repeating it.
 
 ## Exact objects needed

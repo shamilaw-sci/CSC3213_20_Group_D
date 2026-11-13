@@ -1,5 +1,7 @@
 # Database and hosting discovery
 
+**Update, 2026-11-13:** User-supplied catalog results now report PostgreSQL 17.6, 35 public tables and auth/session definitions. See [catalog assessment](SUPABASE_CATALOG_ASSESSMENT.md). Original connection/discovery notes below remain historical; no restore-ready export or applied migration history is available.
+
 2026-11-13. Read-only follow-up to completed Stage 3A at `229405a45e56c3d9cf701e001b4d5f89359eb897`, on `codex/care4u-final-review-2026-11-12`; entry working tree clean. No new application batch began. [Sanitized evidence](evidence/database-hosting-discovery.json) records attempts, tools and migration hashes. No credentials, connection URLs, project identifiers or application records are retained here.
 
 ## Database and migration evidence

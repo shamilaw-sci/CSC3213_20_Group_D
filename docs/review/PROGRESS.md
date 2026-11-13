@@ -104,3 +104,7 @@ For every later batch, update tracker review/verification status and findings, k
 ## Read-only database/hosting discovery — 2026-11-13
 
 [Discovery report](DATABASE_HOSTING_DISCOVERY.md): Supabase confirmed; Render is the documented/configured backend target, deployed topology unverified. PostgreSQL 18.3 export tools found outside PATH. Trusted-TLS metadata connection failed before queries; CA certificate/verified schema export required. No live records/tests/writes, export or disposable database creation. Stage 3A remains complete and paused for independent review; only discovery documentation follows it.
+
+## Supplied schema metadata — 2026-11-13
+
+[Catalog assessment](SUPABASE_CATALOG_ASSESSMENT.md) records 535 user-supplied metadata rows from PostgreSQL 17.6: 35 public tables, 312 columns, 114 constraints and 68 indexes. Auth/session structures are now evidenced; migration history and restore-ready DDL remain pending. RLS settings require separate grants/API exposure assessment. No live records/tests/writes or new application batch.
