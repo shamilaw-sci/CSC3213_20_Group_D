@@ -1,6 +1,7 @@
 /**
  * @file    App.jsx
- * @desc    Root application component. Defines all client-side routes with Zustand Auth and Session Hydration.
+ * @module  Web Routing
+ * @desc    Chooses which pages each user can open and restores login sessions.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -72,9 +73,10 @@ import AdminAnalyticsPage from './pages/admin/AdminAnalyticsPage';
 import AdminQrReissuePage from './pages/admin/AdminQrReissuePage';
 import AdminSystemSettingsPage from './pages/admin/AdminSystemSettingsPage';
 
-/** @component ProtectedRoute
- * @param {Object} props Children and allowed roles. @returns {JSX.Element} Admitted children or sign-in redirect.
- * Zustand changes run after render; UI role checks do not replace backend authorization.
+/**
+ * FEATURE: Protect pages by user role.
+ * LOGIC: No login or wrong role → Send user to Login Page.
+ * A wrong role also clears the saved user; the backend checks real permissions.
  */
 const ProtectedRoute = ({
   children,
@@ -91,7 +93,7 @@ const ProtectedRoute = ({
     );
 
   const roleMismatch = Boolean(user && allowedRoles && !allowedRoles.includes(user.role));
-  // Preserve the current wrong-role invalidation rule without updating Zustand during render.
+  // Clear an incorrect saved role after rendering, not while rendering the page.
   useEffect(() => { if (roleMismatch) clearUser(); }, [roleMismatch, clearUser]);
 
   if (!user) {
@@ -107,9 +109,7 @@ const ProtectedRoute = ({
     allowedRoles &&
     !allowedRoles.includes(user.role)
   ) {
-    // Do not guess another role destination here. Clear a mismatched
-    // session to avoid redirect loops with the login route's own
-    // role-based redirect handling.
+    // Return to Login Page rather than opening another role's dashboard.
     return (
       <Navigate
         to="/login"
@@ -121,7 +121,12 @@ const ProtectedRoute = ({
   return children;
 };
 
-/** @component App @returns {JSX.Element} Session-initialized web routing; Stage 3A review covers auth initialization/guards only. */
+/**
+ * FEATURE: Restore login and open the correct Care4U screens.
+ * LOGIC: Check the saved login with the backend before showing any page.
+ * Then choose the screen and layout using the page address and user role.
+ * Visible buttons and form fields are inside their page/layout files, not here.
+ */
 function App() {
   const {
     user,
@@ -134,9 +139,9 @@ function App() {
     setIsInitializing
   ] = useState(true);
 
-  // Check backend for active session cookie on app load
+  // FEATURE: Keep users signed in after a refresh when their server session is valid.
   useEffect(() => {
-    /** @returns {Promise<void>} Restore UI identity only after /me acknowledgement; clear on denial/network failure and finish initialization. */
+    // LOGIC: Valid session → restore user; invalid session or error → clear user.
     const checkSession = async () => {
       try {
         const response = await fetch(
@@ -179,7 +184,7 @@ function App() {
     clearUser
   ]);
 
-  // Prevent routing until we know if the user is actually logged in
+  // Show the "Loading Care4U..." screen until the login check finishes.
   if (isInitializing) {
     return (
       <div
@@ -215,7 +220,7 @@ function App() {
           }
         />
 
-        {/* Public Routes */}
+        {/* Login Page — logged-in users go to their own role dashboard. */}
         <Route
           path="/login"
           element={
@@ -300,7 +305,7 @@ function App() {
           }
         />
 
-        {/* Staff/Public Lookup routes (Backend handles exact permissions) */}
+        {/* Patient QR Lookup Page — the backend decides who can view patient data. */}
         <Route
           path="/lookup/:qrCodeId"
           element={
@@ -309,7 +314,8 @@ function App() {
         />
 
 
-        {/* Patient pages — restricted to 'patient' */}
+        {/* Patient pages — Profile, Medical Records, Prescriptions, Appointments, and more.
+            These pages share PatientLayout; AIChatWidget appears in the patient area. */}
         <Route
           path="/patient"
           element={
@@ -389,7 +395,7 @@ function App() {
           />
         </Route>
 
-        {/* --- DOCTOR ROUTES --- */}
+        {/* Doctor pages — Dashboard, Appointment Queue, Consultation, and Profile. */}
         <Route
           path="/doctor"
           element={
@@ -398,7 +404,7 @@ function App() {
             </ProtectedRoute>
           }
         >
-          {/* Default redirect to dashboard if they just go to /doctor */}
+          {/* Opening /doctor takes the doctor to their Dashboard. */}
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<DoctorDashboard />} />
           <Route path="queue" element={<AppointmentQueuePage />} />
@@ -406,7 +412,7 @@ function App() {
           <Route path="profile" element={<DoctorProfilePage />} />
         </Route>
 
-        {/* --- PHARMACY ROUTES --- */}
+        {/* Pharmacy pages — Dashboard, Patient QR Lookup, Dispensing History, Profile, and Prescription Lookup. */}
         <Route
           path="/pharmacy"
           element={
@@ -467,7 +473,7 @@ function App() {
           element={<LabRegisterPage />}
         />
 
-        {/* Laboratory pages — restricted to 'lab_technician' */}
+        {/* Laboratory pages — Dashboard, Test Queue, and Report Upload. */}
         <Route
           path="/laboratory"
           element={
@@ -485,7 +491,7 @@ function App() {
           <Route path="report/:requestId" element={<LabReportUploadPage />} />
         </Route>
 
-        {/* Hospital pages — restricted to 'hospital_staff' */}
+        {/* Hospital pages — Dashboard, OPD Queue, and Emergency alerts. */}
         <Route
           path="/hospital"
           element={
@@ -532,7 +538,7 @@ function App() {
 
         </Route>
 
-        {/* Hospital Break-Glass snapshot — standalone crisis screen */}
+        {/* Emergency Snapshot Page — standalone hospital staff screen for emergency patient details. */}
         <Route
           path="/hospital/emergency/snapshot/:patientId"
           element={
@@ -547,7 +553,7 @@ function App() {
         />
 
 
-        {/* Admin pages — restricted to 'admin' */}
+        {/* Admin pages — Accounts, Approvals, Audit Log, Health Content, Emergency Oversight, and Settings. */}
         <Route
           path="/admin"
           element={

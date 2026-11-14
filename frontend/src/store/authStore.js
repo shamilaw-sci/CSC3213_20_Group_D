@@ -1,22 +1,21 @@
+
 /**
- * @file authStore.js
- * @module Store
- * @desc Zustand authentication state for the Care4U web application.
- * @author Wasana Karunanayaka (S/21/081)
+ * @file    authStore.js
+ * @module  Authentication
+ * @desc    Keeps the logged-in user's details available across web pages.
+ * @author  Wasana Karunanayaka (S/21/081)
  */
 
 import { create } from 'zustand';
 
 /**
- * Create volatile UI state; this is not a credential or authorization store.
- * @param {Function} set - Zustand setter.
- * @returns {Object} user and local state actions; cookies remain with the client.
+ * FEATURE: Remember the signed-in user while the website is open.
+ * LOGIC: Save user details after login and clear them when needed.
+ * Clearing this store only updates the screen; server logout is handled separately.
  */
 const useAuthStore = create((set) => ({
-  user: null, 
-  /** @param {Object} user Public API identity. @returns {void} Sets UI state only. */
+  user: null,
   setUser: (user) => set({ user }),
-  /** @returns {void} Clears UI state; caller must separately request server logout. */
   clearUser: () => set({ user: null }),
 }));
 

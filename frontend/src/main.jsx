@@ -1,3 +1,4 @@
+
 /**
  * @file main.jsx
  * @module Application
@@ -12,6 +13,7 @@ import { Toaster } from 'react-hot-toast'
 import './index.css'
 import App from './App.jsx'
 
+// Mark fetched data as stale after 5 minutes and retry failed data queries once.
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -21,10 +23,13 @@ const queryClient = new QueryClient({
   },
 });
 
+// Start the web app with shared data handling and notification messages.
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <App />
+
+      {/* Global notifications: success and error messages shown at the top-right. */}
       <Toaster
         position="top-right"
         toastOptions={{
