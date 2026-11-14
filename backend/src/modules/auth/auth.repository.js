@@ -1,17 +1,15 @@
 /**
- * @file auth.repository.js
- * @module auth
- * @desc Database queries for authentication - register, login, and OTP verification.
- * @author I.M.L.S Idirisinghe (S/21/389)
+ * @file    auth.repository.js
+ * @module  Authentication
+ * @desc    Runs database queries for users, profiles, verification codes and password resets.
+ * @author  I.M.L.S. Idirisinghe (S/21/389)
  */
 
 const { pool } = require('../../config/db');
 
 /**
- * Executes a database operation inside a PostgreSQL transaction.
- *
- * @param {Function} callback - Database work to execute using the transaction client
- * @returns {Promise<*>} Result returned by the callback
+ * FEATURE: Keep related account changes together.
+ * LOGIC: Start a database transaction → save everything if successful; undo all changes if any step fails.
  */
 const withTransaction = async (callback) => {
     const client = await pool.connect();
@@ -35,20 +33,8 @@ const withTransaction = async (callback) => {
 };
 
 /**
- * Creates a new user in the users table with is_verified = true.
- * Only called from verifyOtp, after OTP verification has already
- * succeeded - so the email/OTP is verified at account creation.
- *
- * Patients are approved immediately after OTP verification.
- * Doctors, pharmacists, lab technicians, and hospital staff require
- * admin approval before they can fully use their account.
- *
- * @param {string} email - User email
- * @param {string} phone - User phone number
- * @param {string} passwordHash - Bcrypt hashed password
- * @param {string} role - User role
- * @param {Object} db - PostgreSQL pool or transaction client
- * @returns {Promise<object>} Created user row
+ * FEATURE: Apply the correct approval rule for new users.
+ * LOGIC: Patients are approved after email verification; staff accounts start as pending until admin approval.
  */
 const createUser = async (
     email,
@@ -100,16 +86,7 @@ const createUser = async (
     return result.rows[0];
 };
 
-/**
- * Creates a new patient profile linked to a user.
- * @param {string} userId - UUID of the user
- * @param {string} fullName - Patient full name
- * @param {string} nic - National Identity Card number
- * @param {string} dateOfBirth - Date of birth (YYYY-MM-DD)
- * @param {string} qrCodeId - Unique QR code identifier
- * @param {Object} db - PostgreSQL pool or transaction client
- * @returns {Promise<object>} Created patient row
- */
+
 const createPatient = async (
     userId,
     fullName,
@@ -149,18 +126,7 @@ const createPatient = async (
     return result.rows[0];
 };
 
-/**
- * Creates a new doctor profile linked to a user.
- * Newly registered doctors are not profile-verified until an admin
- * approves their registration.
- *
- * @param {string} userId - UUID of the user
- * @param {string} fullName - Doctor full name
- * @param {string} slmcRegNumber - SLMC register number
- * @param {string} specialization - Doctor specialization
- * @param {Object} db - PostgreSQL pool or transaction client
- * @returns {Promise<object>} Created doctor row
- */
+
 const createDoctor = async (
     userId,
     fullName,
@@ -198,16 +164,7 @@ const createDoctor = async (
     return result.rows[0];
 };
 
-/**
- * Creates a new pharmacy profile linked to a user (pharmacist role).
- * @param {string} userId - UUID of the user
- * @param {string} name - Pharmacy name
- * @param {string} licenseNumber - Pharmacy license number
- * @param {string} address - Pharmacy address
- * @param {string} phone - Pharmacy contact phone
- * @param {Object} db - PostgreSQL pool or transaction client
- * @returns {Promise<object>} Created pharmacy row
- */
+
 const createPharmacy = async (
     userId,
     name,
@@ -251,16 +208,7 @@ const createPharmacy = async (
     return result.rows[0];
 };
 
-/**
- * Creates a new laboratory profile linked to a user (lab_technician role).
- * @param {string} userId - UUID of the user
- * @param {string} name - Laboratory name
- * @param {string} licenseNumber - License number
- * @param {string} address - Address
- * @param {string} phone - Contact phone
- * @param {Object} db - PostgreSQL pool or transaction client
- * @returns {Promise<object>} Created laboratory row
- */
+
 const createLaboratory = async (
     userId,
     name,
@@ -304,16 +252,7 @@ const createLaboratory = async (
     return result.rows[0];
 };
 
-/**
- * Creates a new hospital profile linked to a user (hospital_staff role).
- * @param {string} userId - UUID of the user
- * @param {string} name - Hospital name
- * @param {string} type - Hospital type
- * @param {string} location - Location/Address
- * @param {string} departments - Departments JSON/Text
- * @param {Object} db - PostgreSQL pool or transaction client
- * @returns {Promise<object>} Created hospital row
- */
+
 const createHospital = async (
     userId,
     name,
@@ -358,9 +297,8 @@ const createHospital = async (
 };
 
 /**
- * Finds a user by email address.
- * @param {string} email - Email to search for
- * @returns {Promise<object|null>} User row or null
+ * FEATURE: Find an existing account by email.
+ * LOGIC: Look up the user before registration, login or password recovery.
  */
 const findUserByEmail = async (email) => {
     const result = await pool.query(
@@ -374,11 +312,8 @@ const findUserByEmail = async (email) => {
 };
 
 /**
- * Saves a new password reset token to the database.
- * @param {string} token - The secure hex token
- * @param {string} userId - UUID of the user
- * @param {Date} expiresAt - Expiration timestamp
- * @returns {Promise<Object>} The inserted row
+ * FEATURE: Store a password reset request.
+ * LOGIC: Save a newly generated token with its account and expiry time.
  */
 const savePasswordResetToken = async (
     token,
@@ -406,11 +341,8 @@ const savePasswordResetToken = async (
 };
 
 /**
- * Retrieves and locks an unused/unexpired reset token. Call inside withTransaction
- * to retain the row lock through password update and token consumption.
- * @param {string} token - Raw reset token.
- * @param {Object} [db=pool] - Transaction client for atomic consumption.
- * @returns {Promise<object|null>} Valid token row or null.
+ * FEATURE: Check a reset link before changing the password.
+ * LOGIC: Find an unused token that has not expired; lock its row while the password is being changed.
  */
 const getValidPasswordResetToken = async (token, db = pool) => {
     const result = await db.query(
@@ -427,10 +359,8 @@ const getValidPasswordResetToken = async (token, db = pool) => {
 };
 
 /**
- * Marks a still-usable reset token as used on the supplied client.
- * @param {string} token - Raw token key.
- * @param {Object} [db=pool] - Shared transaction client.
- * @returns {Promise<Object|null>} Consumed token row, or null if unavailable.
+ * FEATURE: Prevent a reset link from being used again.
+ * LOGIC: Mark the token used only if it is still unused and not expired.
  */
 const markTokenAsUsed = async (token, db = pool) => {
     const result = await db.query(
@@ -445,11 +375,8 @@ const markTokenAsUsed = async (token, db = pool) => {
 };
 
 /**
- * Updates a user's password.
- * @param {string} userId
- * @param {string} newPasswordHash - Already-hashed replacement password.
- * @param {Object} [db=pool] - Shared transaction client.
- * @returns {Promise<void>} Resolves after the UPDATE; errors propagate.
+ * FEATURE: Save the new password securely.
+ * LOGIC: Update the stored password hash rather than a plain-text password.
  */
 const updateUserPassword = async (
     userId,
@@ -468,15 +395,8 @@ const updateUserPassword = async (
 };
 
 /**
- * Creates or overwrites a pending OTP verification record for an email.
- * @param {string} email - Email being registered
- * @param {string} phone - Phone number
- * @param {string} passwordHash - Bcrypt hashed password
- * @param {string} role - User role
- * @param {string} otpCode - 6-digit OTP code
- * @param {Date} otpExpiresAt - OTP expiry timestamp
- * @param {object} profileData - Role-specific profile fields
- * @returns {Promise<object>} The upserted otp_verifications row
+ * FEATURE: Keep one pending verification record per email.
+ * LOGIC: Save a new pending registration or replace the previous pending details for that email.
  */
 const upsertOtpVerification = async (
     email,
@@ -533,15 +453,8 @@ const upsertOtpVerification = async (
 };
 
 /**
- * Atomically replaces only the observed pending record's OTP and expiry.
- * No insert fallback: deletion or a new row with the same email returns null.
- * Registration identity fields are never included in this update. The single
- * statement may wait for a database row lock; email is sent after it returns.
- * @param {string} pendingId - ID observed by resend, not just its email key.
- * @param {string} email - Exact pending email to constrain the intended record.
- * @param {string} otpCode - New six-digit code.
- * @param {Date} otpExpiresAt - New expiry.
- * @returns {Promise<Object|null>} Updated identity/expiry or null if no match.
+ * FEATURE: Replace only the code for the same pending registration.
+ * LOGIC: Update the matching pending record; do not accidentally recreate a registration already verified.
  */
 const replacePendingOtp = async (pendingId, email, otpCode, otpExpiresAt) => {
     const result = await pool.query(
@@ -555,11 +468,8 @@ const replacePendingOtp = async (pendingId, email, otpCode, otpExpiresAt) => {
 };
 
 /**
- * Finds pending registration data; a transaction client requests a row lock.
- * The raw OTP/password hash stay server-side and are never returned by controllers.
- * @param {string} email - Email to search for
- * @param {Object} [db=pool] - Transaction client to lock through verification/deletion.
- * @returns {Promise<object|null>} otp_verifications row or null
+ * FEATURE: Check the pending verification code.
+ * LOGIC: During verification, lock the record until the account is created or the operation fails.
  */
 const findOtpByEmail = async (email, db = pool) => {
     const result = await db.query(
@@ -574,10 +484,8 @@ const findOtpByEmail = async (email, db = pool) => {
 };
 
 /**
- * Deletes a pending OTP verification record by email.
- * @param {string} email - Email to delete the pending record for
- * @param {Object} db - PostgreSQL pool or transaction client
- * @returns {Promise<void>} Resolves after deletion on the supplied client.
+ * FEATURE: Finish verification.
+ * LOGIC: Remove the pending code as part of the same account-creation transaction.
  */
 const deleteOtpByEmail = async (
     email,
@@ -591,11 +499,8 @@ const deleteOtpByEmail = async (
 };
 
 /**
- * Increments a user's failed login attempt count.
- * @param {string} userId - UUID of the user
- * @param {number} maxAttempts - Number of failures before locking
- * @param {number} cooldownMinutes - Lockout duration in minutes
- * @returns {Promise<object>} Updated row (failed_login_attempts, locked_until)
+ * FEATURE: Lock an account after repeated wrong passwords.
+ * LOGIC: Count failed attempts in the database; once the limit is reached, set the lock end time.
  */
 const incrementFailedLoginAttempts = async (
     userId,
@@ -631,9 +536,8 @@ const incrementFailedLoginAttempts = async (
 };
 
 /**
- * Resets a user's failed login attempt count and clears lockout after valid login.
- * @param {string} userId - UUID of the user
- * @returns {Promise<void>} Resolves after the update; errors propagate.
+ * FEATURE: Clear login failures after a successful login.
+ * LOGIC: Reset the failed-attempt counter and remove the lock time.
  */
 const resetFailedLoginAttempts = async (userId) => {
     await pool.query(

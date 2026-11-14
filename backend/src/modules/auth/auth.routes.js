@@ -1,10 +1,8 @@
 /**
- * @file auth.routes.js
- * @module auth
- * @desc Eight authentication routes: OTP/recovery have IP and field budgets;
- *       login retains its IP limit; /me revalidates the session/account.
- *       Controllers own validation and lifecycle; this file does not send email.
- * @author I.M.L.S Idirisinghe (S/21/389)
+ * @file    auth.routes.js
+ * @module  Routes
+ * @desc    Connects registration, login, verification and password recovery requests to their handlers.
+ * @author  I.M.L.S. Idirisinghe (S/21/389)
  */
 
 const express = require('express');

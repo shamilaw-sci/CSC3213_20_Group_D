@@ -1,17 +1,14 @@
 /**
- * @file auth.limits.js
- * @module auth
- * @desc Configurable pre-controller OTP/recovery budgets using the installed
- *       express-rate-limit MemoryStore. Counts all attempts in this process;
- *       restart and multiple workers do not share or preserve these counters.
- * @author Codex Review Assistant (Stage 2B implementation; no student credit claimed)
+ * @file    auth.limits.js
+ * @module  Authentication
+ * @desc    Limits repeated verification and password recovery requests.
  */
 const { createHash } = require('crypto');
 const { rateLimit, ipKeyGenerator } = require('express-rate-limit');
 
-/** Read positive integer settings; reject invalid settings instead of disabling limits.
- * @param {Object} env Environment values (no secrets required).
- * @returns {Object} Window milliseconds and request budgets.
+/**
+ * FEATURE: Set safe authentication request limits.
+ * LOGIC: Use configured positive limits or defaults; reject invalid settings instead of turning limits off.
  */
 function readLimitConfig(env) {
   const defaults = {
@@ -33,11 +30,9 @@ function readLimitConfig(env) {
   }));
 }
 
-/** Build a field bucket without storing raw addresses or reset tokens in the key.
- * Email normalization affects counting only; database lookups are unchanged.
- * Missing/non-string/empty fields fall back to an IP bucket (IPv6 /56).
- * @param {string} field Body field name.
- * @returns {Function} Request-to-key function; digest is not email anonymization.
+/**
+ * FEATURE: Count repeated requests for the same email or reset token.
+ * LOGIC: Use a one-way digest for the counting key; missing values count against the sender IP.
  */
 function fieldKey(field) {
   return req => {
@@ -49,11 +44,9 @@ function fieldKey(field) {
   };
 }
 
-/** Construct six independent budgets. Email generation budgets are intentionally
- * shared across registration, resend and forgot-password. IP runs before field
- * budgets; an IP rejection does not spend the field budget. Errors fail closed.
- * @param {Object} options Optional synthetic environment/store factory for tests.
- * @returns {Object} Real middleware instances; default stores are in-process only.
+/**
+ * FEATURE: Slow down repeated verification and recovery requests.
+ * LOGIC: Apply separate IP and email/token limits; registration, resend and password recovery share email limits.
  */
 function createAuthLimiters({ env = process.env, storeFactory } = {}) {
   const config = readLimitConfig(env);

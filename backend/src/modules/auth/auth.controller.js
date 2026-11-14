@@ -1,7 +1,7 @@
 /**
  * @file    auth.controller.js
- * @module  auth
- * @desc    Handles HTTP requests and responses for authentication.
+ * @module  Authentication
+ * @desc    Checks incoming requests and returns responses for account and session actions.
  * @author  I.M.L.S. Idirisinghe (S/21/389)
  */
 
@@ -22,11 +22,8 @@ const laboratoryRepository = require('../laboratory/laboratory.repository');
 const hospitalRepository = require('../hospital/hospital.repository');
 
 /**
- * Rotate the anonymous session ID, assign the identity, then confirm persistence.
- * Failed persistence removes the in-memory identity and attempts destruction.
- * @param {Object} req - Request with express-session middleware installed.
- * @param {Object} user - Public identity fields only; never a password hash.
- * @returns {Promise<void>} Resolves only after the session store acknowledges save.
+ * FEATURE: Create a safer login session.
+ * LOGIC: Replace the old session ID, save the logged-in user and wait for the session to be stored.
  */
 const saveAuthenticatedSession = async (req, user) => {
   try {
@@ -46,19 +43,12 @@ const saveAuthenticatedSession = async (req, user) => {
   }
 };
 
-/**
- * Validate required JSON string fields before calling database/hash providers.
- * @param {*} value - Untrusted request-body field.
- * @returns {boolean} Whether it is a nonempty string (passwords are not trimmed).
- */
+
 const isNonemptyString = (value) => typeof value === 'string' && value.trim().length > 0;
 
 /**
- * POST /api/auth/register
- * Validate scalar fields, role and password length; stage registration and report email submission.
- * @param {Object} req - body: email, phone, password, role, optional object profileData.
- * @param {Object} res - Express response.
- * @returns {Object|Promise<Object>} 200 staged; 400 validation/duplicate, 502 delivery rejection, 500 unexpected failure.
+ * FEATURE: Start account registration.
+ * LOGIC: Check required details and role, then send a verification code instead of creating the account immediately.
  */
 const registerController = async (req, res) => {
   try {
@@ -149,11 +139,8 @@ const registerController = async (req, res) => {
 
 
 /**
- * POST /api/auth/resend-otp
- * Validate email and replace/send a pending verification code.
- * @param {Object} req - body.email string.
- * @param {Object} res - Express response.
- * @returns {Object|Promise<Object>} 200 submitted; 400 missing, 404 no pending record, 502 delivery rejection, 500 unexpected.
+ * FEATURE: Resend the registration verification code.
+ * LOGIC: Check the email and request a new code for an existing pending registration.
  */
 const resendOtpController = async (req, res) => {
   try {
@@ -203,11 +190,8 @@ const resendOtpController = async (req, res) => {
 
 
 /**
- * POST /api/auth/verify-otp
- * Complete account creation; approved identities get a regenerated, saved session. Pending professionals receive approvalPending and no session user.
- * @param {Object} req - body.email and six-digit body.otpCode.
- * @param {Object} res - Express response.
- * @returns {Object|Promise<Object>} 201 created; 400 invalid/expired/duplicate, 404 no pending record, 500 DB/session failure.
+ * FEATURE: Finish registration after email verification.
+ * LOGIC: Check the six-digit code; patients get a login session, while staff wait for admin approval.
  */
 const verifyOtpController = async (req, res) => {
   try {
@@ -294,11 +278,8 @@ const verifyOtpController = async (req, res) => {
 
 
 /**
- * POST /api/auth/login
- * Validate credentials, resolve the role-linked profile, rotate the session and await persistence before returning public identity fields.
- * @param {Object} req - body.email/password and middleware-provided session.
- * @param {Object} res - Express response.
- * @returns {Object|Promise<Object>} 200 identity; 400 malformed input, 401 bad credentials, 403 restricted account, 429 lockout, 500 DB/session failure.
+ * FEATURE: Sign in an eligible user.
+ * LOGIC: Check email/password and account status, find the matching role profile, then replace and save the session.
  */
 const loginController = async (req, res) => {
   try {
@@ -425,11 +406,8 @@ const loginController = async (req, res) => {
 
 
 /**
- * POST /api/auth/logout
- * Destroy the server session before clearing the default cookie. Already-absent sessions are idempotent; store failure never returns success.
- * @param {Object} req - middleware-provided optional session.
- * @param {Object} res - Express response.
- * @returns {Object|Promise<Object>} 200 destroyed/absent; 500 destruction failure.
+ * FEATURE: Log out safely.
+ * LOGIC: Destroy the server session before clearing the login cookie; report a failure if the session cannot be destroyed.
  */
 const logoutController = (req, res) => {
   if (!req.session) {
@@ -455,11 +433,8 @@ const logoutController = (req, res) => {
 
 
 /**
- * GET /api/auth/me
- * Return the public identity already admitted by isAuthenticated. This handler alone does not query fresh account state.
- * @param {Object} req - session.user, refreshed/gated by preceding middleware.
- * @param {Object} res - Express response.
- * @returns {Object|Promise<Object>} 200 public session user; 401 absent identity.
+ * FEATURE: Check the current login.
+ * LOGIC: Return saved user details only when a valid session is present; the route checks account status first.
  */
 const getMeController = (req, res) => {
   if (!req.session || !req.session.user) {
@@ -478,11 +453,8 @@ const getMeController = (req, res) => {
 
 
 /**
- * POST /api/auth/forgot-password
- * Validate email and relay the generic recovery response without confirming account existence or delivery.
- * @param {Object} req - body.email string.
- * @param {Object} res - Express response.
- * @returns {Object|Promise<Object>} 200 generic; 400 malformed, 500 repository/unexpected failure.
+ * FEATURE: Request password recovery.
+ * LOGIC: Return the same public message whether or not the email belongs to an account.
  */
 const forgotPasswordController = async (req, res) => {
   try {
@@ -514,11 +486,8 @@ const forgotPasswordController = async (req, res) => {
 
 
 /**
- * POST /api/auth/reset-password
- * Require the generated token format and minimum password length, then request token-bound password replacement. This does not sign the caller in.
- * @param {Object} req - body.token lowercase hex and body.newPassword string.
- * @param {Object} res - Express response.
- * @returns {Object|Promise<Object>} 200 confirmed reset; 400 invalid/expired/used token or malformed password, 500 unexpected failure.
+ * FEATURE: Set a new password using a reset link.
+ * LOGIC: Check token format and password length; reject missing, expired or already-used tokens.
  */
 const resetPasswordController = async (req, res) => {
   try {

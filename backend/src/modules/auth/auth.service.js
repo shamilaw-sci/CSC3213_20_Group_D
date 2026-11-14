@@ -1,8 +1,8 @@
 /**
- * @file auth.service.js
- * @module auth
- * @desc Business logic for authentication - register, login, and password reset
- * @author I.M.L.S. Idirisinghe (S/21/389)
+ * @file    auth.service.js
+ * @module  Authentication
+ * @desc    Handles registration, verification, login protection and password recovery rules.
+ * @author  I.M.L.S. Idirisinghe (S/21/389)
  */
 
 const bcrypt = require('bcryptjs');
@@ -38,15 +38,8 @@ const {
 
 
 /**
- * Hash a registration password, replace the pending record and email its code.
- * Account/profile creation happens only in verifyOtp; email failure leaves a
- * pending record so the user can request another code. Never log the code.
- * @param {string} email - Exact email lookup key (no case normalization here).
- * @param {string} phone - Registration contact value.
- * @param {string} password - Plain password validated by the HTTP controller.
- * @param {string} role - One of the five public registration roles.
- * @param {Object} profileData - Role-specific fields consumed after verification.
- * @returns {Promise<Object>} Email and expiry; rejects on duplicate/provider/DB failure.
+ * FEATURE: Register with email verification.
+ * LOGIC: Reject an existing email, hash the password, save a pending registration and email a code valid for 10 minutes.
  */
 const register = async (email, phone, password, role, profileData) => {
     const existingUser = await findUserByEmail(email);
@@ -81,13 +74,8 @@ const register = async (email, phone, password, role, profileData) => {
 
 
 /**
- * Replace the code/expiry for an existing pending registration and send email.
- * Update only the observed row's code/expiry; never restore stale registration
- * fields or recreate a row consumed by verification. Only the stored code is
- * valid: concurrent delivery may finish out of order. Provider failure leaves
- * the replacement stored. Email submission happens after the atomic write.
- * @param {string} email - Pending registration's exact email key.
- * @returns {Promise<Object>} Email and new expiry, or rejects if missing/send fails.
+ * FEATURE: Replace an unused verification code.
+ * LOGIC: Only update an existing pending registration; the newest stored code is the one that works.
  */
 const resendOtp = async (email) => {
     const pending = await findOtpByEmail(email);
@@ -117,12 +105,8 @@ const resendOtp = async (email) => {
 
 
 /**
- * Lock and validate a pending code, create its user/profile and delete it using
- * one transaction client. Exact expiry and invalid expiry fail closed. The
- * requested SQL locking/rollback still requires disposable PostgreSQL testing.
- * @param {string} email - Pending registration key.
- * @param {string} otpCode - Six digits, validated at the HTTP boundary.
- * @returns {Promise<Object>} Created user/profile, with professional approval pending.
+ * FEATURE: Create the account only after a valid code.
+ * LOGIC: Check code and expiry, then create user + role profile and remove the code in one database transaction.
  */
 const verifyOtp = async (email, otpCode) => {
     const result = await withTransaction(async (db) => {
@@ -223,13 +207,8 @@ const verifyOtp = async (email, otpCode) => {
 
 
 /**
- * Validate credentials with persisted account lockout and approval restrictions.
- * Locked accounts are rejected before hashing; otherwise account-state details
- * are returned only after a correct password. This function does not create a
- * session: the controller resolves the profile and rotates/saves the session.
- * @param {string} email - Exact email key.
- * @param {string} password - Plain password to compare with the stored hash.
- * @returns {Promise<Object>} User row; failed passwords increment the stored count.
+ * FEATURE: Check credentials and prevent repeated guessing.
+ * LOGIC: After five wrong passwords, lock the account for 15 minutes; require active status and staff approval.
  */
 const login = async (email, password) => {
     const user = await findUserByEmail(email);
@@ -284,11 +263,8 @@ const login = async (email, password) => {
 
 
 /**
- * Store a random, one-hour reset token and attempt email for an existing user.
- * Unknown accounts and transport failures use the same public response. DB
- * failures still propagate. Tokens are currently stored raw (documented risk).
- * @param {string} email - Exact account email key.
- * @returns {Promise<Object>} Generic response; not proof of provider delivery.
+ * FEATURE: Send a password reset link without revealing accounts.
+ * LOGIC: If the email exists, save a random token that expires in one hour; return the same message for unknown emails.
  */
 const forgotPassword = async (email) => {
     const user = await findUserByEmail(email);
@@ -328,12 +304,8 @@ const forgotPassword = async (email) => {
 
 
 /**
- * Lock an unused/unexpired token and update password/consume token on one client.
- * A write/consumption failure rejects and asks withTransaction to roll back.
- * Other sessions, other reset tokens and login lockout are not changed here.
- * @param {string} token - Raw 64-character lowercase hex reset token.
- * @param {string} newPassword - Controller-validated plain password (8+ characters).
- * @returns {Promise<void>} Resolves after transaction commit is acknowledged.
+ * FEATURE: Change a password only once per valid reset link.
+ * LOGIC: Lock and check the unused token, update the hashed password and mark the token used in one transaction.
  */
 const resetPassword = async (token, newPassword) => {
     await withTransaction(async (db) => {
