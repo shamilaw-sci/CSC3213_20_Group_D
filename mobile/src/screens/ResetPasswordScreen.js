@@ -21,7 +21,7 @@ import { resetPassword, authErrorMessage } from '../services/auth.service';
 
 const RESET_TOKEN_PATTERN = /^[a-f0-9]{64}$/;
 
-/** @param {string} value Pasted token or HTTP(S) link. @returns {string} Exact lowercase 64-hex token, or empty on invalid input. */
+/** Accept a reset token or an emailed web link; reject anything with an invalid token. */
 const extractToken = (value) => {
   const input = value.trim();
   if (RESET_TOKEN_PATTERN.test(input)) return input;
@@ -36,10 +36,7 @@ const extractToken = (value) => {
   }
 };
 
-/** @component ResetPasswordScreen
- * @param {Object} props Parent navigation/success callbacks; no credentials persist in props.
- * @returns {JSX.Element} Scrollable keyboard-aware auth UI. Input callbacks update local state and clear errors; visibility callbacks only toggle masking.
- */
+/** Set a new password using the reset link and matching password fields. */
 export default function ResetPasswordScreen({ onBackToLogin }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -51,7 +48,7 @@ export default function ResetPasswordScreen({ onBackToLogin }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  /** @returns {Promise<void>} Validate and submit once; release busy state on every outcome. */
+    /** Check link and passwords, send one request, then clear the fields after success. */
   const handleReset = async () => {
     if (inFlight.current) return;
     const token = extractToken(resetLink);
@@ -155,6 +152,7 @@ export default function ResetPasswordScreen({ onBackToLogin }) {
                  <Text style={styles.backText}>{showConfirmation ? 'Hide' : 'Show'}</Text>
                </TouchableOpacity>
                </View>
+              {/* Reset Password button — submits the new password */}
               <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: Boolean(loading) }} style={[styles.button, loading && styles.disabled]} onPress={handleReset} disabled={loading}>
                 {loading ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.buttonText}>Reset password</Text>}
               </TouchableOpacity>

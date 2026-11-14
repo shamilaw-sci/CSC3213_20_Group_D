@@ -48,10 +48,7 @@ const COLORS = {
   dangerSoft: '#FFF1F1',
 };
 
-/** @component LoginScreen
- * @param {Object} props Parent navigation/success callbacks; no credentials persist in props.
- * @returns {JSX.Element} Scrollable keyboard-aware auth UI. Input callbacks update local state and clear errors; visibility callbacks only toggle masking.
- */
+/** Login screen: checks the details, then opens the signed-in user’s page after backend approval. */
 export default function LoginScreen({
   onLoginSuccess,
   onForgotPassword,
@@ -67,7 +64,7 @@ export default function LoginScreen({
   const inFlight = useRef(false);
   const [error, setError] = useState('');
 
-  /** @returns {boolean} Required-field/new-password checks; server remains authoritative. */
+    /** Check that an email and password were entered before sending a request. */
   const validate = () => {
     if (!email.trim()) {
       setError('Email is required');
@@ -82,7 +79,7 @@ export default function LoginScreen({
     return true;
   };
 
-  /** @returns {Promise<void>} Validate and submit once; release busy state on every outcome. */
+    /** Sign in once, show any error, and pass the verified user to the app. */
   const handleLogin = async () => {
     if (inFlight.current) return;
     if (!validate()) {
@@ -236,6 +233,7 @@ export default function LoginScreen({
                 PASSWORD
               </Text>
 
+              {/* Forgot Password link — opens password recovery */}
               <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: Boolean(loading) }}
                 activeOpacity={0.7}
                 onPress={onForgotPassword}
@@ -306,6 +304,7 @@ export default function LoginScreen({
 
           </View>
 
+          {/* Sign In button — checks the form and requests login */}
           <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: Boolean(loading) }}
             style={[
               styles.primaryButton,
@@ -345,6 +344,7 @@ export default function LoginScreen({
 
           </View>
 
+          {/* Create Account button — opens registration */}
           <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: Boolean(loading) }}
             style={styles.secondaryButton}
             activeOpacity={0.8}

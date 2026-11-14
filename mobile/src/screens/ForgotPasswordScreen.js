@@ -52,10 +52,7 @@ const COLORS = {
   greenSoft: '#EDF9F2',
 };
 
-/** @component ForgotPasswordScreen
- * @param {Object} props Parent navigation/success callbacks; no credentials persist in props.
- * @returns {JSX.Element} Scrollable keyboard-aware auth UI. Input callbacks update local state and clear errors; visibility callbacks only toggle masking.
- */
+/** Password recovery screen: request a reset email without revealing whether the address exists. */
 export default function ForgotPasswordScreen({
   onBackToLogin,
   onResetPassword,
@@ -67,7 +64,7 @@ export default function ForgotPasswordScreen({
   const [error, setError] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
-  /** @returns {boolean} Required-field/new-password checks; server remains authoritative. */
+    /** Do not send a request until the email field has been filled. */
   const validate = () => {
     if (!email.trim()) {
       setError('Email is required');
@@ -77,7 +74,7 @@ export default function ForgotPasswordScreen({
     return true;
   };
 
-  /** @returns {Promise<void>} Validate and submit once; release busy state on every outcome. */
+    /** Request one reset email and show a neutral confirmation after success. */
   const handleSubmit = async () => {
     if (inFlight.current) return;
     if (!validate()) {
@@ -187,6 +184,7 @@ export default function ForgotPasswordScreen({
 
               </View>
 
+              {/* Use a Reset Link button — opens the password reset form */}
               <TouchableOpacity accessibilityRole="button" disabled={loading} accessibilityState={{ disabled: Boolean(loading) }}
                 style={styles.primaryButton}
                 activeOpacity={0.85}
@@ -259,6 +257,7 @@ export default function ForgotPasswordScreen({
 
               </View>
 
+              {/* Request Reset Link button — sends the recovery email request */}
               <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: Boolean(loading) }}
                 style={[
                   styles.primaryButton,
@@ -289,6 +288,7 @@ export default function ForgotPasswordScreen({
             </>
           )}
 
+          {/* Back to Sign In button — returns to login */}
           <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: Boolean(loading) }}
             style={styles.backButton}
             activeOpacity={0.75}

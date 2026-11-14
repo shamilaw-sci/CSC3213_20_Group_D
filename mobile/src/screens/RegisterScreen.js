@@ -56,10 +56,7 @@ const COLORS = {
   dangerSoft: '#FFF1F1',
 };
 
-/** @component RegisterScreen
- * @param {Object} props Parent navigation/success callbacks; no credentials persist in props.
- * @returns {JSX.Element} Scrollable keyboard-aware auth UI. Input callbacks update local state and clear errors; visibility callbacks only toggle masking.
- */
+/** Registration screen: collects patient or doctor details before email verification. */
 export default function RegisterScreen({
   onRegisterSuccess,
   onBackToLogin,
@@ -87,7 +84,7 @@ export default function RegisterScreen({
   const inFlight = useRef(false);
   const [error, setError] = useState('');
 
-  /** @returns {boolean} Required-field/new-password checks; server remains authoritative. */
+    /** Check common account fields and the details required for the chosen role. */
   const validate = () => {
     if (!email.trim()) {
       setError('Email is required');
@@ -161,7 +158,7 @@ export default function RegisterScreen({
     return true;
   };
 
-  /** @returns {Promise<void>} Validate and submit once; release busy state on every outcome. */
+    /** Submit once; when accepted, open OTP verification. The account is not ready yet. */
   const handleRegister = async () => {
     if (inFlight.current) return;
     if (!validate()) {
@@ -299,6 +296,7 @@ export default function RegisterScreen({
               ACCOUNT TYPE
             </Text>
 
+{/* Account Type — Patient / Doctor choice changes the required fields */}
             <View style={styles.roleRow}>
 
               <TouchableOpacity
@@ -755,6 +753,7 @@ export default function RegisterScreen({
 
           </View>
 
+          {/* Register button — validates the form and requests an email code */}
           <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: Boolean(loading) }}
             style={[
               styles.primaryButton,

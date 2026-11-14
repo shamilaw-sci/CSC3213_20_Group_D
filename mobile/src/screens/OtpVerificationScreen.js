@@ -74,10 +74,7 @@ const COLORS = {
    SCREEN
 ========================================================= */
 
-/** @component OtpVerificationScreen
- * @param {Object} props Pending email and parent success/back callbacks.
- * @returns {JSX.Element} Code entry with mutually exclusive verify/resend, recoverable missing context and an advisory countdown.
- */
+/** Verify the email code before registration finishes or staff approval begins. */
 export default function OtpVerificationScreen({
   email,
   onVerifySuccess,
@@ -127,7 +124,7 @@ export default function OtpVerificationScreen({
     return () => clearInterval(timer);
   }, [resendCooldown]);
 
-  /** @returns {boolean} Require pending context and exactly six digits before requesting verification. */
+    /** Require the registration email and exactly six digits before verification. */
   const validate = () => {
     if (!email) { setError('No registration in progress. Return to registration.'); return false; }
     if (!otpCode) {
@@ -143,7 +140,7 @@ export default function OtpVerificationScreen({
     return true;
   };
 
-  /** @returns {Promise<void>} Verify once, preserving the professional-approval branch; never overlap resend. */
+    /** Check the code once; staff awaiting approval are not signed in automatically. */
   const handleVerify = async () => {
     if (inFlight.current) return;
     if (!validate()) {
@@ -188,7 +185,7 @@ export default function OtpVerificationScreen({
     }
   };
 
-  /** @returns {Promise<void>} Request replacement outside verification; even a delivery failure may supersede the old code. */
+    /** Request a new code only after the resend wait has ended; clear the old entry. */
   const handleResend = async () => {
     if (inFlight.current || !email) return;
     if (
@@ -243,7 +240,7 @@ export default function OtpVerificationScreen({
     }
   };
 
-  /** @param {string} text Entered/pasted text. @returns {void} Keep at most six digits and clear stale errors. */
+    /** Keep only numbers from a pasted or typed code, up to six digits. */
   const handleOtpChange = (
     text
   ) => {
@@ -274,6 +271,7 @@ export default function OtpVerificationScreen({
       <View style={[styles.card, { marginTop: 0 }]}>
         <Text style={styles.title}>No registration in progress</Text>
         <Text style={styles.helperText}>Your registration email is missing. Start registration again.</Text>
+        {/* Back to Registration button — returns to the account form */}
         <TouchableOpacity disabled={loading || resending} accessibilityState={{ disabled: Boolean(loading || resending) }} style={styles.primaryButton} accessibilityRole="button" onPress={onBackToRegister}>
           <Text style={styles.primaryButtonText}>Back to registration</Text>
         </TouchableOpacity>
@@ -469,6 +467,7 @@ export default function OtpVerificationScreen({
               VERIFY
           ================================================ */}
 
+          {/* Verify Email button — submits the six-digit code */}
           <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: verifyDisabled }}
             style={[styles.primaryButton, verifyDisabled && styles.buttonDisabled]}
             activeOpacity={0.85}
@@ -507,6 +506,7 @@ export default function OtpVerificationScreen({
               Didn't receive the code?
             </Text>
 
+            {/* Resend Code button — requests a replacement code after the wait */}
             <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: resendDisabled }}
               style={[styles.resendButton, resendDisabled && styles.resendButtonDisabled]}
               activeOpacity={0.75}
