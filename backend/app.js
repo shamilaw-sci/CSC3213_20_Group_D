@@ -228,11 +228,12 @@ app.use('/api/admin/health-content', healthContentRoutes);
  * @param {Object} req Request.
  * @param {Object} res Response.
  * @param {Function} next Express error-handler arity marker (unused).
- * @returns {void} Generic 500; current logger receives the error object.
+ * @returns {void} Generic 500; raw error objects are deliberately not logged.
  */
 app.use((err, req, res, next) => {
 
-  console.error('Unhandled error:', err);
+  // Error objects can contain SQL details, provider URLs or request payloads.
+  console.error('Unhandled request failure.');
 
   res.status(500).json({
 

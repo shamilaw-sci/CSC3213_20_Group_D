@@ -63,11 +63,9 @@ if (
   );
 }
 
-const genAI =
-  new GoogleGenerativeAI(
-    process.env
-      .GEMINI_API_KEY
-  );
+// Optional integrations must not prevent unrelated API modules from loading.
+const genAI = process.env.GEMINI_API_KEY
+  ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY) : null;
 
 /* =========================================================
    INITIALIZE GROQ
@@ -82,12 +80,8 @@ if (
   );
 }
 
-const groq =
-  new Groq({
-    apiKey:
-      process.env
-        .GROQ_API_KEY,
-  });
+const groq = process.env.GROQ_API_KEY
+  ? new Groq({ apiKey: process.env.GROQ_API_KEY }) : null;
 
 /* =========================================================
    SHARED CARE4U RESPONSE RULES
@@ -378,7 +372,7 @@ const runGeminiWithRetry =
 
         console.error(
           `${operationName} attempt ${attempt}/${GEMINI_MAX_ATTEMPTS} failed:`,
-          error.message
+          'Provider request failed.'
         );
 
         const canRetry =
@@ -472,6 +466,7 @@ const generateAIResponse =
     ====================================================== */
 
     try {
+      if (!genAI) throw new Error('Primary AI is not configured');
       const model =
         genAI
           .getGenerativeModel({
@@ -514,7 +509,7 @@ const generateAIResponse =
     ) {
       console.error(
         'Gemini AI Generation Error after retries:',
-        geminiError.message
+        'Provider request failed.'
       );
 
       console.warn(
@@ -527,6 +522,7 @@ const generateAIResponse =
     ====================================================== */
 
     try {
+      if (!groq) throw new Error('Fallback AI is not configured');
       const groqResponse =
         await groq
           .chat
@@ -585,7 +581,7 @@ const generateAIResponse =
     ) {
       console.error(
         'Groq AI Fallback Error:',
-        groqError.message
+        'Provider request failed.'
       );
 
       console.warn(
@@ -633,6 +629,7 @@ const generateAIVisionResponse =
     mimeType
   ) => {
     try {
+      if (!genAI) throw new Error('Primary AI is not configured');
       const model =
         genAI
           .getGenerativeModel({
@@ -689,7 +686,7 @@ const generateAIVisionResponse =
     ) {
       console.error(
         'AI Vision Generation Error after retries:',
-        error.message
+        'Provider request failed.'
       );
 
       throw new Error(

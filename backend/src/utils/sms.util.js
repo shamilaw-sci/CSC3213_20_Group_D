@@ -31,7 +31,8 @@ const sendEmergencySMS = async (
   }
 
   const location =
-    latitude && longitude
+    Number.isFinite(latitude) && Number.isFinite(longitude) &&
+    Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180
       ? `https://www.google.com/maps?q=${latitude},${longitude}`
       : 'Location unavailable';
 
@@ -59,7 +60,7 @@ const sendEmergencySMS = async (
 
     return true;
   } catch (error) {
-    console.error('[Telegram] Emergency notification failed:', error.message);
+    console.error('[Telegram] Emergency notification failed.');
     return false;
   }
 };

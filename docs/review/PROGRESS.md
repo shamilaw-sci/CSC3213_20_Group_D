@@ -118,3 +118,7 @@ For every later batch, update tracker review/verification status and findings, k
 ## Supplied schema metadata — 2026-11-13
 
 [Catalog assessment](SUPABASE_CATALOG_ASSESSMENT.md) records 535 user-supplied metadata rows from PostgreSQL 17.6: 35 public tables, 312 columns, 114 constraints and 68 indexes. Auth/session structures are now evidenced; migration history and restore-ready DDL remain pending. RLS settings require separate grants/API exposure assessment. No live records/tests/writes or new application batch.
+
+### Shared-foundation batch — 2026-11-14
+
+Reviewed config/audit/provider helpers; fixed leaked pg probe client, production TLS trust/URL override, audit finish outcome and secret/path redaction, email HTML escaping/provider error privacy, optional AI/Storage startup, reminder date argument and zero-coordinate SOS formatting. Eleven new synthetic checks plus 12 affected retained contracts PASS; backend syntax PASS. [Shared viva](../viva/05-shared-runtime-and-integrations.md) records functions and limitations. No real provider/DB/job execution. Next: commit this coherent batch, then Doctor/Appointment and Prescription; source review of those route guards has begun.

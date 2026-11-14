@@ -72,3 +72,5 @@ Before changing a disputed header, inspect its creation patch, rename/copy linea
 ## Patient Stage 4A
 
 Retained Wasana Karunanayaka S/21/081 headers with provisional tracker Git evidence: consent service bb21f15, repository 0c5da2a, profile web 98a9ea1/mobile fe29b4d. Maintainer identity is not sole-author proof. Doctor/Appointment repositories retain Tharindu S/21/166 with UdayakumaraDMTL introductions. New tests/fixtures credit Codex Review Assistant, and original-author baseline columns remain unchanged. Details and scope are in STAGE4A.md and the Patient viva guide.
+
+Shared foundations: db/supabase/AI/SOS retained supported Wasana headers, audit retained Tharindu, reminders retained Pamudika. email.js previously lacked an author; introduction 8ba93fc (S/21/001) is provisional with multiple addition candidates, so its new header explicitly says original author unconfirmed. No maintainer was substituted for an original author.

@@ -29,6 +29,7 @@ backend/server.js,./src/utils/expiryJob,Static literal import; does not prove ru
 backend/server.js,./src/utils/reminderJob,Static literal import; does not prove runtime reachability
 backend/server.js,dotenv,Static literal import; does not prove runtime reachability
 backend/src/config/db.js,dotenv,Static literal import; does not prove runtime reachability
+backend/src/config/db.js,node:url,Static literal import; does not prove runtime reachability
 backend/src/config/db.js,pg,Static literal import; does not prove runtime reachability
 backend/src/config/supabase.js,@supabase/supabase-js,Static literal import; does not prove runtime reachability
 backend/src/config/supabase.js,ws,Static literal import; does not prove runtime reachability

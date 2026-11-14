@@ -81,3 +81,7 @@ The prior `docs/final-review/05_remaining_issues.md` listed H03/H05/H06/H08 and 
 ## Later regression recording
 
 For each authorized implementation batch, record the parent snapshot/commit, changed paths, finding IDs, exact checks and observed results. A failure becomes a regression only when the same check passed on the preserved baseline under comparable conditions. Unexecuted runtime checks remain unknown. Preserve historical IDs when closing/revising findings so earlier reports can be traced.
+
+## Shared foundation update — 2026-11-14
+
+Fixed with focused synthetic checks: startup pool-client leak; production TLS verification with explicit CA/URL override handling; pre-outcome/raw-path audit metadata and nested credential exposure; dynamic email HTML injection and raw provider exceptions; missing optional AI/Storage startup failure; reminder date argument mismatch; zero-coordinate SOS omission. Actual certificate provisioning/handshake, audit durability/coverage/retention, provider/clinical privacy, job duplication/status policy and remaining module permissions remain OPEN. See the shared-runtime viva once for details. No production/read/alert/email/payment/deployment action occurred.

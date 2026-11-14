@@ -16,7 +16,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const ws = require('ws');
 
-const supabase = createClient(
+const supabase = process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY ? createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY,
   {
@@ -24,6 +24,7 @@ const supabase = createClient(
       transport: ws,
     },
   }
-);
+) : null;
 
+// Storage is optional at API startup; photo services report 503 when not configured.
 module.exports = { supabase };

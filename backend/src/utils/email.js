@@ -1,13 +1,20 @@
 /**
  * @file email.js
  * @module utils
- * @desc Email sending via Gmail SMTP (Nodemailer). Switched from Resend
- * because Resend's free tier restricts recipients to the account owner's
- * own email until a domain is verified - Gmail SMTP has no such
- * restriction, so real users can actually receive their OTP/reset emails.
+ * @desc Sends Care4U email through configured Gmail SMTP; acknowledgements mean
+ *       provider submission, not confirmed delivery. Templates escape display values.
+ * @author Original author unconfirmed; preserved introduction evidence is in OWNERSHIP.md.
  */
 
 const nodemailer = require('nodemailer');
+
+/** Escape interpolated email text/attributes; never let names/reasons become HTML.
+ * @param {*} value Display value. @returns {string} HTML-escaped text (not a URL allow-list).
+ */
+const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char =>
+  ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+
+
 
 const transporter =
   nodemailer.createTransport({
@@ -71,8 +78,8 @@ const sendLabReportNotification =
                 </h2>
 
                 <p style="color: #64748B;">
-                  Dear ${patientName}, your results for
-                  <strong>${testName}</strong>
+                  Dear ${escapeHtml(patientName)}, your results for
+                  <strong>${escapeHtml(testName)}</strong>
                   are now available in your Care4U account.
                 </p>
 
@@ -96,12 +103,12 @@ const sendLabReportNotification =
 
       console.error(
         'sendLabReportNotification error:',
-        err
+        'Email submission failed.'
       );
 
       return {
         success: false,
-        error: err.message
+        error: 'Email submission failed.'
       };
     }
   };
@@ -154,9 +161,9 @@ const sendAppointmentReminder =
                 </h2>
 
                 <p style="color: #64748B;">
-                  Dear ${patientName}, this is a reminder of your
+                  Dear ${escapeHtml(patientName)}, this is a reminder of your
                   upcoming appointment on
-                  <strong>${appointmentTime}</strong>.
+                  <strong>${escapeHtml(appointmentTime)}</strong>.
                 </p>
 
                 <p style="color: #64748B; font-size: 12px; margin-top: 24px;">
@@ -179,12 +186,12 @@ const sendAppointmentReminder =
 
       console.error(
         'sendAppointmentReminder error:',
-        err
+        'Email submission failed.'
       );
 
       return {
         success: false,
-        error: err.message
+        error: 'Email submission failed.'
       };
     }
   };
@@ -238,8 +245,8 @@ const sendEmergencyAccessAlert =
                 </h2>
 
                 <p style="color: #64748B;">
-                  ${patientName}'s medical record was accessed via
-                  Break-the-Glass emergency access by ${accessedBy}.
+                  ${escapeHtml(patientName)}'s medical record was accessed via
+                  Break-the-Glass emergency access by ${escapeHtml(accessedBy)}.
                 </p>
 
                 <p style="color: #64748B; font-size: 12px; margin-top: 24px;">
@@ -262,12 +269,12 @@ const sendEmergencyAccessAlert =
 
       console.error(
         'sendEmergencyAccessAlert error:',
-        err
+        'Email submission failed.'
       );
 
       return {
         success: false,
-        error: err.message
+        error: 'Email submission failed.'
       };
     }
   };
@@ -341,7 +348,7 @@ const sendOtpEmail =
                       letter-spacing: 4px;
                     "
                   >
-                    ${otpCode}
+                    ${escapeHtml(otpCode)}
                   </p>
 
                 </div>
@@ -370,12 +377,12 @@ const sendOtpEmail =
 
       console.error(
         'sendOtpEmail error:',
-        err
+        'Email submission failed.'
       );
 
       return {
         success: false,
-        error: err.message
+        error: 'Email submission failed.'
       };
     }
   };
@@ -431,7 +438,7 @@ const sendConsentAccessOtpEmail =
                 </h2>
 
                 <p style="color: #64748B;">
-                  Dear ${patientName || 'Patient'},
+                  Dear ${escapeHtml(patientName || 'Patient')},
                 </p>
 
                 <p style="color: #64748B;">
@@ -465,7 +472,7 @@ const sendConsentAccessOtpEmail =
                       letter-spacing: 4px;
                     "
                   >
-                    ${otpCode}
+                    ${escapeHtml(otpCode)}
                   </p>
 
                 </div>
@@ -532,12 +539,12 @@ const sendConsentAccessOtpEmail =
 
       console.error(
         'sendConsentAccessOtpEmail error:',
-        err
+        'Email submission failed.'
       );
 
       return {
         success: false,
-        error: err.message
+        error: 'Email submission failed.'
       };
     }
   };
@@ -597,10 +604,10 @@ const sendPasswordResetEmail =
 
                 <p style="margin: 16px 0;">
                   <a
-                    href="${resetLink}"
+                    href="${escapeHtml(resetLink)}"
                     style="color: #2E75B6;"
                   >
-                    ${resetLink}
+                    ${escapeHtml(resetLink)}
                   </a>
                 </p>
 
@@ -630,12 +637,12 @@ const sendPasswordResetEmail =
 
       console.error(
         'sendPasswordResetEmail error:',
-        err
+        'Email submission failed.'
       );
 
       return {
         success: false,
-        error: err.message
+        error: 'Email submission failed.'
       };
     }
   };
@@ -708,7 +715,7 @@ const sendRejectionEmail =
                   </p>
 
                   <p style="color: #991b1b; margin: 8px 0 0 0;">
-                    ${reason}
+                    ${escapeHtml(reason)}
                   </p>
 
                 </div>
@@ -738,12 +745,12 @@ const sendRejectionEmail =
 
       console.error(
         'sendRejectionEmail error:',
-        err
+        'Email submission failed.'
       );
 
       return {
         success: false,
-        error: err.message
+        error: 'Email submission failed.'
       };
     }
   };

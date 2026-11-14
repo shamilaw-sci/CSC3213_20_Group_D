@@ -53,7 +53,6 @@ const sendAppointmentReminders = async () => {
       const emailResult = await sendAppointmentReminder(
         appt.patient_email,
         appt.patient_name,
-        appt.doctor_name,
         appointmentDate
       );
 

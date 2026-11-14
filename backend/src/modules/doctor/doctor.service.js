@@ -38,6 +38,12 @@ const uploadDoctorPhoto = async (doctorId, file) => {
     throw error;
   }
 
+  if (!supabase) {
+    const error = new Error('Photo uploads are unavailable. Please try again later.');
+    error.statusCode = 503;
+    throw error;
+  }
+
   const existing = await doctorRepository.getDoctorById(doctorId);
 
   if (!existing) {

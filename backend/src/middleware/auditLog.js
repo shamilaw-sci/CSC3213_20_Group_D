@@ -24,47 +24,36 @@ const logAudit = async (userId, action, entityType, entityId, details = {}, ipAd
       `INSERT INTO audit_logs 
        (user_id, action, entity_type, entity_id, details, ip_address)
        VALUES ($1, $2, $3, $4, $5, $6)`,
-      [userId, action, entityType, entityId, JSON.stringify(details), ipAddress]
+      [userId, action, entityType, entityId, JSON.stringify(details, (key, value) => /password|secret|token|otp|authorization|cookie|api[_-]?key/i.test(key) ? '[REDACTED]' : value), ipAddress]
     );
   } catch (error) {
-    console.error('Audit log error:', error.message);
+    console.error('Audit log persistence failed.');
   }
 };
 
-/**
- * Express middleware that automatically logs every API request.
- * Attach to any route to enable automatic audit logging.
- *
- * Resolves entityId from req.params — checks `:id` first (the most common
- * name), then falls back to whatever the first route param actually is
- * (e.g. `:reportId`, `:appointmentId`), so routes that don't name their
- * param "id" still get the correct entity logged instead of null.
- *
- * @param {string} action     - Action name to log
- * @param {string} entityType - Entity type being affected
+/** Audit an instrumented route after the response finishes, including denial/error status.
+ * Capture the actor before handlers can clear/change session state. Store route patterns,
+ * not raw URLs/query strings that can contain QR capabilities or personal identifiers.
+ * Middleware is best-effort; a successful response cannot be changed after finish.
+ * @param {string} action Audit event name. @param {string} entityType Entity category.
+ * @returns {Function} Express middleware; does not imply complete route or abort coverage.
  */
-const auditMiddleware = (action, entityType) => {
-  return async (req, res, next) => {
-    try {
-      const userId = req.session?.user?.id || null;
-      const paramValues = Object.values(req.params || {});
-      const entityId = req.params?.id || paramValues[0] || null;
-      const ipAddress = req.ip || req.connection?.remoteAddress || null;
-      const details = {
-        method: req.method,
-        path: req.path,
-        userAgent: req.headers['user-agent'],
-      };
-
-      await logAudit(userId, action, entityType, entityId, details, ipAddress);
-    } catch (error) {
-      console.error('auditMiddleware error:', error.message);
-    }
-    next();
-  };
+const auditMiddleware = (action, entityType) => (req, res, next) => {
+  const userId = req.session?.user?.id || null;
+  const candidate = req.params?.id || Object.values(req.params || {})[0];
+  // The supplied schema defines entity_id as UUID; QR/NIC params are not UUIDs.
+  const entityId = typeof candidate === 'string' &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(candidate) ? candidate : null;
+  const ipAddress = req.ip || req.connection?.remoteAddress || null;
+  const pattern = typeof req.route?.path === 'string' ? req.route.path : '[instrumented route]';
+  const details = { method: req.method, path: `${req.baseUrl || ''}${pattern}`,
+    userAgent: String(req.headers?.['user-agent'] || '').slice(0, 512) };
+  res.once('finish', () => {
+    const statusCode = res.statusCode;
+    void logAudit(userId, action, entityType, entityId, { ...details, statusCode,
+      outcome: statusCode >= 400 ? 'failed' : 'completed' }, ipAddress);
+  });
+  next();
 };
 
-module.exports = {
-  logAudit,
-  auditMiddleware,
-};
+module.exports = { logAudit, auditMiddleware };

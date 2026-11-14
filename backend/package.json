@@ -7,9 +7,10 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "check": "node scripts/check-syntax.js",
-    "test": "npm run check && npm run test:auth && npm run test:patient",
+    "test": "npm run check && npm run test:auth && npm run test:patient && npm run test:shared",
     "test:auth": "node --test tests/auth-access.test.cjs tests/auth-contracts.test.cjs tests/auth-resend.test.cjs tests/auth-limits.test.cjs",
-    "test:patient": "node --test tests/patient-consent.test.cjs"
+    "test:patient": "node --test tests/patient-consent.test.cjs",
+    "test:shared": "node --test tests/shared-foundations.test.cjs"
   },
   "keywords": [],
   "author": "",

@@ -1,5 +1,7 @@
 # Care4U viva preparation
 
+[Shared runtime, audit and integrations](05-shared-runtime-and-integrations.md) explains configuration, audit outcomes, provider helpers, scheduled jobs and verification limits.
+
 [Patient profile, medical records and consent](04-patient-profile-records-consent.md) explains Stage 4A workflows, functions/state, schema relationships, verification limits and Ctrl+F change locations. Remaining modules continue autonomously; historical stage approval pauses below are superseded.
 
 Current authentication sample: [backend/session workflow](02-authentication-and-access.md), [backend file reference](02-authentication-file-reference.md), [complete web/mobile UI file reference](03-authentication-ui-file-reference.md) and [Ctrl+F change map](02-authentication-change-map.md). [Stage 3A](../review/STAGE3A.md) adds 56 source/UI checks to the retained 89 backend checks, plus exact synthetic-browser states/screenshots. Native/device, real DB/cookies/provider/deployment acceptance remains pending. Shared files and other modules are explicitly partial; stop for independent review.
