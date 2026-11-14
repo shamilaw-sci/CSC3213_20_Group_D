@@ -1,3 +1,4 @@
+
 /**
  * @file patientAccess.js
  * @module Middleware
@@ -9,17 +10,10 @@ const appointmentRepository =
   require('../modules/appointment/appointment.repository');
 
 /**
- * Allows a patient to access only their own profile. Doctors must provide an
- * active appointmentId belonging to both themselves and the selected patient.
- * Pharmacist access is enabled only for explicitly selected workflow routes.
- *
- * @param {Object} options
- * @param {boolean} [options.allowDoctor=false]
- * @param {boolean} [options.allowPharmacist=false]
- * @returns {Function} Async middleware using req.session.user, route patient ID and
- * query/body appointmentId. Owning patient or matching in-progress doctor may
- * proceed; otherwise 403. Repository errors return a generic 500. This guard
- * does not unlock consent categories; the record service applies that filter.
+ * FEATURE: Protect patient records.
+ * LOGIC: Patients can access only their own records.
+ * Doctors need an in-progress appointment with the patient before access is allowed.
+ * Pharmacy access is allowed only when the route specifically enables it.
  */
 const authorizePatientResource = ({
   allowDoctor = false,
@@ -31,6 +25,7 @@ const authorizePatientResource = ({
       const patientId =
         req.params?.id || req.params?.patientId || req.body?.patientId;
 
+      // A patient's login must match the requested patient profile.
       if (
         user?.role === 'patient' &&
         user.profile_id &&
@@ -39,6 +34,7 @@ const authorizePatientResource = ({
         return next();
       }
 
+      // This exception works only on routes that enable pharmacist access.
       if (user?.role === 'pharmacist' && allowPharmacist) {
         return next();
       }
@@ -57,6 +53,7 @@ const authorizePatientResource = ({
         const appointment =
           await appointmentRepository.getAppointmentById(appointmentId);
 
+        // The appointment must match both people and still be in progress.
         if (
           appointment &&
           appointment.status === 'in_progress' &&

@@ -1,18 +1,14 @@
+
 /**
  * @file    supabase.js
  * @module  Config
- * @desc    Initializes the Supabase JS client using the service role key.
- *          Used server-side only, for Storage operations (e.g. patient
- *          photo uploads). Separate from the `pg` pool in db.js, which
- *          handles all direct table queries.
- *
- *          The `ws` transport is passed explicitly because Node.js < 22
- *          has no native WebSocket support, and the underlying
- *          @supabase/realtime-js client throws on init without one —
- *          even though this project only uses Storage, not Realtime.
+ * @desc    Connects the backend to Supabase Storage for file uploads.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
+// FEATURE: Connect to Supabase Storage without exposing the secret key to the frontend.
+// LOGIC: Create the client only when the storage URL and service-role key are provided.
+// Use ws for compatibility with Node versions that lack built-in WebSocket support.
 const { createClient } = require('@supabase/supabase-js');
 const ws = require('ws');
 
@@ -26,5 +22,5 @@ const supabase = process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_K
   }
 ) : null;
 
-// Storage is optional at API startup; photo services report 503 when not configured.
+// When storage settings are missing, export null so the rest of the backend can start.
 module.exports = { supabase };

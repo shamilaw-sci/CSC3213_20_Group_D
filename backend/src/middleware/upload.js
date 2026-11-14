@@ -1,9 +1,8 @@
+
 /**
  * @file    upload.js
  * @module  Middleware
- * @desc    Multer configuration for handling multipart file uploads.
- *          Uses memory storage (no disk writes) since uploaded files
- *          are streamed straight to Supabase Storage buckets.
+ * @desc    Checks image uploads and keeps accepted files in memory for storage.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -12,9 +11,10 @@ const multer = require('multer');
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024; // 2MB, matches the bucket limit
 
-/** Validate declared image MIME before buffering; byte/content verification is separate.
- * @param {Object} req Request. @param {Object} file Multer file metadata.
- * @param {Function} cb Multer acceptance/error callback. @returns {void}
+/**
+ * FEATURE: Accept only supported image types.
+ * LOGIC: Check the file's reported type → JPEG, PNG or WEBP: accept;
+ * otherwise reject. This does not verify the actual file contents.
  */
 const fileFilter = (req, file, cb) => {
   if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
@@ -23,6 +23,11 @@ const fileFilter = (req, file, cb) => {
   cb(null, true);
 };
 
+/**
+ * FEATURE: Limit uploaded image size.
+ * LOGIC: Keep the upload in memory and reject files over 2 MB.
+ * The accepted file can then be sent to storage by the calling code.
+ */
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: MAX_FILE_SIZE_BYTES },
