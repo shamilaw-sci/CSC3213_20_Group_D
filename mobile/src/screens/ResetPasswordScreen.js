@@ -21,7 +21,11 @@ import { resetPassword, authErrorMessage } from '../services/auth.service';
 
 const RESET_TOKEN_PATTERN = /^[a-f0-9]{64}$/;
 
-/** Accept a reset token or an emailed web link; reject anything with an invalid token. */
+/**
+ * FEATURE: Read the password reset token.
+ * LOGIC: Accept a 64-character token or extract it from an email link.
+ * Reject an invalid token or a link that is not HTTP/HTTPS.
+ */
 const extractToken = (value) => {
   const input = value.trim();
   if (RESET_TOKEN_PATTERN.test(input)) return input;
@@ -36,7 +40,11 @@ const extractToken = (value) => {
   }
 };
 
-/** Set a new password using the reset link and matching password fields. */
+/**
+ * FEATURE: Reset password screen.
+ * LOGIC: Let the user paste a reset link, choose a new password,
+ * and return to sign-in after the backend confirms the change.
+ */
 export default function ResetPasswordScreen({ onBackToLogin }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -48,7 +56,12 @@ export default function ResetPasswordScreen({ onBackToLogin }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-    /** Check link and passwords, send one request, then clear the fields after success. */
+  /**
+   * FEATURE: Change a forgotten password.
+   * LOGIC: Check the reset token, minimum 8-character password and matching
+   * confirmation → Send the request once → Clear the entered details on success.
+   * Show an error on failure and stop the loading state either way.
+   */
   const handleReset = async () => {
     if (inFlight.current) return;
     const token = extractToken(resetLink);
@@ -87,10 +100,13 @@ export default function ResetPasswordScreen({ onBackToLogin }) {
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text style={styles.brand}>Care4U</Text>
         <View style={styles.card}>
+          {/* Set a new password heading */}
           <Text style={styles.title}>Set a new password</Text>
+          {/* Password reset result — success view or reset form */}
           {success ? (
             <>
               <Text style={styles.success} accessibilityLiveRegion="polite">Your password has been reset. You can sign in now.</Text>
+              {/* Sign in button — return to the login screen after a successful reset */}
               <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: Boolean(loading) }} style={styles.button} onPress={onBackToLogin} disabled={loading}>
                 <Text style={styles.buttonText}>Sign in</Text>
               </TouchableOpacity>
@@ -100,7 +116,9 @@ export default function ResetPasswordScreen({ onBackToLogin }) {
               <Text style={styles.help}>
                 The email opens the Care4U web reset page. You can finish there, or copy the full link from the email and paste it here. The link expires after one hour.
               </Text>
+              {/* Reset error message — visible when a check or request fails */}
               {error ? <Text style={styles.error} accessibilityRole="alert" accessibilityLiveRegion="polite">{error}</Text> : null}
+              {/* Reset link or token field — paste the emailed link or its token */}
               <Text style={styles.label}>Reset link or token</Text>
               <TextInput
                 editable={!loading}
@@ -112,6 +130,7 @@ export default function ResetPasswordScreen({ onBackToLogin }) {
                 autoCorrect={false}
                 accessibilityLabel="Reset link or token"
               />
+              {/* New password field — enter the replacement password */}
               <Text style={styles.label}>New password</Text>
               <View style={styles.passwordRow}>
                <TextInput
@@ -126,11 +145,13 @@ export default function ResetPasswordScreen({ onBackToLogin }) {
                 autoComplete="new-password"
                 accessibilityLabel="New password"
               />
-               <TouchableOpacity accessibilityState={{ disabled: Boolean(loading) }} style={styles.visibilityButton} accessibilityRole="button" disabled={loading}
+                {/* Show/Hide Password button — change visibility of the new password */}
+                <TouchableOpacity accessibilityState={{ disabled: Boolean(loading) }} style={styles.visibilityButton} accessibilityRole="button" disabled={loading}
                  accessibilityLabel={showPassword ? 'Hide password' : 'Show password'} onPress={() => setShowPassword(previous => !previous)}>
                  <Text style={styles.backText}>{showPassword ? 'Hide' : 'Show'}</Text>
                </TouchableOpacity>
                </View>
+               {/* Confirm password field — must match the new password */}
               <Text style={styles.label}>Confirm password</Text>
               <View style={styles.passwordRow}>
                <TextInput
@@ -147,15 +168,17 @@ export default function ResetPasswordScreen({ onBackToLogin }) {
                 onSubmitEditing={handleReset}
                 accessibilityLabel="Confirm password"
               />
-               <TouchableOpacity accessibilityState={{ disabled: Boolean(loading) }} style={styles.visibilityButton} accessibilityRole="button" disabled={loading}
+                {/* Show/Hide Confirm Password button — change confirmation visibility */}
+                <TouchableOpacity accessibilityState={{ disabled: Boolean(loading) }} style={styles.visibilityButton} accessibilityRole="button" disabled={loading}
                  accessibilityLabel={showConfirmation ? 'Hide confirm password' : 'Show confirm password'} onPress={() => setShowConfirmation(previous => !previous)}>
                  <Text style={styles.backText}>{showConfirmation ? 'Hide' : 'Show'}</Text>
                </TouchableOpacity>
                </View>
-              {/* Reset Password button — submits the new password */}
+               {/* Reset password button — validate fields and submit the new password */}
               <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: Boolean(loading) }} style={[styles.button, loading && styles.disabled]} onPress={handleReset} disabled={loading}>
                 {loading ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.buttonText}>Reset password</Text>}
               </TouchableOpacity>
+               {/* Back to sign in button — return to the login screen */}
               <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: Boolean(loading) }} style={styles.back} onPress={onBackToLogin} disabled={loading}>
                 <Text style={styles.backText}>Back to sign in</Text>
               </TouchableOpacity>
@@ -178,9 +201,11 @@ const styles = StyleSheet.create({
   input: { borderWidth: 1, borderColor: '#CBD5DE', borderRadius: 12, padding: 13, marginBottom: 16, color: '#102331' },
   error: { color: '#AD3030', backgroundColor: '#FFF1F1', padding: 12, borderRadius: 10, marginBottom: 14 },
   success: { color: '#2F855A', backgroundColor: '#EDF9F2', padding: 14, borderRadius: 10, marginBottom: 18 },
+  // Reset password / Sign in button styles.
   button: { backgroundColor: '#0B6F69', borderRadius: 12, minHeight: 50, justifyContent: 'center', alignItems: 'center' },
   buttonText: { color: '#FFFFFF', fontWeight: '800' },
   disabled: { opacity: 0.6 },
+  // Back to sign in button styles.
   back: { alignItems: 'center', justifyContent: 'center', minHeight: 44, marginTop: 18 },
   passwordRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   passwordInput: { flex: 1, marginBottom: 0 },

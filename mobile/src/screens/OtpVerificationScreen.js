@@ -1,9 +1,8 @@
 /**
  * @file    OtpVerificationScreen.js
  * @module  Auth
- * @desc    Mobile OTP verification screen shown after registration.
- *          On successful verification, the account is created and the
- *          patient session begins, or a professional awaits approval.
+ * @desc    Verifies a registration email and handles requesting a new code.
+ *          Patient accounts continue after verification; staff may need approval.
  * @author  I.M.L.S. Idirisinghe (S/21/389)
  */
 
@@ -43,9 +42,6 @@ import {
   authErrorMessage,
 } from '../services/auth.service';
 
-/* =========================================================
-   DESIGN TOKENS
-========================================================= */
 
 const COLORS = {
   background: '#F6F8FA',
@@ -70,11 +66,12 @@ const COLORS = {
   greenSoft: '#EDF9F2',
 };
 
-/* =========================================================
-   SCREEN
-========================================================= */
 
-/** Verify the email code before registration finishes or staff approval begins. */
+/**
+ * FEATURE: Email verification screen.
+ * LOGIC: Send the entered code for checking. Patients can continue after
+ * verification; professional accounts may need admin approval.
+ */
 export default function OtpVerificationScreen({
   email,
   onVerifySuccess,
@@ -97,7 +94,7 @@ export default function OtpVerificationScreen({
   const verifyDisabled = loading || resending || otpCode.length !== 6;
   const resendDisabled = loading || resending || resendCooldown > 0;
 
-  /** Focus after mount; cancel the focus timer on unmount. */
+  // Focus the Verification Code field when the screen opens.
   useEffect(() => {
     const timer = setTimeout(() => {
       otpInputRef.current?.focus();
@@ -106,7 +103,7 @@ export default function OtpVerificationScreen({
     return () => clearTimeout(timer);
   }, []);
 
-  /** Advisory resend countdown only; server limits and code expiry remain authoritative. Cleanup cancels each interval. */
+  // Count down after a successful resend. The backend still controls actual limits.
   useEffect(() => {
     if (resendCooldown <= 0) {
       return;
@@ -124,7 +121,11 @@ export default function OtpVerificationScreen({
     return () => clearInterval(timer);
   }, [resendCooldown]);
 
-    /** Require the registration email and exactly six digits before verification. */
+  /**
+   * FEATURE: Check the verification code before submitting it.
+   * LOGIC: Registration email must exist and the code must contain six digits.
+   * The backend checks whether the code is correct and has not expired.
+   */
   const validate = () => {
     if (!email) { setError('No registration in progress. Return to registration.'); return false; }
     if (!otpCode) {
@@ -140,7 +141,12 @@ export default function OtpVerificationScreen({
     return true;
   };
 
-    /** Check the code once; staff awaiting approval are not signed in automatically. */
+  /**
+   * FEATURE: Verify Email.
+   * LOGIC: Block repeated requests → Send email and code to the backend.
+   * If staff approval is pending, show a notice; otherwise pass the verified
+   * user to the app. On failure, display the returned error.
+   */
   const handleVerify = async () => {
     if (inFlight.current) return;
     if (!validate()) {
@@ -185,7 +191,12 @@ export default function OtpVerificationScreen({
     }
   };
 
-    /** Request a new code only after the resend wait has ended; clear the old entry. */
+  /**
+   * FEATURE: Resend Code.
+   * LOGIC: Avoid overlapping requests and repeat taps → Clear the old entry
+   * → Ask for a new code. After success, start a 30-second countdown.
+   * A failed delivery may still make the previous code unusable.
+   */
   const handleResend = async () => {
     if (inFlight.current || !email) return;
     if (
@@ -240,7 +251,7 @@ export default function OtpVerificationScreen({
     }
   };
 
-    /** Keep only numbers from a pasted or typed code, up to six digits. */
+  // Verification Code field: keep only digits, up to six; clear old errors.
   const handleOtpChange = (
     text
   ) => {
@@ -262,16 +273,14 @@ export default function OtpVerificationScreen({
     setError('');
   };
 
-  /* =======================================================
-     PAGE
-  ======================================================= */
 
   if (!email) return (
     <View style={[styles.container, { justifyContent: 'center' }]}>
       <View style={[styles.card, { marginTop: 0 }]}>
+        {/* No registration in progress heading — shown when the email is missing */}
         <Text style={styles.title}>No registration in progress</Text>
         <Text style={styles.helperText}>Your registration email is missing. Start registration again.</Text>
-        {/* Back to Registration button — returns to the account form */}
+        {/* Back to registration button — returns to the account form when no email is available */}
         <TouchableOpacity disabled={loading || resending} accessibilityState={{ disabled: Boolean(loading || resending) }} style={styles.primaryButton} accessibilityRole="button" onPress={onBackToRegister}>
           <Text style={styles.primaryButtonText}>Back to registration</Text>
         </TouchableOpacity>
@@ -295,9 +304,6 @@ export default function OtpVerificationScreen({
         showsVerticalScrollIndicator={false}
       >
 
-        {/* =================================================
-            BRAND HERO
-        ================================================== */}
 
         <View style={styles.hero}>
 
@@ -325,9 +331,6 @@ export default function OtpVerificationScreen({
 
         </View>
 
-        {/* =================================================
-            VERIFICATION CARD
-        ================================================== */}
 
         <View style={styles.card}>
 
@@ -344,6 +347,7 @@ export default function OtpVerificationScreen({
             EMAIL VERIFICATION
           </Text>
 
+          {/* Verify your email heading — main verification screen title */}
           <Text style={styles.title}>
             Verify your email
           </Text>
@@ -352,6 +356,7 @@ export default function OtpVerificationScreen({
             Enter the 6-digit verification code sent to
           </Text>
 
+          {/* Registration email — the address that receives the verification code */}
           <View style={styles.emailBadge}>
 
             <Mail
@@ -367,9 +372,7 @@ export default function OtpVerificationScreen({
 
           </View>
 
-          {/* ===============================================
-              ERROR
-          ================================================ */}
+          {/* Verification error message — shown for invalid code or failed request */}
 
           {error !== '' && (
             <View style={styles.errorBox} accessibilityRole="alert" accessibilityLiveRegion="polite">
@@ -386,9 +389,7 @@ export default function OtpVerificationScreen({
             </View>
           )}
 
-          {/* ===============================================
-              RESEND SUCCESS
-          ================================================ */}
+          {/* Resend confirmation message — shown when a replacement code is requested successfully */}
 
           {resendMessage !== '' && (
             <View style={styles.successBox} accessibilityLiveRegion="polite">
@@ -405,9 +406,7 @@ export default function OtpVerificationScreen({
             </View>
           )}
 
-          {/* ===============================================
-              OTP FIELD
-          ================================================ */}
+          {/* Verification Code field — enter or paste the six-digit code */}
 
           <View style={styles.inputGroup}>
 
@@ -433,6 +432,7 @@ export default function OtpVerificationScreen({
               selectionColor={COLORS.teal}
             />
 
+            {/* Code progress dots — show how many of the six digits have been entered */}
             <View style={styles.otpProgressRow}>
 
               {Array.from({
@@ -463,11 +463,8 @@ export default function OtpVerificationScreen({
 
           </View>
 
-          {/* ===============================================
-              VERIFY
-          ================================================ */}
+          {/* Verify Email button — active only when six digits are entered and no request is running */}
 
-          {/* Verify Email button — submits the six-digit code */}
           <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: verifyDisabled }}
             style={[styles.primaryButton, verifyDisabled && styles.buttonDisabled]}
             activeOpacity={0.85}
@@ -496,9 +493,7 @@ export default function OtpVerificationScreen({
 
           </TouchableOpacity>
 
-          {/* ===============================================
-              RESEND
-          ================================================ */}
+          {/* Resend Code section — retry only when the countdown has finished */}
 
           <View style={styles.resendSection}>
 
@@ -506,7 +501,7 @@ export default function OtpVerificationScreen({
               Didn't receive the code?
             </Text>
 
-            {/* Resend Code button — requests a replacement code after the wait */}
+            {/* Resend Code button — requests a new code; shows remaining wait time when disabled */}
             <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: resendDisabled }}
               style={[styles.resendButton, resendDisabled && styles.resendButtonDisabled]}
               activeOpacity={0.75}
@@ -549,9 +544,7 @@ export default function OtpVerificationScreen({
 
           </View>
 
-          {/* ===============================================
-              BACK
-          ================================================ */}
+          {/* Wrong email? Go back button — returns to registration to correct the email */}
 
           <View style={styles.divider} />
 
@@ -575,9 +568,6 @@ export default function OtpVerificationScreen({
 
         </View>
 
-        {/* =================================================
-            SECURITY FOOTER
-        ================================================== */}
 
         <View style={styles.securityFooter}>
 
@@ -602,9 +592,6 @@ export default function OtpVerificationScreen({
   );
 }
 
-/* =========================================================
-   STYLES
-========================================================= */
 
 const styles =
   StyleSheet.create({
@@ -621,9 +608,6 @@ const styles =
       paddingBottom: 30,
     },
 
-    /* =====================================================
-       HERO
-    ====================================================== */
 
     hero: {
       height: 235,
@@ -727,9 +711,6 @@ const styles =
       marginTop: 4,
     },
 
-    /* =====================================================
-       CARD
-    ====================================================== */
 
     card: {
       marginHorizontal: 18,
@@ -853,9 +834,6 @@ const styles =
       fontWeight: '800',
     },
 
-    /* =====================================================
-       ALERTS
-    ====================================================== */
 
     errorBox: {
       flexDirection: 'row',
@@ -929,9 +907,6 @@ const styles =
       fontWeight: '700',
     },
 
-    /* =====================================================
-       OTP
-    ====================================================== */
 
     inputGroup: {
       marginBottom: 17,
@@ -950,6 +925,7 @@ const styles =
       marginBottom: 8,
     },
 
+    // Verification Code field styles — digit size and alignment.
     otpInput: {
       minHeight: 62,
 
@@ -1018,9 +994,7 @@ const styles =
       marginTop: 9,
     },
 
-    /* =====================================================
-       VERIFY BUTTON
-    ====================================================== */
+    // Verify Email button styles — size and background color.
 
     primaryButton: {
       minHeight: 52,
@@ -1052,9 +1026,7 @@ const styles =
       opacity: 0.48,
     },
 
-    /* =====================================================
-       RESEND
-    ====================================================== */
+    // Resend Code styles — text, spacing, and disabled appearance.
 
     resendSection: {
       alignItems: 'center',
@@ -1115,6 +1087,7 @@ const styles =
       marginBottom: 15,
     },
 
+    // Wrong email? Go back button styles.
     backButton: {
       minHeight: 44,
       flexDirection: 'row',
@@ -1136,9 +1109,6 @@ const styles =
       fontWeight: '800',
     },
 
-    /* =====================================================
-       FOOTER
-    ====================================================== */
 
     securityFooter: {
       flexDirection: 'row',

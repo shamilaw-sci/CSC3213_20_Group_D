@@ -2,8 +2,8 @@
  * @file    RegisterScreen.js
  * @module  Auth
  * @desc    Mobile registration screen for Care4U patients and doctors.
- *          On success, navigates to OTP verification. The account is not
- *          created until OTP verification is completed.
+ *          Collects registration details and opens email verification.
+ *          The backend completes registration only after code verification.
  * @author  I.M.L.S. Idirisinghe (S/21/389)
  */
 
@@ -56,7 +56,11 @@ const COLORS = {
   dangerSoft: '#FFF1F1',
 };
 
-/** Registration screen: collects patient or doctor details before email verification. */
+/**
+ * FEATURE: Patient and Doctor registration screen.
+ * LOGIC: Selecting an account type shows the details required for that role.
+ * After submitting, the user continues to email verification.
+ */
 export default function RegisterScreen({
   onRegisterSuccess,
   onBackToLogin,
@@ -84,7 +88,12 @@ export default function RegisterScreen({
   const inFlight = useRef(false);
   const [error, setError] = useState('');
 
-    /** Check common account fields and the details required for the chosen role. */
+  /**
+   * FEATURE: Validate registration details.
+   * LOGIC: Check required fields and matching passwords (at least 8 characters).
+   * Patients need a NIC and a real date of birth; doctors need an SLMC number
+   * and specialization. Show an error and stop if any check fails.
+   */
   const validate = () => {
     if (!email.trim()) {
       setError('Email is required');
@@ -158,7 +167,11 @@ export default function RegisterScreen({
     return true;
   };
 
-    /** Submit once; when accepted, open OTP verification. The account is not ready yet. */
+  /**
+   * FEATURE: Request email verification for a new account.
+   * LOGIC: Stop repeated taps → Check details → Send the selected role's data.
+   * Success: open the code verification screen; failure: show an error.
+   */
   const handleRegister = async () => {
     if (inFlight.current) return;
     if (!validate()) {
@@ -267,6 +280,7 @@ export default function RegisterScreen({
             GET STARTED
           </Text>
 
+          {/* Create your account heading — registration page title */}
           <Text style={styles.title}>
             Create your account
           </Text>
@@ -275,6 +289,7 @@ export default function RegisterScreen({
             Choose your account type and complete the information below.
           </Text>
 
+          {/* Registration error message — appears when a field check or request fails */}
           {error !== '' && (
             <View style={styles.errorBox} accessibilityRole="alert" accessibilityLiveRegion="polite">
 
@@ -296,9 +311,10 @@ export default function RegisterScreen({
               ACCOUNT TYPE
             </Text>
 
-{/* Account Type — Patient / Doctor choice changes the required fields */}
+            {/* Account Type — choose Patient or Doctor to show the matching registration fields */}
             <View style={styles.roleRow}>
 
+              {/* Patient account type button — shows NIC and date-of-birth fields */}
               <TouchableOpacity
                 style={[
                   styles.roleButton,
@@ -336,6 +352,7 @@ export default function RegisterScreen({
 
               </TouchableOpacity>
 
+              {/* Doctor account type button — shows SLMC number and specialization */}
               <TouchableOpacity
                 style={[
                   styles.roleButton,
@@ -387,6 +404,7 @@ export default function RegisterScreen({
 
           <View style={styles.inputGroup}>
 
+            {/* Full Name field — required for both Patient and Doctor registration */}
             <Text style={styles.label}>
               FULL NAME
             </Text>
@@ -417,6 +435,7 @@ export default function RegisterScreen({
 
           <View style={styles.inputGroup}>
 
+            {/* Email Address field — used for account verification */}
             <Text style={styles.label}>
               EMAIL ADDRESS
             </Text>
@@ -450,6 +469,7 @@ export default function RegisterScreen({
 
           <View style={styles.inputGroup}>
 
+            {/* Phone Number field — required account contact */}
             <Text style={styles.label}>
               PHONE NUMBER
             </Text>
@@ -492,6 +512,7 @@ export default function RegisterScreen({
 
               <View style={styles.inputGroup}>
 
+                {/* NIC Number field — required only for Patient registration */}
                 <Text style={styles.label}>
                   NIC NUMBER
                 </Text>
@@ -523,6 +544,7 @@ export default function RegisterScreen({
 
               <View style={styles.inputGroup}>
 
+                {/* Date of Birth field — checks YYYY-MM-DD and a real calendar date */}
                 <Text style={styles.label}>
                   DATE OF BIRTH
                 </Text>
@@ -565,6 +587,7 @@ export default function RegisterScreen({
 
               <View style={styles.inputGroup}>
 
+                {/* SLMC Registration Number field — required for Doctor registration */}
                 <Text style={styles.label}>
                   SLMC REGISTRATION NUMBER
                 </Text>
@@ -596,6 +619,7 @@ export default function RegisterScreen({
 
               <View style={styles.inputGroup}>
 
+                {/* Specialization field — required for Doctor registration */}
                 <Text style={styles.label}>
                   SPECIALIZATION
                 </Text>
@@ -637,6 +661,7 @@ export default function RegisterScreen({
 
           <View style={styles.inputGroup}>
 
+            {/* Password field — at least 8 characters */}
             <Text style={styles.label}>
               PASSWORD
             </Text>
@@ -665,6 +690,7 @@ export default function RegisterScreen({
                 }}
               />
 
+              {/* Show/Hide Password button — toggles the password text visibility */}
               <TouchableOpacity accessibilityState={{ disabled: Boolean(loading) }}
                 style={styles.eyeButton}
                 accessibilityRole="button"
@@ -695,6 +721,7 @@ export default function RegisterScreen({
 
           <View style={styles.inputGroup}>
 
+            {/* Confirm Password field — must match Password */}
             <Text style={styles.label}>
               CONFIRM PASSWORD
             </Text>
@@ -725,6 +752,7 @@ export default function RegisterScreen({
                 }}
               />
 
+              {/* Show/Hide Confirm Password button — toggles the confirmation text visibility */}
               <TouchableOpacity accessibilityState={{ disabled: Boolean(loading) }}
                 style={styles.eyeButton}
                 accessibilityRole="button"
@@ -753,7 +781,7 @@ export default function RegisterScreen({
 
           </View>
 
-          {/* Register button — validates the form and requests an email code */}
+          {/* Request verification code button — checks registration details and requests an email code */}
           <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: Boolean(loading) }}
             style={[
               styles.primaryButton,
@@ -774,6 +802,7 @@ export default function RegisterScreen({
 
           </TouchableOpacity>
 
+          {/* Sign in link — returns to the login screen */}
           <Text style={styles.signInText}>
             Already have an account?{' '}
             <Text
@@ -943,6 +972,7 @@ const styles = StyleSheet.create({
     gap: 9,
   },
 
+  // Patient / Doctor account type button — shared size, border, and spacing.
   roleButton: {
     flex: 1,
     minHeight: 48,
@@ -956,6 +986,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
+  // Selected account type button — highlighted background.
   roleButtonActive: {
     backgroundColor: COLORS.teal,
     borderColor: COLORS.teal,
@@ -1019,6 +1050,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 
+  // Show/Hide Password buttons — touch area and alignment.
   eyeButton: {
     width: 44,
     height: 44,
@@ -1026,6 +1058,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
+  // Request verification code button — color, size, and layout.
   primaryButton: {
     minHeight: 52,
     borderRadius: 15,
@@ -1052,6 +1085,7 @@ const styles = StyleSheet.create({
     marginTop: 18,
   },
 
+  // Sign in link — text color and emphasis.
   signInLink: {
     color: COLORS.teal,
     fontWeight: '800',

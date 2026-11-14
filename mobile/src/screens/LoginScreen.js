@@ -1,3 +1,4 @@
+
 /**
  * @file    LoginScreen.js
  * @module  Auth
@@ -48,7 +49,11 @@ const COLORS = {
   dangerSoft: '#FFF1F1',
 };
 
-/** Login screen: checks the details, then opens the signed-in user’s page after backend approval. */
+/**
+ * FEATURE: Mobile sign-in screen.
+ * LOGIC: Take email and password, show any login error, and send successful
+ * user details to the parent app so it can open the correct screen.
+ */
 export default function LoginScreen({
   onLoginSuccess,
   onForgotPassword,
@@ -64,7 +69,11 @@ export default function LoginScreen({
   const inFlight = useRef(false);
   const [error, setError] = useState('');
 
-    /** Check that an email and password were entered before sending a request. */
+  /**
+   * FEATURE: Check login fields.
+   * LOGIC: Email and password must not be empty before contacting the backend.
+   * The backend checks whether the credentials are correct.
+   */
   const validate = () => {
     if (!email.trim()) {
       setError('Email is required');
@@ -79,7 +88,12 @@ export default function LoginScreen({
     return true;
   };
 
-    /** Sign in once, show any error, and pass the verified user to the app. */
+  /**
+   * FEATURE: Sign in.
+   * LOGIC: Stop repeated taps → Check required fields → Send login request.
+   * If the response includes user ID and role, pass it to the parent app;
+   * otherwise show an error. Always stop the loading indicator afterward.
+   */
   const handleLogin = async () => {
     if (inFlight.current) return;
     if (!validate()) {
@@ -134,6 +148,7 @@ export default function LoginScreen({
           <View style={styles.heroCircleOne} />
           <View style={styles.heroCircleTwo} />
 
+          {/* Care4U logo and app name — sign-in screen header */}
           <View style={styles.brandArea}>
 
             <View style={styles.logoTile}>
@@ -158,6 +173,7 @@ export default function LoginScreen({
 
         <View style={styles.card}>
 
+          {/* Welcome back heading and sign-in instructions */}
           <View style={styles.cardHeader}>
 
             <Text style={styles.eyebrow}>
@@ -174,6 +190,7 @@ export default function LoginScreen({
 
           </View>
 
+          {/* Login error message — displayed when a check or request fails */}
           {error !== '' && (
             <View style={styles.errorBox} accessibilityRole="alert" accessibilityLiveRegion="polite">
 
@@ -202,6 +219,7 @@ export default function LoginScreen({
                 color={COLORS.subtle}
               />
 
+              {/* Email Address field — typing also clears the previous error */}
               <TextInput
                 accessibilityLabel="Email address"
                 editable={!loading}
@@ -233,7 +251,7 @@ export default function LoginScreen({
                 PASSWORD
               </Text>
 
-              {/* Forgot Password link — opens password recovery */}
+              {/* Forgot password? link — opens password recovery */}
               <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: Boolean(loading) }}
                 activeOpacity={0.7}
                 onPress={onForgotPassword}
@@ -254,6 +272,7 @@ export default function LoginScreen({
                 color={COLORS.subtle}
               />
 
+              {/* Password field — pressing Done also starts sign-in */}
               <TextInput
                 accessibilityLabel="Password"
                 editable={!loading}
@@ -274,6 +293,7 @@ export default function LoginScreen({
                 }}
               />
 
+              {/* Show/Hide Password button — changes only text visibility */}
               <TouchableOpacity
                 style={styles.eyeButton}
                 accessibilityRole="button"
@@ -304,7 +324,7 @@ export default function LoginScreen({
 
           </View>
 
-          {/* Sign In button — checks the form and requests login */}
+          {/* Sign in button — check fields, send login request, show loading state */}
           <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: Boolean(loading) }}
             style={[
               styles.primaryButton,
@@ -344,7 +364,7 @@ export default function LoginScreen({
 
           </View>
 
-          {/* Create Account button — opens registration */}
+          {/* Create an account button — opens the registration screen */}
           <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: Boolean(loading) }}
             style={styles.secondaryButton}
             activeOpacity={0.8}
@@ -575,6 +595,7 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
   },
 
+  // Show/Hide Password button styles.
   eyeButton: {
     width: 44,
     height: 44,
@@ -583,6 +604,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
+  // Sign in button styles (background color and size).
   primaryButton: {
     minHeight: 51,
     borderRadius: 15,
@@ -624,6 +646,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.75,
   },
 
+  // Create an account button styles.
   secondaryButton: {
     minHeight: 49,
     borderRadius: 15,

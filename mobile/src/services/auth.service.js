@@ -8,10 +8,10 @@
 
 import api from './api';
 
-/** Send one auth request with a bounded wait and require an acknowledged envelope.
- * @param {string} path Auth endpoint suffix.
- * @param {Object} payload Validated screen values; never logged or persisted here.
- * @returns {Promise<Object>} Success envelope; transport and negative envelopes reject.
+/**
+ * FEATURE: Send authentication requests to the backend.
+ * LOGIC: Wait up to 15 seconds for a response. Return only confirmed success;
+ * otherwise treat the request as failed so the screen can show an error.
  */
 const postAuth = async (path, payload) => {
   const response = await api.post(`/api/auth/${path}`, payload, { timeout: 15000 });
@@ -23,16 +23,17 @@ const postAuth = async (path, payload) => {
   return response.data;
 };
 
-/** Convert expected API errors into UI copy; never expose raw transport exceptions.
- * @param {Object} error Axios error or rejected response envelope.
- * @param {string} fallback Context-specific failure wording.
- * @returns {string} Public server message with Retry-After guidance, or network help.
+/**
+ * FEATURE: Show clear authentication error messages.
+ * LOGIC: Explain connection failures without exposing technical errors.
+ * Show helpful messages for invalid codes and links; when requests are limited,
+ * include the waiting time if the backend provides one.
  */
 export const authErrorMessage = (error, fallback = 'The request failed. Please try again.') => {
   const response = error?.response;
   if (!response) return 'Cannot connect to Care4U. Check your connection and try again.';
   const serverMessage = typeof response.data?.message === 'string' ? response.data.message : fallback;
-  // Only the known provider-submission message is public on a 5xx response.
+  // Hide unexpected server errors; only the known email-delivery error is shown.
   if (response.status >= 500) {
     return response.status === 502 && serverMessage === 'Failed to send verification email. Please try again.'
       ? serverMessage
@@ -55,34 +56,20 @@ export const authErrorMessage = (error, fallback = 'The request failed. Please t
   return `${message} ${retry}`;
 };
 
-/** @param {string} email Exact address after UI trimming. @param {string} password Unchanged password.
- * @returns {Promise<Object>} Public session identity after server acknowledgement; cookie persistence is separate.
- */
+// Login — send the entered email and password for backend verification.
 export const login = (email, password) => postAuth('login', { email, password });
 
-/** @param {string} email Address. @param {string} phone Contact. @param {string} password Unchanged password.
- * @param {string} role Supported public role. @param {Object} profileData Role-specific fields.
- * @returns {Promise<Object>} Pending email/expiry; registration alone does not authenticate.
- */
+// Register — send account details and selected role to start email verification.
 export const register = (email, phone, password, role, profileData) => postAuth('register', { email, phone, password, role, profileData });
 
-/** @param {string} email Pending address. @param {string} otpCode Six digits.
- * @returns {Promise<Object>} User/profile and approvalPending; pending professionals have no authenticated session.
- */
+// Verify email — submit the code; staff accounts may still require approval.
 export const verifyOtp = (email, otpCode) => postAuth('verify-otp', { email, otpCode });
 
-/** @param {string} email Pending address.
- * @returns {Promise<Object>} Replacement expiry after submission acknowledgement, not confirmed inbox delivery.
- * Failed submission may still leave a replacement stored; concurrent emails may be superseded.
- */
+// Resend code — request a replacement; success does not guarantee email delivery.
 export const resendOtp = email => postAuth('resend-otp', { email });
 
-/** @param {string} email Recovery address.
- * @returns {Promise<Object>} Generic acknowledgement for known/unknown addresses; no delivery guarantee.
- */
+// Forgot password — request a reset link without revealing registered emails.
 export const forgotPassword = email => postAuth('forgot-password', { email });
 
-/** @param {string} token Valid reset bearer token. @param {string} newPassword Unchanged new password.
- * @returns {Promise<Object>} Acknowledged password update; sessions/other links retain existing policy.
- */
+// Reset password — send the reset token and new password to the backend.
 export const resetPassword = (token, newPassword) => postAuth('reset-password', { token, newPassword });

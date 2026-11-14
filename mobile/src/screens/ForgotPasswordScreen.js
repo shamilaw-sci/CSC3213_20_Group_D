@@ -52,7 +52,12 @@ const COLORS = {
   greenSoft: '#EDF9F2',
 };
 
-/** Password recovery screen: request a reset email without revealing whether the address exists. */
+/**
+ * FEATURE: Forgot password screen.
+ * LOGIC: Ask for an email address and request password recovery.
+ * Show a neutral confirmation after the backend accepts the request,
+ * without revealing whether the email belongs to an account.
+ */
 export default function ForgotPasswordScreen({
   onBackToLogin,
   onResetPassword,
@@ -64,7 +69,11 @@ export default function ForgotPasswordScreen({
   const [error, setError] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
-    /** Do not send a request until the email field has been filled. */
+  /**
+   * FEATURE: Check recovery email.
+   * LOGIC: Do not send a request if the email field is empty.
+   * The backend handles account lookup and further checks.
+   */
   const validate = () => {
     if (!email.trim()) {
       setError('Email is required');
@@ -74,7 +83,12 @@ export default function ForgotPasswordScreen({
     return true;
   };
 
-    /** Request one reset email and show a neutral confirmation after success. */
+  /**
+   * FEATURE: Request a password reset link.
+   * LOGIC: Prevent repeated taps → Check the email field → Ask the backend.
+   * Success: show the same confirmation for any email address.
+   * Failure: show an error. Always stop loading when finished.
+   */
   const handleSubmit = async () => {
     if (inFlight.current) return;
     if (!validate()) {
@@ -152,6 +166,7 @@ export default function ForgotPasswordScreen({
             ACCOUNT RECOVERY
           </Text>
 
+          {/* Forgot your password? heading — change the page title here */}
           <Text style={styles.title}>
             Forgot your password?
           </Text>
@@ -160,6 +175,7 @@ export default function ForgotPasswordScreen({
             Enter the email address linked to your Care4U account to request a password reset.
           </Text>
 
+          {/* Recovery result — show the confirmation after a successful request */}
           {submitted ? (
             <>
 
@@ -184,7 +200,7 @@ export default function ForgotPasswordScreen({
 
               </View>
 
-              {/* Use a Reset Link button — opens the password reset form */}
+              {/* Use a reset link button — opens the screen for entering a reset link */}
               <TouchableOpacity accessibilityRole="button" disabled={loading} accessibilityState={{ disabled: Boolean(loading) }}
                 style={styles.primaryButton}
                 activeOpacity={0.85}
@@ -206,6 +222,7 @@ export default function ForgotPasswordScreen({
           ) : (
             <>
 
+              {/* Request error message — shown if the request fails */}
               {error !== '' && (
                 <View style={styles.errorBox} accessibilityRole="alert" accessibilityLiveRegion="polite">
 
@@ -234,6 +251,7 @@ export default function ForgotPasswordScreen({
                     color={COLORS.subtle}
                   />
 
+                  {/* Email Address field — edit the email input here */}
                   <TextInput
                 accessibilityLabel="Email address"
                 editable={!loading}
@@ -257,7 +275,7 @@ export default function ForgotPasswordScreen({
 
               </View>
 
-              {/* Request Reset Link button — sends the recovery email request */}
+              {/* Request reset link button — checks the email and sends the request */}
               <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: Boolean(loading) }}
                 style={[
                   styles.primaryButton,
@@ -288,7 +306,7 @@ export default function ForgotPasswordScreen({
             </>
           )}
 
-          {/* Back to Sign In button — returns to login */}
+          {/* Back to sign in button — returns to the login screen */}
           <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: Boolean(loading) }}
             style={styles.backButton}
             activeOpacity={0.75}
@@ -512,6 +530,7 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
 
+  // Request reset link / Use a reset link button styles.
   primaryButton: {
     minHeight: 51,
     borderRadius: 15,
@@ -532,6 +551,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
 
+  // Back to sign in button styles.
   backButton: {
     minHeight: 44,
     flexDirection: 'row',
