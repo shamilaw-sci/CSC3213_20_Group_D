@@ -8,6 +8,20 @@
 
 import api from './api';
 
+/** Require an acknowledged patient response before reporting a save, unlock or empty list.
+ * @param {Object} response Axios response. @param {string} kind Expected object/array payload.
+ * @returns {Object|Array} Valid payload; rejected/malformed envelopes throw for screen recovery.
+ */
+const patientData = (response, kind = 'object') => {
+  const data = response?.data?.data;
+  if (response?.data?.success !== true || !data ||
+      (kind === 'array' ? !Array.isArray(data) : typeof data !== 'object' || Array.isArray(data))) {
+    throw new Error('Care4U did not confirm this request. Please try again.');
+  }
+  return data;
+};
+
+
 /* =========================================================
    MULTIPART HELPERS
 ========================================================= */
@@ -85,7 +99,9 @@ export const getPatientProfile =
         `/api/patients/${patientId}`
       );
 
-    return response.data.data;
+    const data = patientData(response);
+  if (typeof data.id !== 'string') throw new Error('The patient profile was not confirmed. Please try again.');
+  return data;
   };
 
 /**
@@ -106,7 +122,9 @@ export const updatePatientProfile =
         data
       );
 
-    return response.data.data;
+    const confirmed = patientData(response);
+  if (typeof confirmed.id !== 'string') throw new Error('The patient profile was not confirmed. Please try again.');
+  return confirmed;
   };
 
 /**
@@ -148,7 +166,9 @@ export const uploadPatientPhoto =
         }
       );
 
-    return response.data.data;
+    const data = patientData(response);
+  if (typeof data.id !== 'string') throw new Error('The patient profile was not confirmed. Please try again.');
+  return data;
   };
 
 /* =========================================================
@@ -162,23 +182,13 @@ export const uploadPatientPhoto =
  * @param {string} role
  * @returns {Promise<Array>}
  */
-export const getMedicalRecords =
-  async (
-    patientId,
-    role
-  ) => {
-    const url =
-      role
-        ? `/api/patients/${patientId}/medical-records?role=${role}`
-        : `/api/patients/${patientId}/medical-records`;
-
-    const response =
-      await api.get(
-        url
-      );
-
-    return response.data.data;
-  };
+export const getMedicalRecords = async (patientId, role, appointmentId = null) => {
+  // role is retained for caller compatibility; only the server session authorizes access.
+  const response = await api.get(`/api/patients/${patientId}/medical-records`, {
+    params: appointmentId ? { appointmentId } : {},
+  });
+  return patientData(response, 'array');
+};
 
 /* =========================================================
    PRESCRIPTIONS
@@ -781,13 +791,10 @@ export const getConsentSettings =
         `/api/patients/${patientId}/consent`
       );
 
-    return (
-      response.data
-        ?.data
-        ?.locked_categories ||
-      []
-    );
-  };
+  const data = patientData(response);
+  if (!Array.isArray(data.locked_categories)) throw new Error('Privacy settings could not be read. Please try again.');
+  return data.locked_categories;
+};
 
 /**
  * Updates locked privacy categories.
@@ -805,6 +812,7 @@ export const updateConsentSettings =
         }
       );
 
-    return response.data
-      ?.data;
+    const data = patientData(response);
+  if (!Array.isArray(data.locked_categories)) throw new Error('Privacy changes were not confirmed. Please try again.');
+  return data;
   };

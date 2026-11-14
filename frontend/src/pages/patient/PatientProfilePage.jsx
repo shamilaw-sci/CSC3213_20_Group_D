@@ -13,7 +13,7 @@
  * Medical Devices & Implants management added for emergency readiness.
  * Important Medical Background management added for major past health events.
  * Family Medical History management added for clinically relevant family conditions.
- * UI Refactor: Edit actions isolated to Edit Mode.
+ * Stage 4A review: profile/consent only; clinical list CRUD and AI remain separate partial scope.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -89,6 +89,9 @@ import HealthAwarenessFeed from '../../components/common/HealthAwarenessFeed';
  * Fetches the currently logged-in patient's real ID from the session,
  * replacing what used to be a hardcoded test patient ID.
  */
+/** Resolve the current patient profile through acknowledged /me; account IDs are never substituted. No inputs; returns patientId/loading. Its mount effect performs the credentialed read.
+ * @returns {*} UI element, local transition or acknowledged async completion as described above.
+ */
 const usePatientId = () => {
   const [patientId, setPatientId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -106,8 +109,8 @@ const usePatientId = () => {
         const data = await res.json();
 
         if (
-          data.success &&
-          data.data?.profile_id
+          res.ok && data.success === true && data.data?.role === 'patient' &&
+          typeof data.data?.profile_id === 'string' && data.data.profile_id
         ) {
           setPatientId(
             data.data.profile_id
@@ -369,6 +372,9 @@ const SeverityBadge = ({
 };
 
 // ─── Profile Field Component ──────────────────────────────────────────────────
+/** Render one read-only profile field. Props supply icon, label and value; missing values use the existing fallback. No API side effects.
+ * @returns {*} UI element, local transition or acknowledged async completion as described above.
+ */
 const ProfileField = ({
   icon: Icon,
   label,
@@ -406,6 +412,9 @@ const ProfileField = ({
 );
 
 // ─── Premium Section Shell ───────────────────────────────────────────────────
+/** Render a themed section and optional Edit Mode action. Props supply heading, description, children, editing and action callback; it does not persist data.
+ * @returns {*} UI element, local transition or acknowledged async completion as described above.
+ */
 const SectionPanel = ({
   title,
   description,
@@ -456,6 +465,9 @@ const SectionPanel = ({
 );
 
 // ─── Premium Summary Tile ────────────────────────────────────────────────────
+/** Render a profile statistic from label/value/helper/icon props; wrapping prevents narrow-screen overflow. No data access.
+ * @returns {*} UI element, local transition or acknowledged async completion as described above.
+ */
 const SummaryTile = ({
   label,
   value,
@@ -466,9 +478,9 @@ const SummaryTile = ({
 }) => (
   <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
 
-    <div className="flex items-start justify-between gap-4">
+    <div className="flex flex-wrap items-start justify-between gap-3">
 
-      <div>
+      <div className="min-w-0 break-words">
         <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
           {label}
         </p>
@@ -539,7 +551,12 @@ const BannerAnimationStyles = () => (
 );
 
 // ─── Main Page Component ──────────────────────────────────────────────────────
+/** Coordinate self-profile reads and profile/consent saves. Query keys use patientId; refs exclude duplicate writes. Clinical list CRUD/AI controls remain partial dependencies of this large screen.
+ * @returns {*} UI element, local transition or acknowledged async completion as described above.
+ */
 const PatientProfilePage = () => {
+  const consentInFlight = useRef(false);
+  const profileInFlight = useRef(false);
   const {
     patientId,
     loading: patientIdLoading
@@ -1055,6 +1072,7 @@ const PatientProfilePage = () => {
 
   const {
     data: lockedCategories = [],
+    isError: consentFailed,
     isLoading:
       consentLoading
   } = useQuery({ 
@@ -1083,6 +1101,7 @@ const PatientProfilePage = () => {
   // ── Mutations ──
   const updateMutation =
     useMutation({
+      onSettled: () => { profileInFlight.current = false; },
       mutationFn:
         (data) =>
           updatePatientProfile(
@@ -1704,6 +1723,7 @@ const PatientProfilePage = () => {
           )
     });
 
+  // Privacy changes save separately from the profile form; failed writes keep the last confirmed list.
   const consentMutation =
     useMutation({
       mutationFn:
@@ -1715,8 +1735,10 @@ const PatientProfilePage = () => {
             newCategories
           ),
 
+      onSettled: () => { consentInFlight.current = false; },
       onSuccess:
-        () => {
+        (settings) => {
+          queryClient.setQueryData(['consent', patientId], settings.locked_categories);
           queryClient.invalidateQueries({
             queryKey: [
               'consent',
@@ -1737,9 +1759,14 @@ const PatientProfilePage = () => {
     });
 
   // ── Handlers ──
-  const handleToggleConsent = (
+  /** Compute the complete next lock list for one category and submit once. Confirmed query state changes only after success; read failures and overlapping saves deny changes.
+ * @returns {*} UI element, local transition or acknowledged async completion as described above.
+ */
+const handleToggleConsent = (
     category
   ) => {
+    if (!isEditing || consentInFlight.current || consentLoading || consentFailed) return;
+    consentInFlight.current = true;
     const isLocked =
       lockedCategories.includes(
         category
@@ -1766,7 +1793,10 @@ const PatientProfilePage = () => {
     );
   };
 
-  const handleEditClick = () => {
+  /** Populate the editable name/blood/contact fields from the last confirmed profile and enter Edit Mode. Cancelling profile edits does not reverse separately saved privacy settings.
+ * @returns {*} UI element, local transition or acknowledged async completion as described above.
+ */
+const handleEditClick = () => {
     reset({
       full_name:
         patient?.full_name ||
@@ -2456,9 +2486,9 @@ if (isError) {
           GLOBAL PROFILE FORM
       ====================================================== */}
       <form
-        onSubmit={handleSubmit(
-          data => updateMutation.mutate(data)
-        )}
+        onSubmit={event => handleSubmit(
+          data => { if (!profileInFlight.current) { profileInFlight.current = true; updateMutation.mutate(data); } }
+        )(event)}
         className="space-y-6"
       >
 
@@ -2496,12 +2526,12 @@ if (isError) {
                 />
 
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  <label htmlFor="profile-blood-group" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                     Blood Group <span className="text-destructive">*</span>
                   </label>
 
-                  <select
-                    className="w-full px-3 py-2.5 text-sm text-foreground bg-card border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+                  <select id="profile-blood-group" aria-invalid={!!errors.blood_group} aria-describedby={errors.blood_group ? "profile-blood-group-error" : undefined}
+                    className="w-full min-h-11 px-3 py-2.5 text-sm text-foreground bg-card border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                     {...register(
                       'blood_group',
                       {
@@ -2516,6 +2546,7 @@ if (isError) {
                       <option key={bg} value={bg}>{bg}</option>
                     ))}
                   </select>
+                  {errors.blood_group && <p id="profile-blood-group-error" role="alert" className="text-sm text-destructive">Choose a blood group.</p>}
                 </div>
 
                 <div className="flex items-start gap-2 rounded-xl bg-secondary/60 p-3 text-xs text-muted-foreground">
@@ -2564,12 +2595,12 @@ if (isError) {
                 />
 
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  <label htmlFor="profile-relationship" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                     Relationship
                   </label>
 
-                  <select
-                    className="w-full px-3 py-2.5 text-sm text-foreground bg-card border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+                  <select id="profile-relationship"
+                    className="w-full min-h-11 px-3 py-2.5 text-sm text-foreground bg-card border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                     {...register('emergency_contact_relationship')}
                   >
                     <option value="">Select relationship</option>
@@ -2998,19 +3029,19 @@ if (isError) {
         ==================================================== */}
         <SectionPanel
           title="Privacy & Consent"
-          description="Choose which sensitive medical-record categories require explicit patient approval before doctor access."
+          description="Choose category locks for the record text filter. An assigned doctor needs a patient code to unlock matching records for 15 minutes. Matching is not automatic clinical classification."
         >
 
           {!isEditing && (
             <div className="flex items-start gap-2 rounded-xl bg-secondary/70 px-4 py-3 mb-4">
               <Lock size={15} className="text-muted-foreground shrink-0 mt-0.5" />
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Privacy settings are read-only until you enter Edit Mode.
+                Enter Edit Mode to change privacy locks. Each switch saves separately; cancelling profile edits does not undo saved privacy changes.
               </p>
             </div>
           )}
 
-          {consentLoading ? (
+          {consentFailed ? <Alert type="error" message="Privacy settings could not be loaded. Reload before changing locks." /> : consentLoading ? (
             <div className="py-8 flex justify-center"><Spinner size="sm" /></div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -3030,7 +3061,7 @@ if (isError) {
                       <div className="min-w-0">
                         <p className="text-sm font-bold text-foreground">{category}</p>
                         <p className={`text-xs mt-1 font-medium ${isLocked ? 'text-destructive' : 'text-primary'}`}>
-                          {isLocked ? 'Locked · approval required' : 'Standard clinical access'}
+                          {isLocked ? 'Matching records need a consent code' : 'No category lock selected'}
                         </p>
                       </div>
                     </div>
@@ -3038,9 +3069,10 @@ if (isError) {
                     <button
                       type="button"
                       onClick={() => handleToggleConsent(category)}
-                      disabled={consentMutation.isPending || !isEditing}
+                      disabled={consentMutation.isPending || !isEditing || consentFailed}
+                      role="switch" aria-checked={isLocked}
                       aria-label={`${isLocked ? 'Unlock' : 'Lock'} ${category}`}
-                      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${!isEditing ? 'opacity-45 cursor-not-allowed' : 'hover:opacity-90'} ${isLocked ? 'bg-destructive' : 'bg-slate-300'}`}
+                      className={`relative inline-flex h-11 w-12 shrink-0 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${!isEditing ? 'opacity-45 cursor-not-allowed' : 'hover:opacity-90'} ${isLocked ? 'bg-destructive' : 'bg-slate-300'}`}
                     >
                       <span
                         className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-300 ${isLocked ? 'translate-x-6' : 'translate-x-1'}`}
@@ -3095,13 +3127,14 @@ if (isError) {
 
       <div className="flex items-center justify-center gap-2 px-4 text-xs text-muted-foreground">
         <Shield size={15} />
-        <span>Your profile and clinical safety information are protected by Care4U access controls.</span>
+        <span>Your profile and clinical safety information are protected by Care4U access controls. Category locks use record text matching; they may not identify every sensitive record.</span>
       </div>
 
       {/* ── Add Allergy Modal ── */}
       {isAddAllergyModalOpen && (
 
         <Modal
+        manageFocus
           isOpen={
             isAddAllergyModalOpen
           }
@@ -3302,6 +3335,7 @@ if (isError) {
       {isAddConditionModalOpen && (
 
         <Modal
+        manageFocus
           isOpen={
             isAddConditionModalOpen
           }
@@ -3464,6 +3498,7 @@ if (isError) {
       {isAddDeviceModalOpen && (
 
         <Modal
+        manageFocus
           isOpen={
             isAddDeviceModalOpen
           }
@@ -3660,6 +3695,7 @@ if (isError) {
       {isAddBackgroundModalOpen && (
 
         <Modal
+        manageFocus
           isOpen={
             isAddBackgroundModalOpen
           }
@@ -3876,6 +3912,7 @@ if (isError) {
       {isAddFamilyHistoryModalOpen && (
 
         <Modal
+        manageFocus
           isOpen={
             isAddFamilyHistoryModalOpen
           }
@@ -4062,6 +4099,7 @@ if (isError) {
       {isAddVaccinationModalOpen && (
 
         <Modal
+        manageFocus
           isOpen={
             isAddVaccinationModalOpen
           }
@@ -4414,6 +4452,7 @@ if (isError) {
       {isDeleteModalOpen && (
 
         <Modal
+        manageFocus
           isOpen={
             isDeleteModalOpen
           }
@@ -4495,6 +4534,7 @@ if (isError) {
       {isDeleteConditionModalOpen && (
 
         <Modal
+        manageFocus
           isOpen={
             isDeleteConditionModalOpen
           }
@@ -4578,6 +4618,7 @@ if (isError) {
       {isDeleteDeviceModalOpen && (
 
         <Modal
+        manageFocus
           isOpen={
             isDeleteDeviceModalOpen
           }
@@ -4667,6 +4708,7 @@ if (isError) {
       {isDeleteBackgroundModalOpen && (
 
         <Modal
+        manageFocus
           isOpen={
             isDeleteBackgroundModalOpen
           }
@@ -4757,6 +4799,7 @@ if (isError) {
       {isDeleteFamilyHistoryModalOpen && (
 
         <Modal
+        manageFocus
           isOpen={
             isDeleteFamilyHistoryModalOpen
           }
@@ -4846,6 +4889,7 @@ if (isError) {
       {isDeleteVaccinationModalOpen && (
 
         <Modal
+        manageFocus
           isOpen={
             isDeleteVaccinationModalOpen
           }

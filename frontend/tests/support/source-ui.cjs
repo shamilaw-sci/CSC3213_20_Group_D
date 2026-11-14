@@ -36,6 +36,8 @@ function screen(file, { props = {}, imports = {}, globals = {}, binding } = {}) 
   const React = {
     createElement: (type, props, ...children) => ({ type, props: { ...props, children } }),
     Fragment: 'Fragment',
+    useMemo: calculate => calculate(),
+    useCallback: callback => callback,
     useState: initial => { const index = cursor++; if (!(index in state)) state[index] = typeof initial === 'function' ? initial() : initial;
       return [state[index], value => { state[index] = typeof value === 'function' ? value(state[index]) : value; }]; },
     useRef: initial => { const index = cursor++; return state[index] ||= { current: initial }; },

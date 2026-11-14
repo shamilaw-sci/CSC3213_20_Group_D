@@ -8,6 +8,20 @@
 
 import api from './api';
 
+/** Require an acknowledged patient response before reporting a save, unlock or empty list.
+ * @param {Object} response Axios response. @param {string} kind Expected object/array payload.
+ * @returns {Object|Array} Valid payload; rejected/malformed envelopes throw for screen recovery.
+ */
+const patientData = (response, kind = 'object') => {
+  const data = response?.data?.data;
+  if (response?.data?.success !== true || !data ||
+      (kind === 'array' ? !Array.isArray(data) : typeof data !== 'object' || Array.isArray(data))) {
+    throw new Error('Care4U did not confirm this request. Please try again.');
+  }
+  return data;
+};
+
+
 /**
  * Fetches a patient profile by patient UUID.
  * @param {string} patientId - UUID of the patient
@@ -21,7 +35,9 @@ export const getPatientProfile = async (
       `/api/patients/${patientId}`
     );
 
-  return response.data.data;
+  const data = patientData(response);
+  if (typeof data.id !== 'string') throw new Error('The patient profile was not confirmed. Please try again.');
+  return data;
 };
 
 /**
@@ -40,7 +56,9 @@ export const updatePatientProfile = async (
       data
     );
 
-  return response.data.data;
+  const confirmed = patientData(response);
+  if (typeof confirmed.id !== 'string') throw new Error('The patient profile was not confirmed. Please try again.');
+  return confirmed;
 };
 
 /**
@@ -73,7 +91,9 @@ export const uploadPatientPhoto = async (
       }
     );
 
-  return response.data.data;
+  const data = patientData(response);
+  if (typeof data.id !== 'string') throw new Error('The patient profile was not confirmed. Please try again.');
+  return data;
 };
 
 /**
@@ -105,7 +125,7 @@ export const getMedicalRecords = async (
       }
     );
 
-  return response.data.data;
+  return patientData(response, 'array');
 };
 
 /**
@@ -637,11 +657,9 @@ export const getConsentSettings = async (
       `/api/patients/${patientId}/consent`
     );
 
-  return (
-    response.data?.data
-      ?.locked_categories ||
-    []
-  );
+  const data = patientData(response);
+  if (!Array.isArray(data.locked_categories)) throw new Error('Privacy settings could not be read. Please try again.');
+  return data.locked_categories;
 };
 
 /**
@@ -663,7 +681,9 @@ export const updateConsentSettings = async (
       }
     );
 
-  return response.data?.data;
+  const data = patientData(response);
+  if (!Array.isArray(data.locked_categories)) throw new Error('Privacy changes were not confirmed. Please try again.');
+  return data;
 };
 
 /* =========================================================
@@ -692,7 +712,9 @@ export const getConsentAccessStatus = async (
       }
     );
 
-  return response.data.data;
+  const data = patientData(response);
+  if (typeof data.hasActiveGrant !== 'boolean' || !Array.isArray(data.lockedCategories) || !Array.isArray(data.grantedCategories)) throw new Error('Consent status could not be read. Please try again.');
+  return data;
 };
 
 /**
@@ -717,7 +739,9 @@ export const requestConsentAccess = async (
       }
     );
 
-  return response.data.data;
+  const data = patientData(response);
+  if (typeof data.alreadyGranted !== 'boolean' || !Number.isFinite(Date.parse(data.expiresAt)) || (!data.alreadyGranted && typeof data.requestId !== 'string')) throw new Error('The consent request was not confirmed. Please try again.');
+  return data;
 };
 
 /**
@@ -743,5 +767,7 @@ export const verifyConsentAccess = async (
       }
     );
 
-  return response.data.data;
+  const data = patientData(response);
+  if (data.granted !== true || !Array.isArray(data.grantedCategories) || !Number.isFinite(Date.parse(data.expiresAt))) throw new Error('Temporary access was not confirmed. Please try again.');
+  return data;
 };

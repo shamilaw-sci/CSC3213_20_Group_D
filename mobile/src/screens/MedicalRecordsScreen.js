@@ -12,6 +12,7 @@ import React, {
   useEffect,
   useMemo,
   useState,
+  useRef,
 } from 'react';
 
 import {
@@ -124,6 +125,8 @@ const RECORD_TYPES = {
     background: COLORS.greenSoft,
   },
 
+  diagnosis: { label: 'Diagnosis', icon: FileText, color: COLORS.teal, background: COLORS.tealSoft },
+  vaccination: { label: 'Vaccination', icon: FileHeart, color: COLORS.teal, background: COLORS.tealSoft },
   other: {
     label: 'Record',
     icon: FileText,
@@ -133,6 +136,9 @@ const RECORD_TYPES = {
 };
 
 const FILTERS = [
+  { key: 'diagnosis', label: 'Diagnoses' },
+  { key: 'vaccination', label: 'Vaccinations' },
+  { key: 'other', label: 'Other' },
   {
     key: 'all',
     label: 'All',
@@ -257,6 +263,9 @@ const formatLongDate = (
  * @component SummaryCard
  * @desc      Compact medical-record summary statistic.
  */
+/** Render a native record metric using label/value/icon/color props; no API side effects.
+ * @returns {*} UI element, local transition or acknowledged async completion as described above.
+ */
 const SummaryCard = ({
   icon: Icon,
   value,
@@ -302,6 +311,9 @@ const SummaryCard = ({
 /**
  * @component RecordCard
  * @desc      Premium medical-record timeline card.
+ */
+/** Render a native record summary and delegate opening through onPress/onOpen props; record selection belongs to the screen.
+ * @returns {*} UI element, local transition or acknowledged async completion as described above.
  */
 const RecordCard = ({
   record,
@@ -504,6 +516,9 @@ const DetailSection = ({
 /**
  * @component RecordDetailModal
  * @desc      Full record detail experience.
+ */
+/** Render selected record detail with native Modal controls. Props provide record/visibility/close handling; device/back/focus acceptance remains NOT_RUN.
+ * @returns {*} UI element, local transition or acknowledged async completion as described above.
  */
 const RecordDetailModal = ({
   record,
@@ -871,6 +886,9 @@ const RecordDetailModal = ({
    MAIN SCREEN
 ========================================================= */
 
+/** Load the session profile records, reject stale async results via loadVersion, clear detail/payload before refresh, and derive type filters. No account-ID fallback or native runtime claim.
+ * @returns {*} UI element, local transition or acknowledged async completion as described above.
+ */
 const MedicalRecordsScreen = () => {
   const user =
     useAuthStore(
@@ -880,7 +898,6 @@ const MedicalRecordsScreen = () => {
 
   const patientId =
     user?.profile_id ||
-    user?.id ||
     '';
 
   const [
@@ -913,6 +930,8 @@ const MedicalRecordsScreen = () => {
     setSelectedFilter,
   ] = useState('all');
 
+  const loadVersion = useRef(0);
+
   /* =======================================================
      LOAD RECORDS
   ======================================================= */
@@ -922,6 +941,9 @@ const MedicalRecordsScreen = () => {
       async (
         background = false
       ) => {
+        const version = ++loadVersion.current;
+        setSelectedRecord(null);
+        setRecords([]);
         if (!patientId) {
           setLoading(
             false
@@ -954,6 +976,7 @@ const MedicalRecordsScreen = () => {
               patientId
             );
 
+          if (version !== loadVersion.current) return;
           setRecords(
             data ||
             []
@@ -962,6 +985,7 @@ const MedicalRecordsScreen = () => {
         } catch (
           err
         ) {
+          if (version !== loadVersion.current) return;
           console.error(
             'Medical records load error:',
             err
@@ -972,6 +996,7 @@ const MedicalRecordsScreen = () => {
           );
 
         } finally {
+          if (version !== loadVersion.current) return;
           setLoading(
             false
           );
@@ -988,6 +1013,7 @@ const MedicalRecordsScreen = () => {
 
   useEffect(() => {
     fetchRecords();
+    return () => { loadVersion.current += 1; };
   }, [
     fetchRecords,
   ]);
@@ -1341,6 +1367,8 @@ const MedicalRecordsScreen = () => {
                     key={
                       filter.key
                     }
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
                     style={[
                       styles.filterChip,
 
@@ -1720,6 +1748,7 @@ const styles =
     },
 
     filterChip: {
+    minHeight: 44,
       minHeight: 36,
 
       paddingHorizontal: 13,

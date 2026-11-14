@@ -14,6 +14,7 @@ import React, {
   useCallback,
   useEffect,
   useState,
+  useRef,
 } from 'react';
 
 import {
@@ -743,6 +744,9 @@ const EmptySection = ({
    MAIN SCREEN
 ========================================================= */
 
+/** Coordinate owned profile and privacy controls from patientId prop/session profile_id. Mutations require acknowledgement; privacy uses a separate serialized save. Other clinical CRUD/AI remains partial scope.
+ * @returns {*} UI element, local transition or acknowledged async completion as described above.
+ */
 const PatientProfileScreen = ({
   patientId,
 }) => {
@@ -753,7 +757,6 @@ const PatientProfileScreen = ({
   const activePatientId =
     patientId ||
     user?.profile_id ||
-    user?.id ||
     '';
 
   /* =======================================================
@@ -775,6 +778,9 @@ const PatientProfileScreen = ({
   const [vaccinations, setVaccinations] = useState([]);
 
   const [lockedCategories, setLockedCategories] = useState([]);
+  const consentInFlight = useRef(false);
+  const saveInFlight = useRef(false);
+  const [consentSaving, setConsentSaving] = useState(false);
 
   const [loading, setLoading] = useState(true);
 
@@ -1038,7 +1044,10 @@ const PatientProfileScreen = ({
      GLOBAL EDIT MODE
   ======================================================= */
 
-  const startEditing = () => {
+  /** Copy confirmed editable profile values into formData and clear old save feedback. No backend write occurs until saveProfile.
+ * @returns {*} UI element, local transition or acknowledged async completion as described above.
+ */
+const startEditing = () => {
     setFormData({
       full_name:
         patient?.full_name ||
@@ -1066,7 +1075,10 @@ const PatientProfileScreen = ({
     setIsEditing(true);
   };
 
-  const updateField = (
+  /** Update one local editable form field. Inputs are field name/value; the backend still applies its fixed allow-list.
+ * @returns {*} UI element, local transition or acknowledged async completion as described above.
+ */
+const updateField = (
     field,
     value
   ) => {
@@ -1078,7 +1090,11 @@ const PatientProfileScreen = ({
     );
   };
 
-  const saveProfile = async () => {
+  /** Validate nonempty name, exclude repeated taps, await the confirmed profile, then replace patient state and exit edit mode. Failure preserves the form and restores retry.
+ * @returns {*} UI element, local transition or acknowledged async completion as described above.
+ */
+const saveProfile = async () => {
+    if (saveInFlight.current) return;
     if (
       !formData
         .full_name
@@ -1091,6 +1107,7 @@ const PatientProfileScreen = ({
       return;
     }
 
+    saveInFlight.current = true;
     setSaving(true);
     setSaveError(null);
 
@@ -1127,6 +1144,7 @@ const PatientProfileScreen = ({
       );
 
     } finally {
+      saveInFlight.current = false;
       setSaving(false);
     }
   };
@@ -1286,59 +1304,27 @@ const PatientProfileScreen = ({
      PRIVACY
   ======================================================= */
 
-  const toggleConsent = async (
-    category
-  ) => {
-    if (
-      !isEditing
-    ) {
-      return;
-    }
-
-    const previous = [
-      ...lockedCategories,
-    ];
-
-    const isLocked =
-      lockedCategories.includes(
-        category
-      );
-
-    const next =
-      isLocked
-        ? lockedCategories.filter(
-            item =>
-              item !== category
-          )
-        : [
-            ...lockedCategories,
-            category,
-          ];
-
-    setLockedCategories(
-      next
-    );
-
+  /** Save privacy independently of profile edits; never show an unacknowledged lock.
+   * @param {string} category Existing display label. @returns {Promise<void>} Confirmed list or retry alert.
+   */
+  /** Serialize a complete privacy-list save; update the visible list only after acknowledgement. Failure keeps the confirmed state.
+ * @returns {*} UI element, local transition or acknowledged async completion as described above.
+ */
+const toggleConsent = async category => {
+    if (!isEditing || consentInFlight.current) return;
+    consentInFlight.current = true;
+    setConsentSaving(true);
+    const next = lockedCategories.includes(category)
+      ? lockedCategories.filter(item => item !== category) : [...lockedCategories, category];
     try {
-      await updateConsentSettings(
-        activePatientId,
-        next
-      );
-
-    } catch (err) {
-      console.error(
-        'Consent update error:',
-        err
-      );
-
-      setLockedCategories(
-        previous
-      );
-
-      Alert.alert(
-        'Update failed',
-        'The privacy setting could not be updated.'
-      );
+      const result = await updateConsentSettings(activePatientId, next);
+      if (!Array.isArray(result?.locked_categories)) throw new Error('Unconfirmed privacy settings');
+      setLockedCategories(result.locked_categories);
+    } catch {
+      Alert.alert('Privacy setting not saved', 'Please try again. The last confirmed settings are still shown.');
+    } finally {
+      consentInFlight.current = false;
+      setConsentSaving(false);
     }
   };
 
@@ -3598,6 +3584,8 @@ const PatientProfileScreen = ({
               </View>
             ) : null}
 
+            <Text style={styles.privacyStatus}>Each switch saves separately. Profile cancel does not undo saved locks. Matching record text can be unlocked for 15 minutes by an assigned doctor using a patient code; matching may miss sensitive records.</Text>
+
             {SENSITIVE_CATEGORIES.map(
               category => {
                 const locked =
@@ -3659,15 +3647,18 @@ const PatientProfileScreen = ({
                         ]}
                       >
                         {locked
-                          ? 'Locked · approval required'
-                          : 'Standard clinical access'}
+                          ? 'Matching records need a consent code'
+                          : 'No category lock selected'}
                       </Text>
 
                     </View>
 
                     <Switch
                       value={locked}
-                      disabled={!isEditing}
+                      disabled={!isEditing || consentSaving}
+                      accessibilityLabel={category}
+                      accessibilityRole="switch"
+                      accessibilityState={{ checked: locked, disabled: !isEditing || consentSaving }}
                       onValueChange={() =>
                         toggleConsent(
                           category

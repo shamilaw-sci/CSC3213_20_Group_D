@@ -1134,6 +1134,7 @@ const SafetySection = ({
  * Main consultation workspace.
  */
 const ConsultationPage = () => {
+  const consentInFlight = useRef(false);
 
   const {
     appointmentId,
@@ -3221,6 +3222,8 @@ const ConsultationPage = () => {
 
         expiryHandled =
           true;
+        // Clear protected payloads before refresh: a failed refresh must not retain expired data.
+        setRecords([]);
 
         setConsentAccessStatus(
           (previous) => ({
@@ -3302,6 +3305,7 @@ const ConsultationPage = () => {
    */
   const handleRequestConsentAccess =
     async () => {
+      if (consentInFlight.current) return;
 
       if (
         !consultation
@@ -3311,6 +3315,7 @@ const ConsultationPage = () => {
         return;
       }
 
+      consentInFlight.current = true;
       try {
 
         setIsRequestingConsent(
@@ -3406,7 +3411,7 @@ const ConsultationPage = () => {
         );
 
         toast.success(
-          'Consent code sent to the patient.'
+          'Consent email submitted. Ask the patient to check their inbox and spam folder.'
         );
 
       } catch (err) {
@@ -3432,6 +3437,7 @@ const ConsultationPage = () => {
         );
 
       } finally {
+        consentInFlight.current = false;
 
         setIsRequestingConsent(
           false
@@ -3446,6 +3452,7 @@ const ConsultationPage = () => {
    */
   const handleVerifyConsentAccess =
     async () => {
+      if (consentInFlight.current) return;
 
       const normalizedOtp =
         consentOtp
@@ -3477,6 +3484,7 @@ const ConsultationPage = () => {
         return;
       }
 
+      consentInFlight.current = true;
       try {
 
         setIsVerifyingConsent(
@@ -3578,6 +3586,7 @@ const ConsultationPage = () => {
         );
 
       } finally {
+        consentInFlight.current = false;
 
         setIsVerifyingConsent(
           false
@@ -8343,7 +8352,7 @@ const ConsultationPage = () => {
               </p>
 
               <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-                Care4U sent a six-digit consent code to the patient's registered email.
+                A six-digit code was submitted for the patient's registered email. Ask the patient to check their inbox and spam folder.
                 Ask the patient to read the code to you only if they agree to temporary access.
               </p>
 

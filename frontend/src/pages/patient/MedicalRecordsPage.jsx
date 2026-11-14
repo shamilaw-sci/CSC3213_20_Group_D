@@ -77,6 +77,8 @@ const RECORD_TYPES = {
     backgroundClass: 'bg-emerald-50',
   },
 
+  diagnosis: { label: 'Diagnosis', icon: FileText, colorClass: 'text-primary', backgroundClass: 'bg-module-soft' },
+  vaccination: { label: 'Vaccination', icon: FileHeart, colorClass: 'text-primary', backgroundClass: 'bg-module-soft' },
   other: {
     label: 'Record',
     icon: FileText,
@@ -86,6 +88,9 @@ const RECORD_TYPES = {
 };
 
 const FILTERS = [
+  { key: 'diagnosis', label: 'Diagnoses' },
+  { key: 'vaccination', label: 'Vaccinations' },
+  { key: 'other', label: 'Other' },
   {
     key: 'all',
     label: 'All',
@@ -197,6 +202,9 @@ const formatLongDate = (
    SUMMARY CARD
 ========================================================= */
 
+/** Render a record summary metric from icon/label/value/description/color props; purely presentational.
+ * @returns {*} UI element, local transition or acknowledged async completion as described above.
+ */
 const SummaryCard = ({
   icon: Icon,
   label,
@@ -296,6 +304,9 @@ const SummaryCard = ({
    RECORD CARD
 ========================================================= */
 
+/** Render one record summary and call onOpen on keyboard/click activation. Props are record and onOpen; the parent owns selection.
+ * @returns {*} UI element, local transition or acknowledged async completion as described above.
+ */
 const RecordCard = ({
   record,
   onOpen,
@@ -640,6 +651,9 @@ const DetailBlock = ({
    MAIN PAGE
 ========================================================= */
 
+/** Read the owning profile records through React Query; derive sorted/filter/count views. Only a selected object in the current result can open a detail dialog. Missing profile or failed API denies display.
+ * @returns {*} UI element, local transition or acknowledged async completion as described above.
+ */
 const MedicalRecordsPage = () => {
   const user =
     useAuthStore(
@@ -649,7 +663,6 @@ const MedicalRecordsPage = () => {
 
   const patientId =
     user?.profile_id ||
-    user?.id ||
     '';
 
   const [
@@ -780,6 +793,8 @@ const MedicalRecordsPage = () => {
      LOADING
   ======================================================= */
 
+  if (!patientId) return <Alert type="error" message="Your patient profile is unavailable. Please sign in again." />;
+
   if (
     isLoading
   ) {
@@ -865,8 +880,9 @@ const MedicalRecordsPage = () => {
           <Alert
             type="error"
             message={
-              error?.message ||
-              'Failed to load medical records.'
+              error?.response?.status === 401
+                ? 'Your session has ended. Please sign in again.'
+                : 'Could not load your medical records. Check your connection and try again.'
             }
           />
 
@@ -1145,6 +1161,7 @@ const MedicalRecordsPage = () => {
                     key={
                       filter.key
                     }
+                    aria-pressed={active}
                     type="button"
                     onClick={() =>
                       setSelectedFilter(
@@ -1354,8 +1371,9 @@ const MedicalRecordsPage = () => {
       ==================================================== */}
 
       <Modal
+        manageFocus
         isOpen={
-          !!selectedRecord
+          !!selectedRecord && records.includes(selectedRecord)
         }
         onClose={() =>
           setSelectedRecord(
@@ -1366,7 +1384,7 @@ const MedicalRecordsPage = () => {
         size="lg"
       >
 
-        {selectedRecord && (() => {
+        {records.includes(selectedRecord) && selectedRecord && (() => {
           const meta =
             getRecordMeta(
               selectedRecord
