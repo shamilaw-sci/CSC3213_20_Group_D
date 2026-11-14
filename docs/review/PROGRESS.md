@@ -1,5 +1,15 @@
 # Care4U final review progress
 
+## Current work: autonomous remaining final review
+
+2026-11-14. User authorized completing remaining review without per-stage pauses or handoff ZIPs. Preserve completed work and use focused checks plus major integration checkpoints. Missing isolated-DB/native/deployment acceptance leaves explicit gaps, not unrelated source/UI/viva blockers. No live records/DB writes, real messages/payments, deployment, push or merge.
+
+[Patient Stage 4A](STAGE4A.md) is the current coherent batch, starting at b09bfd0 with clean entry: profile persistence/validation, service ownership/consultation boundaries, atomic consent mutation protocol/expiry/attempt guards, acknowledged web/mobile feedback, record filters and representative web a11y/responsiveness. Existing 145 + 44 new checks PASS; final source-bound static checkpoint is recorded in evidence/static-current. [Patient viva](../viva/04-patient-profile-records-consent.md) covers logic and partial scope. C3-11, clinical text classification, explicit revocation and rolling consent budgets remain open.
+
+Patient application commits: 6f261b6 and c06edd8; all six static checks passed. No ZIP; outside-repo application patch saved. Next order: shared auth/audit/config foundations as needed; Doctor/Appointment context; Prescription/dispensing; Pharmacy/Laboratory; Hospital/Emergency; orders/payments; Admin/health content/integrations and remaining shared consumers. Use tracker exclusions/partial states, do not repeat completed foundations unless affected. Final completion requires pending source work, not merely the Patient checkpoint.
+
+## Historical handoffs and discovery
+
 ## Current handoff: Stage 3A
 
 2026-11-13 (Asia/Colombo). **Stage 3A complete locally; stop for independent review.** Entry was clean at confirmed Stage 2B final `8c06a83a15bb502da04f987c7dbc8f58deedabcc` on the same `codex/care4u-final-review-2026-11-12` branch. Application/UI/tests/comments commit: `57e6d2c` and response-safety commit `d78465b`. Final documentation/evidence commit is in Git and the outside-repository manifest.

@@ -1,5 +1,9 @@
 # Stage 1 findings
 
+## Patient Stage 4A update
+
+See [STAGE4A.md](STAGE4A.md): P4-01 profile name persistence/validation, P4-02 service ownership/active context, P4-03 consent transaction/expiry/attempt guards, P4-04 acknowledged client states, P4-05 patient filters/dialog/labels/responsiveness and P4-06 expiry payload clearing have scoped source fixes and checks. Real PG/native/deployment acceptance remains pending. Open: clinical text classification/confidential flag policy, patient-initiated/lock-change revocation, rolling consent request budgets, profile-link cardinality, safety/AI/photo confidentiality. C3-11 remains open; not every registration route is protected. Continue remaining modules autonomously; no global clinical/privacy closure.
+
 ## Stage 3A current update
 
 See [STAGE3A.md](STAGE3A.md), source/UI commit `57e6d2c` and response-safety commit `d78465b`, and [complete UI reference](../viva/03-authentication-ui-file-reference.md). Earlier stage sections remain historical. All 89 backend and 56 new source/UI cases pass; exact web fixture coverage is separate from native/real DB/session acceptance.

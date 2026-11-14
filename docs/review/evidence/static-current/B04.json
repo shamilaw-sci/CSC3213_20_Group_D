@@ -2,7 +2,7 @@
   "id": "B04",
   "kind": "parser",
   "required": true,
-  "run_id": "2026-11-13T07-57-48-711Z-057952db-1223-4d0e-bcd6-dcb9fb149897",
+  "run_id": "2026-11-14T02-28-49-316Z-1a72167b-9517-4aae-8d38-a4de9085b851",
   "command": [
     "C:\\Users\\Waasana\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
     "D:\\Projects\\Care4U - Healthcare Project\\codes\\CSC3213_20_Group_D\\docs\\review\\tools\\static-worker.mjs",
@@ -12,8 +12,8 @@
   "cwd": ".",
   "result": "PASS",
   "source_snapshot": {
-    "head": "d78465bef5ebd231690700b2c6e7dafdb51aa5e9",
-    "sha256": "bd7167ee75eddf071b73d79642de31e2c4164f3a61c5afdda796ce3bd5ee87bd",
+    "head": "b09bfd05c32fdda16831240abbc725cb6780d5de",
+    "sha256": "373058a6ffde86c16a5cdc3644bdad6b396ad7ea61fe4f2aef502ca780d9eee0",
     "files": [
       {
         "path": "docs/review/tools/check-evidence.mjs",
@@ -137,7 +137,7 @@
       },
       {
         "path": "mobile/src/screens/MedicalRecordsScreen.js",
-        "sha256": "8de637b6969ec7614de7586ce1419a546bf186e4fa81fda2609b4bdec844d97c"
+        "sha256": "eabc873e7a4e9f27c6e4ef030a7902240d796055816664f73209ab11996cc913"
       },
       {
         "path": "mobile/src/screens/MyAppointmentsScreen.js",
@@ -153,7 +153,7 @@
       },
       {
         "path": "mobile/src/screens/PatientProfileScreen.js",
-        "sha256": "dcc19fa6f2dd60766babb9b08ca3a2e8cb8635dda74c0adce561b107543a5a54"
+        "sha256": "593149a463d80d85a97ca2df057259c58f92f7b5ee55e2da11ae8eb64416b871"
       },
       {
         "path": "mobile/src/screens/PatientQRCardScreen.js",
@@ -193,7 +193,7 @@
       },
       {
         "path": "mobile/src/services/patient.service.js",
-        "sha256": "947e9f9a2a5d521b750945300eb462658593bb4af8e8e98db075b398178c56ae"
+        "sha256": "8060b3e39495d8272a3244a72af56d6da5a06f24ee07d1c51e80dba7a5c6144d"
       },
       {
         "path": "mobile/src/services/prescription.service.js",
@@ -214,8 +214,8 @@
     ]
   },
   "limitations": "Tracked JS/JSX parsing only; no Metro/native/device behavior or API calls",
-  "started_at": "2026-11-13T07:57:59.444Z",
-  "finished_at": "2026-11-13T07:57:59.987Z",
+  "started_at": "2026-11-14T02:29:00.844Z",
+  "finished_at": "2026-11-14T02:29:01.389Z",
   "exit_code": 0,
   "error_code": null,
   "details": {

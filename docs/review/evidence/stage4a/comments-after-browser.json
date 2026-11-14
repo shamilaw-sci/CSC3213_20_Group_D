@@ -1,0 +1,36 @@
+{
+  "date": "2026-11-14",
+  "method": "Installed Babel JSX/CommonJS transform with comments:false, exact generated-code equality before/after",
+  "files": [
+    {
+      "path": "frontend/src/pages/patient/PatientProfilePage.jsx",
+      "before_sha256": "f5c8c13ff043c2c50060e568f6cb21ff88ed54e2fb5c82281a73a26a3fd7697c",
+      "after_sha256": "a2756f0e4e6f2de0c2e15b3fcbc552ac6347ca73ff1cebcd05749784a7fd8249",
+      "executable_code_identical": true
+    },
+    {
+      "path": "frontend/src/pages/patient/MedicalRecordsPage.jsx",
+      "before_sha256": "42d58f0810fb3ca9d3b37339f13297b6e16bed431ff4865f10ec2126cfe17f0b",
+      "after_sha256": "b97f1c5edc90dea97524ed348da7e481aea5a87964cea6d2f6969e538d6049ec",
+      "executable_code_identical": true
+    },
+    {
+      "path": "mobile/src/screens/PatientProfileScreen.js",
+      "before_sha256": "ce1a602f4f69a1b8cb06548afa5fc2eeb30a5f76884d332aba7e4125804f5523",
+      "after_sha256": "593149a463d80d85a97ca2df057259c58f92f7b5ee55e2da11ae8eb64416b871",
+      "executable_code_identical": true
+    },
+    {
+      "path": "mobile/src/screens/MedicalRecordsScreen.js",
+      "before_sha256": "f27b3892b314ac2075478ac1a7a5da17bc9007a1cac190a76ac808ae4f7125d8",
+      "after_sha256": "eabc873e7a4e9f27c6e4ef030a7902240d796055816664f73209ab11996cc913",
+      "executable_code_identical": true
+    },
+    {
+      "path": "frontend/src/components/common/Modal.jsx",
+      "before_sha256": "a3a536407d306d6f876d9c61541cc7720b8f98a072c3c74279d332ff1570ca55",
+      "after_sha256": "a3a536407d306d6f876d9c61541cc7720b8f98a072c3c74279d332ff1570ca55",
+      "executable_code_identical": true
+    }
+  ]
+}

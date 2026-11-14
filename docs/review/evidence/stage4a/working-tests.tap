@@ -1,0 +1,118 @@
+TAP version 13
+# Subtest: auth routes keep me behind authentication and login behind its IP limiter
+ok 1 - auth routes keep me behind authentication and login behind its IP limiter
+  ---
+  duration_ms: 3.4924
+  type: 'test'
+  ...
+# Subtest: patient routes install authentication before resource routes; UUID prescription reads never enable pharmacists
+ok 2 - patient routes install authentication before resource routes; UUID prescription reads never enable pharmacists
+  ---
+  duration_ms: 1.8466
+  type: 'test'
+  ...
+# Subtest: mocked route declarations attach IP then field budget before each OTP/recovery controller
+ok 3 - mocked route declarations attach IP then field budget before each OTP/recovery controller
+  ---
+  duration_ms: 2.213
+  type: 'test'
+  ...
+# Subtest: mocked app assembly selects bounded proxy defaults/config and actual Express resolves IP accordingly
+ok 4 - mocked app assembly selects bounded proxy defaults/config and actual Express resolves IP accordingly
+  ---
+  duration_ms: 225.8399
+  type: 'test'
+  ...
+# Subtest: session/CORS assembly (test) uses documented cookie/store contract without connecting
+ok 5 - session/CORS assembly (test) uses documented cookie/store contract without connecting
+  ---
+  duration_ms: 1.2022
+  type: 'test'
+  ...
+# Subtest: session/CORS assembly (production) uses documented cookie/store contract without connecting
+ok 6 - session/CORS assembly (production) uses documented cookie/store contract without connecting
+  ---
+  duration_ms: 0.9709
+  type: 'test'
+  ...
+# Subtest: session assembly rejects missing secret/origins and invalid cookie lifetimes
+ok 7 - session assembly rejects missing secret/origins and invalid cookie lifetimes
+  ---
+  duration_ms: 6.3898
+  type: 'test'
+  ...
+# Subtest: repository token/OTP reads and writes honor the supplied transaction client and guarded consumption
+ok 8 - repository token/OTP reads and writes honor the supplied transaction client and guarded consumption
+  ---
+  duration_ms: 1.702
+  type: 'test'
+  ...
+# Subtest: transaction helper requests BEGIN/COMMIT/release or ROLLBACK/release on callback failure
+ok 9 - transaction helper requests BEGIN/COMMIT/release or ROLLBACK/release on callback failure
+  ---
+  duration_ms: 2.0575
+  type: 'test'
+  ...
+# Subtest: consent status validates doctor, patient and active consultation before asking for a grant
+ok 10 - consent status validates doctor, patient and active consultation before asking for a grant
+  ---
+  duration_ms: 8.2735
+  type: 'test'
+  ...
+# Subtest: consent repository contract scopes grant by patient/doctor/appointment and excludes expired/revoked rows
+ok 11 - consent repository contract scopes grant by patient/doctor/appointment and excludes expired/revoked rows
+  ---
+  duration_ms: 1.4107
+  type: 'test'
+  ...
+# Subtest: medical-record filter hides locked categories on missing/failed grant and requires every matched category
+ok 12 - medical-record filter hides locked categories on missing/failed grant and requires every matched category
+  ---
+  duration_ms: 4.8637
+  type: 'test'
+  ...
+# Subtest: profile repository persists full name and only whitelisted editable columns
+ok 13 - profile repository persists full name and only whitelisted editable columns
+  ---
+  duration_ms: 2.5326
+  type: 'test'
+  ...
+# Subtest: profile rejects invalid shape and empty name before update
+ok 14 - profile rejects invalid shape and empty name before update
+  ---
+  duration_ms: 9.0529
+  type: 'test'
+  ...
+# Subtest: record service denies unowned or missing identities before returning records
+ok 15 - record service denies unowned or missing identities before returning records
+  ---
+  duration_ms: 4.1518
+  type: 'test'
+  ...
+# Subtest: consent categories reject mixed or malformed elements rather than silently discarding locks
+ok 16 - consent categories reject mixed or malformed elements rather than silently discarding locks
+  ---
+  duration_ms: 2.253
+  type: 'test'
+  ...
+# Subtest: verification consumes and creates grant on the same transaction client
+ok 17 - verification consumes and creates grant on the same transaction client
+  ---
+  duration_ms: 2.6523
+  type: 'test'
+  ...
+# Subtest: consume SQL rechecks expiry, attempts, invalidation and single use
+ok 18 - consume SQL rechecks expiry, attempts, invalidation and single use
+  ---
+  duration_ms: 1.5531
+  type: 'test'
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 18
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 402.2927

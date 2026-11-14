@@ -39,10 +39,6 @@ Main registration still creates only pending OTP data; verification creates acco
 
 This hardening was source-tested after browser capture. Captured fixture 500/known-safe 502 wording is unchanged; the additional unexpected-5xx branch was not rerun in the browser. Capture hashes remain historical and the verification summary records the difference.
 
-**C3-12:** Final response tracing found raw unexpected error text in the two direct registration controllers and in client 5xx formatting. Controllers now return generic 5xx failure text; both clients suppress unexpected 5xx bodies while retaining the known safe email-submission 502 message. Two actual-controller regression cases cover 500 and expected 400 responses; both client formatter tests cover unknown 500/502 bodies. Existing raw server logging remains outside this fix and privacy follow-up stays open.
-
-This hardening was source-tested after browser capture. Captured fixture 500/known-safe 502 wording is unchanged; the additional unexpected-5xx branch was not rerun in the browser. Capture hashes remain historical and the verification summary records the difference.
-
 ## Checks actually performed
 
 | Check | Result / meaning |

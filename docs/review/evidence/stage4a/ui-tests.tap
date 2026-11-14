@@ -1,0 +1,136 @@
+TAP version 13
+# Subtest: frontend getPatientProfile rejects negative envelopes rather than empty/saved success
+ok 1 - frontend getPatientProfile rejects negative envelopes rather than empty/saved success
+  ---
+  duration_ms: 110.5971
+  type: 'test'
+  ...
+# Subtest: frontend updatePatientProfile rejects negative envelopes rather than empty/saved success
+ok 2 - frontend updatePatientProfile rejects negative envelopes rather than empty/saved success
+  ---
+  duration_ms: 20.8053
+  type: 'test'
+  ...
+# Subtest: frontend getMedicalRecords rejects negative envelopes rather than empty/saved success
+ok 3 - frontend getMedicalRecords rejects negative envelopes rather than empty/saved success
+  ---
+  duration_ms: 23.7762
+  type: 'test'
+  ...
+# Subtest: frontend getConsentSettings rejects negative envelopes rather than empty/saved success
+ok 4 - frontend getConsentSettings rejects negative envelopes rather than empty/saved success
+  ---
+  duration_ms: 16.9727
+  type: 'test'
+  ...
+# Subtest: frontend updateConsentSettings rejects negative envelopes rather than empty/saved success
+ok 5 - frontend updateConsentSettings rejects negative envelopes rather than empty/saved success
+  ---
+  duration_ms: 15.4772
+  type: 'test'
+  ...
+# Subtest: frontend medical record wrapper validates array and forwards consultation not role
+ok 6 - frontend medical record wrapper validates array and forwards consultation not role
+  ---
+  duration_ms: 28.5975
+  type: 'test'
+  ...
+# Subtest: frontend privacy response must contain a confirmed list
+ok 7 - frontend privacy response must contain a confirmed list
+  ---
+  duration_ms: 24.4148
+  type: 'test'
+  ...
+# Subtest: mobile getPatientProfile rejects negative envelopes rather than empty/saved success
+ok 8 - mobile getPatientProfile rejects negative envelopes rather than empty/saved success
+  ---
+  duration_ms: 11.9527
+  type: 'test'
+  ...
+# Subtest: mobile updatePatientProfile rejects negative envelopes rather than empty/saved success
+ok 9 - mobile updatePatientProfile rejects negative envelopes rather than empty/saved success
+  ---
+  duration_ms: 13.2938
+  type: 'test'
+  ...
+# Subtest: mobile getMedicalRecords rejects negative envelopes rather than empty/saved success
+ok 10 - mobile getMedicalRecords rejects negative envelopes rather than empty/saved success
+  ---
+  duration_ms: 9.2028
+  type: 'test'
+  ...
+# Subtest: mobile getConsentSettings rejects negative envelopes rather than empty/saved success
+ok 11 - mobile getConsentSettings rejects negative envelopes rather than empty/saved success
+  ---
+  duration_ms: 11.8869
+  type: 'test'
+  ...
+# Subtest: mobile updateConsentSettings rejects negative envelopes rather than empty/saved success
+ok 12 - mobile updateConsentSettings rejects negative envelopes rather than empty/saved success
+  ---
+  duration_ms: 8.822
+  type: 'test'
+  ...
+# Subtest: mobile medical record wrapper validates array and forwards consultation not role
+ok 13 - mobile medical record wrapper validates array and forwards consultation not role
+  ---
+  duration_ms: 25.8152
+  type: 'test'
+  ...
+# Subtest: mobile privacy response must contain a confirmed list
+ok 14 - mobile privacy response must contain a confirmed list
+  ---
+  duration_ms: 15.5577
+  type: 'test'
+  ...
+# Subtest: web requestConsentAccess refuses a malformed acknowledged grant/request
+ok 15 - web requestConsentAccess refuses a malformed acknowledged grant/request
+  ---
+  duration_ms: 8.0294
+  type: 'test'
+  ...
+# Subtest: web verifyConsentAccess refuses a malformed acknowledged grant/request
+ok 16 - web verifyConsentAccess refuses a malformed acknowledged grant/request
+  ---
+  duration_ms: 9.6549
+  type: 'test'
+  ...
+# Subtest: web getConsentAccessStatus refuses a malformed acknowledged grant/request
+ok 17 - web getConsentAccessStatus refuses a malformed acknowledged grant/request
+  ---
+  duration_ms: 19.3529
+  type: 'test'
+  ...
+# Subtest: web verified grant is accepted only with explicit grant acknowledgement and expiry
+ok 18 - web verified grant is accepted only with explicit grant acknowledgement and expiry
+  ---
+  duration_ms: 8.0564
+  type: 'test'
+  ...
+# Subtest: actual record screen filters all schema-supported record types
+ok 19 - actual record screen filters all schema-supported record types
+  ---
+  duration_ms: 35.6283
+  type: 'test'
+  ...
+# Subtest: actual record screen does not substitute account ID for missing profile
+ok 20 - actual record screen does not substitute account ID for missing profile
+  ---
+  duration_ms: 22.4455
+  type: 'test'
+  ...
+# Subtest: opt-in dialog does not steal input focus on parent callback changes and Escape uses latest callback
+ok 21 - opt-in dialog does not steal input focus on parent callback changes and Escape uses latest callback
+  ---
+  duration_ms: 18.1402
+  type: 'test'
+  ...
+1..21
+# tests 21
+# suites 0
+# pass 21
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 767.1392

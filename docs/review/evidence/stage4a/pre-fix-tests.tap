@@ -1,0 +1,154 @@
+TAP version 13
+# Subtest: profile repository persists full name and only whitelisted editable columns
+not ok 1 - profile repository persists full name and only whitelisted editable columns
+  ---
+  duration_ms: 3.6899
+  type: 'test'
+  location: 'D:\\Projects\\Care4U - Healthcare Project\\codes\\CSC3213_20_Group_D\\backend\\tests\\patient-consent.test.cjs:41:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /full_name\s*=/. Input:
+
+    'UPDATE patients\n' +
+      '    SET\n' +
+      '      blood_group = COALESCE($1, blood_group),\n' +
+      '      emergency_contact_name = COALESCE($2, emergency_contact_name),\n' +
+      '      emergency_contact_phone = COALESCE($3, emergency_contact_phone),\n' +
+      '      emergency_contact_relationship = COALESCE($4, emergency_contact_relationship)\n' +
+      '    WHERE id = $5\n' +
+      '    RETURNING *'
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    UPDATE patients
+        SET
+          blood_group = COALESCE($1, blood_group),
+          emergency_contact_name = COALESCE($2, emergency_contact_name),
+          emergency_contact_phone = COALESCE($3, emergency_contact_phone),
+          emergency_contact_relationship = COALESCE($4, emergency_contact_relationship)
+        WHERE id = $5
+        RETURNING *
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (D:\Projects\Care4U - Healthcare Project\codes\CSC3213_20_Group_D\backend\tests\patient-consent.test.cjs:44:9)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+# Subtest: profile rejects invalid shape and empty name before update
+not ok 2 - profile rejects invalid shape and empty name before update
+  ---
+  duration_ms: 1.6726
+  type: 'test'
+  location: 'D:\\Projects\\Care4U - Healthcare Project\\codes\\CSC3213_20_Group_D\\backend\\tests\\patient-consent.test.cjs:46:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The validation function is expected to return "true". Received false
+
+    Caught error:
+
+    TypeError: Cannot read properties of null (reading 'full_name')
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    async TestContext.<anonymous> (D:\Projects\Care4U - Healthcare Project\codes\CSC3213_20_Group_D\backend\tests\patient-consent.test.cjs:49:3)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: record service denies unowned or missing identities before returning records
+not ok 3 - record service denies unowned or missing identities before returning records
+  ---
+  duration_ms: 1.047
+  type: 'test'
+  location: 'D:\\Projects\\Care4U - Healthcare Project\\codes\\CSC3213_20_Group_D\\backend\\tests\\patient-consent.test.cjs:52:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    async TestContext.<anonymous> (D:\Projects\Care4U - Healthcare Project\codes\CSC3213_20_Group_D\backend\tests\patient-consent.test.cjs:54:73)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: consent categories reject mixed or malformed elements rather than silently discarding locks
+not ok 4 - consent categories reject mixed or malformed elements rather than silently discarding locks
+  ---
+  duration_ms: 1.1942
+  type: 'test'
+  location: 'D:\\Projects\\Care4U - Healthcare Project\\codes\\CSC3213_20_Group_D\\backend\\tests\\patient-consent.test.cjs:57:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    async TestContext.<anonymous> (D:\Projects\Care4U - Healthcare Project\codes\CSC3213_20_Group_D\backend\tests\patient-consent.test.cjs:58:83)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: verification consumes and creates grant on the same transaction client
+not ok 5 - verification consumes and creates grant on the same transaction client
+  ---
+  duration_ms: 2.2806
+  type: 'test'
+  location: 'D:\\Projects\\Care4U - Healthcare Project\\codes\\CSC3213_20_Group_D\\backend\\tests\\patient-consent.test.cjs:60:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+
+    + undefined
+    - {
+    -   query: [AsyncFunction: query]
+    - }
+
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: consume SQL rechecks expiry, attempts, invalidation and single use
+not ok 6 - consume SQL rechecks expiry, attempts, invalidation and single use
+  ---
+  duration_ms: 1.0816
+  type: 'test'
+  location: 'D:\\Projects\\Care4U - Healthcare Project\\codes\\CSC3213_20_Group_D\\backend\\tests\\patient-consent.test.cjs:63:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /expires_at > NOW\(\)/. Input:
+
+    'UPDATE consent_access_requests\n' +
+      '         SET\n' +
+      '           used_at = NOW()\n' +
+      '         WHERE id = $1\n' +
+      '           AND used_at IS NULL\n' +
+      '           AND invalidated_at IS NULL\n' +
+      '         RETURNING\n' +
+      '           id,\n' +
+      '           used_at'
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    UPDATE consent_access_requests
+             SET
+               used_at = NOW()
+             WHERE id = $1
+               AND used_at IS NULL
+               AND invalidated_at IS NULL
+             RETURNING
+               id,
+               used_at
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (D:\Projects\Care4U - Healthcare Project\codes\CSC3213_20_Group_D\backend\tests\patient-consent.test.cjs:65:57)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 0
+# fail 6
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 106.4633

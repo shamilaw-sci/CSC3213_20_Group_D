@@ -2,7 +2,7 @@
   "id": "B02",
   "kind": "lint",
   "required": true,
-  "run_id": "2026-11-13T07-57-48-711Z-057952db-1223-4d0e-bcd6-dcb9fb149897",
+  "run_id": "2026-11-14T02-28-49-316Z-1a72167b-9517-4aae-8d38-a4de9085b851",
   "command": [
     "C:\\Users\\Waasana\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
     "node_modules/eslint/bin/eslint.js",
@@ -13,8 +13,8 @@
   "cwd": "frontend",
   "result": "PASS",
   "source_snapshot": {
-    "head": "d78465bef5ebd231690700b2c6e7dafdb51aa5e9",
-    "sha256": "323ecc98894254c7976d60b5dd7649a9f3c7d460f761c6ed49f221ea99393038",
+    "head": "b09bfd05c32fdda16831240abbc725cb6780d5de",
+    "sha256": "8b81ac66bfa14599a248a83ea646cbe8bc8505f6e695e5524fac6f368ceee9c8",
     "files": [
       {
         "path": "docs/review/tools/check-evidence.mjs",
@@ -66,7 +66,7 @@
       },
       {
         "path": "frontend/package.json",
-        "sha256": "73903a90a2a1302c241cf7fd37017f2817a26ee8f01b8bdef9a00da116d88740"
+        "sha256": "f081be919000abeb01fb9b17751f166565ef3ddad71d727cd8efae94157a4112"
       },
       {
         "path": "frontend/public/favicon.svg",
@@ -150,7 +150,7 @@
       },
       {
         "path": "frontend/src/components/common/Modal.jsx",
-        "sha256": "480d31b2dedb285442dd8e4767938adfe4ea38bd5685f06f3530deb31252f65d"
+        "sha256": "e46e94f9639a4dcf22c34f69d87f01c3d3e0a2fbf08a031173bf2f0e87cfd858"
       },
       {
         "path": "frontend/src/components/common/PageHeader.jsx",
@@ -298,7 +298,7 @@
       },
       {
         "path": "frontend/src/pages/doctor/ConsultationPage.jsx",
-        "sha256": "ee0e8d9e85704cc7ae9f2879c131ebda867e1e9476745edc18c5c4e4c1e5c4bf"
+        "sha256": "02eb36d498345392cb439c09d5244f2574e78480271679207dc26f92464ab2c1"
       },
       {
         "path": "frontend/src/pages/doctor/DoctorDashboard.jsx",
@@ -354,7 +354,7 @@
       },
       {
         "path": "frontend/src/pages/patient/MedicalRecordsPage.jsx",
-        "sha256": "d630ced7a5ca76c3d6bfc796c4e5f0fe539df4d601eb369365d9539b196473cc"
+        "sha256": "b97f1c5edc90dea97524ed348da7e481aea5a87964cea6d2f6969e538d6049ec"
       },
       {
         "path": "frontend/src/pages/patient/MyAppointmentsPage.jsx",
@@ -370,7 +370,7 @@
       },
       {
         "path": "frontend/src/pages/patient/PatientProfilePage.jsx",
-        "sha256": "8cfe6fd73edfc62935fec91e120dd1aa0c106f06cf88d8ef26fcc8f75231f1a1"
+        "sha256": "f1553f0e53405026a2d1d2a556202e0ee14dc729e6b4a9cb5bdca6e8ead46636"
       },
       {
         "path": "frontend/src/pages/patient/PaymentHistoryPage.jsx",
@@ -434,7 +434,7 @@
       },
       {
         "path": "frontend/src/services/patient.service.js",
-        "sha256": "6fa126713a325f9639d7d179554871523895bc8780554d3aadf2471a94d89b8d"
+        "sha256": "612dc83f396ef1f52343aebe49b00156c81aafaecbc82b75776034406afbbc46"
       },
       {
         "path": "frontend/src/services/prescription.service.js",
@@ -481,12 +481,28 @@
         "sha256": "42c61ca993948411561e6f1dd5a01a807a40d9825f657117b261bc2e8e0dcc96"
       },
       {
+        "path": "frontend/tests/patient-fixture.html",
+        "sha256": "4809182d30a8ad4e2017b0a2fd15dff9db5c3ad4ce56f770e593e1cc1e0cd95f"
+      },
+      {
+        "path": "frontend/tests/patient-fixture.jsx",
+        "sha256": "cb8804a84bd298e873adb0593eba43cf87b37c051fc72710d1ae3873e9468ae3"
+      },
+      {
+        "path": "frontend/tests/patient-ui.test.cjs",
+        "sha256": "5485dc0a9d19f235ee75af51478c393a601b216245985bd76a10b13038b4cb74"
+      },
+      {
         "path": "frontend/tests/serve-auth-fixture.mjs",
         "sha256": "34313e80a4bca1c8baf2e29517ce38a3703f9ff5d374a8174c1c16a881d39af2"
       },
       {
+        "path": "frontend/tests/serve-patient-fixture.mjs",
+        "sha256": "25b7428dc5cf9a97f8d523de96874cea00d1e338f0ffe2f95fb4d2e658165b32"
+      },
+      {
         "path": "frontend/tests/support/source-ui.cjs",
-        "sha256": "e5282144422c3362d3bb771947719fa1281870775f41f4b3c0cae7d586369c10"
+        "sha256": "9049df8846f6cbf19081f40b3365078e94cec6993f0b3f06280e0a69c785ec00"
       },
       {
         "path": "frontend/vercel.json",
@@ -499,21 +515,21 @@
     ]
   },
   "limitations": "Configured web ESLint scope only; no fixes, typecheck or runtime verification",
-  "started_at": "2026-11-13T07:57:52.757Z",
-  "finished_at": "2026-11-13T07:57:57.808Z",
+  "started_at": "2026-11-14T02:28:53.212Z",
+  "finished_at": "2026-11-14T02:28:58.703Z",
   "exit_code": 0,
   "error_code": null,
   "details": {
-    "files": 94,
+    "files": 97,
     "errors": 0,
     "warnings": 0,
     "diagnostics": []
   },
   "warnings": [],
   "output": {
-    "stdout_sha256": "339ae82620c38b6d390bb6b9f64f4a64746dabebab9e39f84131ee1f47566295",
+    "stdout_sha256": "32548bd3919b342e94bf7fac7b27c3c751d6c5e1ad2d8d663294e79306ebf90f",
     "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "stdout_bytes": 37463,
+    "stdout_bytes": 38318,
     "stderr_bytes": 0,
     "policy": "Raw output not persisted; no source snippets or environment values in evidence"
   }

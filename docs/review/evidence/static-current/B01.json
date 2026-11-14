@@ -2,7 +2,7 @@
   "id": "B01",
   "kind": "syntax",
   "required": true,
-  "run_id": "2026-11-13T07-57-48-711Z-057952db-1223-4d0e-bcd6-dcb9fb149897",
+  "run_id": "2026-11-14T02-28-49-316Z-1a72167b-9517-4aae-8d38-a4de9085b851",
   "command": [
     "C:\\Users\\Waasana\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
     "scripts/check-syntax.js"
@@ -10,8 +10,8 @@
   "cwd": "backend",
   "result": "PASS",
   "source_snapshot": {
-    "head": "d78465bef5ebd231690700b2c6e7dafdb51aa5e9",
-    "sha256": "1738ac28b6b3037c6258145471697d429ab7126685a43ed2855905e4f344144b",
+    "head": "b09bfd05c32fdda16831240abbc725cb6780d5de",
+    "sha256": "0953f2163af3359c777f3a062b97fc3e1c2d293a4d33ea0c7ac02d5c06ef2da2",
     "files": [
       {
         "path": "backend/.env.example",
@@ -67,7 +67,7 @@
       },
       {
         "path": "backend/package.json",
-        "sha256": "35cf940b9d0b531d674cb8cbe02842fef4d5173e6a2425af46430cd7df8253d7"
+        "sha256": "7c40f862946a98f36c3e70a1f5f4cb53eaa57f0ac2c7f7d40eed18a7e9680e7e"
       },
       {
         "path": "backend/scripts/check-syntax.js",
@@ -131,7 +131,7 @@
       },
       {
         "path": "backend/src/modules/appointment/appointment.repository.js",
-        "sha256": "1170e913ec37b6bd9267f629ad87f26eac3f8bd6f4a608046492927c79512b68"
+        "sha256": "ef3990fb3f5ddb0f46ef322ec2516c81a4af7df69d05cc6c90ad19920ed5daac"
       },
       {
         "path": "backend/src/modules/appointment/appointment.routes.js",
@@ -163,7 +163,7 @@
       },
       {
         "path": "backend/src/modules/doctor/doctor.repository.js",
-        "sha256": "01c304bd670985cd34abf6288c5504cab32c81cd008de03ba0bab382a5e149fb"
+        "sha256": "655ebf2299d3aba9271f30907eaaa26ad42daafbda146d30fe9ee3d2c00c830f"
       },
       {
         "path": "backend/src/modules/doctor/doctor.routes.js",
@@ -271,23 +271,23 @@
       },
       {
         "path": "backend/src/modules/patient/consent.controller.js",
-        "sha256": "9633de979edf9b9d72a2489620e3a40fdabfda42ddde1c209931101f7d719a0f"
+        "sha256": "1941acded54694cf88aed69806fec48b90eb2058770ba5bba5c53c09360353e8"
       },
       {
         "path": "backend/src/modules/patient/consent.repository.js",
-        "sha256": "59fc67085066ac2711ddd1888485fa9e2eced0422bcd3b76d41b4f8ef57806b7"
+        "sha256": "70fa229124313d56a9f82d0c4ac74600a4243e0df7ae2c3eaf2580c5c881f309"
       },
       {
         "path": "backend/src/modules/patient/consent.service.js",
-        "sha256": "f91effbff2a7d7464c682fb21bf98a7a938e8b8251d5073beeef59bef2950d9b"
+        "sha256": "0d64332fd1d74856efcd6a51fa48c514d92606a02ffb2699468a46907212c6a7"
       },
       {
         "path": "backend/src/modules/patient/patient.controller.js",
-        "sha256": "0c1297329141f75fed5ec2330496e7e91f792db729b2d557df31e4fe0aaac4c6"
+        "sha256": "a0e77b7b2cdf9bada65b7f3b86eabf65167810ca59a9529e78ac6d1ac7e960e9"
       },
       {
         "path": "backend/src/modules/patient/patient.repository.js",
-        "sha256": "630cce9782d4913e5e05e0bb24991d2a8bbfcb716c5dd4105e85efcb7d01dd18"
+        "sha256": "8b2e3ccf2201ff19a9aea45a3f37f15524f524a6bce762a9f5af303542db440f"
       },
       {
         "path": "backend/src/modules/patient/patient.routes.js",
@@ -295,7 +295,7 @@
       },
       {
         "path": "backend/src/modules/patient/patient.service.js",
-        "sha256": "618648d49ac303e7f42a069b9304efaa1798302485bcbe685602cec530d079b8"
+        "sha256": "c878f5f9ce096ab3f19b05b3e6e1e203ca6be59b5e4b528c5497c7c7071205ef"
       },
       {
         "path": "backend/src/modules/payment/payment.controller.js",
@@ -383,7 +383,7 @@
       },
       {
         "path": "backend/tests/auth-contracts.test.cjs",
-        "sha256": "3c186adbc757300d5a8433893980fa414dceb99a47287bb4156fc312b7c510cd"
+        "sha256": "6f818b3fae61ba07eb53b76f40f6bd298129217d0e46ba3df87dfecbefc52902"
       },
       {
         "path": "backend/tests/auth-limits.test.cjs",
@@ -392,6 +392,10 @@
       {
         "path": "backend/tests/auth-resend.test.cjs",
         "sha256": "d60768049036b8bae7670dcc6aa843170b05b9897c2268d8ce68c714a49e4be8"
+      },
+      {
+        "path": "backend/tests/patient-consent.test.cjs",
+        "sha256": "ab58449df6a929be5caa361c28f1df5c5076eebe129aa70f7103b48ca585472a"
       },
       {
         "path": "backend/tests/support/isolated.cjs",
@@ -424,8 +428,8 @@
     ]
   },
   "limitations": "Node syntax only; no module evaluation, API or database assertions",
-  "started_at": "2026-11-13T07:57:48.718Z",
-  "finished_at": "2026-11-13T07:57:52.754Z",
+  "started_at": "2026-11-14T02:28:49.328Z",
+  "finished_at": "2026-11-14T02:28:53.209Z",
   "exit_code": 0,
   "error_code": null,
   "details": {

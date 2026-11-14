@@ -2,7 +2,7 @@
   "id": "B06",
   "kind": "metadata",
   "required": true,
-  "run_id": "2026-11-13T07-57-48-711Z-057952db-1223-4d0e-bcd6-dcb9fb149897",
+  "run_id": "2026-11-14T02-28-49-316Z-1a72167b-9517-4aae-8d38-a4de9085b851",
   "command": [
     "C:\\Users\\Waasana\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
     "D:\\Projects\\Care4U - Healthcare Project\\codes\\CSC3213_20_Group_D\\docs\\review\\tools\\static-worker.mjs",
@@ -12,8 +12,8 @@
   "cwd": ".",
   "result": "PASS",
   "source_snapshot": {
-    "head": "d78465bef5ebd231690700b2c6e7dafdb51aa5e9",
-    "sha256": "1b4d1978d2a8e070f66e8ed8e6599f547ff5beca90d4c7511d8dc36908326ee9",
+    "head": "b09bfd05c32fdda16831240abbc725cb6780d5de",
+    "sha256": "fd156c5bf2d8c8e83c6a7527ae6e42a8fef75c2a6f7722a603fcf1f3796beb8f",
     "files": [
       {
         "path": "backend/.env.example",
@@ -69,7 +69,7 @@
       },
       {
         "path": "backend/package.json",
-        "sha256": "35cf940b9d0b531d674cb8cbe02842fef4d5173e6a2425af46430cd7df8253d7"
+        "sha256": "7c40f862946a98f36c3e70a1f5f4cb53eaa57f0ac2c7f7d40eed18a7e9680e7e"
       },
       {
         "path": "backend/scripts/check-syntax.js",
@@ -133,7 +133,7 @@
       },
       {
         "path": "backend/src/modules/appointment/appointment.repository.js",
-        "sha256": "1170e913ec37b6bd9267f629ad87f26eac3f8bd6f4a608046492927c79512b68"
+        "sha256": "ef3990fb3f5ddb0f46ef322ec2516c81a4af7df69d05cc6c90ad19920ed5daac"
       },
       {
         "path": "backend/src/modules/appointment/appointment.routes.js",
@@ -165,7 +165,7 @@
       },
       {
         "path": "backend/src/modules/doctor/doctor.repository.js",
-        "sha256": "01c304bd670985cd34abf6288c5504cab32c81cd008de03ba0bab382a5e149fb"
+        "sha256": "655ebf2299d3aba9271f30907eaaa26ad42daafbda146d30fe9ee3d2c00c830f"
       },
       {
         "path": "backend/src/modules/doctor/doctor.routes.js",
@@ -273,23 +273,23 @@
       },
       {
         "path": "backend/src/modules/patient/consent.controller.js",
-        "sha256": "9633de979edf9b9d72a2489620e3a40fdabfda42ddde1c209931101f7d719a0f"
+        "sha256": "1941acded54694cf88aed69806fec48b90eb2058770ba5bba5c53c09360353e8"
       },
       {
         "path": "backend/src/modules/patient/consent.repository.js",
-        "sha256": "59fc67085066ac2711ddd1888485fa9e2eced0422bcd3b76d41b4f8ef57806b7"
+        "sha256": "70fa229124313d56a9f82d0c4ac74600a4243e0df7ae2c3eaf2580c5c881f309"
       },
       {
         "path": "backend/src/modules/patient/consent.service.js",
-        "sha256": "f91effbff2a7d7464c682fb21bf98a7a938e8b8251d5073beeef59bef2950d9b"
+        "sha256": "0d64332fd1d74856efcd6a51fa48c514d92606a02ffb2699468a46907212c6a7"
       },
       {
         "path": "backend/src/modules/patient/patient.controller.js",
-        "sha256": "0c1297329141f75fed5ec2330496e7e91f792db729b2d557df31e4fe0aaac4c6"
+        "sha256": "a0e77b7b2cdf9bada65b7f3b86eabf65167810ca59a9529e78ac6d1ac7e960e9"
       },
       {
         "path": "backend/src/modules/patient/patient.repository.js",
-        "sha256": "630cce9782d4913e5e05e0bb24991d2a8bbfcb716c5dd4105e85efcb7d01dd18"
+        "sha256": "8b2e3ccf2201ff19a9aea45a3f37f15524f524a6bce762a9f5af303542db440f"
       },
       {
         "path": "backend/src/modules/patient/patient.routes.js",
@@ -297,7 +297,7 @@
       },
       {
         "path": "backend/src/modules/patient/patient.service.js",
-        "sha256": "618648d49ac303e7f42a069b9304efaa1798302485bcbe685602cec530d079b8"
+        "sha256": "c878f5f9ce096ab3f19b05b3e6e1e203ca6be59b5e4b528c5497c7c7071205ef"
       },
       {
         "path": "backend/src/modules/payment/payment.controller.js",
@@ -385,7 +385,7 @@
       },
       {
         "path": "backend/tests/auth-contracts.test.cjs",
-        "sha256": "3c186adbc757300d5a8433893980fa414dceb99a47287bb4156fc312b7c510cd"
+        "sha256": "6f818b3fae61ba07eb53b76f40f6bd298129217d0e46ba3df87dfecbefc52902"
       },
       {
         "path": "backend/tests/auth-limits.test.cjs",
@@ -394,6 +394,10 @@
       {
         "path": "backend/tests/auth-resend.test.cjs",
         "sha256": "d60768049036b8bae7670dcc6aa843170b05b9897c2268d8ce68c714a49e4be8"
+      },
+      {
+        "path": "backend/tests/patient-consent.test.cjs",
+        "sha256": "ab58449df6a929be5caa361c28f1df5c5076eebe129aa70f7103b48ca585472a"
       },
       {
         "path": "backend/tests/support/isolated.cjs",
@@ -449,7 +453,7 @@
       },
       {
         "path": "frontend/package.json",
-        "sha256": "73903a90a2a1302c241cf7fd37017f2817a26ee8f01b8bdef9a00da116d88740"
+        "sha256": "f081be919000abeb01fb9b17751f166565ef3ddad71d727cd8efae94157a4112"
       },
       {
         "path": "frontend/public/favicon.svg",
@@ -533,7 +537,7 @@
       },
       {
         "path": "frontend/src/components/common/Modal.jsx",
-        "sha256": "480d31b2dedb285442dd8e4767938adfe4ea38bd5685f06f3530deb31252f65d"
+        "sha256": "e46e94f9639a4dcf22c34f69d87f01c3d3e0a2fbf08a031173bf2f0e87cfd858"
       },
       {
         "path": "frontend/src/components/common/PageHeader.jsx",
@@ -681,7 +685,7 @@
       },
       {
         "path": "frontend/src/pages/doctor/ConsultationPage.jsx",
-        "sha256": "ee0e8d9e85704cc7ae9f2879c131ebda867e1e9476745edc18c5c4e4c1e5c4bf"
+        "sha256": "02eb36d498345392cb439c09d5244f2574e78480271679207dc26f92464ab2c1"
       },
       {
         "path": "frontend/src/pages/doctor/DoctorDashboard.jsx",
@@ -737,7 +741,7 @@
       },
       {
         "path": "frontend/src/pages/patient/MedicalRecordsPage.jsx",
-        "sha256": "d630ced7a5ca76c3d6bfc796c4e5f0fe539df4d601eb369365d9539b196473cc"
+        "sha256": "b97f1c5edc90dea97524ed348da7e481aea5a87964cea6d2f6969e538d6049ec"
       },
       {
         "path": "frontend/src/pages/patient/MyAppointmentsPage.jsx",
@@ -753,7 +757,7 @@
       },
       {
         "path": "frontend/src/pages/patient/PatientProfilePage.jsx",
-        "sha256": "8cfe6fd73edfc62935fec91e120dd1aa0c106f06cf88d8ef26fcc8f75231f1a1"
+        "sha256": "f1553f0e53405026a2d1d2a556202e0ee14dc729e6b4a9cb5bdca6e8ead46636"
       },
       {
         "path": "frontend/src/pages/patient/PaymentHistoryPage.jsx",
@@ -817,7 +821,7 @@
       },
       {
         "path": "frontend/src/services/patient.service.js",
-        "sha256": "6fa126713a325f9639d7d179554871523895bc8780554d3aadf2471a94d89b8d"
+        "sha256": "612dc83f396ef1f52343aebe49b00156c81aafaecbc82b75776034406afbbc46"
       },
       {
         "path": "frontend/src/services/prescription.service.js",
@@ -864,12 +868,28 @@
         "sha256": "42c61ca993948411561e6f1dd5a01a807a40d9825f657117b261bc2e8e0dcc96"
       },
       {
+        "path": "frontend/tests/patient-fixture.html",
+        "sha256": "4809182d30a8ad4e2017b0a2fd15dff9db5c3ad4ce56f770e593e1cc1e0cd95f"
+      },
+      {
+        "path": "frontend/tests/patient-fixture.jsx",
+        "sha256": "cb8804a84bd298e873adb0593eba43cf87b37c051fc72710d1ae3873e9468ae3"
+      },
+      {
+        "path": "frontend/tests/patient-ui.test.cjs",
+        "sha256": "5485dc0a9d19f235ee75af51478c393a601b216245985bd76a10b13038b4cb74"
+      },
+      {
         "path": "frontend/tests/serve-auth-fixture.mjs",
         "sha256": "34313e80a4bca1c8baf2e29517ce38a3703f9ff5d374a8174c1c16a881d39af2"
       },
       {
+        "path": "frontend/tests/serve-patient-fixture.mjs",
+        "sha256": "25b7428dc5cf9a97f8d523de96874cea00d1e338f0ffe2f95fb4d2e658165b32"
+      },
+      {
         "path": "frontend/tests/support/source-ui.cjs",
-        "sha256": "e5282144422c3362d3bb771947719fa1281870775f41f4b3c0cae7d586369c10"
+        "sha256": "9049df8846f6cbf19081f40b3365078e94cec6993f0b3f06280e0a69c785ec00"
       },
       {
         "path": "frontend/vercel.json",
@@ -977,7 +997,7 @@
       },
       {
         "path": "mobile/src/screens/MedicalRecordsScreen.js",
-        "sha256": "8de637b6969ec7614de7586ce1419a546bf186e4fa81fda2609b4bdec844d97c"
+        "sha256": "eabc873e7a4e9f27c6e4ef030a7902240d796055816664f73209ab11996cc913"
       },
       {
         "path": "mobile/src/screens/MyAppointmentsScreen.js",
@@ -993,7 +1013,7 @@
       },
       {
         "path": "mobile/src/screens/PatientProfileScreen.js",
-        "sha256": "dcc19fa6f2dd60766babb9b08ca3a2e8cb8635dda74c0adce561b107543a5a54"
+        "sha256": "593149a463d80d85a97ca2df057259c58f92f7b5ee55e2da11ae8eb64416b871"
       },
       {
         "path": "mobile/src/screens/PatientQRCardScreen.js",
@@ -1033,7 +1053,7 @@
       },
       {
         "path": "mobile/src/services/patient.service.js",
-        "sha256": "947e9f9a2a5d521b750945300eb462658593bb4af8e8e98db075b398178c56ae"
+        "sha256": "8060b3e39495d8272a3244a72af56d6da5a06f24ee07d1c51e80dba7a5c6144d"
       },
       {
         "path": "mobile/src/services/prescription.service.js",
@@ -1062,8 +1082,8 @@
     ]
   },
   "limitations": "Four lock roots and installed direct versions only; no clean install/transitive audit or network access",
-  "started_at": "2026-11-13T07:58:00.631Z",
-  "finished_at": "2026-11-13T07:58:01.178Z",
+  "started_at": "2026-11-14T02:29:01.832Z",
+  "finished_at": "2026-11-14T02:29:02.297Z",
   "exit_code": 0,
   "error_code": null,
   "details": {

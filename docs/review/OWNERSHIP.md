@@ -68,3 +68,7 @@ Whole-history contributor identities include `Wasana-Karunanayaka`, `Wasana Karu
 Use the existing guide's `@file`, `@module`, `@desc`, `@author` and function/component purpose/parameter/return conventions with language-compatible syntax. Add a separate module-maintainer field only if the team adopts one; never overwrite a supported original author to match the maintainer table. Record uncertainty here and in the tracker and continue unrelated verified work. Preserve licenses, useful TODOs, security rationale and accurate original names. Do not add student attribution to review-assistant tooling.
 
 Before changing a disputed header, inspect its creation patch, rename/copy lineage and substantial implementation commits; compare current header/guide/student-ID evidence. Use team clarification for unresolved identities or imported/co-created work. No uncertain row in the CSV is a final ownership assignment.
+
+## Patient Stage 4A
+
+Retained Wasana Karunanayaka S/21/081 headers with provisional tracker Git evidence: consent service bb21f15, repository 0c5da2a, profile web 98a9ea1/mobile fe29b4d. Maintainer identity is not sole-author proof. Doctor/Appointment repositories retain Tharindu S/21/166 with UdayakumaraDMTL introductions. New tests/fixtures credit Codex Review Assistant, and original-author baseline columns remain unchanged. Details and scope are in STAGE4A.md and the Patient viva guide.
