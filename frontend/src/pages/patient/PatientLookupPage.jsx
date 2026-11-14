@@ -1,35 +1,8 @@
 /**
  * @file    PatientLookupPage.jsx
- * @component PatientLookupPage
- * @desc      Read-only patient lookup page for doctors.
- * Fetches and displays full patient details using a QR code ID.
- * URL pattern: /lookup/:qrCodeId
- * Reachable after a doctor scans a patient QR code via qr-scanner.app.
- * Header banner redesigned for at-a-glance clinical identity (CARE4U-59/66/69):
- * photo, name, age/gender, blood group, and priority condition surface
- * immediately, with an ECG-trace signature animation on load. Avatar sized
- * up to 96px for reliable visual identification.
- * Known Allergies card splits severe allergies into a static red alert
- * strip above the regular list, so a severe allergy can't be scanned past
- * (CARE4U-61).
- * Emergency Contact demoted from a top-level Row 1 card into a closed-by-
- * default collapsible section near the bottom of the page — it's rarely
- * needed mid-lookup and previously competed for visual weight with
- * safety-critical info (CARE4U-62). Patient Information now takes the
- * full Row 1 width on its own.
- * Active Prescriptions section added between Known Allergies and Medical
- * Records — flat, non-expandable list of currently active prescriptions
- * (medicine, dosage, prescribing doctor, expiry) so a doctor can see what
- * a patient is already on before prescribing something new. Reuses the
- * existing getPatientPrescriptions endpoint/data shape from the patient's
- * own Prescriptions page (CARE4U-67).
- * Most Recent Visit Summary added below the banner to give instant context 
- * on the patient's last interaction without scrolling (CARE4U-68).
- * Thorough loading states and responsive scaling applied for mobile viewing (CARE4U-63/64).
- * Actions panel added and strictly gated behind doctor authentication (CARE4U-71).
- * "Start Visit" action button creates a walk-in consultation (CARE4U-72).
- * Doctor Privacy Enforcements successfully integrated (CARE4U-284).
- * @author    Wasana Karunanayaka (S/21/081)
+ * @module  Patient / Doctor
+ * @desc    Looks up patient QR identity, shows permitted health data and opens doctor visits.
+ * @author  Wasana Karunanayaka (S/21/081)
  */
 
 import { API_BASE_URL } from '../../services/api';
@@ -58,7 +31,7 @@ import Modal from '../../components/common/Modal';
 import DataTable from '../../components/common/DataTable';
 import Button from '../../components/common/Button';
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
+// Helpers
 
 const formatDate = (iso) => {
   if (!iso) return '—';
@@ -91,7 +64,7 @@ const getAvatarSrc = (patient) => {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(patient?.full_name || 'Patient')}&background=F1F5F9&color=0f172a&size=120&bold=true&rounded=true`;
 };
 
-// ─── Severity Badge ───────────────────────────────────────────────────────────
+// Severity Badge
 const SEVERITY_STYLES = {
   priority: { bg: 'bg-destructive/10', text: 'text-destructive', label: 'Priority' },
   severe:   { bg: 'bg-destructive/10', text: 'text-destructive', label: 'Severe' },
@@ -108,7 +81,7 @@ const SeverityBadge = ({ severity }) => {
   );
 };
 
-// ─── AI Text Formatter ──────────────────────────────────────────────────────
+// AI Text Formatter
 const formatAiText = (text) => {
   if (!text) return null;
 
@@ -128,7 +101,7 @@ const formatAiText = (text) => {
   return lines.map((line, index) => {
     if (line.startsWith('|')) {
       if (line.includes('---')) return null;
-      
+
       const cells = line.split('|').filter(c => c.trim());
       const isHeader = index + 1 < lines.length && lines[index + 1].includes('---');
 
@@ -153,13 +126,13 @@ const formatAiText = (text) => {
 
     const isBullet = /^[*\-+•]\s*/.test(line);
     let cleanLine = line.replace(/^[*\-+•]\s*/, '');
-    
+
     cleanLine = cleanLine.replace(/(^\*.*?\*\*)|(^\*\*.*?\*)/g, (match) => {
       return '**' + match.replace(/\*/g, '') + '**';
     });
 
     const parts = cleanLine.split(/\*\*(.*?)\*\*/g);
-    
+
     return (
       <div key={index} className={`flex items-start gap-3 ${isBullet ? 'mb-2' : 'mb-3 mt-3'}`}>
         {isBullet && <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0 shadow-sm" />}
@@ -179,7 +152,7 @@ const formatAiText = (text) => {
   });
 };
 
-// ─── Sub-component: ProfileField ─────────────────────────────────────────────
+// Sub-component: ProfileField
 const ProfileField = ({ label, value, className = '' }) => (
   <div className="flex flex-col gap-1 py-2 border-b border-border last:border-0">
     <span className="text-xs text-muted-foreground uppercase tracking-wide">{label}</span>
@@ -189,7 +162,7 @@ const ProfileField = ({ label, value, className = '' }) => (
   </div>
 );
 
-// ─── Sub-component: Active Prescription Row ───────────────────────────────────
+// Sub-component: Active Prescription Row
 const ActivePrescriptionRow = ({ prescription }) => {
   const days = daysRemaining(prescription.expires_at);
   const items = (prescription.items || []).filter((i) => i && i.medicine_name);
@@ -226,7 +199,7 @@ const ActivePrescriptionRow = ({ prescription }) => {
   );
 };
 
-// ─── Banner Load Animations ───────────────────────────────────────────────────
+// Banner Load Animations
 const BannerAnimationStyles = () => (
   <style>{`
     @keyframes cuAvatarPop {
@@ -259,7 +232,7 @@ const BannerAnimationStyles = () => (
   `}</style>
 );
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// Main Component
 const PatientLookupPage = () => {
   const { qrCodeId } = useParams();
   const navigate = useNavigate();
@@ -313,7 +286,7 @@ const PatientLookupPage = () => {
 
   const { data: records = [], isLoading: recordsLoading } = useQuery({
     queryKey: ['medical-records', patient?.id],
-    // Pass the doctor's role from the auth store to enforce privacy locks
+    // The role argument is retained for compatibility; backend access needs an active appointment ID, omitted here.
     queryFn: () => getMedicalRecords(patient.id, user?.role),
     enabled: !!patient?.id,
   });
@@ -327,7 +300,7 @@ const PatientLookupPage = () => {
   const conditions = patient?.conditions || [];
   const priorityCondition = conditions.find((c) => c.is_priority);
   const severeAllergies = allergies.filter((a) => a.severity?.toLowerCase() === 'severe');
-  
+
   const sortedAllergies = [...allergies].sort((a, b) => {
     if (a.severity?.toLowerCase() === 'severe' && b.severity?.toLowerCase() !== 'severe') return -1;
     if (a.severity?.toLowerCase() !== 'severe' && b.severity?.toLowerCase() === 'severe') return 1;
@@ -340,12 +313,17 @@ const PatientLookupPage = () => {
 
   const mostRecentVisit = records.length > 0 ? records[0] : null;
 
+  /**
+   * FEATURE: Generate AI medical-history summary
+   * LOGIC: Request a summary for the loaded patient and show a retryable error if it fails.
+   * The role argument does not grant access; consultation context is required by the backend.
+   */
   const handleGenerateSummary = async () => {
     if (!patient?.id) return;
     setIsGeneratingSummary(true);
     setSummaryError(null);
     try {
-      // Pass the doctor's role to the AI generator to ensure privacy!
+      // Backend authorization controls summary access; this call does not supply a consultation appointment ID.
       const data = await getPatientHistorySummary(patient.id, user?.role);
       setAiSummary(data.summary);
     } catch (err) {
@@ -357,6 +335,12 @@ const PatientLookupPage = () => {
   };
 
   // CARE4U-72: Start Visit Handler
+  /**
+   * FEATURE: Start Visit
+   * LOGIC: Send an immediate OPD booking for the scanned patient, require an appointment ID,
+   * then open its consultation page. Failed requests show the server message and release loading.
+   * The doctor-only button is a UI gate; backend session checks authorize the booking.
+   */
   const handleStartVisit = async () => {
     if (!patient?.id || !user?.id) return;
 
@@ -434,7 +418,7 @@ const PatientLookupPage = () => {
     <div className="min-h-screen bg-background">
       <BannerAnimationStyles />
 
-      {/* ── Header Banner (Responsive) ── */}
+      {/* Header Banner (Responsive) */}
       <div className="relative overflow-hidden px-4 py-6 sm:px-8 sm:py-7 bg-brand-deep">
         <svg
           className="absolute inset-0 w-full h-full opacity-20 pointer-events-none"
@@ -462,6 +446,7 @@ const PatientLookupPage = () => {
               <p className="cu-fade-slide-up text-[10px] sm:text-xs font-semibold uppercase tracking-widest mb-1 text-brand-deep-foreground/70">
                 Doctor View — Read Only
               </p>
+              {/* Patient QR Lookup Heading */}
               <h1 className="cu-fade-slide-up text-xl sm:text-2xl font-bold text-brand-deep-foreground leading-tight" style={{ animationDelay: '80ms' }}>
                 {patient?.full_name || 'Patient Lookup'}
               </h1>
@@ -497,7 +482,7 @@ const PatientLookupPage = () => {
         </div>
       </div>
 
-      {/* ── Gated Doctor Actions Panel (CARE4U-71 & CARE4U-72) ── */}
+      {/* Gated Doctor Actions Panel (CARE4U-71 & CARE4U-72) */}
       {isDoctor && (
         <div className="bg-card border-b border-border shadow-sm sticky top-0 z-40">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -506,6 +491,7 @@ const PatientLookupPage = () => {
               <span>Verified Doctor Access</span>
             </div>
             <div className="flex flex-wrap items-center gap-3">
+              {/* Start Visit Button */}
               <Button
                 variant="primary"
                 onClick={handleStartVisit}
@@ -514,16 +500,16 @@ const PatientLookupPage = () => {
               >
                 Start Visit
               </Button>
-              {/* Ready for CARE4U-73, 74 integration */}
+              {/* Doctor consultation opens from Start Visit. */}
             </div>
           </div>
         </div>
       )}
 
-      {/* ── Page Body (Responsive) ── */}
+      {/* Page Body (Responsive) */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 flex flex-col gap-5 sm:gap-6">
 
-        {/* ── Most Recent Visit Strip ── */}
+        {/* Most Recent Visit Strip */}
         {!recordsLoading && mostRecentVisit && (
           <div className="bg-secondary/50 border border-border rounded-lg px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-2 mb-1 sm:mb-2">
             <div className="flex items-center gap-2 text-foreground font-semibold text-sm">
@@ -656,6 +642,7 @@ const PatientLookupPage = () => {
             <>
               {records.length > 0 && !aiSummary && (
                 <div className="flex justify-end mb-4">
+                  {/* Generate AI Summary Button */}
                   <Button
                     variant="primary"
                     onClick={handleGenerateSummary}
@@ -693,6 +680,7 @@ const PatientLookupPage = () => {
               )}
 
               <div className="overflow-x-auto">
+                {/* Patient Medical Records Table */}
                 <DataTable
                   columns={recordColumns}
                   data={records}
@@ -704,8 +692,9 @@ const PatientLookupPage = () => {
           )}
         </Card>
 
-        {/* ── Row 5: Emergency Contact ── */}
+        {/* Row 5: Emergency Contact */}
         <div className="border border-border rounded-lg bg-card">
+          {/* Emergency Contact Expand or Collapse Button */}
           <button
             onClick={() => setShowEmergencyContact((prev) => !prev)}
             className="w-full flex items-center justify-between px-4 py-3 text-left focus:outline-none focus:ring-2 focus:ring-primary rounded-lg"
@@ -732,6 +721,7 @@ const PatientLookupPage = () => {
 
       </div>
 
+      {/* Patient Record Details Modal */}
       <Modal
         isOpen={!!selectedRecord}
         onClose={() => setSelectedRecord(null)}

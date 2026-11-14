@@ -2,7 +2,7 @@
  * @file    MyAppointmentsPage.jsx
  * @module  Patient
  * @desc    Patient workspace for viewing, rescheduling,
- *          and cancelling medical appointments.
+ * and cancelling medical appointments.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -52,9 +52,7 @@ import Button from '../../components/common/Button';
 import Alert from '../../components/common/Alert';
 import Spinner from '../../components/common/Spinner';
 
-/* =========================================================
-   STATUS CONFIGURATION
-========================================================= */
+/* STATUS CONFIGURATION */
 
 const STATUS_CONFIG = {
   scheduled: {
@@ -118,15 +116,10 @@ const STATUS_CONFIG = {
   },
 };
 
-/* =========================================================
-   HELPERS
-========================================================= */
+/* HELPERS */
 
 /**
  * Returns readable status configuration.
- *
- * @param {string} status
- * @returns {Object}
  */
 const getStatusConfig = (
   status
@@ -156,9 +149,6 @@ const getStatusConfig = (
 
 /**
  * Formats appointment date.
- *
- * @param {string} value
- * @returns {string}
  */
 const formatDate = (
   value
@@ -191,9 +181,6 @@ const formatDate = (
 
 /**
  * Formats appointment time.
- *
- * @param {string} value
- * @returns {string}
  */
 const formatTime = (
   value
@@ -225,9 +212,6 @@ const formatTime = (
 
 /**
  * Formats appointment type.
- *
- * @param {string} value
- * @returns {string}
  */
 const formatType = (
   value
@@ -251,9 +235,6 @@ const formatType = (
 
 /**
  * Returns initials from doctor name.
- *
- * @param {string} name
- * @returns {string}
  */
 const getInitials = (
   name
@@ -277,9 +258,6 @@ const getInitials = (
 
 /**
  * Determines whether appointment belongs to upcoming care.
- *
- * @param {Object} appointment
- * @returns {boolean}
  */
 const isUpcomingAppointment = (
   appointment
@@ -294,9 +272,7 @@ const isUpcomingAppointment = (
   );
 };
 
-/* =========================================================
-   SUMMARY CARD
-========================================================= */
+/* SUMMARY CARD */
 
 /**
  * @component SummaryCard
@@ -395,9 +371,7 @@ const SummaryCard = ({
   );
 };
 
-/* =========================================================
-   STATUS BADGE
-========================================================= */
+/* STATUS BADGE */
 
 /**
  * @component StatusBadge
@@ -451,13 +425,11 @@ const StatusBadge = ({
   );
 };
 
-/* =========================================================
-   APPOINTMENT CARD
-========================================================= */
+/* APPOINTMENT CARD */
 
 /**
  * @component AppointmentCard
- * @desc      Premium web appointment card matching mobile structure.
+ * @desc      web appointment card matching mobile structure.
  */
 const AppointmentCard = ({
   appointment,
@@ -510,9 +482,7 @@ const AppointmentCard = ({
       `}
     >
 
-      {/* ===================================================
-          DOCTOR IDENTITY + STATUS
-      ==================================================== */}
+      {/* DOCTOR IDENTITY + STATUS */}
 
       <div
         className="
@@ -621,9 +591,7 @@ const AppointmentCard = ({
 
       </div>
 
-      {/* ===================================================
-          VISIT DETAILS
-      ==================================================== */}
+      {/* VISIT DETAILS */}
 
       <div
         className="
@@ -853,9 +821,7 @@ const AppointmentCard = ({
 
       </div>
 
-      {/* ===================================================
-          NOTES
-      ==================================================== */}
+      {/* NOTES */}
 
       {appointment.notes && (
 
@@ -900,9 +866,7 @@ const AppointmentCard = ({
 
       )}
 
-      {/* ===================================================
-          STATUS MESSAGES
-      ==================================================== */}
+      {/* STATUS MESSAGES */}
 
       {isConfirmed && (
 
@@ -986,9 +950,7 @@ const AppointmentCard = ({
 
       )}
 
-      {/* ===================================================
-          ACTIONS
-      ==================================================== */}
+      {/* ACTIONS */}
 
       {isScheduled && (
 
@@ -1006,6 +968,7 @@ const AppointmentCard = ({
           "
         >
 
+          {/* Reschedule Appointment Button */}
           <Button
             variant="secondary"
             size="sm"
@@ -1030,6 +993,7 @@ const AppointmentCard = ({
             Reschedule
           </Button>
 
+          {/* Cancel Appointment Button */}
           <Button
             variant="danger"
             size="sm"
@@ -1064,10 +1028,13 @@ const AppointmentCard = ({
   );
 };
 
-/* =========================================================
-   MAIN PAGE
-========================================================= */
+/* MAIN PAGE */
 
+/**
+ * FEATURE: Appointment history and upcoming care
+ * LOGIC: Group scheduled, confirmed and in-progress visits as upcoming by status, earliest first.
+ * Show other statuses in History, latest first; this grouping does not compare dates with today.
+ */
 export default function MyAppointmentsPage() {
   const user =
     useAuthStore(
@@ -1114,9 +1081,7 @@ export default function MyAppointmentsPage() {
       !!patientId,
   });
 
-  /* =======================================================
-     CANCEL APPOINTMENT
-  ======================================================= */
+  /* CANCEL APPOINTMENT */
 
   const cancelMutation =
     useMutation({
@@ -1150,6 +1115,12 @@ export default function MyAppointmentsPage() {
         },
     });
 
+  /**
+   * FEATURE: Cancel an appointment
+   * LOGIC: Ask for browser confirmation before requesting cancelled status.
+   * Success refreshes appointments; a failed request shows the server error.
+   * Cards offer cancellation and rescheduling only while status is scheduled.
+   */
   const handleCancel =
     appointmentId => {
       if (
@@ -1163,10 +1134,13 @@ export default function MyAppointmentsPage() {
       }
     };
 
-  /* =======================================================
-     RESCHEDULE
-  ======================================================= */
+  /* RESCHEDULE */
 
+  /**
+   * FEATURE: Choose a replacement appointment
+   * LOGIC: Require a doctor ID and open the slot picker with the old appointment ID.
+   * Booking the replacement and cancelling the original happen in BookAppointmentPage.
+   */
   const handleReschedule =
     appointment => {
       const targetId =
@@ -1194,9 +1168,7 @@ export default function MyAppointmentsPage() {
       );
     };
 
-  /* =======================================================
-     DERIVED DATA
-  ======================================================= */
+  /* DERIVED DATA */
 
   const upcomingAppointments =
     useMemo(
@@ -1273,9 +1245,7 @@ export default function MyAppointmentsPage() {
       ? upcomingAppointments
       : historyAppointments;
 
-  /* =======================================================
-     LOADING
-  ======================================================= */
+  /* LOADING */
 
   if (
     isLoading
@@ -1339,9 +1309,7 @@ export default function MyAppointmentsPage() {
     );
   }
 
-  /* =======================================================
-     ERROR
-  ======================================================= */
+  /* ERROR */
 
   if (
     isError
@@ -1373,17 +1341,14 @@ export default function MyAppointmentsPage() {
     );
   }
 
-  /* =======================================================
-     PAGE
-  ======================================================= */
+  /* PAGE */
 
   return (
     <div className="space-y-7">
 
-      {/* ===================================================
-          PAGE HEADER
-      ==================================================== */}
+      {/* PAGE HEADER */}
 
+      {/* My Appointments Heading */}
       <PageHeader
         eyebrow="Patient Portal"
         icon={
@@ -1476,9 +1441,7 @@ export default function MyAppointmentsPage() {
         }
       />
 
-      {/* ===================================================
-          SUMMARY CARDS
-      ==================================================== */}
+      {/* SUMMARY CARDS */}
 
       <section
         className="
@@ -1532,9 +1495,7 @@ export default function MyAppointmentsPage() {
 
       </section>
 
-      {/* ===================================================
-          APPOINTMENT WORKSPACE
-      ==================================================== */}
+      {/* APPOINTMENT WORKSPACE */}
 
       <section
         className="
@@ -1547,9 +1508,7 @@ export default function MyAppointmentsPage() {
         "
       >
 
-        {/* =================================================
-            TOOLBAR
-        ================================================== */}
+        {/* TOOLBAR */}
 
         <div
           className="
@@ -1609,9 +1568,7 @@ export default function MyAppointmentsPage() {
 
           </div>
 
-          {/* ===============================================
-              UPCOMING / HISTORY TOGGLE
-          ================================================ */}
+          {/* UPCOMING / HISTORY TOGGLE */}
 
           <div
             className="
@@ -1624,6 +1581,7 @@ export default function MyAppointmentsPage() {
             "
           >
 
+            {/* Upcoming Appointments Tab */}
             <button
               type="button"
               onClick={() =>
@@ -1686,6 +1644,7 @@ export default function MyAppointmentsPage() {
 
             </button>
 
+            {/* Appointment History Tab */}
             <button
               type="button"
               onClick={() =>
@@ -1752,9 +1711,7 @@ export default function MyAppointmentsPage() {
 
         </div>
 
-        {/* =================================================
-            CONTENT
-        ================================================== */}
+        {/* CONTENT */}
 
         <div
           className="
@@ -1874,7 +1831,7 @@ export default function MyAppointmentsPage() {
               {displayedAppointments.map(
                 appointment => (
 
-                  <AppointmentCard
+                  /* Appointment Cards and Action Handlers */ <AppointmentCard
                     key={
                       appointment.id
                     }
@@ -1907,9 +1864,7 @@ export default function MyAppointmentsPage() {
 
       </section>
 
-      {/* ===================================================
-          BOOK ANOTHER APPOINTMENT
-      ==================================================== */}
+      {/* BOOK ANOTHER APPOINTMENT */}
 
       {appointments.length >
         0 && (

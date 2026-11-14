@@ -1,8 +1,7 @@
 /**
  * @file    BookAppointmentPage.jsx
  * @module  Patient
- * @desc    Patient UI for selecting an AI-suggested appointment slot,
- *          with reschedule support.
+ * @desc    Select a doctor appointment slot, book a visit, or reschedule an existing visit.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -60,9 +59,7 @@ import Button from '../../components/common/Button';
 import Alert from '../../components/common/Alert';
 import Spinner from '../../components/common/Spinner';
 
-/* =========================================================
-   HELPERS
-========================================================= */
+
 
 /**
  * Returns doctor initials.
@@ -258,9 +255,7 @@ const formatExperience = (
   } experience`;
 };
 
-/* =========================================================
-   DOCTOR PHOTO
-========================================================= */
+
 
 const DoctorPhoto = ({
   doctor,
@@ -367,9 +362,7 @@ const DoctorPhoto = ({
   );
 };
 
-/* =========================================================
-   STEP HEADER
-========================================================= */
+
 
 const StepHeader = ({
   step,
@@ -432,10 +425,12 @@ const StepHeader = ({
   );
 };
 
-/* =========================================================
-   MAIN PAGE
-========================================================= */
 
+
+/**
+ * FEATURE: Book or reschedule appointment
+ * LOGIC: Load the chosen doctor and available slots, then let the patient select a date and time.
+ */
 export default function BookAppointmentPage() {
   const user =
     useAuthStore(
@@ -491,9 +486,7 @@ export default function BookAppointmentPage() {
     doctorId ===
       'undefined';
 
-  /* =======================================================
-     DOCTOR
-  ======================================================= */
+
 
   const {
     data:
@@ -517,9 +510,7 @@ export default function BookAppointmentPage() {
       !isInvalidId,
   });
 
-  /* =======================================================
-     AVAILABLE SLOTS
-  ======================================================= */
+
 
   const {
     data:
@@ -543,9 +534,7 @@ export default function BookAppointmentPage() {
       !isInvalidId,
   });
 
-  /* =======================================================
-     GROUP SLOTS BY DATE
-  ======================================================= */
+
 
   const slotGroups =
     useMemo(
@@ -612,10 +601,14 @@ export default function BookAppointmentPage() {
         )
       : [];
 
-  /* =======================================================
-     BOOKING MUTATION
-  ======================================================= */
 
+
+  /**
+   * FEATURE: Save appointment
+   * LOGIC: Create the replacement first, then request cancellation of the old booking.
+   * If cancellation fails, keep the new booking, show a warning and return to appointments; both can remain active.
+   * A failed new booking leaves the old appointment unchanged.
+   */
   const bookMutation =
     useMutation({
       mutationFn:
@@ -685,10 +678,14 @@ export default function BookAppointmentPage() {
         },
     });
 
-  /* =======================================================
-     SUBMIT
-  ======================================================= */
 
+
+  /**
+   * FEATURE: Confirm booking
+   * LOGIC: Require a patient and selected slot, then send doctor, time and optional reason as an OPD booking.
+   * Displayed slots are not reservations: the backend locks the doctor row, rechecks availability
+   * and conflicts in one transaction, and rejects an occupied slot. API errors appear in a toast.
+   */
   const handleSubmit =
     event => {
       event.preventDefault();
@@ -726,9 +723,7 @@ export default function BookAppointmentPage() {
       });
     };
 
-  /* =======================================================
-     INVALID DOCTOR
-  ======================================================= */
+
 
   if (
     isInvalidId
@@ -827,9 +822,7 @@ export default function BookAppointmentPage() {
     );
   }
 
-  /* =======================================================
-     LOADING
-  ======================================================= */
+
 
   if (
     isLoadingDoctor ||
@@ -894,9 +887,7 @@ export default function BookAppointmentPage() {
     );
   }
 
-  /* =======================================================
-     LOAD ERROR
-  ======================================================= */
+
 
   if (
     isDoctorError ||
@@ -926,17 +917,14 @@ export default function BookAppointmentPage() {
     );
   }
 
-  /* =======================================================
-     PAGE
-  ======================================================= */
+
 
   return (
     <div className="space-y-7">
 
-      {/* ===================================================
-          HEADER
-      ==================================================== */}
 
+
+      {/* Book Appointment Heading */}
       <PageHeader
         eyebrow={
           rescheduleId
@@ -1051,9 +1039,7 @@ export default function BookAppointmentPage() {
         }
       />
 
-      {/* ===================================================
-          RESCHEDULE NOTICE
-      ==================================================== */}
+
 
       {rescheduleId && (
 
@@ -1118,9 +1104,7 @@ export default function BookAppointmentPage() {
 
       )}
 
-      {/* ===================================================
-          MAIN LAYOUT
-      ==================================================== */}
+
 
       <div
         className="
@@ -1132,9 +1116,7 @@ export default function BookAppointmentPage() {
         "
       >
 
-        {/* =================================================
-            DOCTOR PROFILE
-        ================================================== */}
+
 
         <aside
           className="
@@ -1291,9 +1273,7 @@ export default function BookAppointmentPage() {
 
               </div>
 
-              {/* ===========================================
-                  DOCTOR META
-              ============================================ */}
+
 
               <div
                 className="
@@ -1502,10 +1482,9 @@ export default function BookAppointmentPage() {
 
         </aside>
 
-        {/* =================================================
-            BOOKING FLOW
-        ================================================== */}
 
+
+        {/* Appointment Booking Form */}
         <form
           onSubmit={
             handleSubmit
@@ -1513,9 +1492,7 @@ export default function BookAppointmentPage() {
           className="space-y-5"
         >
 
-          {/* ===============================================
-              STEP 1 — DATE
-          ================================================ */}
+
 
           <Card>
 
@@ -1639,6 +1616,7 @@ export default function BookAppointmentPage() {
                       dateKey;
 
                     return (
+                      /* Available Date Button */
                       <button
                         key={
                           dateKey
@@ -1752,9 +1730,7 @@ export default function BookAppointmentPage() {
 
           </Card>
 
-          {/* ===============================================
-              STEP 2 — TIME
-          ================================================ */}
+
 
           {availableDates.length >
             0 && (
@@ -1784,6 +1760,7 @@ export default function BookAppointmentPage() {
                       slot;
 
                     return (
+                      /* Available Time Slot Button */
                       <button
                         key={
                           slot
@@ -1865,9 +1842,7 @@ export default function BookAppointmentPage() {
 
           )}
 
-          {/* ===============================================
-              STEP 3 — REASON
-          ================================================ */}
+
 
           {availableDates.length >
             0 && (
@@ -1921,6 +1896,7 @@ export default function BookAppointmentPage() {
                     "
                   />
 
+                  {/* Reason for Visit Notes Field */}
                   <textarea
                     id="appointment-reason"
                     name="reason"
@@ -1969,9 +1945,7 @@ export default function BookAppointmentPage() {
 
           )}
 
-          {/* ===============================================
-              SUMMARY
-          ================================================ */}
+
 
           {selectedSlot && (
 
@@ -2173,9 +2147,7 @@ export default function BookAppointmentPage() {
 
           )}
 
-          {/* ===============================================
-              CONFIRM
-          ================================================ */}
+
 
           {availableDates.length >
             0 && (
@@ -2227,6 +2199,7 @@ export default function BookAppointmentPage() {
                 "
               >
 
+                {/* Cancel Booking Button */}
                 <Button
                   type="button"
                   variant="secondary"
@@ -2242,6 +2215,7 @@ export default function BookAppointmentPage() {
                   Cancel
                 </Button>
 
+                {/* Confirm Appointment or Confirm Reschedule Button */}
                 <Button
                   type="submit"
                   size="lg"

@@ -1,10 +1,7 @@
 /**
  * @file    AIChatWidget.jsx
  * @module  Patient
- * @desc    Premium Care4U web AI Assistant widget.
- *          Supports English/Sinhala responses, Markdown rendering,
- *          conversation context, suggested prompts, fullscreen mode,
- *          persistent AI safety guidance, and responsive chat controls.
+ * @desc    Patient AI chat with language selection, conversation context and safety guidance.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -34,9 +31,7 @@ import remarkGfm from 'remark-gfm';
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
 
-/* =========================================================
-   QUICK PROMPTS
-========================================================= */
+/* QUICK PROMPTS */
 
 const QUICK_PROMPTS = {
   English: [
@@ -52,9 +47,7 @@ const QUICK_PROMPTS = {
   ],
 };
 
-/* =========================================================
-   MARKDOWN COMPONENTS
-========================================================= */
+/* MARKDOWN COMPONENTS */
 
 /* eslint-disable no-unused-vars */
 
@@ -194,11 +187,7 @@ const MarkdownComponents = {
     />
   ),
 
-  /*
-   * Backend prompts now prohibit Markdown tables for patient chat,
-   * but this fallback renderer prevents a malformed response from
-   * breaking the web layout if one is ever returned.
-   */
+  /* Backend prompts now prohibit Markdown tables for patient chat, but this fallback renderer prevents a malformed response from breaking the web layout if one is ever returned. */
   table: ({
     node,
     ...props
@@ -286,9 +275,7 @@ const MarkdownComponents = {
 
 /* eslint-enable no-unused-vars */
 
-/* =========================================================
-   AI CHAT WIDGET
-========================================================= */
+/* AI CHAT WIDGET */
 
 export default function AIChatWidget() {
   const user =
@@ -350,9 +337,7 @@ export default function AIChatWidget() {
   const inputRef =
     useRef(null);
 
-  /* =======================================================
-     AUTO SCROLL
-  ======================================================= */
+  /* AUTO SCROLL */
 
   useEffect(
     () => {
@@ -369,9 +354,7 @@ export default function AIChatWidget() {
     ]
   );
 
-  /* =======================================================
-     FOCUS INPUT WHEN OPENING
-  ======================================================= */
+  /* FOCUS INPUT WHEN OPENING */
 
   useEffect(
     () => {
@@ -401,9 +384,7 @@ export default function AIChatWidget() {
     ]
   );
 
-  /* =======================================================
-     LANGUAGE
-  ======================================================= */
+  /* LANGUAGE */
 
   const toggleLanguage =
     () => {
@@ -416,10 +397,15 @@ export default function AIChatWidget() {
       );
     };
 
-  /* =======================================================
-     SEND MESSAGE
-  ======================================================= */
+  /* SEND MESSAGE */
 
+  /**
+   * FEATURE: Send a patient AI chat message
+   * LOGIC: Ignore blank text or another send while loading; require a patient ID.
+   * Send the new message, selected language and previous local messages to the patient chat API.
+   * Append the reply or failure message and release loading; closing the widget keeps local history.
+   * The visible safety notice remains present; provider guardrails run on the backend.
+   */
   const sendMessage =
     async (
       messageOverride = null
@@ -471,10 +457,7 @@ export default function AIChatWidget() {
           messageText,
       };
 
-      /*
-       * Map the web UI format into the chat-history format
-       * expected by the backend.
-       */
+      /* Map the web UI format into the chat-history format expected by the backend. */
       const formattedHistory =
         messages.map(
           message => ({
@@ -592,9 +575,7 @@ export default function AIChatWidget() {
       }
     };
 
-  /* =======================================================
-     SUBMIT
-  ======================================================= */
+  /* SUBMIT */
 
   const handleSubmit =
     event => {
@@ -603,9 +584,7 @@ export default function AIChatWidget() {
       sendMessage();
     };
 
-  /* =======================================================
-     TEXTAREA KEYBOARD BEHAVIOUR
-  ======================================================= */
+  /* TEXTAREA KEYBOARD BEHAVIOUR */
 
   const handleInputKeyDown =
     event => {
@@ -620,9 +599,7 @@ export default function AIChatWidget() {
       }
     };
 
-  /* =======================================================
-     CLOSE
-  ======================================================= */
+  /* CLOSE */
 
   const closeChat =
     () => {
@@ -635,9 +612,7 @@ export default function AIChatWidget() {
       );
     };
 
-  /* =======================================================
-     PAGE
-  ======================================================= */
+  /* PAGE */
 
   return (
     <div
@@ -663,9 +638,7 @@ export default function AIChatWidget() {
       `}
     >
 
-      {/* ===================================================
-          CHAT WINDOW
-      ==================================================== */}
+      {/* CHAT WINDOW */}
 
       {isOpen && (
 
@@ -699,9 +672,7 @@ export default function AIChatWidget() {
           `}
         >
 
-          {/* =================================================
-              HEADER
-          ================================================== */}
+          {/* HEADER */}
 
           <div
             className="
@@ -851,6 +822,7 @@ export default function AIChatWidget() {
                 "
               >
 
+                {/* Switch Assistant Language Button */}
                 <button
                   type="button"
                   onClick={
@@ -890,6 +862,7 @@ export default function AIChatWidget() {
 
                 </button>
 
+                {/* AI Assistant Full Screen or Minimize Button */}
                 <button
                   type="button"
                   onClick={() =>
@@ -930,6 +903,7 @@ export default function AIChatWidget() {
 
                 </button>
 
+                {/* Close AI Assistant Button */}
                 <button
                   type="button"
                   onClick={
@@ -960,9 +934,7 @@ export default function AIChatWidget() {
 
           </div>
 
-          {/* =================================================
-              DISCLAIMER
-          ================================================== */}
+          {/* DISCLAIMER */}
 
           <div
             className="
@@ -1029,9 +1001,7 @@ export default function AIChatWidget() {
 
           </div>
 
-          {/* =================================================
-              CHAT HISTORY
-          ================================================== */}
+          {/* CHAT HISTORY */}
 
           <div
             className="
@@ -1172,7 +1142,7 @@ export default function AIChatWidget() {
 
                         ) : (
 
-                          <ReactMarkdown
+                          /* AI Reply Markdown Display */ <ReactMarkdown
                             components={
                               MarkdownComponents
                             }
@@ -1217,9 +1187,7 @@ export default function AIChatWidget() {
                 }
               )}
 
-              {/* =============================================
-                  QUICK PROMPTS
-              ============================================== */}
+              {/* QUICK PROMPTS */}
 
               {messages.length ===
                 1 &&
@@ -1259,7 +1227,7 @@ export default function AIChatWidget() {
                     ].map(
                       prompt => (
 
-                        <button
+                        /* Suggested Question Button */ <button
                           key={
                             prompt
                           }
@@ -1320,9 +1288,7 @@ export default function AIChatWidget() {
 
               )}
 
-              {/* =============================================
-                  LOADING
-              ============================================== */}
+              {/* LOADING */}
 
               {isLoading && (
 
@@ -1446,9 +1412,7 @@ export default function AIChatWidget() {
 
           </div>
 
-          {/* =================================================
-              INPUT AREA
-          ================================================== */}
+          {/* INPUT AREA */}
 
           <div
             className="
@@ -1546,6 +1510,7 @@ export default function AIChatWidget() {
                   "
                 />
 
+                {/* Send AI Chat Message Button */}
                 <button
                   type="submit"
                   disabled={
@@ -1640,13 +1605,11 @@ export default function AIChatWidget() {
 
       )}
 
-      {/* ===================================================
-          FLOATING LAUNCH BUTTON
-      ==================================================== */}
+      {/* FLOATING LAUNCH BUTTON */}
 
       {!isOpen && (
 
-        <button
+        /* Open Care4U AI Assistant Button */ <button
           type="button"
           onClick={() =>
             setIsOpen(

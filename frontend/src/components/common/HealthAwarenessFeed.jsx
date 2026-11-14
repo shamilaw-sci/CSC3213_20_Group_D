@@ -1,7 +1,7 @@
 /**
  * @file    HealthAwarenessFeed.jsx
  * @module  Patient
- * @desc    Widget that displays personalized health articles based on patient conditions/allergies.
+ * @desc    Shows published health infographics selected using the supplied patient allergies.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -29,6 +29,12 @@ import Card from './Card';
 
 const AUTO_SCROLL_DELAY = 15000;
 
+/**
+ * FEATURE: Recommended health infographics
+ * LOGIC: Fetch published content, rank/filter using patient allergies and keep only articles with images.
+ * Restart at the first article when allergies change; errors and empty results share the empty display.
+ * Rotate multiple articles every 15 seconds while unpaused; hovering/focusing pauses and swipes move slides.
+ */
 const HealthAwarenessFeed = ({
   patientAllergies = []
 }) => {
@@ -66,11 +72,11 @@ const HealthAwarenessFeed = ({
         setLoading(true);
         setError(null);
 
-        // Fetch from Member 1's backend endpoint
+        // Load published awareness content.
         const data =
           await getHealthContent();
 
-        // Pass it through our smart filter logic (Epic 8.13 requirement)
+        // Keep article selection in the shared health-content service.
         const personalized =
           getPersonalizedFeed(
             data,
@@ -334,6 +340,7 @@ const HealthAwarenessFeed = ({
 
         </div>
 
+        {/* Pause or Resume Health Slideshow Button */}
         <button
           type="button"
           onClick={() =>
@@ -455,6 +462,7 @@ const HealthAwarenessFeed = ({
 
         {articles.length > 1 && (
           <>
+            {/* Previous Health Infographic Button */}
             <button
               type="button"
               onClick={
@@ -484,6 +492,7 @@ const HealthAwarenessFeed = ({
               />
             </button>
 
+            {/* Next Health Infographic Button */}
             <button
               type="button"
               onClick={

@@ -1,8 +1,8 @@
 /**
  * @file    prescription.service.js
- * @module  Services
+ * @module  Prescription
  * @desc    API calls for prescription module.
- * @author  S/21/001
+ * @author  Pamudika Abayarathna (S/21/001)
  */
 
 import api from './api';
@@ -17,6 +17,11 @@ export const getPrescriptionById = async (id) => {
   return response.data;
 };
 
+/**
+ * FEATURE: Verify a prescription reference
+ * LOGIC: Send the QR value to the verification endpoint and return its complete response envelope.
+ * The server checks pharmacist access and prescription validity; this call does not dispense medicine.
+ */
 export const verifyPrescriptionByQR = async (qrValue) => {
   const response = await api.get(`/api/prescriptions/verify/${qrValue}`);
   return response.data;

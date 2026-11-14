@@ -1,9 +1,7 @@
 /**
  * @file      MedicalRecordsPage.jsx
- * @component MedicalRecordsPage
- * @desc      Premium patient medical-record timeline.
- *            Displays record summaries, filtering, clinical cards,
- *            confidential indicators, and full record details.
+ * @module    Patient
+ * @desc      Displays the patient record timeline, category filters and clinical details.
  * @author    Wasana Karunanayaka (S/21/081)
  */
 
@@ -44,9 +42,7 @@ import Modal from '../../components/common/Modal';
 import Spinner from '../../components/common/Spinner';
 import Alert from '../../components/common/Alert';
 
-/* =========================================================
-   RECORD TYPE CONFIGURATION
-========================================================= */
+/* RECORD TYPE CONFIGURATION */
 
 const RECORD_TYPES = {
   consultation: {
@@ -113,9 +109,7 @@ const FILTERS = [
   },
 ];
 
-/* =========================================================
-   HELPERS
-========================================================= */
+/* HELPERS */
 
 /**
  * Returns display metadata for a medical-record type.
@@ -198,12 +192,10 @@ const formatLongDate = (
   );
 };
 
-/* =========================================================
-   SUMMARY CARD
-========================================================= */
+/* SUMMARY CARD */
 
-/** Render a record summary metric from icon/label/value/description/color props; purely presentational.
- * @returns {*} UI element, local transition or acknowledged async completion as described above.
+/**
+ * Render a record summary metric from icon/label/value/description/color props; purely presentational.
  */
 const SummaryCard = ({
   icon: Icon,
@@ -300,12 +292,10 @@ const SummaryCard = ({
   );
 };
 
-/* =========================================================
-   RECORD CARD
-========================================================= */
+/* RECORD CARD */
 
-/** Render one record summary and call onOpen on keyboard/click activation. Props are record and onOpen; the parent owns selection.
- * @returns {*} UI element, local transition or acknowledged async completion as described above.
+/**
+ * Render one record summary and call onOpen on keyboard/click activation. Props are record and onOpen; the parent owns selection.
  */
 const RecordCard = ({
   record,
@@ -320,7 +310,7 @@ const RecordCard = ({
     meta.icon;
 
   return (
-    <button
+    /* Open Medical Record Button */ <button
       type="button"
       onClick={
         onOpen
@@ -379,9 +369,7 @@ const RecordCard = ({
           "
         >
 
-          {/* ===============================================
-              TYPE + PRIVACY
-          ================================================ */}
+          {/* TYPE + PRIVACY */}
 
           <div
             className="
@@ -439,9 +427,7 @@ const RecordCard = ({
 
           </div>
 
-          {/* ===============================================
-              TITLE
-          ================================================ */}
+          {/* TITLE */}
 
           <h3
             className="
@@ -457,9 +443,7 @@ const RecordCard = ({
               meta.label}
           </h3>
 
-          {/* ===============================================
-              META
-          ================================================ */}
+          {/* META */}
 
           <div
             className="
@@ -528,9 +512,7 @@ const RecordCard = ({
 
           </div>
 
-          {/* ===============================================
-              FOLLOW-UP
-          ================================================ */}
+          {/* FOLLOW-UP */}
 
           {record.follow_up_needed && (
 
@@ -595,9 +577,7 @@ const RecordCard = ({
   );
 };
 
-/* =========================================================
-   DETAIL BLOCK
-========================================================= */
+/* DETAIL BLOCK */
 
 const DetailBlock = ({
   label,
@@ -647,12 +627,13 @@ const DetailBlock = ({
   );
 };
 
-/* =========================================================
-   MAIN PAGE
-========================================================= */
+/* MAIN PAGE */
 
-/** Read the owning profile records through React Query; derive sorted/filter/count views. Only a selected object in the current result can open a detail dialog. Missing profile or failed API denies display.
- * @returns {*} UI element, local transition or acknowledged async completion as described above.
+/**
+ * FEATURE: View and filter medical records
+ * LOGIC: Require the session profile ID, load its records, sort newest first and filter by record type.
+ * Counts use the full result; the detail modal opens only while its selected record remains in that result.
+ * Confidential badges describe records; backend access rules control who receives them.
  */
 const MedicalRecordsPage = () => {
   const user =
@@ -700,9 +681,7 @@ const MedicalRecordsPage = () => {
       !!patientId,
   });
 
-  /* =======================================================
-     DERIVED RECORD DATA
-  ======================================================= */
+  /* DERIVED RECORD DATA */
 
   const sortedRecords =
     useMemo(
@@ -789,9 +768,7 @@ const MedicalRecordsPage = () => {
       ]
     );
 
-  /* =======================================================
-     LOADING
-  ======================================================= */
+  /* LOADING */
 
   if (!patientId) return <Alert type="error" message="Your patient profile is unavailable. Please sign in again." />;
 
@@ -857,9 +834,7 @@ const MedicalRecordsPage = () => {
     );
   }
 
-  /* =======================================================
-     ERROR
-  ======================================================= */
+  /* ERROR */
 
   if (
     isError
@@ -895,10 +870,9 @@ const MedicalRecordsPage = () => {
   return (
     <div className="space-y-7">
 
-      {/* ===================================================
-          PAGE HEADER
-      ==================================================== */}
+      {/* PAGE HEADER */}
 
+      {/* Medical Records Heading */}
       <PageHeader
         eyebrow="Patient Portal"
         icon={
@@ -989,9 +963,7 @@ const MedicalRecordsPage = () => {
         }
       />
 
-      {/* ===================================================
-          SUMMARY CARDS
-      ==================================================== */}
+      {/* SUMMARY CARDS */}
 
       <section
         className="
@@ -1058,9 +1030,7 @@ const MedicalRecordsPage = () => {
 
       </section>
 
-      {/* ===================================================
-          RECORD TIMELINE
-      ==================================================== */}
+      {/* RECORD TIMELINE */}
 
       <section
         className="
@@ -1073,9 +1043,7 @@ const MedicalRecordsPage = () => {
         "
       >
 
-        {/* =================================================
-            SECTION HEADER
-        ================================================== */}
+        {/* SECTION HEADER */}
 
         <div
           className="
@@ -1137,9 +1105,7 @@ const MedicalRecordsPage = () => {
 
           </div>
 
-          {/* ===============================================
-              FILTER CHIPS
-          ================================================ */}
+          {/* FILTER CHIPS */}
 
           <div
             className="
@@ -1157,7 +1123,7 @@ const MedicalRecordsPage = () => {
                   filter.key;
 
                 return (
-                  <button
+                  /* Medical Records Category Filter Button */ <button
                     key={
                       filter.key
                     }
@@ -1193,9 +1159,7 @@ const MedicalRecordsPage = () => {
 
         </div>
 
-        {/* =================================================
-            RECORD CONTENT
-        ================================================== */}
+        {/* RECORD CONTENT */}
 
         <div
           className="
@@ -1273,7 +1237,7 @@ const MedicalRecordsPage = () => {
               {records.length >
                 0 && (
 
-                <button
+                /* View All Records Button */ <button
                   type="button"
                   onClick={() =>
                     setSelectedFilter(
@@ -1340,9 +1304,7 @@ const MedicalRecordsPage = () => {
 
       </section>
 
-      {/* ===================================================
-          SECURITY FOOTER
-      ==================================================== */}
+      {/* SECURITY FOOTER */}
 
       <div
         className="
@@ -1366,10 +1328,9 @@ const MedicalRecordsPage = () => {
 
       </div>
 
-      {/* ===================================================
-          RECORD DETAIL MODAL
-      ==================================================== */}
+      {/* RECORD DETAIL MODAL */}
 
+      {/* Medical Record Details Modal */}
       <Modal
         manageFocus
         isOpen={
@@ -1397,9 +1358,7 @@ const MedicalRecordsPage = () => {
           return (
             <div className="space-y-6">
 
-              {/* ===========================================
-                  RECORD HERO
-              ============================================ */}
+              {/* RECORD HERO */}
 
               <div
                 className="
@@ -1570,9 +1529,7 @@ const MedicalRecordsPage = () => {
 
               </div>
 
-              {/* ===========================================
-                  CONFIDENTIAL WARNING
-              ============================================ */}
+              {/* CONFIDENTIAL WARNING */}
 
               {selectedRecord
                   .is_confidential && (
@@ -1638,9 +1595,7 @@ const MedicalRecordsPage = () => {
 
               )}
 
-              {/* ===========================================
-                  CLINICAL INFORMATION
-              ============================================ */}
+              {/* CLINICAL INFORMATION */}
 
               <div>
 
@@ -1749,9 +1704,7 @@ const MedicalRecordsPage = () => {
 
               </div>
 
-              {/* ===========================================
-                  FOLLOW-UP NOTICE
-              ============================================ */}
+              {/* FOLLOW-UP NOTICE */}
 
               {selectedRecord
                   .follow_up_needed && (
@@ -1817,9 +1770,7 @@ const MedicalRecordsPage = () => {
 
               )}
 
-              {/* ===========================================
-                  PRIVACY NOTE
-              ============================================ */}
+              {/* PRIVACY NOTE */}
 
               <div
                 className="

@@ -1,9 +1,8 @@
 /**
- * @component PatientNavbar
- * @desc      Top navigation bar for the patient portal, using TopNavbar
- *            with patient-specific nav items grouped cleanly to avoid clutter.
- *            Includes the lab-report "New" badge.
- * @author    Wasana Karunanayaka (S/21/081)
+ * @file    PatientNavbar.jsx
+ * @module  Patient
+ * @desc    Patient navigation links, unread lab-result badge, and logout action.
+ * @author  Wasana Karunanayaka (S/21/081)
  */
 import { API_BASE_URL } from '../../services/api';
 
@@ -16,6 +15,11 @@ import { getLabReports } from '../../services/patient.service';
 import useAuthStore from '../../store/authStore';
 import TopNavbar from './TopNavbar';
 
+/**
+ * FEATURE: Patient Logout
+ * LOGIC: Attempt a session logout with cookies, then open login even if the request fails.
+ * The response status is not checked here; the server controls session removal.
+ */
 const handleLogout = async () => {
   try {
     await fetch(`${API_BASE_URL}/api/auth/logout`, { method: 'POST', credentials: 'include' });
@@ -23,6 +27,10 @@ const handleLogout = async () => {
   window.location.href = '/login';
 };
 
+/**
+ * FEATURE: Patient navigation and new report badge
+ * LOGIC: Show patient page links and check for completed lab reports that have not been read.
+ */
 export default function PatientNavbar() {
   const user = useAuthStore((state) => state.user);
   const patientId = user?.profile_id || user?.id || '';
@@ -36,7 +44,7 @@ export default function PatientNavbar() {
 
   const hasNewReports = reports.filter((r) => r.status === 'completed' && !r.is_read).length > 0;
 
-  // We use dropdown groups to keep the navbar clean while restoring the missing pages
+  // My Health, Pharmacy and Account group the patient links; the lab badge uses completed, unread reports.
   const navItems = [
     { type: 'link', to: '/patient/appointments', label: 'My Appointments', icon: CalendarCheck },
     { type: 'link', to: '/patient/doctors', label: 'Find a Doctor', icon: Stethoscope },
@@ -69,5 +77,5 @@ export default function PatientNavbar() {
     },
   ];
 
-  return <TopNavbar portalLabel="Patient Portal" theme="patient" navItems={navItems} onLogout={handleLogout} />;
+  return /* Patient Portal Menus and Logout Button */ <TopNavbar portalLabel="Patient Portal" theme="patient" navItems={navItems} onLogout={handleLogout} />;
 }

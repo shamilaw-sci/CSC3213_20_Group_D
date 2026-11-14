@@ -1,8 +1,8 @@
 /**
- * @component OrderTrackerPage
- * @desc      Patient-facing medicine order tracking page showing
- *            delivery status, order details, and a visual progress timeline.
- * @author    Pamudika Abayarathna (S/21/001)
+ * @file    OrderTrackerPage.jsx
+ * @module  Patient / Pharmacy
+ * @desc    Displays medicine-order status, delivery details and progress timelines.
+ * @author  Pamudika Abayarathna (S/21/001)
  */
 
 import {
@@ -97,6 +97,12 @@ const formatDate = (
   );
 };
 
+/**
+ * FEATURE: Medicine delivery progress
+ * LOGIC: Compare the server status with the fixed placed-to-delivered sequence.
+ * Mark earlier steps complete; cancelled orders show a cancellation message instead.
+ * Unknown statuses do not mark a step reached. This page only displays order state.
+ */
 const StatusTimeline = ({
   currentStatus,
 }) => {
@@ -365,6 +371,11 @@ const StatusTimeline = ({
   );
 };
 
+/**
+ * FEATURE: Track medicine orders
+ * LOGIC: Load orders for the session patient and count all except delivered/cancelled as active.
+ * Loading, request failure and an empty order history have separate displays; no status is changed here.
+ */
 const OrderTrackerPage = () => {
   const user =
     useAuthStore(
@@ -456,9 +467,8 @@ const OrderTrackerPage = () => {
   return (
     <div className="space-y-7">
 
-      {/* =========================================
-          PAGE HERO
-      ========================================= */}
+      {/* PAGE HERO */}
+      {/* Medicine Orders Heading */}
       <PageHeader
         eyebrow="Patient Portal"
         icon={
@@ -520,9 +530,8 @@ const OrderTrackerPage = () => {
         }
       />
 
-      {/* =========================================
-          ORDER HISTORY
-      ========================================= */}
+      {/* ORDER HISTORY */}
+      {/* Medicine Order History Card */}
       <Card
         title="Order History"
       >
@@ -761,6 +770,7 @@ const OrderTrackerPage = () => {
 
                       </div>
 
+                      {/* Delivery Progress Timeline */}
                       <StatusTimeline
                         currentStatus={
                           order.status

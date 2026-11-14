@@ -1,6 +1,6 @@
 /**
  * @file    patient.service.js
- * @module  Services
+ * @module  Patient / Services
  * @desc    Frontend service functions for the Patient module.
  * Calls the Care4U backend patient API endpoints.
  * @author  Wasana Karunanayaka (S/21/081)
@@ -8,9 +8,11 @@
 
 import api from './api';
 
-/** Require an acknowledged patient response before reporting a save, unlock or empty list.
- * @param {Object} response Axios response. @param {string} kind Expected object/array payload.
- * @returns {Object|Array} Valid payload; rejected/malformed envelopes throw for screen recovery.
+/**
+ * FEATURE: Confirm profile, record and consent responses
+ * LOGIC: Require success=true and the expected object/list shape for callers using this helper.
+ * An empty array is valid; a rejected or malformed envelope throws instead of reporting success.
+ * Other service functions below still return their existing response payloads directly.
  */
 const patientData = (response, kind = 'object') => {
   const data = response?.data?.data;
@@ -24,8 +26,6 @@ const patientData = (response, kind = 'object') => {
 
 /**
  * Fetches a patient profile by patient UUID.
- * @param {string} patientId - UUID of the patient
- * @returns {Promise<Object>} The patient data object
  */
 export const getPatientProfile = async (
   patientId
@@ -42,9 +42,6 @@ export const getPatientProfile = async (
 
 /**
  * Updates editable fields on a patient profile.
- * @param {string} patientId - UUID of the patient
- * @param {Object} data - Fields to update
- * @returns {Promise<Object>} The updated patient data object
  */
 export const updatePatientProfile = async (
   patientId,
@@ -63,9 +60,6 @@ export const updatePatientProfile = async (
 
 /**
  * Uploads a new profile photo for a patient.
- * @param {string} patientId - UUID of the patient
- * @param {File} file - Image file selected by the user
- * @returns {Promise<Object>} Updated patient data
  */
 export const uploadPatientPhoto = async (
   patientId,
@@ -99,13 +93,8 @@ export const uploadPatientPhoto = async (
 /**
  * Fetches medical records for a patient.
  *
- * During a doctor consultation, appointmentId is supplied
- * so temporary patient-consent access can be evaluated.
- *
- * @param {string} patientId - UUID of the patient
- * @param {string|null} role - Existing caller compatibility
- * @param {string|null} appointmentId - Current appointment UUID
- * @returns {Promise<Array>} Medical records
+ * Doctors must supply appointmentId for an assigned, in-progress consultation.
+ * The legacy role argument is not sent and cannot grant access; backend session rules apply.
  */
 export const getMedicalRecords = async (
   patientId,
@@ -316,9 +305,6 @@ export const deleteMedicalDevice = async (
 /**
  * Fetches all active important medical background
  * records belonging to the authenticated patient.
- *
- * @param {string} patientId - UUID of the patient
- * @returns {Promise<Array>} Array of background records
  */
 export const getHealthBackground = async (
   patientId,
@@ -336,10 +322,6 @@ export const getHealthBackground = async (
 /**
  * Adds an important medical background record
  * to the patient's profile.
- *
- * @param {string} patientId - UUID of the patient
- * @param {Object} backgroundData - Background information
- * @returns {Promise<Object>} Created background record
  */
 export const addHealthBackground = async (
   patientId,
@@ -357,10 +339,6 @@ export const addHealthBackground = async (
 /**
  * Removes an important medical background record
  * from the patient's active profile.
- *
- * @param {string} patientId - UUID of the patient
- * @param {string} backgroundId - UUID of the record
- * @returns {Promise<Object>} Success response
  */
 export const deleteHealthBackground = async (
   patientId,
@@ -376,9 +354,6 @@ export const deleteHealthBackground = async (
 
 /**
  * Fetches all active family medical history records.
- *
- * @param {string} patientId - UUID of the patient
- * @returns {Promise<Array>} Array of family history records
  */
 export const getFamilyHistory = async (
   patientId,
@@ -396,10 +371,6 @@ export const getFamilyHistory = async (
 /**
  * Adds a family medical history record
  * to the patient's profile.
- *
- * @param {string} patientId - UUID of the patient
- * @param {Object} familyHistoryData - Family history information
- * @returns {Promise<Object>} Created family history record
  */
 export const addFamilyHistory = async (
   patientId,
@@ -417,10 +388,6 @@ export const addFamilyHistory = async (
 /**
  * Removes a family medical history record
  * from the patient's active profile.
- *
- * @param {string} patientId - UUID of the patient
- * @param {string} familyHistoryId - UUID of the family history record
- * @returns {Promise<Object>} Success response
  */
 export const deleteFamilyHistory = async (
   patientId,
@@ -539,13 +506,8 @@ export const scanVaccinationCard = async (
 /**
  * Fetches an AI-generated clinical summary.
  *
- * During a consultation, appointmentId allows the
- * summary to respect any active temporary consent grant.
- *
- * @param {string} patientId - UUID of the patient
- * @param {string|null} role - Existing caller compatibility
- * @param {string|null} appointmentId - Current appointment UUID
- * @returns {Promise<Object>} AI summary response
+ * Supply appointmentId during a doctor consultation so the backend can check access and consent.
+ * The legacy role argument is not sent; this function does not bypass privacy filtering.
  */
 export const getPatientHistorySummary = async (
   patientId,
@@ -639,15 +601,10 @@ export const getPatientAppointments = async (
   return response.data.data;
 };
 
-/* =========================================================
-   PRIVACY & CONSENT SETTINGS
-========================================================= */
+/* PRIVACY & CONSENT SETTINGS */
 
 /**
  * Retrieves privacy and consent settings.
- *
- * @param {string} patientId - UUID of the patient
- * @returns {Promise<Array>} Locked category names
  */
 export const getConsentSettings = async (
   patientId
@@ -663,11 +620,9 @@ export const getConsentSettings = async (
 };
 
 /**
- * Updates privacy and consent settings.
- *
- * @param {string} patientId - UUID of the patient
- * @param {Array<string>} lockedCategories - Protected categories
- * @returns {Promise<Object>} Updated consent settings
+ * FEATURE: Save privacy category locks
+ * LOGIC: Send the complete category list and accept only a confirmed response containing locked_categories.
+ * The screen keeps the last confirmed settings if this request rejects.
  */
 export const updateConsentSettings = async (
   patientId,
@@ -686,17 +641,11 @@ export const updateConsentSettings = async (
   return data;
 };
 
-/* =========================================================
-   TEMPORARY DOCTOR CONSENT ACCESS
-========================================================= */
+/* TEMPORARY DOCTOR CONSENT ACCESS */
 
 /**
  * Retrieves temporary consent-access status for
  * the current doctor consultation.
- *
- * @param {string} patientId - UUID of the patient
- * @param {string} appointmentId - UUID of the appointment
- * @returns {Promise<Object>} Current temporary-access status
  */
 export const getConsentAccessStatus = async (
   patientId,
@@ -722,10 +671,6 @@ export const getConsentAccessStatus = async (
  *
  * The OTP is sent by the backend to the patient's
  * registered Care4U email address.
- *
- * @param {string} patientId - UUID of the patient
- * @param {string} appointmentId - UUID of the appointment
- * @returns {Promise<Object>} OTP request information
  */
 export const requestConsentAccess = async (
   patientId,
@@ -745,13 +690,9 @@ export const requestConsentAccess = async (
 };
 
 /**
- * Verifies the patient-provided OTP and creates
- * a temporary doctor access grant.
- *
- * @param {string} patientId - UUID of the patient
- * @param {string} appointmentId - UUID of the appointment
- * @param {string} otpCode - 6-digit OTP
- * @returns {Promise<Object>} Temporary grant information
+ * FEATURE: Confirm temporary doctor consent
+ * LOGIC: Send the appointment and patient-provided code; require granted=true, a category list
+ * and a valid expiry before reporting success. The backend validates the code and creates the grant.
  */
 export const verifyConsentAccess = async (
   patientId,

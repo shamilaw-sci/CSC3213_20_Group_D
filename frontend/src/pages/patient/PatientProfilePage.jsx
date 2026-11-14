@@ -1,19 +1,7 @@
 /**
  * @file    PatientProfilePage.jsx
- * @component PatientProfilePage
- * @desc    Displays and allows editing of the patient's profile.
- * Includes smart autocomplete for adding allergies, secure deletion,
- * profile photo upload (CARE4U-65), and a redesigned Ultra-Clean Light Mode header.
- * Avatar sized up to 96px for reliable visual identification.
- * Chronic conditions management added in CARE4U-79.
- * Vaccination Records added in CARE4U-148.
- * AI Vaccination Bulk Card Scanning added in CARE4U-154.
- * Smart Health Awareness Feed added in CARE4U-280 (Epic 8.13).
- * Privacy & Consent Controls added in CARE4U-284 (Epic 8.12).
- * Medical Devices & Implants management added for emergency readiness.
- * Important Medical Background management added for major past health events.
- * Family Medical History management added for clinically relevant family conditions.
- * Stage 4A review: profile/consent only; clinical list CRUD and AI remain separate partial scope.
+ * @module  Patient
+ * @desc    View and edit patient details, health information, vaccinations, and privacy settings.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -85,12 +73,11 @@ import Alert from '../../components/common/Alert';
 import Modal from '../../components/common/Modal'; 
 import HealthAwarenessFeed from '../../components/common/HealthAwarenessFeed';
 
+
+
 /**
- * Fetches the currently logged-in patient's real ID from the session,
- * replacing what used to be a hardcoded test patient ID.
- */
-/** Resolve the current patient profile through acknowledged /me; account IDs are never substituted. No inputs; returns patientId/loading. Its mount effect performs the credentialed read.
- * @returns {*} UI element, local transition or acknowledged async completion as described above.
+ * FEATURE: Identify the logged-in patient
+ * LOGIC: Read the patient profile ID from the confirmed login session before loading records.
  */
 const usePatientId = () => {
   const [patientId, setPatientId] = useState(null);
@@ -138,7 +125,7 @@ const usePatientId = () => {
   };
 };
 
-// ─── Sensitive Categories for Consent ──────────
+// Sensitive Categories for Consent
 const SENSITIVE_CATEGORIES = [
   'Mental Health',
   'Reproductive Health',
@@ -221,7 +208,7 @@ const FAMILY_RELATIONS = [
   }
 ];
 
-// ─── Photo upload constraints (mirrors backend middleware/upload.js) ──────────
+// Photo upload constraints (mirrors backend middleware/upload.js)
 const ALLOWED_PHOTO_TYPES = [
   'image/jpeg',
   'image/png',
@@ -231,7 +218,7 @@ const ALLOWED_PHOTO_TYPES = [
 const MAX_PHOTO_SIZE_BYTES =
   2 * 1024 * 1024;
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// Helpers
 const formatDate = (dateStr) => {
   if (!dateStr) return '—';
 
@@ -329,7 +316,7 @@ const getFamilyRelationLabel = (
   );
 };
 
-// ─── Severity Badge ───────────────────────────────────────────────────────────
+// Severity Badge
 const SEVERITY_STYLES = {
   priority: {
     bg: 'bg-destructive/10',
@@ -371,9 +358,9 @@ const SeverityBadge = ({
   );
 };
 
-// ─── Profile Field Component ──────────────────────────────────────────────────
-/** Render one read-only profile field. Props supply icon, label and value; missing values use the existing fallback. No API side effects.
- * @returns {*} UI element, local transition or acknowledged async completion as described above.
+// Profile Field Component
+/**
+ * Render one read-only profile field. Props supply icon, label and value; missing values use the existing fallback. No API side effects.
  */
 const ProfileField = ({
   icon: Icon,
@@ -411,9 +398,9 @@ const ProfileField = ({
   </div>
 );
 
-// ─── Premium Section Shell ───────────────────────────────────────────────────
-/** Render a themed section and optional Edit Mode action. Props supply heading, description, children, editing and action callback; it does not persist data.
- * @returns {*} UI element, local transition or acknowledged async completion as described above.
+// Section Shell
+/**
+ * Render a themed section and optional Edit Mode action. Props supply heading, description, children, editing and action callback; it does not persist data.
  */
 const SectionPanel = ({
   title,
@@ -464,9 +451,9 @@ const SectionPanel = ({
   </section>
 );
 
-// ─── Premium Summary Tile ────────────────────────────────────────────────────
-/** Render a profile statistic from label/value/helper/icon props; wrapping prevents narrow-screen overflow. No data access.
- * @returns {*} UI element, local transition or acknowledged async completion as described above.
+// Summary Tile
+/**
+ * Render a profile statistic from label/value/helper/icon props; wrapping prevents narrow-screen overflow. No data access.
  */
 const SummaryTile = ({
   label,
@@ -505,7 +492,7 @@ const SummaryTile = ({
   </div>
 );
 
-// ─── Banner Load Animations ─────────────────────────────
+// Banner Load Animations
 const BannerAnimationStyles = () => (
   <style>{`
     @keyframes cuAvatarPop {
@@ -550,9 +537,11 @@ const BannerAnimationStyles = () => (
   `}</style>
 );
 
-// ─── Main Page Component ──────────────────────────────────────────────────────
-/** Coordinate self-profile reads and profile/consent saves. Query keys use patientId; refs exclude duplicate writes. Clinical list CRUD/AI controls remain partial dependencies of this large screen.
- * @returns {*} UI element, local transition or acknowledged async completion as described above.
+// Main Page Component
+
+/**
+ * FEATURE: Patient Profile
+ * LOGIC: Load patient details and health lists so the user can view and manage them.
  */
 const PatientProfilePage = () => {
   const consentInFlight = useRef(false);
@@ -570,11 +559,11 @@ const PatientProfilePage = () => {
     setIsEditing
   ] = useState(false);
 
-  // ── Photo Upload State ──
+  // Photo Upload State
   const photoInputRef =
     useRef(null);
 
-  // ── Allergy UI State ──
+  // Allergy UI State
   const [
     isAddAllergyModalOpen,
     setIsAddAllergyModalOpen
@@ -590,7 +579,7 @@ const PatientProfilePage = () => {
     setAllergyToDelete
   ] = useState(null);
 
-  // ── Condition UI State ──
+  // Condition UI State
   const [
     isAddConditionModalOpen,
     setIsAddConditionModalOpen
@@ -606,7 +595,7 @@ const PatientProfilePage = () => {
     setConditionToDelete
   ] = useState(null);
 
-  // ── Medical Device UI State ──
+  // Medical Device UI State
   const [
     isAddDeviceModalOpen,
     setIsAddDeviceModalOpen
@@ -647,7 +636,7 @@ const PatientProfilePage = () => {
     setIsEmergencyRelevantInput
   ] = useState(true);
 
-  // ── Important Medical Background UI State ──
+  // Important Medical Background UI State
   const [
     isAddBackgroundModalOpen,
     setIsAddBackgroundModalOpen
@@ -689,7 +678,7 @@ const PatientProfilePage = () => {
   ] = useState(false);
 
 
-  // ── Family Medical History UI State ──
+  // Family Medical History UI State
   const [
     isAddFamilyHistoryModalOpen,
     setIsAddFamilyHistoryModalOpen
@@ -725,7 +714,7 @@ const PatientProfilePage = () => {
     setIsFamilyHistoryEmergencyRelevantInput
   ] = useState(false);
 
-  // ── Vaccination UI State ──
+  // Vaccination UI State
   const [
     isAddVaccinationModalOpen,
     setIsAddVaccinationModalOpen
@@ -744,7 +733,7 @@ const PatientProfilePage = () => {
   const scanVaccineInputRef =
     useRef(null);
 
-  // ── Autocomplete State (Allergies) ──
+  // Autocomplete State (Allergies)
   const [
     allergenInput,
     setAllergenInput
@@ -773,7 +762,7 @@ const PatientProfilePage = () => {
   const allergyDropdownRef =
     useRef(null);
 
-  // ── Dynamic Bulk Autocomplete State (Vaccinations) ──
+  // Dynamic Bulk Autocomplete State (Vaccinations)
   const [
     bulkVaccines,
     setBulkVaccines
@@ -797,7 +786,7 @@ const PatientProfilePage = () => {
     setVaccineSuggestions
   ] = useState([]);
 
-  // ── Add Condition Form State ──
+  // Add Condition Form State
   const [
     conditionInput,
     setConditionInput
@@ -948,7 +937,7 @@ const PatientProfilePage = () => {
     }
   };
 
-  // ── Queries ──
+  // Queries
   const {
     data: patient,
     isLoading,
@@ -1088,7 +1077,7 @@ const PatientProfilePage = () => {
       !!patient 
   });
 
-  // ── Form Setup ──
+  // Form Setup
   const {
     register,
     handleSubmit,
@@ -1098,7 +1087,13 @@ const PatientProfilePage = () => {
     }
   } = useForm();
 
-  // ── Mutations ──
+  // Mutations
+  /**
+   * FEATURE: Save profile changes
+   * LOGIC: The form blocks duplicate submissions with profileInFlight; settling releases the guard.
+   * Success replaces the cached profile and exits editing; failure keeps the form open.
+   * Health-list changes and privacy switches save independently of this form.
+   */
   const updateMutation =
     useMutation({
       onSettled: () => { profileInFlight.current = false; },
@@ -1663,6 +1658,11 @@ const PatientProfilePage = () => {
           ),
     });
 
+  /**
+   * FEATURE: Review AI vaccination-card results
+   * LOGIC: Convert one result or a result list into editable rows, replacing the current rows only when nonempty.
+   * Extraction does not save vaccinations; the patient reviews and submits them separately.
+   */
   const scanVaccinationMutation =
     useMutation({
       mutationFn:
@@ -1758,9 +1758,13 @@ const PatientProfilePage = () => {
           ),
     });
 
-  // ── Handlers ──
-  /** Compute the complete next lock list for one category and submit once. Confirmed query state changes only after success; read failures and overlapping saves deny changes.
- * @returns {*} UI element, local transition or acknowledged async completion as described above.
+  // Handlers
+
+/**
+ * FEATURE: Lock or unlock medical information
+ * LOGIC: Require Edit Mode and loaded consent settings; block a second write while one is running.
+ * Save the full category list separately from profile edits; failed writes keep the confirmed list.
+ * Record filtering and temporary doctor access are enforced by the backend.
  */
 const handleToggleConsent = (
     category
@@ -1793,8 +1797,10 @@ const handleToggleConsent = (
     );
   };
 
-  /** Populate the editable name/blood/contact fields from the last confirmed profile and enter Edit Mode. Cancelling profile edits does not reverse separately saved privacy settings.
- * @returns {*} UI element, local transition or acknowledged async completion as described above.
+
+/**
+ * FEATURE: Edit Profile
+ * LOGIC: Fill the form with current confirmed profile values before enabling editing.
  */
 const handleEditClick = () => {
     reset({
@@ -1824,6 +1830,10 @@ const handleEditClick = () => {
     () =>
       photoInputRef.current?.click();
 
+  /**
+   * FEATURE: Upload Profile Photo
+   * LOGIC: Accept JPEG, PNG or WEBP images up to 2 MB, then send the selected image.
+   */
   const handlePhotoFileChange = (
     e
   ) => {
@@ -1862,6 +1872,10 @@ const handleEditClick = () => {
     () =>
       scanVaccineInputRef.current?.click();
 
+  /**
+   * FEATURE: Scan Vaccination Card
+   * LOGIC: Check the selected image type and send it for extraction before the user reviews the results.
+   */
   const handleScanVaccineChange = (
     e
   ) => {
@@ -1887,6 +1901,10 @@ const handleEditClick = () => {
     );
   };
 
+  /**
+   * FEATURE: Add Allergy
+   * LOGIC: Require an allergen name and send its severity and optional notes.
+   */
   const submitAddAllergy = (
     e
   ) => {
@@ -1910,6 +1928,11 @@ const handleEditClick = () => {
     });
   };
 
+  /**
+   * FEATURE: Add Chronic Condition
+   * LOGIC: Require a condition name; send its date, notes and the patient-selected priority flag.
+   * The flag highlights the condition; this page does not calculate medical severity.
+   */
   const submitAddCondition = (
     e
   ) => {
@@ -1935,6 +1958,11 @@ const handleEditClick = () => {
     });
   };
 
+  /**
+   * FEATURE: Add a medical device or implant
+   * LOGIC: Require its name, then save optional type/date/notes and the emergency-relevance choice.
+   * Successful saves refresh the device list; failed requests show the server message.
+   */
   const submitAddMedicalDevice = (
     e
   ) => {
@@ -1962,6 +1990,10 @@ const handleEditClick = () => {
     });
   };
 
+  /**
+   * FEATURE: Record an important past medical event
+   * LOGIC: Require a title, then send the selected event type, optional date/notes and emergency flag.
+   */
   const submitAddHealthBackground = (
     e
   ) => {
@@ -1990,6 +2022,11 @@ const handleEditClick = () => {
   };
 
 
+  /**
+   * FEATURE: Add family medical history
+   * LOGIC: Require a condition and save the selected relationship, notes and emergency flag.
+   * No relative name is collected by this form.
+   */
   const submitAddFamilyHistory = (
     e
   ) => {
@@ -2015,6 +2052,11 @@ const handleEditClick = () => {
     });
   };
 
+  /**
+   * FEATURE: Save Vaccination Records
+   * LOGIC: Ignore rows with neither name nor date, then require both fields on every remaining row.
+   * Send all reviewed rows together; backend validation still decides whether they can be saved.
+   */
   const submitBulkVaccination = (
     e
   ) => {
@@ -2064,6 +2106,7 @@ const handleEditClick = () => {
     });
   };
 
+  // Remove actions open a confirmation first; successful requests refresh only the affected health list.
   const promptDeleteAllergy = (
     allergy
   ) => {
@@ -2178,7 +2221,7 @@ const handleEditClick = () => {
     }
   );
 
-  // ── Render States ──
+  // Render States
 if (
   patientIdLoading ||
   isLoading
@@ -2223,9 +2266,7 @@ if (isError) {
 
       <BannerAnimationStyles />
 
-      {/* =====================================================
-          PREMIUM PROFILE HERO
-      ====================================================== */}
+
       <section
         className="
           relative
@@ -2276,6 +2317,7 @@ if (isError) {
                 )}
 
                 {isEditing && (
+                  /* Change Profile Photo Button */
                   <button
                     type="button"
                     onClick={handlePhotoButtonClick}
@@ -2320,6 +2362,7 @@ if (isError) {
                   </span>
                 </div>
 
+                {/* Patient Profile Heading */}
                 <h1 className="text-2xl sm:text-3xl lg:text-[2rem] font-black tracking-tight text-white mt-3">
                   {patient?.full_name || 'Patient'}
                 </h1>
@@ -2346,6 +2389,7 @@ if (isError) {
 
                 <div className="mt-4 flex justify-center sm:justify-start">
                   {!isEditing ? (
+                    /* Edit Profile Button */
                     <button
                       type="button"
                       onClick={handleEditClick}
@@ -2390,6 +2434,7 @@ if (isError) {
                   <div className="flex items-center gap-4">
 
                     <div className="rounded-xl border border-slate-100 bg-white p-2 shrink-0">
+                      {/* Patient QR Identity Card */}
                       <QRCodeSVG
                         value={patient.qr_code_id}
                         size={92}
@@ -2432,18 +2477,14 @@ if (isError) {
 
       </section>
 
-      {/* =====================================================
-          HEALTH AWARENESS
-      ====================================================== */}
+
       {!isEditing && (
-        <HealthAwarenessFeed
+        /* Health Awareness Feed */ <HealthAwarenessFeed
           patientAllergies={allergies}
         />
       )}
 
-      {/* =====================================================
-          HEALTH SNAPSHOT
-      ====================================================== */}
+
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <SummaryTile
           label="Blood Group"
@@ -2482,9 +2523,8 @@ if (isError) {
         />
       </section>
 
-      {/* =====================================================
-          GLOBAL PROFILE FORM
-      ====================================================== */}
+
+      {/* Personal Information and Emergency Contact Form */}
       <form
         onSubmit={event => handleSubmit(
           data => { if (!profileInFlight.current) { profileInFlight.current = true; updateMutation.mutate(data); } }
@@ -2492,9 +2532,7 @@ if (isError) {
         className="space-y-6"
       >
 
-        {/* ===================================================
-            PERSONAL + EMERGENCY
-        ==================================================== */}
+
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
 
           <SectionPanel
@@ -2621,11 +2659,10 @@ if (isError) {
 
         </div>
 
-        {/* ===================================================
-            CONDITIONS + ALLERGIES
-        ==================================================== */}
+
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
 
+          {/* Chronic Conditions Card and Add Condition Button */}
           <SectionPanel
             title="Chronic Conditions"
             description="Long-term health conditions relevant to ongoing treatment and safety."
@@ -2683,6 +2720,7 @@ if (isError) {
 
           </SectionPanel>
 
+          {/* Known Allergies Card and Add Allergy Button */}
           <SectionPanel
             title="Known Allergies"
             description="Important allergy information used during medication and treatment decisions."
@@ -2739,9 +2777,8 @@ if (isError) {
 
         </div>
 
-        {/* ===================================================
-            MEDICAL DEVICES
-        ==================================================== */}
+
+        {/* Medical Devices and Implants Card and Add Device Button */}
         <SectionPanel
           title="Medical Devices & Implants"
           description="Implants and medical equipment that may affect routine or emergency care."
@@ -2821,9 +2858,8 @@ if (isError) {
 
         </SectionPanel>
 
-        {/* ===================================================
-            IMPORTANT MEDICAL BACKGROUND
-        ==================================================== */}
+
+        {/* Important Medical Background Card and Add Record Button */}
         <SectionPanel
           title="Important Medical Background"
           description="Major surgeries, procedures, transplants, hospitalizations, and serious past health events that remain clinically relevant."
@@ -2893,9 +2929,8 @@ if (isError) {
 
         </SectionPanel>
 
-        {/* ===================================================
-            FAMILY HISTORY
-        ==================================================== */}
+
+        {/* Family Medical History Card and Add History Button */}
         <SectionPanel
           title="Family Medical History"
           description="Clinically relevant conditions in close family members that may help doctors understand familial health risks."
@@ -2958,9 +2993,8 @@ if (isError) {
 
         </SectionPanel>
 
-        {/* ===================================================
-            VACCINATIONS
-        ==================================================== */}
+
+        {/* Vaccination Records Card and Add Vaccination Button */}
         <SectionPanel
           title="Vaccination Records"
           description="Your recorded immunisation history, including manually entered and AI-assisted card records."
@@ -3024,9 +3058,8 @@ if (isError) {
 
         </SectionPanel>
 
-        {/* ===================================================
-            PRIVACY & CONSENT
-        ==================================================== */}
+
+        {/* Privacy and Consent Category Switches */}
         <SectionPanel
           title="Privacy & Consent"
           description="Choose category locks for the record text filter. An assigned doctor needs a patient code to unlock matching records for 15 minutes. Matching is not automatic clinical classification."
@@ -3066,6 +3099,7 @@ if (isError) {
                       </div>
                     </div>
 
+                    {/* Privacy Lock or Unlock Button */}
                     <button
                       type="button"
                       onClick={() => handleToggleConsent(category)}
@@ -3086,9 +3120,7 @@ if (isError) {
 
         </SectionPanel>
 
-        {/* ===================================================
-            GLOBAL EDIT ACTIONS
-        ==================================================== */}
+
         {isEditing && (
           <div className="sticky bottom-4 z-30 rounded-2xl border border-border/80 bg-card/95 backdrop-blur-xl p-4 shadow-[0_16px_48px_rgba(15,23,42,0.16)]">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -3099,6 +3131,7 @@ if (isError) {
               </div>
 
               <div className="flex gap-2 sm:shrink-0">
+                {/* Cancel Profile Editing Button */}
                 <Button
                   type="button"
                   variant="secondary"
@@ -3109,6 +3142,7 @@ if (isError) {
                   Cancel
                 </Button>
 
+                {/* Save Changes Button */}
                 <Button
                   type="submit"
                   variant="primary"
@@ -3130,7 +3164,7 @@ if (isError) {
         <span>Your profile and clinical safety information are protected by Care4U access controls. Category locks use record text matching; they may not identify every sensitive record.</span>
       </div>
 
-      {/* ── Add Allergy Modal ── */}
+      {/* Add Allergy Modal */}
       {isAddAllergyModalOpen && (
 
         <Modal
@@ -3314,6 +3348,7 @@ if (isError) {
                 Cancel
               </Button>
 
+              {/* Save Allergy Button */}
               <Button
                 type="submit"
                 variant="primary"
@@ -3331,7 +3366,7 @@ if (isError) {
         </Modal>
       )}
 
-      {/* ── Add Condition Modal ── */}
+      {/* Add Condition Modal */}
       {isAddConditionModalOpen && (
 
         <Modal
@@ -3477,6 +3512,7 @@ if (isError) {
                 Cancel
               </Button>
 
+              {/* Save Condition Button */}
               <Button
                 type="submit"
                 variant="primary"
@@ -3494,7 +3530,7 @@ if (isError) {
         </Modal>
       )}
 
-      {/* ── Add Medical Device Modal ── */}
+      {/* Add Medical Device Modal */}
       {isAddDeviceModalOpen && (
 
         <Modal
@@ -3674,6 +3710,7 @@ if (isError) {
                 Cancel
               </Button>
 
+              {/* Save Medical Device Button */}
               <Button
                 type="submit"
                 variant="primary"
@@ -3691,7 +3728,7 @@ if (isError) {
         </Modal>
       )}
 
-      {/* ── Add Important Medical Background Modal ── */}
+      {/* Add Important Medical Background Modal */}
       {isAddBackgroundModalOpen && (
 
         <Modal
@@ -3890,6 +3927,7 @@ if (isError) {
                 Cancel
               </Button>
 
+              {/* Save Medical Background Button */}
               <Button
                 type="submit"
                 variant="primary"
@@ -3908,7 +3946,7 @@ if (isError) {
       )}
 
 
-      {/* ── Add Family Medical History Modal ── */}
+      {/* Add Family Medical History Modal */}
       {isAddFamilyHistoryModalOpen && (
 
         <Modal
@@ -4078,6 +4116,7 @@ if (isError) {
                 Cancel
               </Button>
 
+              {/* Save Family History Button */}
               <Button
                 type="submit"
                 variant="primary"
@@ -4095,7 +4134,7 @@ if (isError) {
         </Modal>
       )}
 
-      {/* ── Add Bulk Vaccination Modal ── */}
+      {/* Add Bulk Vaccination Modal */}
       {isAddVaccinationModalOpen && (
 
         <Modal
@@ -4112,7 +4151,7 @@ if (isError) {
         >
 
           <div className="flex flex-col h-full max-h-[80vh]">
-            
+
             <div className="mb-4 p-4 bg-primary/10 border border-primary/20 rounded-lg flex flex-col gap-2 shrink-0">
 
               <div className="flex items-center gap-2 text-primary font-semibold">
@@ -4131,6 +4170,7 @@ if (isError) {
                 Save time! Upload a photo of the CHDR/vaccination card to automatically extract multiple entries at once.
               </p>
 
+              {/* Scan Vaccination Card Button */}
               <Button
                 type="button"
                 variant="secondary"
@@ -4190,7 +4230,7 @@ if (isError) {
                     }
                     className="p-4 bg-secondary border border-border rounded-lg relative"
                   >
-                  
+
                     {bulkVaccines.length >
                       1 && (
 
@@ -4397,6 +4437,7 @@ if (isError) {
                 )
               )}
 
+              {/* Add Another Vaccination Row Button */}
               <Button
                 type="button"
                 variant="secondary"
@@ -4428,6 +4469,7 @@ if (isError) {
                 Cancel
               </Button>
 
+              {/* Save All Vaccination Records Button */}
               <Button
                 type="button"
                 onClick={
@@ -4448,7 +4490,7 @@ if (isError) {
         </Modal>
       )}
 
-      {/* ── Delete Confirmation Modals ── */}
+      {/* Delete Confirmation Modals */}
       {isDeleteModalOpen && (
 
         <Modal
@@ -4510,6 +4552,7 @@ if (isError) {
                 Cancel
               </Button>
 
+              {/* Confirm Remove Allergy Button */}
               <Button
                 type="button"
                 variant="primary"
@@ -4592,6 +4635,7 @@ if (isError) {
                 Cancel
               </Button>
 
+              {/* Confirm Remove Condition Button */}
               <Button
                 type="button"
                 variant="primary"
@@ -4682,6 +4726,7 @@ if (isError) {
                 Cancel
               </Button>
 
+              {/* Confirm Remove Medical Device Button */}
               <Button
                 type="button"
                 variant="primary"
@@ -4772,6 +4817,7 @@ if (isError) {
                 Cancel
               </Button>
 
+              {/* Confirm Remove Medical Background Button */}
               <Button
                 type="button"
                 variant="primary"
@@ -4863,6 +4909,7 @@ if (isError) {
                 Cancel
               </Button>
 
+              {/* Confirm Remove Family History Button */}
               <Button
                 type="button"
                 variant="primary"
@@ -4947,6 +4994,7 @@ if (isError) {
                 Cancel
               </Button>
 
+              {/* Confirm Remove Vaccination Button */}
               <Button
                 type="button"
                 variant="primary"

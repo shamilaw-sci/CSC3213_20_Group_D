@@ -1,12 +1,16 @@
 /**
  * @file    doctor.service.js
- * @module  Services
+ * @module  Doctor / Patient
  * @desc    Frontend service for doctor-related API calls.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
 import api from './api';
 
+/**
+ * FEATURE: Search doctor specialty and hospital
+ * LOGIC: Encode nonempty filters as URL parameters and return the server result; no client-side filtering runs here.
+ */
 export const searchDoctors = async (
   specialty = '',
   hospital = ''
@@ -20,7 +24,7 @@ export const searchDoctors = async (
   if (hospital) {
     params.append('hospital', hospital);
   }
-  
+
   const response = await api.get(
     `/api/doctors/search?${params.toString()}`
   );
@@ -36,6 +40,7 @@ export const getDoctorProfile = async (id) => {
   return response.data.data;
 };
 
+// Available times are a snapshot; the booking endpoint must recheck the chosen slot.
 export const getAvailableSlots = async (id) => {
   const response = await api.get(
     `/api/doctors/${id}/slots`
@@ -46,9 +51,6 @@ export const getAvailableSlots = async (id) => {
 
 /**
  * Uploads a doctor's profile photo.
- * @param {string} id - Doctor profile UUID
- * @param {File} file - Selected image file
- * @returns {Promise<Object>} Updated doctor profile
  */
 export const uploadDoctorPhoto = async (id, file) => {
   const formData = new FormData();

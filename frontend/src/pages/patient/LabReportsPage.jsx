@@ -1,10 +1,8 @@
 /**
- * @file      LabReportsPage.jsx
- * @component LabReportsPage
- * @desc      Premium patient laboratory-report workspace.
- *            Supports image previews, PDF reports,
- *            unread tracking, and diagnostic history.
- * @author    Wasana Karunanayaka (S/21/081)
+ * @file    LabReportsPage.jsx
+ * @module  Patient
+ * @desc    List lab reports, preview images, open PDFs, and mark reports read.
+ * @author  Wasana Karunanayaka (S/21/081)
  */
 
 import {
@@ -44,15 +42,10 @@ import PageHeader from '../../components/common/PageHeader';
 import Spinner from '../../components/common/Spinner';
 import Alert from '../../components/common/Alert';
 
-/* =========================================================
-   HELPERS
-========================================================= */
+
 
 /**
  * Formats a report timestamp.
- *
- * @param {string} dateStr
- * @returns {string}
  */
 const formatDate = (
   dateStr
@@ -90,9 +83,6 @@ const formatDate = (
 /**
  * Removes query parameters and fragments before
  * checking an uploaded report's file extension.
- *
- * @param {string} url
- * @returns {string}
  */
 const cleanFileUrl = (
   url
@@ -111,9 +101,6 @@ const cleanFileUrl = (
 
 /**
  * Checks whether an uploaded laboratory report is an image.
- *
- * @param {string} url
- * @returns {boolean}
  */
 const isImageReport = (
   url
@@ -139,9 +126,6 @@ const isImageReport = (
 
 /**
  * Checks whether an uploaded laboratory report is a PDF.
- *
- * @param {string} url
- * @returns {boolean}
  */
 const isPdfReport = (
   url
@@ -208,9 +192,7 @@ const getFileMeta = (
   };
 };
 
-/* =========================================================
-   SUMMARY CARD
-========================================================= */
+
 
 const SummaryCard = ({
   icon: Icon,
@@ -305,9 +287,7 @@ const SummaryCard = ({
   );
 };
 
-/* =========================================================
-   READ STATUS
-========================================================= */
+
 
 const ReadBadge = ({
   isRead,
@@ -381,9 +361,7 @@ const ReadBadge = ({
   );
 };
 
-/* =========================================================
-   REPORT CARD
-========================================================= */
+
 
 const LabReportCard = ({
   report,
@@ -411,13 +389,12 @@ const LabReportCard = ({
       "
     >
 
-      {/* ===================================================
-          IMAGE PREVIEW
-      ==================================================== */}
+
 
       {fileMeta.type ===
       'image' ? (
 
+        /* Open Lab Report Image Button */
         <button
           type="button"
           onClick={() =>
@@ -547,9 +524,7 @@ const LabReportCard = ({
 
       )}
 
-      {/* ===================================================
-          CONTENT
-      ==================================================== */}
+
 
       <div className="p-5">
 
@@ -630,9 +605,7 @@ const LabReportCard = ({
 
         </div>
 
-        {/* =================================================
-            META DETAILS
-        ================================================== */}
+
 
         <div
           className="
@@ -796,10 +769,9 @@ const LabReportCard = ({
 
         </div>
 
-        {/* =================================================
-            ACTION
-        ================================================== */}
 
+
+        {/* Open Lab Report Button */}
         <button
           type="button"
           disabled={
@@ -888,9 +860,7 @@ const LabReportCard = ({
   );
 };
 
-/* =========================================================
-   IMAGE VIEWER
-========================================================= */
+
 
 const ImageReportViewer = ({
   report,
@@ -934,9 +904,7 @@ const ImageReportViewer = ({
         "
       >
 
-        {/* =================================================
-            TOP BAR
-        ================================================== */}
+
 
         <div
           className="
@@ -1013,6 +981,7 @@ const ImageReportViewer = ({
 
           </div>
 
+          {/* Close Report Preview Button */}
           <button
             type="button"
             onClick={
@@ -1041,9 +1010,7 @@ const ImageReportViewer = ({
 
         </div>
 
-        {/* =================================================
-            REPORT IMAGE
-        ================================================== */}
+
 
         <div
           className="
@@ -1085,9 +1052,7 @@ const ImageReportViewer = ({
 
         </div>
 
-        {/* =================================================
-            INFO
-        ================================================== */}
+
 
         <div
           className="
@@ -1121,6 +1086,7 @@ const ImageReportViewer = ({
               : ''}
           </div>
 
+          {/* Open Original Report Link */}
           <a
             href={
               report.report_url
@@ -1161,10 +1127,12 @@ const ImageReportViewer = ({
   );
 };
 
-/* =========================================================
-   MAIN PAGE
-========================================================= */
 
+
+/**
+ * FEATURE: Laboratory reports
+ * LOGIC: Load the patient reports and separate unread completed results.
+ */
 const LabReportsPage = () => {
   const user =
     useAuthStore(
@@ -1208,10 +1176,13 @@ const LabReportsPage = () => {
       !!patientId,
   });
 
-  /* =======================================================
-     MARK AS READ
-  ======================================================= */
 
+
+  /**
+   * FEATURE: Mark report as read
+   * LOGIC: Skip already-read reports; after a successful write refresh the shared report query and navbar badge.
+   * Failure is logged without closing the report or changing its cached unread flag.
+   */
   const markAsRead =
     async (
       report
@@ -1249,10 +1220,14 @@ const LabReportsPage = () => {
       }
     };
 
-  /* =======================================================
-     OPEN REPORT
-  ======================================================= */
 
+
+  /**
+   * FEATURE: View Lab Report
+   * LOGIC: Ignore missing URLs; detect images by extension after removing URL query/fragment text.
+   * Show images here, or attempt a new tab for other files, then request the read update.
+   * A blocked popup is not detected, so a read request can still follow an unsuccessful tab opening.
+   */
   const handleViewReport =
     async (
       report
@@ -1296,9 +1271,7 @@ const LabReportsPage = () => {
       );
     };
 
-  /* =======================================================
-     DERIVED DATA
-  ======================================================= */
+
 
   const sortedReports =
     useMemo(
@@ -1364,9 +1337,7 @@ const LabReportsPage = () => {
       ]
     );
 
-  /* =======================================================
-     LOADING
-  ======================================================= */
+
 
   if (
     isLoading
@@ -1430,9 +1401,7 @@ const LabReportsPage = () => {
     );
   }
 
-  /* =======================================================
-     ERROR
-  ======================================================= */
+
 
   if (
     isError
@@ -1467,13 +1436,11 @@ const LabReportsPage = () => {
   return (
     <div className="space-y-7">
 
-      {/* ===================================================
-          IMAGE VIEWER
-      ==================================================== */}
+
 
       {imageReport && (
 
-        <ImageReportViewer
+        /* Lab Report Image Preview Dialog */ <ImageReportViewer
           report={
             imageReport
           }
@@ -1486,10 +1453,9 @@ const LabReportsPage = () => {
 
       )}
 
-      {/* ===================================================
-          HEADER
-      ==================================================== */}
 
+
+      {/* Laboratory Reports Heading */}
       <PageHeader
         eyebrow="Patient Portal"
         icon={
@@ -1597,9 +1563,7 @@ const LabReportsPage = () => {
         }
       />
 
-      {/* ===================================================
-          SUMMARY
-      ==================================================== */}
+
 
       <section
         className="
@@ -1675,9 +1639,7 @@ const LabReportsPage = () => {
 
       </section>
 
-      {/* ===================================================
-          DIAGNOSTIC HISTORY
-      ==================================================== */}
+
 
       <section
         className="
@@ -1897,9 +1859,7 @@ const LabReportsPage = () => {
 
       </section>
 
-      {/* ===================================================
-          SECURITY FOOTER
-      ==================================================== */}
+
 
       <div
         className="

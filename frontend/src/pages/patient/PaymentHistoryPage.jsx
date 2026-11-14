@@ -1,8 +1,8 @@
 /**
- * @component PaymentHistoryPage
- * @desc      Shows patient payment history with status badges
- *            and a simple receipt view per transaction.
- * @author    Pamudika Abayarathna (S/21/001)
+ * @file    PaymentHistoryPage.jsx
+ * @module  Patient / Payment
+ * @desc    Displays sandbox payment history, status badges and transaction receipts.
+ * @author  Pamudika Abayarathna (S/21/001)
  */
 
 import { useState } from 'react';
@@ -47,6 +47,7 @@ const formatDate = (
   );
 };
 
+// Success, pending and failed badges use the returned payment status; this page does not settle payments.
 const getPaymentBadgeProps = (
   status
 ) => {
@@ -90,7 +91,7 @@ const ReceiptModal = ({
   }
 
   return (
-    <Modal
+    /* Payment Receipt Modal */ <Modal
       isOpen={
         !!payment
       }
@@ -215,6 +216,7 @@ const ReceiptModal = ({
       </div>
 
       <div className="mt-7">
+        {/* Close Receipt Button */}
         <Button
           variant="primary"
           className="w-full"
@@ -230,6 +232,12 @@ const ReceiptModal = ({
   );
 };
 
+/**
+ * FEATURE: Payment history and receipts
+ * LOGIC: Fetch the session patient’s transactions and open the selected returned payment in a receipt.
+ * Receipt details and amounts come from that payment; the page makes no charge request.
+ * Loading, failed requests and an empty history have separate displays.
+ */
 const PaymentHistoryPage = () => {
   const user =
     useAuthStore(
@@ -317,6 +325,7 @@ const PaymentHistoryPage = () => {
         }
       />
 
+      {/* Payment History Heading and Sandbox Notice */}
       <PageHeader
         eyebrow="Patient Portal"
         icon={CreditCard}
@@ -351,6 +360,7 @@ const PaymentHistoryPage = () => {
         }
       />
 
+      {/* Payment Transactions Card */}
       <Card title="Transactions">
 
         {!data ||
@@ -390,7 +400,7 @@ const PaymentHistoryPage = () => {
                 payment
               ) => (
 
-                <button
+                /* View Receipt Button */ <button
                   type="button"
                   key={
                     payment.id

@@ -1,11 +1,8 @@
 /**
- * @file      PrescriptionsPage.jsx
- * @component PrescriptionsPage
- * @desc      Premium patient prescription workspace.
- *            Displays prescription status, medicines,
- *            dispensing progress, expiry information,
- *            and pharmacy QR codes.
- * @author    Wasana Karunanayaka (S/21/081)
+ * @file    PrescriptionsPage.jsx
+ * @module  Patient
+ * @desc    Show prescriptions, dispensing status, medicine details, and pharmacy QR codes.
+ * @author  Wasana Karunanayaka (S/21/081)
  */
 
 import {
@@ -45,9 +42,7 @@ import PageHeader from '../../components/common/PageHeader';
 import Spinner from '../../components/common/Spinner';
 import Alert from '../../components/common/Alert';
 
-/* =========================================================
-   STATUS CONFIGURATION
-========================================================= */
+
 
 const STATUS_CONFIG = {
   active: {
@@ -105,9 +100,7 @@ const FILTERS = [
   },
 ];
 
-/* =========================================================
-   HELPERS
-========================================================= */
+
 
 /**
  * Normalizes prescription status values.
@@ -158,7 +151,10 @@ const isExpired = (
 };
 
 /**
- * Resolves the final patient-facing status.
+ * FEATURE: Prescription expiry and QR eligibility
+ * LOGIC: A valid expiry before the browser time overrides the saved status as expired.
+ * Missing/invalid dates fall back to the normalized status; only active or partially filled
+ * prescriptions with a QR reference offer the QR button. The backend must verify dispensing.
  */
 const resolveStatus = (
   status,
@@ -240,7 +236,9 @@ const formatDate = (
 };
 
 /**
- * Calculates dispensing percentage.
+ * FEATURE: Partial dispensing progress
+ * LOGIC: Divide dispensed quantity by prescribed quantity and limit the bar to 0–100 percent.
+ * Nonpositive prescribed quantities show zero; this display does not authorize a dispense.
  */
 const getDispensingProgress = (
   item
@@ -276,9 +274,7 @@ const getDispensingProgress = (
   );
 };
 
-/* =========================================================
-   SUMMARY CARD
-========================================================= */
+
 
 const SummaryCard = ({
   icon: Icon,
@@ -373,9 +369,7 @@ const SummaryCard = ({
   );
 };
 
-/* =========================================================
-   STATUS BADGE
-========================================================= */
+
 
 const StatusBadge = ({
   status,
@@ -423,9 +417,7 @@ const StatusBadge = ({
   );
 };
 
-/* =========================================================
-   MEDICINE CARD
-========================================================= */
+
 
 const MedicineCard = ({
   item,
@@ -564,9 +556,7 @@ const MedicineCard = ({
 
       </div>
 
-      {/* =================================================
-          SPECIAL NOTES
-      ================================================== */}
+
 
       {item.special_notes && (
 
@@ -607,9 +597,7 @@ const MedicineCard = ({
 
       )}
 
-      {/* =================================================
-          DISPENSING PROGRESS
-      ================================================== */}
+
 
       <div className="mt-4">
 
@@ -712,9 +700,7 @@ const MedicineCard = ({
   );
 };
 
-/* =========================================================
-   QR MODAL
-========================================================= */
+
 
 const PharmacyQRModal = ({
   prescription,
@@ -759,9 +745,7 @@ const PharmacyQRModal = ({
         "
       >
 
-        {/* =================================================
-            MODAL HEADER
-        ================================================== */}
+
 
         <div
           className="
@@ -831,6 +815,7 @@ const PharmacyQRModal = ({
 
           </div>
 
+          {/* Close Prescription QR Button */}
           <button
             type="button"
             onClick={
@@ -858,9 +843,7 @@ const PharmacyQRModal = ({
 
         </div>
 
-        {/* =================================================
-            QR CONTENT
-        ================================================== */}
+
 
         <div
           className="
@@ -934,6 +917,7 @@ const PharmacyQRModal = ({
               "
             >
 
+              {/* Prescription QR Code */}
               <QRCodeSVG
                 value={
                   qrValue
@@ -1026,9 +1010,7 @@ const PharmacyQRModal = ({
   );
 };
 
-/* =========================================================
-   PRESCRIPTION CARD
-========================================================= */
+
 
 const PrescriptionCard = ({
   prescription,
@@ -1077,9 +1059,7 @@ const PrescriptionCard = ({
       "
     >
 
-      {/* ===================================================
-          HEADER
-      ==================================================== */}
+
 
       <div
         className="
@@ -1183,9 +1163,7 @@ const PrescriptionCard = ({
 
       </div>
 
-      {/* ===================================================
-          DATE PANEL
-      ==================================================== */}
+
 
       <div
         className="
@@ -1349,9 +1327,7 @@ const PrescriptionCard = ({
 
       </div>
 
-      {/* ===================================================
-          DOCTOR NOTES
-      ==================================================== */}
+
 
       {prescription.notes && (
 
@@ -1418,9 +1394,7 @@ const PrescriptionCard = ({
 
       )}
 
-      {/* ===================================================
-          MEDICINES
-      ==================================================== */}
+
 
       <div className="mt-5">
 
@@ -1526,9 +1500,7 @@ const PrescriptionCard = ({
 
       </div>
 
-      {/* ===================================================
-          QR ACTION
-      ==================================================== */}
+
 
       <div
         className="
@@ -1541,6 +1513,7 @@ const PrescriptionCard = ({
 
         {qrAvailable ? (
 
+          /* Show Prescription QR Button */
           <button
             type="button"
             onClick={() =>
@@ -1658,10 +1631,12 @@ const PrescriptionCard = ({
   );
 };
 
-/* =========================================================
-   MAIN PAGE
-========================================================= */
 
+
+/**
+ * FEATURE: My Prescriptions
+ * LOGIC: Load prescriptions, group by current status, and show medicine details and QR codes.
+ */
 const PrescriptionsPage = () => {
   const user =
     useAuthStore(
@@ -1709,9 +1684,7 @@ const PrescriptionsPage = () => {
       !!patientId,
   });
 
-  /* =======================================================
-     DERIVED PRESCRIPTION DATA
-  ======================================================= */
+
 
   const sortedPrescriptions =
     useMemo(
@@ -1834,9 +1807,7 @@ const PrescriptionsPage = () => {
       ]
     );
 
-  /* =======================================================
-     LOADING
-  ======================================================= */
+
 
   if (
     isLoading
@@ -1900,9 +1871,7 @@ const PrescriptionsPage = () => {
     );
   }
 
-  /* =======================================================
-     ERROR
-  ======================================================= */
+
 
   if (
     isError
@@ -1937,13 +1906,11 @@ const PrescriptionsPage = () => {
   return (
     <div className="space-y-7">
 
-      {/* ===================================================
-          QR MODAL
-      ==================================================== */}
+
 
       {qrPrescription && (
 
-        <PharmacyQRModal
+        /* Pharmacy QR Modal */ <PharmacyQRModal
           prescription={
             qrPrescription
           }
@@ -1956,10 +1923,9 @@ const PrescriptionsPage = () => {
 
       )}
 
-      {/* ===================================================
-          HEADER
-      ==================================================== */}
 
+
+      {/* My Prescriptions Heading */}
       <PageHeader
         eyebrow="Patient Portal"
         icon={
@@ -2030,9 +1996,7 @@ const PrescriptionsPage = () => {
         }
       />
 
-      {/* ===================================================
-          SUMMARY
-      ==================================================== */}
+
 
       <section
         className="
@@ -2084,9 +2048,7 @@ const PrescriptionsPage = () => {
 
       </section>
 
-      {/* ===================================================
-          PRESCRIPTION WORKSPACE
-      ==================================================== */}
+
 
       <section
         className="
@@ -2099,9 +2061,7 @@ const PrescriptionsPage = () => {
         "
       >
 
-        {/* =================================================
-            TOOLBAR
-        ================================================== */}
+
 
         <div
           className="
@@ -2179,6 +2139,7 @@ const PrescriptionsPage = () => {
                   filter.key;
 
                 return (
+                  /* Prescription Status Filter Button */
                   <button
                     key={
                       filter.key
@@ -2214,9 +2175,7 @@ const PrescriptionsPage = () => {
 
         </div>
 
-        {/* =================================================
-            CONTENT
-        ================================================== */}
+
 
         <div
           className="
@@ -2292,7 +2251,7 @@ const PrescriptionsPage = () => {
               {prescriptions.length >
                 0 && (
 
-                <button
+                /* View All Prescriptions Button */ <button
                   type="button"
                   onClick={() =>
                     setSelectedFilter(
@@ -2358,9 +2317,7 @@ const PrescriptionsPage = () => {
 
       </section>
 
-      {/* ===================================================
-          SECURITY
-      ==================================================== */}
+
 
       <div
         className="

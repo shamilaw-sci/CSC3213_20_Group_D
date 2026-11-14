@@ -21,18 +21,15 @@ export const getHealthContent = async () => {
 };
 
 /**
- * Smart filtering logic: Sorts health articles so that ones relevant
- * to the patient's specific allergies/conditions appear at the top.
- * Automatically removes any duplicate articles from the database.
- * 
- * @param {Array} articles - List of all published articles
- * @param {Array} patientAllergies - List of patient's allergies
- * @returns {Array} Sorted and deduplicated articles
+ * FEATURE: Select relevant awareness articles
+ * LOGIC: Keep the last article for each exact title in memory; do not delete database content.
+ * Rank articles containing any supplied allergy name in their title/category/body before other articles.
+ * With no allergies, return the unique articles in their existing order; conditions are not used.
  */
 export const getPersonalizedFeed = (articles, patientAllergies = []) => {
   if (!articles || articles.length === 0) return [];
 
-  // Make the UI bulletproof: Remove duplicates based on the article title
+  // Map replaces an earlier article with the same exact title.
   const uniqueArticles = Array.from(new Map(articles.map(item => [item.title, item])).values());
 
   if (!patientAllergies || patientAllergies.length === 0) return uniqueArticles;

@@ -1,9 +1,8 @@
 /**
- * @component PatientLayout
- * @desc      Layout wrapper for all patient portal pages.
- *            Applies the Patient module theme, renders PatientNavbar,
- *            and displays the selected patient page.
- * @author    Wasana Karunanayaka (S/21/081)
+ * @file    PatientLayout.jsx
+ * @module  Patient
+ * @desc    Wraps patient pages with their shared layout and navigation.
+ * @author  Wasana Karunanayaka (S/21/081)
  */
 
 import {
@@ -12,6 +11,10 @@ import {
 
 import PatientNavbar from './PatientNavbar';
 
+/**
+ * FEATURE: Shared patient layout
+ * LOGIC: Show the patient navigation and the selected page inside the same layout.
+ */
 const PatientLayout = () => {
   return (
     <div
@@ -19,8 +22,10 @@ const PatientLayout = () => {
       className="min-h-screen bg-secondary/30"
     >
 
+      {/* Patient Portal Navigation */}
       <PatientNavbar />
 
+      {/* Patient Page Content and Spacing */}
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-6">
         <Outlet />
       </main>

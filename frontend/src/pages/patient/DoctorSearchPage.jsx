@@ -1,8 +1,7 @@
 /**
  * @file    DoctorSearchPage.jsx
  * @module  Patient
- * @desc    Patient-facing page to search and filter doctors
- *          by specialty or hospital.
+ * @desc    Search doctors by specialty or hospital and open appointment booking.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -41,15 +40,10 @@ import Button from '../../components/common/Button';
 import Alert from '../../components/common/Alert';
 import Spinner from '../../components/common/Spinner';
 
-/* =========================================================
-   HELPERS
-========================================================= */
+
 
 /**
  * Returns doctor initials for the photo fallback.
- *
- * @param {string} name
- * @returns {string}
  */
 const getInitials = (
   name
@@ -73,9 +67,6 @@ const getInitials = (
 
 /**
  * Returns readable doctor experience text.
- *
- * @param {number|string} value
- * @returns {string}
  */
 const formatExperience = (
   value
@@ -98,9 +89,7 @@ const formatExperience = (
   }`;
 };
 
-/* =========================================================
-   DOCTOR PHOTO
-========================================================= */
+
 
 /**
  * @component DoctorPhoto
@@ -217,13 +206,11 @@ const DoctorPhoto = ({
   );
 };
 
-/* =========================================================
-   DOCTOR CARD
-========================================================= */
+
 
 /**
  * @component DoctorCard
- * @desc      Premium doctor card with large circular portrait.
+ * @desc      doctor card with large circular portrait.
  */
 const DoctorCard = ({
   doctor,
@@ -249,9 +236,7 @@ const DoctorCard = ({
       "
     >
 
-      {/* ===================================================
-          COLORED PROFILE HEADER
-      ==================================================== */}
+
 
       <div
         className="
@@ -332,9 +317,7 @@ const DoctorCard = ({
 
       </div>
 
-      {/* ===================================================
-          PROFILE CONTENT
-      ==================================================== */}
+
 
       <div
         className="
@@ -367,9 +350,7 @@ const DoctorCard = ({
 
         </div>
 
-        {/* =================================================
-            IDENTITY
-        ================================================== */}
+
 
         <div className="text-center">
 
@@ -443,9 +424,7 @@ const DoctorCard = ({
 
         </div>
 
-        {/* =================================================
-            HOSPITAL
-        ================================================== */}
+
 
         <div
           className="
@@ -522,9 +501,7 @@ const DoctorCard = ({
 
         </div>
 
-        {/* =================================================
-            DETAILS
-        ================================================== */}
+
 
         <div
           className="
@@ -730,9 +707,7 @@ const DoctorCard = ({
 
         <div className="flex-1" />
 
-        {/* =================================================
-            BOOKING
-        ================================================== */}
+
 
         <div
           className="
@@ -773,6 +748,7 @@ const DoctorCard = ({
 
           </div>
 
+          {/* Book Appointment Button */}
           <Button
             variant="primary"
             icon={
@@ -799,10 +775,12 @@ const DoctorCard = ({
   );
 };
 
-/* =========================================================
-   MAIN PAGE
-========================================================= */
 
+
+/**
+ * FEATURE: Find a Doctor
+ * LOGIC: Load doctors using the chosen specialty and hospital filters.
+ */
 export default function DoctorSearchPage() {
   const navigate =
     useNavigate();
@@ -845,8 +823,11 @@ export default function DoctorSearchPage() {
       ),
   });
 
+
   /**
-   * Applies doctor search filters.
+   * FEATURE: Search Doctors
+   * LOGIC: Trim and apply both filters only on form submission; typing alone leaves the current query unchanged.
+   * The query key separates each filter pair, and API failures appear above the results.
    */
   const handleSearch =
     event => {
@@ -861,8 +842,10 @@ export default function DoctorSearchPage() {
       });
     };
 
+
   /**
-   * Clears all doctor search filters.
+   * FEATURE: Clear Search
+   * LOGIC: Reset typed and applied filters; the unfiltered query can reuse cached results.
    */
   const clearSearch =
     () => {
@@ -884,6 +867,7 @@ export default function DoctorSearchPage() {
   return (
     <div className="space-y-7">
 
+      {/* Find a Doctor Heading */}
       <PageHeader
         eyebrow="Patient Portal"
         icon={
@@ -956,12 +940,11 @@ export default function DoctorSearchPage() {
         }
       />
 
-      {/* ===================================================
-          SEARCH
-      ==================================================== */}
+
 
       <Card title="Search Doctors">
 
+        {/* Search Doctors Form */}
         <form
           onSubmit={
             handleSearch
@@ -1196,6 +1179,7 @@ export default function DoctorSearchPage() {
 
             {hasActiveFilters && (
 
+              /* Clear Search Button */
               <Button
                 type="button"
                 variant="secondary"
@@ -1209,6 +1193,7 @@ export default function DoctorSearchPage() {
 
             )}
 
+            {/* Search Doctors Button */}
             <Button
               type="submit"
               icon={
@@ -1225,9 +1210,7 @@ export default function DoctorSearchPage() {
 
       </Card>
 
-      {/* ===================================================
-          RESULTS
-      ==================================================== */}
+
 
       <section>
 
@@ -1444,7 +1427,7 @@ export default function DoctorSearchPage() {
             {doctors.map(
               doctor => (
 
-                <DoctorCard
+                /* Doctor Result Card and Booking Navigation */ <DoctorCard
                   key={
                     doctor.id
                   }
