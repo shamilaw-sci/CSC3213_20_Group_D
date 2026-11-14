@@ -2,8 +2,9 @@
  * @file auth.css
  * @module Authentication UI
  * @desc Auth-only contrast, focus, wrapping and minimum control sizes. Portal themes stay separate.
- * @author Codex Review Assistant (Stage 3A)
+ * @author Original author unverified
  */
+/* Public login and registration pages: shared colors and focus styling. */
 .auth-page {
   --primary: 176 82% 24%;
   --ring: 176 82% 24%;
@@ -18,6 +19,7 @@
 .auth-page [role='alert'], .auth-page [role='status'], .auth-controls [role='alert'], .auth-controls [role='status'] { overflow-wrap: anywhere; }
 @media (max-width: 480px) { .auth-page input, .auth-controls input:not([type='checkbox']), .auth-controls textarea { font-size: 16px; } }
 
+/* Auth controls used in other pages: keep submit buttons and links consistent. */
 .auth-controls { --ring: var(--brand-deep); --destructive: 4 76% 36%; --muted-foreground: 215 20% 36%; }
 .auth-controls button[type='submit'] { background-color: hsl(var(--brand-deep)); color: hsl(var(--brand-deep-foreground)); }
 .auth-controls .text-primary, .auth-controls a { color: hsl(var(--brand-deep)); }

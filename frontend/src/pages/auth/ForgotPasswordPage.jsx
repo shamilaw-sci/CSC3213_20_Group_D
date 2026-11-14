@@ -12,16 +12,16 @@ import Alert from '../../components/common/Alert';
 import AuthLayout from '../../components/auth/AuthLayout';
 import { forgotPassword, authErrorMessage } from '../../services/auth.service';
 
-/** @component ForgotPasswordPage @returns {JSX.Element} Form or generic acknowledged-request feedback. */
+/** Password recovery screen: ask for an email without revealing whether an account exists. */
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const inFlight = useRef(false);
-  /** @param {Object} event Input event. @returns {void} Clear outdated request feedback. */
+  /** Update the email field and clear the earlier error. */
   const handleChange = event => { setEmail(event.target.value); setError(''); };
-  /** @param {Object} event Form event. @returns {Promise<void>} Request once; only an acknowledged envelope shows success. */
+  /** Request one reset email; show a neutral confirmation after the backend acknowledges it. */
   const handleSubmit = async event => {
     event.preventDefault();
     if (inFlight.current) return;
@@ -42,6 +42,7 @@ const ForgotPasswordPage = () => {
           <Input label="Email address" name="email" type="email" autoComplete="email" value={email}
             onChange={handleChange} error={error === 'Email is required' ? error : ''} placeholder="you@example.com" disabled={loading} required />
           {error && error !== 'Email is required' && <Alert type="error" message={error} />}
+          {/* Request reset link button — sends the recovery request */}
           <Button type="submit" size="lg" loading={loading} className="w-full mt-2">{loading ? 'Requesting...' : 'Request reset link'}</Button>
         </form>
       )}

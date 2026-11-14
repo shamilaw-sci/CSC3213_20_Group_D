@@ -22,7 +22,7 @@ const ROLE_OPTIONS = [
   { value: 'hospital_staff', label: 'Hospital Staff' },
 ];
 
-/** @component RegisterPage @returns {JSX.Element} Two forms with role-specific required details; server validates independently. */
+/** Two-step registration: collect account details, then the details required for the chosen role. */
 const RegisterPage = () => {
   const inFlight = useRef(false);
   const formRef = useRef(null);
@@ -61,17 +61,17 @@ const RegisterPage = () => {
   const [loading, setLoading]     = useState(false);
   const [serverError, setServerError] = useState('');
 
-  /** Focus the first account/profile field after a step transition; cleanup is unnecessary (no timer). */
+  // Focus the first field when moving between registration steps.
   useEffect(() => { formRef.current?.querySelector('input')?.focus(); }, [step]);
 
-  /** @param {Object} e Input event. @returns {void} Update field and clear stale feedback. */
+  /** Update the selected field without discarding the other registration details. */
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setErrors({ ...errors, [e.target.name]: '' });
     setServerError('');
   };
 
-  /** @returns {Object} Required credentials/confirmation and new-password length errors. */
+  /** Account details: require email and phone, plus a password of at least eight matching characters. */
   const validateStep1 = () => {
     const newErrors = {};
 
@@ -112,7 +112,7 @@ const RegisterPage = () => {
     return newErrors;
   };
 
-  /** @returns {Object} Required profile fields for only the selected role; no invented credential policy. */
+  /** Check only the fields required for the chosen role (patient, doctor, pharmacy, lab or hospital). */
   const validateStep2 = () => {
     const newErrors = {};
 
@@ -220,7 +220,7 @@ const RegisterPage = () => {
     return newErrors;
   };
 
-  /** @param {Object} event Step-one form event. @returns {void} Advance only after account validation. */
+  /** Continue to the second step only after the account fields are valid. */
   const handleNext = event => {
     event.preventDefault();
     const validationErrors = validateStep1();
@@ -237,7 +237,7 @@ const RegisterPage = () => {
     setStep(2);
   };
 
-  /** @param {Object} event Profile form event. @returns {Promise<void>} Build selected role payload and request pending verification once. */
+  /** Send role-specific details once; after a successful registration request, open email verification. */
   const handleSubmit = async event => {
     event.preventDefault();
     if (inFlight.current) return;
@@ -334,7 +334,7 @@ const RegisterPage = () => {
 
   return (
     <AuthLayout title="Create your account">
-          {/* Step indicator */}
+          {/* Registration progress indicator — two steps */}
           <div className="flex items-center gap-2 mb-6">
             <div
               className={`h-2 flex-1 rounded-full ${
@@ -353,7 +353,7 @@ const RegisterPage = () => {
             />
           </div>
 
-          {/* Server Error */}
+          {/* Registration error message */}
           {serverError && (
             <div className="mb-4">
               <Alert
@@ -363,14 +363,14 @@ const RegisterPage = () => {
             </div>
           )}
 
-          {/* Step 1 — Basic Info */}
+          {/* Step 1 — Account Details form */}
           {step === 1 && (
             <form ref={formRef} onSubmit={handleNext} noValidate className="flex flex-col gap-4">
               <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                 Step 1 of 2 — Account Details
               </p>
 
-              {/* Role selector */}
+              {/* Role selector — choose Patient, Doctor, Pharmacist, Lab Technician or Hospital Staff */}
               <div className="grid grid-cols-3 gap-2 mb-1">
                 {ROLE_OPTIONS.map((r) => (
                   <button
@@ -444,6 +444,7 @@ const RegisterPage = () => {
                 required
               />
 
+              {/* Continue button — validates the first registration step */}
               <Button
                 variant="primary"
                 size="lg"
@@ -455,7 +456,7 @@ const RegisterPage = () => {
             </form>
           )}
 
-          {/* Step 2 — Role Info */}
+          {/* Step 2 — Role Details form */}
           {step === 2 && (
             <form ref={formRef} onSubmit={handleSubmit} noValidate aria-busy={loading} className="flex flex-col gap-4">
               <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
@@ -690,6 +691,7 @@ const RegisterPage = () => {
               )}
 
               <div className="flex gap-3 mt-2">
+                {/* Back button — returns from role details to account details */}
                 <Button
                   variant="secondary"
                   size="lg"
@@ -700,6 +702,7 @@ const RegisterPage = () => {
                   Back
                 </Button>
 
+                {/* Request code button — submits registration and opens verification */}
                 <Button
                   variant="primary"
                   size="lg"
@@ -715,7 +718,7 @@ const RegisterPage = () => {
             </form>
           )}
 
-          {/* Login Link */}
+          {/* Back to sign in link — returns to the login screen */}
           <p className="text-center text-sm text-muted-foreground mt-6">
             Already have an account?{' '}
             <Link

@@ -13,10 +13,7 @@ import AuthLayout from '../../components/auth/AuthLayout';
 import { login, authErrorMessage } from '../../services/auth.service';
 import useAuthStore from '../../store/authStore';
 
-/** @component LoginPage
- * @returns {JSX.Element} Keyboard-submittable sign-in form; API remains authoritative.
- * Controlled credentials/errors stay local. The ref prevents same-tick duplicate requests.
- */
+/** Sign in: check the fields, ask the backend to verify the account, then open the correct role dashboard. */
 const LoginPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -27,20 +24,20 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
 
-  /** @param {Object} event Input event. @returns {void} Update value and clear stale feedback. */
+  /** Update login fields and clear earlier validation messages. */
   const handleChange = event => {
     setFormData({ ...formData, [event.target.name]: event.target.value });
     setErrors({ ...errors, [event.target.name]: '' });
     setServerError('');
   };
-  /** @returns {Object} Required-field errors; existing passwords are not subjected to new-password length rules. */
+  /** Keep the user on the form until both email and password have been entered. */
   const validate = () => {
     const next = {};
     if (!formData.email.trim()) next.email = 'Email is required';
     if (!formData.password) next.password = 'Password is required';
     return next;
   };
-  /** @param {Object} event Form event. @returns {Promise<void>} Validate, request session, set public identity and navigate. */
+  /** Stop duplicate sign-ins, save the returned user after success, then go to their dashboard. */
   const handleSubmit = async event => {
     event.preventDefault();
     if (inFlight.current) return;
@@ -76,9 +73,12 @@ const LoginPage = () => {
           onChange={handleChange} placeholder="you@example.com" error={errors.email} disabled={loading} required />
         <Input label="Password" name="password" type="password" autoComplete="current-password" revealPassword
           value={formData.password} onChange={handleChange} error={errors.password} disabled={loading} required />
+        {/* Sign in button — submits the login form */}
         <Button type="submit" size="lg" loading={loading} className="w-full mt-2">{loading ? 'Signing in...' : 'Sign in'}</Button>
+        {/* Forgot your password? link — opens password recovery */}
         <Link aria-disabled={loading} onClick={event => { if (loading) event.preventDefault(); }} to="/forgot-password" className="text-sm text-primary font-semibold hover:underline justify-center">Forgot your password?</Link>
       </form>
+      {/* Create an account link — registration starts here */}
       <p className="text-center text-sm text-muted-foreground mt-4">New to Care4U?{' '}
         <Link aria-disabled={loading} onClick={event => { if (loading) event.preventDefault(); }} to="/register" className="text-primary font-semibold hover:underline">Create an account</Link>
       </p>

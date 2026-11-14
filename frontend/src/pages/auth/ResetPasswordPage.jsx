@@ -12,7 +12,7 @@ import Alert from '../../components/common/Alert';
 import AuthLayout from '../../components/auth/AuthLayout';
 import { resetPassword, authErrorMessage } from '../../services/auth.service';
 
-/** @component ResetPasswordPage @returns {JSX.Element} Valid-token form, invalid-link recovery, or confirmed completion. */
+/** Reset password screen: require a valid-looking link token and matching new passwords. */
 const ResetPasswordPage = () => {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token') || '';
@@ -23,12 +23,12 @@ const ResetPasswordPage = () => {
   const [serverError, setServerError] = useState('');
   const [success, setSuccess] = useState(false);
   const inFlight = useRef(false);
-  /** @param {Object} event Input event. @returns {void} Update unchanged password characters and clear stale errors. */
+  /** Keep password fields updated and clear earlier errors. */
   const handleChange = event => {
     setFormData({ ...formData, [event.target.name]: event.target.value });
     setErrors({ ...errors, [event.target.name]: '' }); setServerError('');
   };
-  /** @returns {Object} New-password length and confirmation errors, independently of client token validation. */
+  /** Reject passwords shorter than eight characters or confirmation that does not match. */
   const validate = () => {
     const next = {};
     if (formData.newPassword.length < 8) next.newPassword = 'Password must be at least 8 characters';
@@ -36,7 +36,7 @@ const ResetPasswordPage = () => {
     else if (formData.newPassword !== formData.confirmPassword) next.confirmPassword = 'Passwords do not match';
     return next;
   };
-  /** @param {Object} event Form event. @returns {Promise<void>} Guard token/duplicates, submit, clear secrets only on acknowledgement. */
+  /** Send the new password once; clear the entered passwords only after the backend confirms success. */
   const handleSubmit = async event => {
     event.preventDefault();
     if (inFlight.current || !validToken) return;
@@ -64,6 +64,7 @@ const ResetPasswordPage = () => {
             value={formData.newPassword} onChange={handleChange} error={errors.newPassword} disabled={loading} required />
           <Input label="Confirm password" name="confirmPassword" type="password" autoComplete="new-password" revealPassword
             value={formData.confirmPassword} onChange={handleChange} error={errors.confirmPassword} disabled={loading} required />
+          {/* Reset password button — submits the new password */}
           <Button type="submit" size="lg" loading={loading} className="w-full mt-2">{loading ? 'Resetting...' : 'Reset password'}</Button>
         </form>
       )}

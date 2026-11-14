@@ -2,7 +2,7 @@
  * @file OtpVerificationPage.jsx
  * @module Authentication UI
  * @desc Completes pending registration, serializes resend/verification and separates approval from sign-in.
- * @author Original author unconfirmed; Git introduction: lasitha (5aaea4b). See OWNERSHIP.md.
+ * @author Original author unverified
  */
 import { useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -13,7 +13,7 @@ import AuthLayout from '../../components/auth/AuthLayout';
 import { verifyOtp, resendOtp, authErrorMessage } from '../../services/auth.service';
 import useAuthStore from '../../store/authStore';
 
-/** @component OtpVerificationPage @returns {JSX.Element} Code form or recoverable missing-registration state. */
+/** Email verification screen: check the six-digit code before a new account becomes usable. */
 const OtpVerificationPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -28,7 +28,7 @@ const OtpVerificationPage = () => {
   const inFlight = useRef(false);
   const busy = loading || resending;
 
-  /** @param {Object} event Form event. @returns {Promise<void>} Verify once; only saved-session responses admit a signed-in UI. */
+  /** Verify once: patients can continue after success; staff awaiting admin approval return to login. */
   const handleVerify = async event => {
     event.preventDefault();
     if (inFlight.current || !email) return;
@@ -50,7 +50,7 @@ const OtpVerificationPage = () => {
     } catch (requestError) { setError(authErrorMessage(requestError, 'Could not verify the code. Check the code or request a new one.')); }
     finally { inFlight.current = false; setLoading(false); }
   };
-  /** @returns {Promise<void>} Replace only when no verification is running; failure may still have replaced the old code. */
+  /** Request a replacement code; prevent another request while verification or resend is running. */
   const handleResend = async () => {
     if (inFlight.current || !email) return;
     inFlight.current = true; setResending(true); setError(''); setResendMessage(''); setOtpCode('');
@@ -76,7 +76,9 @@ const OtpVerificationPage = () => {
           value={otpCode} onChange={event => { setOtpCode(event.target.value.replace(/[^0-9]/g, '').slice(0, 6)); setError(''); }}
           aria-invalid={Boolean(error)} aria-describedby={error ? 'otp-feedback' : 'otp-help'} disabled={busy} required />
         <p id="otp-help" className="text-sm text-muted-foreground">Codes expire after 10 minutes. If resending fails, the previous code may no longer work. Wait before requesting another.</p>
+        {/* Verify email button — submits the six-digit code */}
         <Button type="submit" size="lg" loading={loading} disabled={resending} className="w-full">{loading ? 'Verifying...' : 'Verify email'}</Button>
+        {/* Resend code button — requests a new verification code */}
         <Button onClick={handleResend} variant="secondary" loading={resending} disabled={loading} className="w-full">{resending ? 'Requesting...' : 'Resend code'}</Button>
       </form>
       <p className="text-center mt-4"><Link to="/register" aria-disabled={busy} onClick={event => { if (busy) event.preventDefault(); }}

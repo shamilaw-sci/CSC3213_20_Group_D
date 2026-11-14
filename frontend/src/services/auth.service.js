@@ -8,11 +8,7 @@
 
 import api from './api';
 
-/** Send one auth request with a bounded wait and require an acknowledged envelope.
- * @param {string} path Known local API path or auth endpoint suffix (fixed by the wrappers).
- * @param {Object} payload Validated screen values; never logged or persisted here.
- * @returns {Promise<Object>} Success envelope; transport and negative envelopes reject.
- */
+/** Send auth requests to the backend and accept the result only if it confirms success. */
 const postAuth = async (path, payload) => {
   const response = await api.post(path.startsWith('/api/') ? path : `/api/auth/${path}`, payload, { timeout: 15000 });
   if (response.data?.success !== true) {
@@ -23,11 +19,7 @@ const postAuth = async (path, payload) => {
   return response.data;
 };
 
-/** Convert expected API errors into UI copy; never expose raw transport exceptions.
- * @param {Object} error Axios error or rejected response envelope.
- * @param {string} fallback Context-specific failure wording.
- * @returns {string} Public server message with Retry-After guidance, or network help.
- */
+/** Show clear, safe errors to users; explain connection problems and when to retry after too many requests. */
 export const authErrorMessage = (error, fallback = 'The request failed. Please try again.') => {
   const response = error?.response;
   if (!response) return 'Cannot connect to Care4U. Check your connection and try again.';
@@ -55,44 +47,26 @@ export const authErrorMessage = (error, fallback = 'The request failed. Please t
   return `${message} ${retry}`;
 };
 
-/** @param {string} email Exact address after UI trimming. @param {string} password Unchanged password.
- * @returns {Promise<Object>} Public session identity after server acknowledgement; cookie persistence is separate.
- */
+/** Authentication request — sends the screen values to its matching backend endpoint. */
 export const login = (email, password) => postAuth('login', { email, password });
 
-/** @param {string} email Address. @param {string} phone Contact. @param {string} password Unchanged password.
- * @param {string} role Supported public role. @param {Object} profileData Role-specific fields.
- * @returns {Promise<Object>} Pending email/expiry; registration alone does not authenticate.
- */
+/** Sends this account action to the backend; the server checks the final rules. */
 export const register = (email, phone, password, role, profileData) => postAuth('register', { email, phone, password, role, profileData });
 
-/** @param {string} email Pending address. @param {string} otpCode Six digits.
- * @returns {Promise<Object>} User/profile and approvalPending; pending professionals have no authenticated session.
- */
+/** Sends this account action to the backend; the server checks the final rules. */
 export const verifyOtp = (email, otpCode) => postAuth('verify-otp', { email, otpCode });
 
-/** @param {string} email Pending address.
- * @returns {Promise<Object>} Replacement expiry after submission acknowledgement, not confirmed inbox delivery.
- * Failed submission may still leave a replacement stored; concurrent emails may be superseded.
- */
+/** Sends this account action to the backend; the server checks the final rules. */
 export const resendOtp = email => postAuth('resend-otp', { email });
 
-/** @param {string} email Recovery address.
- * @returns {Promise<Object>} Generic acknowledgement for known/unknown addresses; no delivery guarantee.
- */
+/** Sends this account action to the backend; the server checks the final rules. */
 export const forgotPassword = email => postAuth('forgot-password', { email });
 
-/** @param {string} token Valid reset bearer token. @param {string} newPassword Unchanged new password.
- * @returns {Promise<Object>} Acknowledged password update; sessions/other links retain existing policy.
- */
+/** Sends this account action to the backend; the server checks the final rules. */
 export const resetPassword = (token, newPassword) => postAuth('reset-password', { token, newPassword });
 
-/** @param {Object} payload Pharmacy account/facility fields; no OTP step in this existing application contract.
- * @returns {Promise<Object>} Acknowledged pending-approval application; no signed-in session is claimed.
- */
+/** Sends this account action to the backend; the server checks the final rules. */
 export const registerPharmacy = payload => postAuth('/api/pharmacies/register', payload);
 
-/** @param {Object} payload Laboratory account/facility fields and available_tests.
- * @returns {Promise<Object>} Acknowledged pending-approval application; preserves the separate existing enrollment workflow.
- */
+/** Sends this account action to the backend; the server checks the final rules. */
 export const registerLaboratory = payload => postAuth('/api/laboratories/register', payload);
