@@ -44,7 +44,9 @@ const VALID_FAMILY_RELATIONS = [
 ];
 
 /**
- * Retrieves a patient's full profile by their patient UUID.
+ * Retrieves a patient's profile after route-level ownership authorization.
+ * @param {string} id Patient profile UUID, not users.id.
+ * @returns {Promise<Object>} Selected public profile/account fields or 404.
  */
 const getPatientProfile = async (id) => {
   const patient =
@@ -64,7 +66,9 @@ const getPatientProfile = async (id) => {
 };
 
 /**
- * Updates editable fields on a patient profile.
+ * Updates only validated profile fields; rejects blank names and values beyond supplied schema lengths.
+ * @param {string} id Owned patient profile UUID. @param {Object} data JSON patch; identity/role fields ignored.
+ * @returns {Promise<Object>} Persisted row. Emergency fields accept empty strings to clear them.
  */
 const updatePatientProfile = async (
   id,
@@ -83,37 +87,25 @@ const updatePatientProfile = async (
     throw error;
   }
 
-  const allowedFields = {
-    full_name:
-      data.full_name,
-
-    blood_group:
-      data.blood_group,
-
-    emergency_contact_name:
-      data.emergency_contact_name,
-
-    emergency_contact_phone:
-      data.emergency_contact_phone,
-
-    emergency_contact_relationship:
-      data.emergency_contact_relationship,
-  };
-
-  const filteredData =
-    Object.fromEntries(
-      Object.entries(
-        allowedFields
-      ).filter(
-        ([_, v]) =>
-          v !== undefined
-      )
-    );
-
-  return await patientRepository.updatePatient(
-    id,
-    filteredData
-  );
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    const error = new Error('Profile changes must be an object'); error.statusCode = 400; throw error;
+  }
+  const limits = { full_name: 255, blood_group: 5, emergency_contact_name: 255,
+    emergency_contact_phone: 20, emergency_contact_relationship: 100 };
+  const filteredData = {};
+  for (const [field, limit] of Object.entries(limits)) {
+    if (data[field] === undefined) continue;
+    if (typeof data[field] !== 'string' || data[field].trim().length > limit ||
+        (field === 'full_name' && !data[field].trim()) ||
+        (field === 'blood_group' && !['', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].includes(data[field].trim()))) {
+      const error = new Error(`Enter a valid ${field.replaceAll('_', ' ')}`); error.statusCode = 400; throw error;
+    }
+    filteredData[field] = data[field].trim();
+  }
+  if (!Object.keys(filteredData).length) {
+    const error = new Error('No editable profile changes were supplied'); error.statusCode = 400; throw error;
+  }
+  return await patientRepository.updatePatient(id, filteredData);
 };
 
 /**
@@ -229,6 +221,18 @@ const getMedicalRecords = async (
     throw error;
   }
 
+  // Services may be called outside the patient router (for example AI summaries).
+  // Deny unknown roles/foreign owners before loading any medical record payload.
+  const isOwner = requestingUser?.role === 'patient' && requestingUser.id &&
+    String(requestingUser.id) === String(existing.user_id);
+  if (!isOwner && requestingUser?.role !== 'doctor') {
+    const error = new Error('You do not have permission to view these medical records');
+    error.statusCode = 403; throw error;
+  }
+  if (requestingUser?.role === 'doctor') {
+    await consentService.validateDoctorConsultationContext(patientId, appointmentId, requestingUser);
+  }
+
   const records =
     await patientRepository.getMedicalRecords(
       patientId
@@ -242,8 +246,8 @@ const getMedicalRecords = async (
     requestingUser &&
     requestingUser.role ===
       'patient' &&
-    requestingUser.id ===
-      existing.user_id
+    String(requestingUser.id) ===
+      String(existing.user_id)
   ) {
     return records;
   }

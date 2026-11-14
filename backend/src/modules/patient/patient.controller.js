@@ -26,6 +26,10 @@ const getPharmacyPatientSummary = (patient) => ({
 const { logAudit } = require('../../middleware/auditLog');
 const { generateAIResponse } = require('../../utils/ai.util');
 
+/** Read the guarded patient profile; unexpected SQL failures stay private.
+ * @param {Object} req Owned profile params and session. @param {Object} res Express response.
+ * @returns {Promise<void>} Acknowledged profile or public error.
+ */
 const getPatientController = async (req, res) => {
   try {
     const { id } = req.params;
@@ -38,11 +42,15 @@ const getPatientController = async (req, res) => {
   } catch (error) {
     res.status(error.statusCode || 500).json({
       success: false,
-      message: error.message || 'Internal server error'
+      message: error.statusCode && error.statusCode < 500 ? error.message : 'Care4U could not complete the request. Please try again.'
     });
   }
 };
 
+/** Save only service-validated editable fields after the ownership middleware.
+ * @param {Object} req Target profile and JSON patch. @param {Object} res Express response.
+ * @returns {Promise<void>} Persisted profile acknowledgement or public error.
+ */
 const updatePatientController = async (req, res) => {
   try {
     const { id } = req.params;
@@ -55,11 +63,15 @@ const updatePatientController = async (req, res) => {
   } catch (error) {
     res.status(error.statusCode || 500).json({
       success: false,
-      message: error.message || 'Internal server error'
+      message: error.statusCode && error.statusCode < 500 ? error.message : 'Care4U could not complete the request. Please try again.'
     });
   }
 };
 
+/** Forward the authenticated identity and appointment context, never a caller-supplied role.
+ * @param {Object} req Patient params and optional consultation query. @param {Object} res Response.
+ * @returns {Promise<void>} Already-filtered records or denial.
+ */
 const getMedicalRecordsController = async (
   req,
   res
@@ -104,9 +116,7 @@ const getMedicalRecordsController = async (
       500
     ).json({
       success: false,
-      message:
-        error.message ||
-        'Internal server error'
+      message: error.statusCode && error.statusCode < 500 ? error.message : 'Care4U could not complete the request. Please try again.'
     });
   }
 };

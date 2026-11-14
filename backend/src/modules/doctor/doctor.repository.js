@@ -18,8 +18,12 @@ const getDoctorById = async (id) => {
   return result.rows[0] || null;
 };
 
-const getDoctorByUserId = async (userId) => {
-  const result = await pool.query(
+/** Resolve a doctor profile from the account ID, optionally on a consent transaction.
+ * @param {string} userId Account UUID. @param {Object} db Pool or transaction client.
+ * @returns {Promise<Object|null>} Linked profile; uniqueness policy remains separately documented.
+ */
+const getDoctorByUserId = async (userId, db = pool) => {
+  const result = await db.query(
     `SELECT d.*, u.email, u.phone, u.role
      FROM doctors d
      JOIN users u ON d.user_id = u.id

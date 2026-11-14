@@ -44,12 +44,12 @@ const updateAppointmentStatus = async (
  * @returns {Promise<Object|null>}
  */
 const getAppointmentById = async (
-  id
+  id, db = pool
 ) => {
-  const result = await pool.query(
+  const result = await db.query(
     `SELECT *
      FROM appointments
-     WHERE id = $1`,
+     WHERE id = $1 ${db === pool ? '' : 'FOR SHARE'}`,
     [id]
   );
 

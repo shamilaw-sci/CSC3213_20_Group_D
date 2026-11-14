@@ -17,8 +17,8 @@ const { pool } = require('../../config/db');
  * @param {string} id - UUID of the patient (patients.id)
  * @returns {Promise<Object|null>} Patient row or null if not found
  */
-async function getPatientById(id) {
-  const result = await pool.query(
+async function getPatientById(id, db = pool) {
+  const result = await db.query(
     `SELECT 
       p.id,
       p.user_id,
@@ -53,8 +53,8 @@ async function getPatientById(id) {
  * @param {string} userId - UUID from the users table (users.id)
  * @returns {Promise<Object|null>} Patient row or null if not found
  */
-async function getPatientByUserId(userId) {
-  const result = await pool.query(
+async function getPatientByUserId(userId, db = pool) {
+  const result = await db.query(
     `SELECT 
       p.id,
       p.user_id,
@@ -91,31 +91,20 @@ async function getPatientByUserId(userId) {
  * @returns {Promise<Object|null>} Updated patient row or null
  */
 async function updatePatient(id, data) {
-  const {
-    blood_group,
-    emergency_contact_name,
-    emergency_contact_phone,
-    emergency_contact_relationship,
-  } = data;
-
+  // Only service-validated editable columns can enter this fixed SQL statement.
+  const { full_name, blood_group, emergency_contact_name, emergency_contact_phone,
+    emergency_contact_relationship } = data;
   const result = await pool.query(
-    `UPDATE patients
-    SET
-      blood_group = COALESCE($1, blood_group),
-      emergency_contact_name = COALESCE($2, emergency_contact_name),
-      emergency_contact_phone = COALESCE($3, emergency_contact_phone),
-      emergency_contact_relationship = COALESCE($4, emergency_contact_relationship)
-    WHERE id = $5
-    RETURNING *`,
-    [
-      blood_group,
-      emergency_contact_name,
-      emergency_contact_phone,
-      emergency_contact_relationship,
-      id,
-    ]
+    `UPDATE patients SET
+      full_name = COALESCE($1, full_name),
+      blood_group = COALESCE($2, blood_group),
+      emergency_contact_name = COALESCE($3, emergency_contact_name),
+      emergency_contact_phone = COALESCE($4, emergency_contact_phone),
+      emergency_contact_relationship = COALESCE($5, emergency_contact_relationship),
+      updated_at = NOW()
+     WHERE id = $6 RETURNING *`,
+    [full_name, blood_group, emergency_contact_name, emergency_contact_phone, emergency_contact_relationship, id]
   );
-
   return result.rows[0] || null;
 }
 

@@ -19,13 +19,15 @@ const {
  * Retrieves a patient's consent settings.
  *
  * @param {string} patientId
+ * @param {Object} db Optional pool/transaction client; mutations share the patient lock.
  * @returns {Promise<Object>}
  */
 const getConsentSettings = async (
-  patientId
+  patientId,
+  db = pool
 ) => {
   const result =
-    await pool.query(
+    await db.query(
       `SELECT
         locked_categories
        FROM consent_settings
@@ -51,14 +53,16 @@ const getConsentSettings = async (
  *
  * @param {string} patientId
  * @param {Array<string>} lockedCategories
+ * @param {Object} db Optional pool/transaction client; mutations share the patient lock.
  * @returns {Promise<Object>}
  */
 const upsertConsentSettings = async (
   patientId,
-  lockedCategories
+  lockedCategories,
+  db = pool
 ) => {
   const result =
-    await pool.query(
+    await db.query(
       `INSERT INTO consent_settings
         (
           patient_id,
@@ -101,16 +105,18 @@ const upsertConsentSettings = async (
  * @param {string} patientId
  * @param {string} doctorId
  * @param {string} appointmentId
+ * @param {Object} db Optional pool/transaction client; mutations share the patient lock.
  * @returns {Promise<number>} Number of invalidated requests
  */
 const invalidateActiveAccessRequests =
   async (
     patientId,
     doctorId,
-    appointmentId
-  ) => {
+    appointmentId,
+  db = pool
+) => {
     const result =
-      await pool.query(
+      await db.query(
         `UPDATE consent_access_requests
          SET
            invalidated_at = NOW()
@@ -119,7 +125,7 @@ const invalidateActiveAccessRequests =
            AND appointment_id = $3
            AND used_at IS NULL
            AND invalidated_at IS NULL
-           AND expires_at > NOW()
+           AND expires_at > clock_timestamp()
          RETURNING id`,
         [
           patientId,
@@ -137,6 +143,7 @@ const invalidateActiveAccessRequests =
  * Only the hashed OTP is stored.
  *
  * @param {Object} requestData
+ * @param {Object} db Optional pool/transaction client; mutations share the patient lock.
  * @returns {Promise<Object>}
  */
 const createConsentAccessRequest =
@@ -147,9 +154,11 @@ const createConsentAccessRequest =
     requestedCategories,
     otpHash,
     expiresAt
-  }) => {
+  },
+  db = pool
+) => {
     const result =
-      await pool.query(
+      await db.query(
         `INSERT INTO consent_access_requests
           (
             patient_id,
@@ -202,16 +211,18 @@ const createConsentAccessRequest =
  * @param {string} patientId
  * @param {string} doctorId
  * @param {string} appointmentId
+ * @param {Object} db Optional pool/transaction client; mutations share the patient lock.
  * @returns {Promise<Object|null>}
  */
 const getActiveConsentAccessRequest =
   async (
     patientId,
     doctorId,
-    appointmentId
-  ) => {
+    appointmentId,
+  db = pool
+) => {
     const result =
-      await pool.query(
+      await db.query(
         `SELECT
           id,
           patient_id,
@@ -230,7 +241,7 @@ const getActiveConsentAccessRequest =
            AND appointment_id = $3
            AND used_at IS NULL
            AND invalidated_at IS NULL
-           AND expires_at > NOW()
+           AND expires_at > clock_timestamp()
          ORDER BY created_at DESC
          LIMIT 1`,
         [
@@ -250,19 +261,25 @@ const getActiveConsentAccessRequest =
  * Increments the failed verification attempt count.
  *
  * @param {string} requestId
+ * @param {Object} db Optional pool/transaction client; mutations share the patient lock.
  * @returns {Promise<Object|null>}
  */
 const incrementConsentAccessAttempt =
   async (
-    requestId
-  ) => {
+    requestId,
+  db = pool
+) => {
     const result =
-      await pool.query(
+      await db.query(
         `UPDATE consent_access_requests
          SET
            attempt_count =
              attempt_count + 1
          WHERE id = $1
+           AND used_at IS NULL
+           AND invalidated_at IS NULL
+           AND expires_at > clock_timestamp()
+           AND attempt_count < 5
          RETURNING
            id,
            attempt_count,
@@ -284,20 +301,24 @@ const incrementConsentAccessAttempt =
  * Marks an OTP request as successfully used.
  *
  * @param {string} requestId
+ * @param {Object} db Optional pool/transaction client; mutations share the patient lock.
  * @returns {Promise<Object|null>}
  */
 const markConsentAccessRequestUsed =
   async (
-    requestId
-  ) => {
+    requestId,
+  db = pool
+) => {
     const result =
-      await pool.query(
+      await db.query(
         `UPDATE consent_access_requests
          SET
            used_at = NOW()
          WHERE id = $1
            AND used_at IS NULL
            AND invalidated_at IS NULL
+           AND expires_at > clock_timestamp()
+           AND attempt_count < 5
          RETURNING
            id,
            used_at`,
@@ -319,14 +340,16 @@ const markConsentAccessRequestUsed =
  * attempts has been reached.
  *
  * @param {string} requestId
+ * @param {Object} db Optional pool/transaction client; mutations share the patient lock.
  * @returns {Promise<Object|null>}
  */
 const invalidateConsentAccessRequest =
   async (
-    requestId
-  ) => {
+    requestId,
+  db = pool
+) => {
     const result =
-      await pool.query(
+      await db.query(
         `UPDATE consent_access_requests
          SET
            invalidated_at = NOW()
@@ -356,6 +379,7 @@ const invalidateConsentAccessRequest =
  * successful OTP verification.
  *
  * @param {Object} grantData
+ * @param {Object} db Optional pool/transaction client; mutations share the patient lock.
  * @returns {Promise<Object>}
  */
 const createConsentAccessGrant =
@@ -366,9 +390,11 @@ const createConsentAccessGrant =
     requestId,
     grantedCategories,
     expiresAt
-  }) => {
+  },
+  db = pool
+) => {
     const result =
-      await pool.query(
+      await db.query(
         `INSERT INTO consent_access_grants
           (
             patient_id,
@@ -418,16 +444,18 @@ const createConsentAccessGrant =
  * @param {string} patientId
  * @param {string} doctorId
  * @param {string} appointmentId
+ * @param {Object} db Optional pool/transaction client; mutations share the patient lock.
  * @returns {Promise<Object|null>}
  */
 const getActiveConsentAccessGrant =
   async (
     patientId,
     doctorId,
-    appointmentId
-  ) => {
+    appointmentId,
+  db = pool
+) => {
     const result =
-      await pool.query(
+      await db.query(
         `SELECT
           id,
           patient_id,
@@ -444,7 +472,7 @@ const getActiveConsentAccessGrant =
            AND doctor_id = $2
            AND appointment_id = $3
            AND revoked_at IS NULL
-           AND expires_at > NOW()
+           AND expires_at > clock_timestamp()
          ORDER BY granted_at DESC
          LIMIT 1`,
         [
@@ -467,16 +495,18 @@ const getActiveConsentAccessGrant =
  * @param {string} patientId
  * @param {string} doctorId
  * @param {string} appointmentId
+ * @param {Object} db Optional pool/transaction client; mutations share the patient lock.
  * @returns {Promise<number>}
  */
 const revokeActiveConsentAccessGrants =
   async (
     patientId,
     doctorId,
-    appointmentId
-  ) => {
+    appointmentId,
+  db = pool
+) => {
     const result =
-      await pool.query(
+      await db.query(
         `UPDATE consent_access_grants
          SET
            revoked_at = NOW()
@@ -484,7 +514,7 @@ const revokeActiveConsentAccessGrants =
            AND doctor_id = $2
            AND appointment_id = $3
            AND revoked_at IS NULL
-           AND expires_at > NOW()
+           AND expires_at > clock_timestamp()
          RETURNING id`,
         [
           patientId,
@@ -496,7 +526,32 @@ const revokeActiveConsentAccessGrants =
     return result.rowCount;
   };
 
+/** Serialize consent mutations on one patient row and commit atomically.
+ * @param {string} patientId Existing patient profile UUID (also covers no settings row yet).
+ * @param {Function} work Receives the sole transaction client; providers run after commit.
+ * @returns {Promise<*>} Work result. Failure rolls back and always releases the client.
+ */
+const withPatientTransaction = async (patientId, work) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const patient = await client.query('SELECT id FROM patients WHERE id = $1 FOR UPDATE', [patientId]);
+    if (!patient.rows.length) {
+      const error = new Error('Patient not found'); error.statusCode = 404; throw error;
+    }
+    const result = await work(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
 module.exports = {
+  withPatientTransaction,
   getConsentSettings,
   upsertConsentSettings,
 

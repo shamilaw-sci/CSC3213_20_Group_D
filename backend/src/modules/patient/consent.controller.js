@@ -105,7 +105,7 @@ const updateConsent =
 
       const {
         lockedCategories
-      } = req.body;
+      } = req.body || {};
 
       const settings =
         await consentService
@@ -186,7 +186,7 @@ const requestConsentAccess =
 
       const {
         appointmentId
-      } = req.body;
+      } = req.body || {};
 
       const result =
         await consentService
@@ -212,8 +212,7 @@ const requestConsentAccess =
             null,
 
           requestedCategories:
-            result?.requestedCategories ||
-            result?.categories ||
+            result?.lockedCategories ||
             [],
 
           requestExpiresAt:
@@ -232,7 +231,7 @@ const requestConsentAccess =
         message:
           result.alreadyGranted
             ? 'Temporary access is already active for this consultation'
-            : 'Consent code sent to the patient',
+            : 'Consent email submitted. Ask the patient to check their inbox and spam folder.',
 
         data:
           result
@@ -283,7 +282,7 @@ const verifyConsentAccess =
     const {
       appointmentId,
       otpCode
-    } = req.body;
+    } = req.body || {};
 
     try {
 

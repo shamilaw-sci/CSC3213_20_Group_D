@@ -186,7 +186,7 @@ test('consent repository contract scopes grant by patient/doctor/appointment and
   const repo = load('backend/src/modules/patient/consent.repository.js', { '../../config/db': { pool: { query: async (sql, args) => { call = { sql, args }; return { rows: [] }; } } } });
   assert.equal(await repo.getActiveConsentAccessGrant('patient-a', 'doctor-a', 'appointment-a'), null);
   assert.deepEqual(Array.from(call.args), ['patient-a','doctor-a','appointment-a']);
-  assert.match(call.sql, /revoked_at IS NULL/); assert.match(call.sql, /expires_at > NOW\(\)/);
+  assert.match(call.sql, /revoked_at IS NULL/); assert.match(call.sql, /expires_at > (?:NOW|clock_timestamp)\(\)/);
 });
 
 test('medical-record filter hides locked categories on missing/failed grant and requires every matched category', async () => {
@@ -195,7 +195,7 @@ test('medical-record filter hides locked categories on missing/failed grant and 
     const api = load('backend/src/modules/patient/patient.service.js', {
       './patient.repository': { getPatientById: async () => ({ user_id: 'patient-user' }), getMedicalRecords: async () => records },
       './consent.repository': { getConsentSettings: async () => ({ locked_categories: ['mental health','genetic'] }) },
-      './consent.service': { getConsentAccessStatus: access }, '../../utils/ai.util': {}, '../../config/supabase': {},
+      './consent.service': { getConsentAccessStatus: access, validateDoctorConsultationContext: async () => ({}) }, '../../utils/ai.util': {}, '../../config/supabase': {},
     });
     return api.getMedicalRecords('patient-a', { id: 'doctor-user', role: 'doctor' }, 'appointment-a');
   };
