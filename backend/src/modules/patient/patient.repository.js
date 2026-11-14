@@ -1,21 +1,15 @@
 /**
  * @file    patient.repository.js
  * @module  Patient
- * @desc    Database query functions for the Patient module.
- *          All direct SQL interactions for patient data live here.
+ * @desc    Reads and updates patient information in PostgreSQL.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
 const { pool } = require('../../config/db');
 
 /**
- * Fetches a patient record by their patient table ID.
- *
- * Account information is optional because hospital-assisted
- * patients may exist without a linked Care4U user account.
- *
- * @param {string} id - UUID of the patient (patients.id)
- * @returns {Promise<Object|null>} Patient row or null if not found
+ * FEATURE: Find patient profile
+ * LOGIC: Join patient details with account details; patients without linked accounts can still be found.
  */
 async function getPatientById(id, db = pool) {
   const result = await db.query(
@@ -50,8 +44,6 @@ async function getPatientById(id, db = pool) {
 
 /**
  * Fetches a patient record by their linked user ID.
- * @param {string} userId - UUID from the users table (users.id)
- * @returns {Promise<Object|null>} Patient row or null if not found
  */
 async function getPatientByUserId(userId, db = pool) {
   const result = await db.query(
@@ -84,11 +76,8 @@ async function getPatientByUserId(userId, db = pool) {
 }
 
 /**
- * Updates editable fields on a patient record.
- * Only the fields passed in `data` will be updated.
- * @param {string} id - UUID of the patient (patients.id)
- * @param {Object} data - Fields to update
- * @returns {Promise<Object|null>} Updated patient row or null
+ * FEATURE: Save approved profile changes
+ * LOGIC: Update only the fields supplied after the service checks them.
  */
 async function updatePatient(id, data) {
   // Only service-validated editable columns can enter this fixed SQL statement.
@@ -109,13 +98,8 @@ async function updatePatient(id, data) {
 }
 
 /**
- * Updates only the photo_url field on a patient record.
- * Kept as its own function (rather than folded into updatePatient)
- * since photo uploads go through a dedicated multipart endpoint,
- * not the general profile-edit JSON body.
- * @param {string} patientId - UUID of the patient (patients.id)
- * @param {string} photoUrl  - Public URL of the uploaded photo in Supabase Storage
- * @returns {Promise<Object|null>} Updated patient row or null
+ * FEATURE: Save new profile photo address
+ * LOGIC: Update the patient photo link in the database after storage upload.
  */
 async function updatePatientPhoto(patientId, photoUrl) {
   const result = await pool.query(
@@ -130,10 +114,8 @@ async function updatePatientPhoto(patientId, photoUrl) {
 }
 
 /**
- * Fetches all medical records for a patient, ordered newest first.
- * Joins with the doctors table to include the doctor's name.
- * @param {string} patientId - UUID of the patient (patients.id)
- * @returns {Promise<Array>} Array of medical record rows (empty array if none)
+ * FEATURE: Load medical history
+ * LOGIC: Read patient records from the database; the service decides which are visible to a doctor.
  */
 async function getMedicalRecords(patientId) {
   const result = await pool.query(
@@ -165,8 +147,6 @@ async function getMedicalRecords(patientId) {
 
 /**
  * Fetches all allergy records for a patient, ordered newest first.
- * @param {string} patientId - UUID of the patient (patients.id)
- * @returns {Promise<Array>} Array of allergy rows (empty array if none)
  */
 async function getAllergies(patientId) {
   const result = await pool.query(
@@ -189,8 +169,6 @@ async function getAllergies(patientId) {
 /**
  * Fetches all chronic condition records for a patient, ordered so
  * priority-flagged conditions surface first, then newest first.
- * @param {string} patientId - UUID of the patient (patients.id)
- * @returns {Promise<Array>} Array of condition rows (empty array if none)
  */
 async function getConditionsByPatientId(patientId) {
   const result = await pool.query(
@@ -213,12 +191,6 @@ async function getConditionsByPatientId(patientId) {
 
 /**
  * Inserts a new chronic condition record for a patient.
- * @param {string} patientId - UUID of the patient (patients.id)
- * @param {string} condition - Name of the condition
- * @param {string} diagnosedAt - Date string for when it was diagnosed
- * @param {string|null} notes - Optional additional notes
- * @param {boolean} isPriority - Whether this is a priority/severe condition
- * @returns {Promise<Object>} The newly created condition row
  */
 async function addCondition(
   patientId,
@@ -263,9 +235,6 @@ async function addCondition(
 
 /**
  * Deletes a chronic condition record belonging to a specific patient.
- * @param {string} patientId - UUID of the patient (patients.id)
- * @param {string} conditionId - UUID of the condition (patient_conditions.id)
- * @returns {Promise<boolean>} True if a row was deleted, false otherwise
  */
 async function deleteCondition(
   patientId,
@@ -288,9 +257,6 @@ async function deleteCondition(
 /**
  * Fetches all active medical devices and implants for a patient.
  * Emergency-relevant devices are ordered first.
- *
- * @param {string} patientId - UUID of the patient
- * @returns {Promise<Array>} Array of active medical device rows
  */
 async function getMedicalDevicesByPatientId(
   patientId
@@ -322,14 +288,6 @@ async function getMedicalDevicesByPatientId(
 
 /**
  * Inserts a medical device or implant record for a patient.
- *
- * @param {string} patientId - UUID of the patient
- * @param {string} deviceName - Name of the device or implant
- * @param {string|null} deviceType - Device category/type
- * @param {string|null} implantedAt - Implant/start date
- * @param {string|null} notes - Optional device notes
- * @param {boolean} isEmergencyRelevant - Whether emergency staff should see it
- * @returns {Promise<Object>} Newly created medical device row
  */
 async function addMedicalDevice(
   patientId,
@@ -375,13 +333,8 @@ async function addMedicalDevice(
 }
 
 /**
- * Removes a medical device from the patient's active profile.
- * The row is preserved for historical integrity by setting
- * is_active to false instead of permanently deleting it.
- *
- * @param {string} patientId - UUID of the patient
- * @param {string} deviceId - UUID of the medical device
- * @returns {Promise<boolean>} True if a device was deactivated
+ * FEATURE: Remove device from active profile
+ * LOGIC: Mark the device inactive instead of deleting its history.
  */
 async function deleteMedicalDevice(
   patientId,
@@ -407,11 +360,6 @@ async function deleteMedicalDevice(
 
 /**
  * Inserts a new allergy record for a patient.
- * @param {string} patientId - UUID of the patient (patients.id)
- * @param {string} allergen  - Name of the allergen (e.g. Penicillin)
- * @param {string} severity  - Severity level: mild / moderate / severe
- * @param {string|null} notes - Optional additional notes
- * @returns {Promise<Object>} The newly created allergy row
  */
 async function addAllergy(
   patientId,
@@ -451,10 +399,8 @@ async function addAllergy(
 }
 
 /**
- * Deletes an allergy record belonging to a specific patient.
- * @param {string} patientId - UUID of the patient (patients.id)
- * @param {string} allergyId - UUID of the allergy (patient_allergies.id)
- * @returns {Promise<boolean>} True if a row was deleted, false otherwise
+ * FEATURE: Delete own allergy
+ * LOGIC: Delete only the allergy matching both its ID and the patient ID.
  */
 async function deleteAllergy(
   patientId,
@@ -476,8 +422,6 @@ async function deleteAllergy(
 
 /**
  * Fetches all vaccination records for a patient, ordered by date administered newest first.
- * @param {string} patientId - UUID of the patient (patients.id)
- * @returns {Promise<Array>} Array of vaccination rows (empty array if none)
  */
 async function getVaccinationsByPatientId(
   patientId
@@ -504,12 +448,6 @@ async function getVaccinationsByPatientId(
 
 /**
  * Inserts a new vaccination record for a patient.
- * @param {string} patientId - UUID of the patient (patients.id)
- * @param {string} vaccineName - Name of the vaccine (e.g. "BCG", "MMR")
- * @param {string} dateAdministered - Date string (YYYY-MM-DD)
- * @param {string|null} doseNumber - Dose identifier/number (e.g. "Dose 1", "Booster")
- * @param {string|null} notes - Optional additional notes
- * @returns {Promise<Object>} The newly created vaccination row
  */
 async function addVaccination(
   patientId,
@@ -554,9 +492,6 @@ async function addVaccination(
 
 /**
  * Deletes a vaccination record belonging to a specific patient.
- * @param {string} patientId - UUID of the patient (patients.id)
- * @param {string} vaccinationId - UUID of the vaccination (vaccinations.id)
- * @returns {Promise<boolean>} True if a row was deleted, false otherwise
  */
 async function deleteVaccination(
   patientId,
@@ -577,11 +512,8 @@ async function deleteVaccination(
 }
 
 /**
- * Fetches all prescriptions for a patient with their medicine items,
- * ordered newest first. Uses JSON_AGG to bundle all items per prescription
- * into a single array so each prescription appears as one object.
- * @param {string} patientId - UUID of the patient (patients.id)
- * @returns {Promise<Array>} Array of prescription objects (empty array if none)
+ * FEATURE: Show patient medicines
+ * LOGIC: Fetch prescription details together with their medicine items.
  */
 async function getPatientPrescriptions(
   patientId
@@ -639,14 +571,8 @@ async function getPatientPrescriptions(
 }
 
 /**
- * Fetches a patient record by their QR code ID.
- * Used by the doctor-facing QR lookup endpoint.
- *
- * Account information is optional because hospital-assisted
- * patients may not have a linked user account.
- *
- * @param {string} qrCodeId - Patient QR identity
- * @returns {Promise<Object|null>} Patient row or null if not found
+ * FEATURE: Patient QR lookup
+ * LOGIC: Look up a patient using their stored QR identity.
  */
 async function getPatientByQrCodeId(
   qrCodeId
@@ -682,10 +608,8 @@ async function getPatientByQrCodeId(
 }
 
 /**
- * Fetches all completed laboratory reports for a patient, ordered newest first.
- * Joins with lab_test_requests to get test details, and laboratories for the lab name.
- * @param {string} patientId - UUID of the patient
- * @returns {Promise<Array>} Array of lab report rows (empty array if none)
+ * FEATURE: View laboratory results
+ * LOGIC: Load the patient's completed laboratory reports.
  */
 async function getLabReports(
   patientId
@@ -717,10 +641,8 @@ async function getLabReports(
 }
 
 /**
- * Marks a specific lab report as read by the patient and logs the view time.
- * @param {string} patientId - UUID of the patient
- * @param {string} reportId - UUID of the lab report
- * @returns {Promise<Object|null>} The updated report row or null
+ * FEATURE: Mark report as read
+ * LOGIC: Update only the report belonging to this patient.
  */
 async function markLabReportAsRead(
   patientId,
@@ -745,8 +667,6 @@ async function markLabReportAsRead(
 
 /**
  * Fetches all appointments for a patient, including the doctor's name.
- * @param {string} patientId - UUID of the patient
- * @returns {Promise<Array>} Array of appointment rows
  */
 async function getPatientAppointments(
   patientId
@@ -775,13 +695,8 @@ async function getPatientAppointments(
 }
 
 /**
- * Fetches a patient record by their NIC.
- *
- * Account information is optional because hospital-assisted
- * patients may not have a linked user account.
- *
- * @param {string} nic - Patient NIC number
- * @returns {Promise<Object|null>} Patient row or null if not found
+ * FEATURE: Fallback patient lookup
+ * LOGIC: Find a patient using the supplied NIC when a QR card is unavailable.
  */
 async function getPatientByNic(
   nic
@@ -821,9 +736,6 @@ async function getPatientByNic(
 /**
  * Fetches all active important medical background records for a patient.
  * Emergency-relevant records are ordered first.
- *
- * @param {string} patientId - UUID of the patient
- * @returns {Promise<Array>} Array of active health background rows
  */
 async function getHealthBackgroundByPatientId(
   patientId
@@ -855,14 +767,6 @@ async function getHealthBackgroundByPatientId(
 
 /**
  * Inserts an important medical background record for a patient.
- *
- * @param {string} patientId - UUID of the patient
- * @param {string} backgroundType - Category of the medical background
- * @param {string} title - Short description/title
- * @param {string|null} eventDate - Optional date of event
- * @param {string|null} notes - Optional additional notes
- * @param {boolean} isEmergencyRelevant - Whether emergency staff should see it
- * @returns {Promise<Object>} Newly created health background row
  */
 async function addHealthBackground(
   patientId,
@@ -908,12 +812,8 @@ async function addHealthBackground(
 }
 
 /**
- * Removes an important medical background record from the
- * patient's active profile while preserving historical data.
- *
- * @param {string} patientId - UUID of the patient
- * @param {string} backgroundId - UUID of the background record
- * @returns {Promise<boolean>} True if a row was deactivated
+ * FEATURE: Remove medical background
+ * LOGIC: Mark the record inactive instead of deleting its history.
  */
 async function deleteHealthBackground(
   patientId,
@@ -940,9 +840,6 @@ async function deleteHealthBackground(
 /**
  * Fetches all active family medical history records for a patient.
  * Emergency-relevant records are ordered first.
- *
- * @param {string} patientId - UUID of the patient
- * @returns {Promise<Array>} Array of active family history rows
  */
 async function getFamilyHistoryByPatientId(
   patientId
@@ -972,13 +869,6 @@ async function getFamilyHistoryByPatientId(
 
 /**
  * Inserts a family medical history record for a patient.
- *
- * @param {string} patientId - UUID of the patient
- * @param {string} relation - Relationship of the affected family member
- * @param {string} condition - Medical condition or relevant family history
- * @param {string|null} notes - Optional additional notes
- * @param {boolean} isEmergencyRelevant - Whether emergency staff should see it
- * @returns {Promise<Object>} Newly created family history row
  */
 async function addFamilyHistory(
   patientId,
@@ -1022,12 +912,8 @@ async function addFamilyHistory(
 }
 
 /**
- * Removes a family medical history record from the patient's
- * active profile while preserving historical data.
- *
- * @param {string} patientId - UUID of the patient
- * @param {string} familyHistoryId - UUID of the family history record
- * @returns {Promise<boolean>} True if a row was deactivated
+ * FEATURE: Remove family history
+ * LOGIC: Mark the record inactive instead of deleting its history.
  */
 async function deleteFamilyHistory(
   patientId,

@@ -1,9 +1,8 @@
 /**
- * @file consent.service.js
- * @module Patient
- * @desc Own-patient privacy settings and consultation-bound, hashed-OTP consent.
- * @author Wasana Karunanayaka (S/21/081)
- * Stage 4A transaction/validation changes: Codex Review Assistant.
+ * @file    consent.service.js
+ * @module  Patient
+ * @desc    Checks patient consent and controls temporary doctor access to private records.
+ * @author  Wasana Karunanayaka (S/21/081)
  */
 const bcrypt = require('bcryptjs');
 const consentRepository = require('./consent.repository');
@@ -16,14 +15,12 @@ const OTP_EXPIRY_MINUTES = 10;
 const ACCESS_GRANT_MINUTES = 15;
 const MAX_OTP_ATTEMPTS = 5;
 
-/** @param {string} message Public reason. @param {number} statusCode HTTP status.
- * @returns {Error} Expected service failure, without SQL/provider internals.
- */
+
 const createServiceError = (message, statusCode) => Object.assign(new Error(message), { statusCode });
 
-/** Resolve account ID to doctor profile ID; never substitute one for the other.
- * @param {Object} user Authenticated public identity. @param {Object} db Optional transaction client.
- * @returns {Promise<Object>} Linked doctor, or an authentication/role/profile error.
+/**
+ * FEATURE: Check doctor identity
+ * LOGIC: Find the doctor profile linked to the logged-in account; reject a mismatched profile.
  */
 const resolveDoctorProfile = async (user, db) => {
   if (!user?.id) throw createServiceError('Authentication is required', 401);
@@ -36,8 +33,9 @@ const resolveDoctorProfile = async (user, db) => {
   return doctor;
 };
 
-/** @param {string} patientId Target profile UUID. @param {Object} user Session identity.
- * @param {Object} db Optional transaction client. @returns {Promise<Object>} Owning patient.
+/**
+ * FEATURE: Protect privacy settings
+ * LOGIC: Only the patient who owns the profile can read or change its protected categories.
  */
 const ensurePatientOwnsConsentSettings = async (patientId, user, db) => {
   if (!user?.id) throw createServiceError('Authentication is required', 401);
@@ -49,11 +47,9 @@ const ensurePatientOwnsConsentSettings = async (patientId, user, db) => {
   return patient;
 };
 
-/** Validate both profile assignments and the active consultation before record/grant access.
- * A transaction client also holds an appointment share lock against status transitions.
- * @param {string} patientId Patient profile UUID. @param {string} appointmentId Appointment UUID.
- * @param {Object} user Doctor session. @param {Object} db Optional transaction client.
- * @returns {Promise<Object>} Patient, appointment, doctor and doctorId.
+/**
+ * FEATURE: Confirm active consultation
+ * LOGIC: Doctor, patient and appointment must match and the appointment must be in progress.
  */
 const validateDoctorConsultationContext = async (patientId, appointmentId, user, db) => {
   if (typeof patientId !== 'string' || !patientId || typeof appointmentId !== 'string' || !appointmentId) {
@@ -71,9 +67,9 @@ const validateDoctorConsultationContext = async (patientId, appointmentId, user,
   return { patient, doctor, doctorId: doctor.id, appointment };
 };
 
-/** Validate rather than silently dropping malformed locks. Existing labels remain supported.
- * Clinical keyword classification is separately documented; no diagnosis taxonomy is invented.
- * @param {Array<string>} categories Complete category list. @returns {Array<string>} Trimmed unique labels.
+/**
+ * FEATURE: Check protected category names
+ * LOGIC: Reject invalid lists, limit them to 50 entries and remove duplicate names.
  */
 const normalizeCategories = categories => {
   if (!Array.isArray(categories) || categories.length > 50 || categories.some(
@@ -83,25 +79,21 @@ const normalizeCategories = categories => {
   return [...new Set(categories.map(item => item.trim()))];
 };
 
-/** @param {string} patientId Patient profile. @param {Object} db Optional transaction.
- * @returns {Promise<Array<string>>} Valid stored locks. Malformed stored settings fail closed.
- */
+
 const getLockedCategories = async (patientId, db) => {
   const settings = await consentRepository.getConsentSettings(patientId, db);
   return normalizeCategories(settings?.locked_categories);
 };
 
-/** @param {string} patientId Target profile. @param {Object} user Owning session.
- * @returns {Promise<Object>} Validated locked_categories; does not authenticate a doctor.
- */
+
 const getPatientConsentSettings = async (patientId, user) => {
   await ensurePatientOwnsConsentSettings(patientId, user);
   return { locked_categories: await getLockedCategories(patientId) };
 };
 
-/** Serialize settings with OTP/grant changes without changing existing revocation policy.
- * @param {string} patientId Profile UUID. @param {Array<string>} categories Full replacement.
- * @param {Object} user Owner session. @returns {Promise<Object>} Acknowledged stored settings.
+/**
+ * FEATURE: Change patient privacy locks
+ * LOGIC: Check the owner, validate categories and save the update inside a patient transaction.
  */
 const updatePatientConsentSettings = async (patientId, categories, user) => {
   await ensurePatientOwnsConsentSettings(patientId, user);
@@ -112,11 +104,9 @@ const updatePatientConsentSettings = async (patientId, categories, user) => {
   });
 };
 
-/** Create a replacement request atomically, then submit email after releasing SQL locks.
- * Provider acknowledgement is not confirmed delivery; failed/throwing submission invalidates
- * only this request ID and cannot invalidate a newer replacement. Out-of-order emails remain possible.
- * @param {string} patientId Patient. @param {string} appointmentId Consultation.
- * @param {Object} user Doctor session. @returns {Promise<Object>} Request or existing grant metadata, never the OTP/hash.
+/**
+ * FEATURE: Request temporary doctor access
+ * LOGIC: During an active consultation, generate a 10-minute code, store its hash and email it to the patient. An existing valid grant is reused.
  */
 const requestConsentAccessOtp = async (patientId, appointmentId, user) => {
   // Validate role/context before taking a patient mutation lock or generating a code.
@@ -149,11 +139,9 @@ const requestConsentAccessOtp = async (patientId, appointmentId, user) => {
     lockedCategories: result.request.requested_categories, expiresAt: result.request.expires_at, delivery: 'email' };
 };
 
-/** Commit attempt counters even when an expected verification error must be returned.
- * Serialize read/compare/consume/revoke/grant; an unexpected write failure rolls everything back.
- * @param {string} patientId Patient. @param {string} appointmentId Appointment.
- * @param {string} otpCode Six-digit string. @param {Object} user Doctor.
- * @returns {Promise<Object>} Grant acknowledgement only after commit.
+/**
+ * FEATURE: Verify temporary consent
+ * LOGIC: Check the six-digit code; allow at most 5 wrong attempts. A valid code is used once and grants 15 minutes of access.
  */
 const verifyConsentAccessOtp = async (patientId, appointmentId, otpCode, user) => {
   if (typeof otpCode !== 'string' || !/^\d{6}$/.test(otpCode.trim())) {
@@ -189,8 +177,9 @@ const verifyConsentAccessOtp = async (patientId, appointmentId, otpCode, user) =
   return result;
 };
 
-/** @param {string} patientId Patient. @param {string} appointmentId Active appointment.
- * @param {Object} user Assigned doctor. @returns {Promise<Object>} Current locks and unexpired/unrevoked grant metadata.
+/**
+ * FEATURE: Check access before viewing records
+ * LOGIC: Require the same active consultation, then look for an unexpired grant to the protected categories.
  */
 const getConsentAccessStatus = async (patientId, appointmentId, user) => {
   const { doctorId } = await validateDoctorConsultationContext(patientId, appointmentId, user);
@@ -200,9 +189,9 @@ const getConsentAccessStatus = async (patientId, appointmentId, user) => {
     grantedCategories: grant?.granted_categories || [], expiresAt: grant?.expires_at || null };
 };
 
-/** @param {string} patientId Patient. @param {string} appointmentId Consultation.
- * @param {Object} user Doctor. @param {string} category Lock label.
- * @returns {Promise<boolean>} False on invalid context; checks assignment as well as grant expiry/revocation.
+/**
+ * FEATURE: Check one protected category
+ * LOGIC: Allow it only if the current grant includes that category; any failed check denies access.
  */
 const hasTemporaryCategoryAccess = async (patientId, appointmentId, user, category) => {
   if (typeof category !== 'string' || !category.trim()) return false;

@@ -1,9 +1,7 @@
 /**
  * @file    consent.repository.js
  * @module  Patient
- * @desc    Database queries for Patient Privacy & Consent Controls.
- *          Handles patient privacy settings, temporary OTP access
- *          requests, and short-lived doctor access grants.
+ * @desc    Stores patient privacy settings, consent codes and temporary access records.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -11,16 +9,11 @@ const {
   pool
 } = require('../../config/db');
 
-/* =========================================================
-   PATIENT CONSENT SETTINGS
-========================================================= */
+
 
 /**
- * Retrieves a patient's consent settings.
- *
- * @param {string} patientId
- * @param {Object} db Optional pool/transaction client; mutations share the patient lock.
- * @returns {Promise<Object>}
+ * FEATURE: Read privacy locks
+ * LOGIC: Return the protected categories; use an empty list when no settings exist.
  */
 const getConsentSettings = async (
   patientId,
@@ -49,12 +42,8 @@ const getConsentSettings = async (
 };
 
 /**
- * Updates or creates a patient's consent settings.
- *
- * @param {string} patientId
- * @param {Array<string>} lockedCategories
- * @param {Object} db Optional pool/transaction client; mutations share the patient lock.
- * @returns {Promise<Object>}
+ * FEATURE: Save privacy locks
+ * LOGIC: Insert settings or update the existing row for this patient.
  */
 const upsertConsentSettings = async (
   patientId,
@@ -92,21 +81,11 @@ const upsertConsentSettings = async (
   return result.rows[0];
 };
 
-/* =========================================================
-   CONSENT ACCESS REQUESTS
-========================================================= */
+
 
 /**
- * Invalidates any unused OTP requests for the same
- * doctor, patient, and appointment.
- *
- * A new OTP request should replace older pending OTPs.
- *
- * @param {string} patientId
- * @param {string} doctorId
- * @param {string} appointmentId
- * @param {Object} db Optional pool/transaction client; mutations share the patient lock.
- * @returns {Promise<number>} Number of invalidated requests
+ * FEATURE: Replace old consent codes
+ * LOGIC: Make earlier unused codes invalid for the same doctor, patient and appointment.
  */
 const invalidateActiveAccessRequests =
   async (
@@ -138,13 +117,8 @@ const invalidateActiveAccessRequests =
   };
 
 /**
- * Creates a new OTP consent-access request.
- *
- * Only the hashed OTP is stored.
- *
- * @param {Object} requestData
- * @param {Object} db Optional pool/transaction client; mutations share the patient lock.
- * @returns {Promise<Object>}
+ * FEATURE: Store consent request
+ * LOGIC: Save the hashed code, protected categories and expiry without storing the plain code.
  */
 const createConsentAccessRequest =
   async ({
@@ -202,17 +176,8 @@ const createConsentAccessRequest =
   };
 
 /**
- * Retrieves the latest currently usable OTP request
- * for a specific doctor/patient/appointment context.
- *
- * The OTP hash is intentionally returned because the
- * service layer needs it for bcrypt verification.
- *
- * @param {string} patientId
- * @param {string} doctorId
- * @param {string} appointmentId
- * @param {Object} db Optional pool/transaction client; mutations share the patient lock.
- * @returns {Promise<Object|null>}
+ * FEATURE: Find usable consent code
+ * LOGIC: Only return an unused, unexpired, non-invalidated request for this exact consultation.
  */
 const getActiveConsentAccessRequest =
   async (
@@ -258,11 +223,8 @@ const getActiveConsentAccessRequest =
   };
 
 /**
- * Increments the failed verification attempt count.
- *
- * @param {string} requestId
- * @param {Object} db Optional pool/transaction client; mutations share the patient lock.
- * @returns {Promise<Object|null>}
+ * FEATURE: Count wrong consent codes
+ * LOGIC: Increase failed attempts only while the code is still valid and below the limit.
  */
 const incrementConsentAccessAttempt =
   async (
@@ -298,11 +260,8 @@ const incrementConsentAccessAttempt =
   };
 
 /**
- * Marks an OTP request as successfully used.
- *
- * @param {string} requestId
- * @param {Object} db Optional pool/transaction client; mutations share the patient lock.
- * @returns {Promise<Object|null>}
+ * FEATURE: Prevent code reuse
+ * LOGIC: Mark the code used only if it is still valid and has attempts remaining.
  */
 const markConsentAccessRequestUsed =
   async (
@@ -334,14 +293,8 @@ const markConsentAccessRequestUsed =
   };
 
 /**
- * Invalidates a specific OTP request.
- *
- * Used when the maximum number of failed verification
- * attempts has been reached.
- *
- * @param {string} requestId
- * @param {Object} db Optional pool/transaction client; mutations share the patient lock.
- * @returns {Promise<Object|null>}
+ * FEATURE: Disable consent code
+ * LOGIC: Prevent a failed or replaced request from being used.
  */
 const invalidateConsentAccessRequest =
   async (
@@ -370,17 +323,11 @@ const invalidateConsentAccessRequest =
     );
   };
 
-/* =========================================================
-   TEMPORARY CONSENT ACCESS GRANTS
-========================================================= */
+
 
 /**
- * Creates a temporary consent access grant after
- * successful OTP verification.
- *
- * @param {Object} grantData
- * @param {Object} db Optional pool/transaction client; mutations share the patient lock.
- * @returns {Promise<Object>}
+ * FEATURE: Record temporary access
+ * LOGIC: Store which doctor, patient, appointment and categories the permission applies to, with an expiry.
  */
 const createConsentAccessGrant =
   async ({
@@ -438,14 +385,8 @@ const createConsentAccessGrant =
   };
 
 /**
- * Retrieves the latest active temporary access grant
- * for the doctor/patient/appointment combination.
- *
- * @param {string} patientId
- * @param {string} doctorId
- * @param {string} appointmentId
- * @param {Object} db Optional pool/transaction client; mutations share the patient lock.
- * @returns {Promise<Object|null>}
+ * FEATURE: Check temporary access
+ * LOGIC: Return permission only if it belongs to this consultation and has not expired or been revoked.
  */
 const getActiveConsentAccessGrant =
   async (
@@ -489,14 +430,8 @@ const getActiveConsentAccessGrant =
   };
 
 /**
- * Revokes active temporary access grants for the same
- * patient, doctor, and appointment.
- *
- * @param {string} patientId
- * @param {string} doctorId
- * @param {string} appointmentId
- * @param {Object} db Optional pool/transaction client; mutations share the patient lock.
- * @returns {Promise<number>}
+ * FEATURE: Replace existing permission
+ * LOGIC: Revoke earlier access grants for the same doctor, patient and appointment.
  */
 const revokeActiveConsentAccessGrants =
   async (
@@ -526,10 +461,9 @@ const revokeActiveConsentAccessGrants =
     return result.rowCount;
   };
 
-/** Serialize consent mutations on one patient row and commit atomically.
- * @param {string} patientId Existing patient profile UUID (also covers no settings row yet).
- * @param {Function} work Receives the sole transaction client; providers run after commit.
- * @returns {Promise<*>} Work result. Failure rolls back and always releases the client.
+/**
+ * FEATURE: Handle simultaneous consent requests
+ * LOGIC: Lock this patient row, perform related changes together, then commit or roll back as one operation.
  */
 const withPatientTransaction = async (patientId, work) => {
   const client = await pool.connect();

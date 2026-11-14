@@ -1,14 +1,12 @@
 /**
  * @file    patient.service.js
  * @module  Patient
- * @desc    Business logic for patient profile management.
- *          Sits between the controller and the repository.
- *          Doctor privacy and consent enforcement added in CARE4U-284 (Epic 8.12).
+ * @desc    Checks patient data and applies rules before saving or returning it.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
 const patientRepository = require('./patient.repository');
-const consentRepository = require('./consent.repository'); // Import for Epic 8.12 Privacy Checks
+const consentRepository = require('./consent.repository');
 const consentService = require('./consent.service');
 
 
@@ -45,8 +43,6 @@ const VALID_FAMILY_RELATIONS = [
 
 /**
  * Retrieves a patient's profile after route-level ownership authorization.
- * @param {string} id Patient profile UUID, not users.id.
- * @returns {Promise<Object>} Selected public profile/account fields or 404.
  */
 const getPatientProfile = async (id) => {
   const patient =
@@ -66,9 +62,8 @@ const getPatientProfile = async (id) => {
 };
 
 /**
- * Updates only validated profile fields; rejects blank names and values beyond supplied schema lengths.
- * @param {string} id Owned patient profile UUID. @param {Object} data JSON patch; identity/role fields ignored.
- * @returns {Promise<Object>} Persisted row. Emergency fields accept empty strings to clear them.
+ * FEATURE: Edit profile safely
+ * LOGIC: Check the patient exists and allow only named fields with valid lengths and blood groups.
  */
 const updatePatientProfile = async (
   id,
@@ -109,7 +104,8 @@ const updatePatientProfile = async (
 };
 
 /**
- * Uploads a new profile photo for a patient to Supabase Storage.
+ * FEATURE: Upload patient photo
+ * LOGIC: Require a file and storage connection, upload using the patient ID, then save the new photo URL.
  */
 const uploadPatientPhoto = async (
   patientId,
@@ -195,19 +191,8 @@ const uploadPatientPhoto = async (
 };
 
 /**
- * Retrieves all medical records for a patient.
- *
- * Patient owners always see their complete history.
- *
- * Doctors are subject to the patient's privacy locks.
- * During an active consultation, a valid temporary
- * OTP consent grant can unlock protected categories
- * for that specific doctor/patient/appointment context.
- *
- * @param {string} patientId
- * @param {Object} requestingUser
- * @param {string|null} appointmentId
- * @returns {Promise<Array>}
+ * FEATURE: Protect private medical records
+ * LOGIC: Patient sees full history. Doctor needs an active consultation; hide records matching locked words unless a valid temporary grant covers every matching category.
  */
 const getMedicalRecords = async (
   patientId,
@@ -245,9 +230,9 @@ const getMedicalRecords = async (
     );
 
   /**
-   * The patient always has access to their
-   * own complete medical history.
-   */
+ * The patient always has access to their
+ * own complete medical history.
+ */
   if (
     requestingUser &&
     requestingUser.role ===
@@ -259,9 +244,9 @@ const getMedicalRecords = async (
   }
 
   /**
-   * Doctors must respect the patient's
-   * configured privacy categories.
-   */
+ * Doctors must respect the patient's
+ * configured privacy categories.
+ */
   if (
     requestingUser &&
     requestingUser.role
@@ -294,9 +279,9 @@ const getMedicalRecords = async (
         .filter(Boolean);
 
     /**
-     * Nothing is locked, so no temporary
-     * access check is necessary.
-     */
+ * Nothing is locked, so no temporary
+ * access check is necessary.
+ */
     if (
       lockedCategories.length ===
       0
@@ -308,13 +293,10 @@ const getMedicalRecords = async (
       [];
 
     /**
-     * Temporary access is consultation-specific.
-     *
-     * If appointmentId is absent, invalid, belongs
-     * to another doctor/patient, is no longer active,
-     * or the grant has expired, access fails closed
-     * and the protected records remain hidden.
-     */
+ * Temporary access is consultation-specific.
+ * If appointmentId is absent, invalid, belongs
+ * to another doctor/patient, is no longer active,
+ */
     if (appointmentId) {
       try {
         const accessStatus =
@@ -352,9 +334,9 @@ const getMedicalRecords = async (
       } catch (accessError) {
 
         /**
-         * Do not expose protected information if
-         * temporary-access validation fails.
-         */
+ * Do not expose protected information if
+ * temporary-access validation fails.
+ */
         console.warn(
           'Temporary consent access check failed:',
           accessError.message
@@ -394,9 +376,9 @@ const getMedicalRecords = async (
           );
 
         /**
-         * Record does not belong to any
-         * protected category.
-         */
+ * Record does not belong to any
+ * protected category.
+ */
         if (
           matchedLockedCategories
             .length ===
@@ -406,11 +388,10 @@ const getMedicalRecords = async (
         }
 
         /**
-         * Show a protected record only when
-         * every protected category matched by
-         * that record is included in the
-         * temporary consent grant.
-         */
+ * Show a protected record only when
+ * every protected category matched by
+ * that record is included in the
+ */
         return matchedLockedCategories
           .every(
             (lockedCategory) =>
@@ -450,7 +431,8 @@ const getAllergies = async (
 };
 
 /**
- * Adds a new allergy record for a patient.
+ * FEATURE: Add patient allergy
+ * LOGIC: Require an allergy name and severity of mild, moderate or severe before saving.
  */
 const addAllergy = async (
   patientId,
@@ -513,7 +495,8 @@ const addAllergy = async (
 };
 
 /**
- * Deletes an allergy record belonging to a specific patient.
+ * FEATURE: Remove patient allergy
+ * LOGIC: Check the patient exists and remove only a matching allergy belonging to them.
  */
 const deleteAllergy = async (
   patientId,
@@ -575,7 +558,8 @@ const getConditions = async (
 };
 
 /**
- * Adds a new chronic condition record for a patient.
+ * FEATURE: Record chronic condition
+ * LOGIC: Require a condition name and an existing patient before saving.
  */
 const addCondition = async (
   patientId,
@@ -724,7 +708,8 @@ const getMedicalDevices = async (
 };
 
 /**
- * Adds a medical device or implant to a patient's profile.
+ * FEATURE: Save medical device or implant
+ * LOGIC: Owner only; check name, lengths and date, then save whether it matters in an emergency.
  */
 const addMedicalDevice = async (
   patientId,
@@ -873,8 +858,8 @@ const addMedicalDevice = async (
 };
 
 /**
- * Removes a medical device or implant from a patient's
- * active profile while preserving the historical row.
+ * FEATURE: Remove medical device
+ * LOGIC: Owner only; remove the device from the active profile while preserving its historical row.
  */
 const deleteMedicalDevice = async (
   patientId,
@@ -998,8 +983,8 @@ const getHealthBackground = async (
 };
 
 /**
- * Adds an important medical background record
- * to the authenticated patient's profile.
+ * FEATURE: Record important medical background
+ * LOGIC: Allow only the owner, then check the required information before saving.
  */
 const addHealthBackground = async (
   patientId,
@@ -1162,8 +1147,8 @@ const addHealthBackground = async (
 };
 
 /**
- * Removes an important medical background record from the
- * patient's active profile while preserving historical data.
+ * FEATURE: Remove medical background
+ * LOGIC: Only the owner can remove their record from the active profile.
  */
 const deleteHealthBackground = async (
   patientId,
@@ -1290,8 +1275,8 @@ const getFamilyHistory = async (
 };
 
 /**
- * Adds a family medical history record
- * to the authenticated patient's profile.
+ * FEATURE: Record family medical history
+ * LOGIC: Allow only the owner and validate the relative and health details before saving.
  */
 const addFamilyHistory = async (
   patientId,
@@ -1402,8 +1387,8 @@ const addFamilyHistory = async (
 };
 
 /**
- * Removes a family medical history record from the
- * patient's active profile while preserving historical data.
+ * FEATURE: Remove family medical history
+ * LOGIC: Only the owner can remove their record from the active profile.
  */
 const deleteFamilyHistory = async (
   patientId,
@@ -1486,7 +1471,8 @@ const getVaccinations = async (
 };
 
 /**
- * Adds a new vaccination record for a patient.
+ * FEATURE: Add vaccination
+ * LOGIC: Require a vaccine name and administration date before saving.
  */
 const addVaccination = async (
   patientId,
@@ -1533,8 +1519,8 @@ const addVaccination = async (
 };
 
 /**
- * Adds MULTIPLE vaccination records for a patient (Bulk Insert).
- * Loops over the array and relies on the existing addVaccination repository method.
+ * FEATURE: Save multiple vaccinations
+ * LOGIC: Skip rows missing a vaccine name or date; insert the remaining rows together as concurrent requests, not one database transaction.
  */
 const addBulkVaccinations = async (
   patientId,
@@ -1671,7 +1657,8 @@ const getPatientPrescriptions = async (
 };
 
 /**
- * Retrieves a patient profile using their QR code ID, including conditions.
+ * FEATURE: Look up patient by QR code
+ * LOGIC: Find the matching patient and include their chronic conditions.
  */
 const getPatientByQrCode = async (
   qrCodeId
@@ -1704,12 +1691,8 @@ const getPatientByQrCode = async (
 };
 
 /**
- * Retrieves a patient profile using their NIC.
- * Used by pharmacy staff as a fallback lookup method
- * when a patient QR code is unavailable.
- *
- * @param {string} nic - Patient NIC number
- * @returns {Promise<Object>} Patient profile
+ * FEATURE: Look up patient by NIC
+ * LOGIC: Reject a blank NIC and return the matching patient or a not-found error.
  */
 const getPatientByNic = async (
   nic
@@ -1746,15 +1729,15 @@ const getPatientByNic = async (
 };
 
 /**
- * Uses AI to generate a highly precise clinical summary of a patient's medical history.
- * EPIC 8.12: Now respects privacy locks by passing the requesting user to getMedicalRecords.
+ * FEATURE: Summarize medical history with AI
+ * LOGIC: Start from the records visible to this user, format history and condition details, then ask AI for a brief summary.
  */
 const getPatientHistorySummary = async (
   patientId,
   requestingUser,
   appointmentId = null
 ) => {
-  // Pass the requestingUser down! The AI will now only summarize ALLOWED records.
+  // Pass the requesting user so access checks can be applied to medical records.
   const records =
     await getMedicalRecords(
       patientId,
@@ -1859,8 +1842,8 @@ const getPatientHistorySummary = async (
 };
 
 /**
- * Extracts multiple vaccination details from an uploaded CHDR image using AI Vision.
- * Instructs the AI to return strictly formatted JSON array.
+ * FEATURE: Read vaccination card image
+ * LOGIC: Ask AI to extract administered vaccines only; remove code fences and parse its answer as JSON or report a scan failure.
  */
 const extractVaccinationDataFromImage = async (
   file
@@ -1910,7 +1893,7 @@ const extractVaccinationDataFromImage = async (
         file.mimetype
       );
     
-    // Clean the response just in case Gemini stubbornly adds markdown fences despite our instructions
+    // Remove any code fences before reading the AI response as JSON.
     const cleanedText =
       aiResponseText
         .replace(
@@ -1959,8 +1942,6 @@ const extractVaccinationDataFromImage = async (
 
 /**
  * Retrieves all completed laboratory reports for a patient.
- * @param {string} patientId - UUID of the patient
- * @returns {Promise<Array>}
  */
 const getLabReports = async (
   patientId
@@ -1987,10 +1968,8 @@ const getLabReports = async (
 };
 
 /**
- * Marks a lab report as read.
- * @param {string} patientId - UUID of the patient
- * @param {string} reportId - UUID of the lab report
- * @returns {Promise<Object>}
+ * FEATURE: Mark lab report as seen
+ * LOGIC: Confirm the patient exists; update only a report belonging to that patient.
  */
 const markLabReportAsRead = async (
   patientId,
@@ -2040,12 +2019,8 @@ const getPatientAppointments = async (
 };
 
 /**
- * Generates a safe, non-diagnostic AI response for the patient chat assistant.
- * Incorporates strict system guardrails against medical diagnosis.
- * @param {string} patientId - UUID of the patient
- * @param {string} message - The user's input message
- * @param {string} language - 'English' or 'Sinhala'
- * @returns {Promise<Object>}
+ * FEATURE: Patient AI health guidance
+ * LOGIC: Check the patient exists and prompt AI for general advice and app help, not diagnoses or prescriptions.
  */
 const generatePatientChatResponse = async (
   patientId,
@@ -2095,8 +2070,8 @@ const generatePatientChatResponse = async (
 };
 
 /**
- * Ensures that patient safety information is being read
- * either by the owning patient or by an authenticated doctor.
+ * FEATURE: Protect safety information
+ * LOGIC: Allow the owning patient or a logged-in doctor; reject other users.
  */
 const ensureCanReadPatientSafetyData = (
   patientId,

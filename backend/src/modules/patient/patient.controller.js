@@ -1,17 +1,15 @@
 /**
  * @file    patient.controller.js
  * @module  Patient
- * @desc    HTTP request handlers for the patient module.
+ * @desc    Handles patient API requests, responses and audit records.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
 const patientService = require('./patient.service');
 
 /**
- * Limits pharmacy lookup responses to identity and dispensing-safety fields.
- *
- * @param {Object} patient - Full patient lookup result
- * @returns {Object} Pharmacy-safe patient summary
+ * FEATURE: Limit pharmacy lookup details
+ * LOGIC: Return a smaller identity and dispensing-safety summary instead of the full patient record.
  */
 const getPharmacyPatientSummary = (patient) => ({
   id: patient.id,
@@ -26,9 +24,8 @@ const getPharmacyPatientSummary = (patient) => ({
 const { logAudit } = require('../../middleware/auditLog');
 const { generateAIResponse } = require('../../utils/ai.util');
 
-/** Read the guarded patient profile; unexpected SQL failures stay private.
- * @param {Object} req Owned profile params and session. @param {Object} res Express response.
- * @returns {Promise<void>} Acknowledged profile or public error.
+/**
+ * Read the guarded patient profile; unexpected SQL failures stay private.
  */
 const getPatientController = async (req, res) => {
   try {
@@ -47,9 +44,9 @@ const getPatientController = async (req, res) => {
   }
 };
 
-/** Save only service-validated editable fields after the ownership middleware.
- * @param {Object} req Target profile and JSON patch. @param {Object} res Express response.
- * @returns {Promise<void>} Persisted profile acknowledgement or public error.
+/**
+ * FEATURE: Edit patient profile
+ * LOGIC: Send requested changes to the service, which checks which fields can be updated.
  */
 const updatePatientController = async (req, res) => {
   try {
@@ -68,9 +65,9 @@ const updatePatientController = async (req, res) => {
   }
 };
 
-/** Forward the authenticated identity and appointment context, never a caller-supplied role.
- * @param {Object} req Patient params and optional consultation query. @param {Object} res Response.
- * @returns {Promise<void>} Already-filtered records or denial.
+/**
+ * FEATURE: View medical history
+ * LOGIC: Pass the logged-in user and appointment to the service so doctor privacy checks are applied.
  */
 const getMedicalRecordsController = async (
   req,
@@ -460,6 +457,10 @@ const deleteVaccinationController = async (req, res) => {
   }
 };
 
+/**
+ * FEATURE: Scan vaccination card
+ * LOGIC: Send the uploaded image to the service for AI extraction; the returned records still need user review.
+ */
 const extractVaccinationDataController = async (req, res) => {
   try {
     const extractedDataArray =
@@ -505,6 +506,10 @@ const getPatientPrescriptionsController = async (req, res) => {
   }
 };
 
+/**
+ * FEATURE: Pharmacy scans patient QR card
+ * LOGIC: Require confirmation flags for staff verification and patient consent, then return only active, unexpired prescriptions and audit the lookup.
+ */
 const getPharmacyPrescriptionsByQrController = async (req, res) => {
   try {
     if (req.body?.staffVerified !== true || req.body?.patientConsented !== true) {
@@ -548,6 +553,10 @@ const getPharmacyPrescriptionsByQrController = async (req, res) => {
   }
 };
 
+/**
+ * FEATURE: Find patient by QR code
+ * LOGIC: Look up the patient; pharmacists receive a smaller summary than doctors.
+ */
 const getPatientByQrCodeController = async (req, res) => {
   try {
     const { qrCodeId } = req.params;
@@ -574,13 +583,8 @@ const getPatientByQrCodeController = async (req, res) => {
 };
 
 /**
- * Handles GET /api/patients/nic/:nic
- * Retrieves a patient profile using their NIC.
- * Intended for pharmacy staff fallback lookup when
- * a patient QR code is unavailable.
- *
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
+ * FEATURE: Find patient without a QR card
+ * LOGIC: Look up by NIC; pharmacists receive a restricted patient summary.
  */
 const getPatientByNicController = async (req, res) => {
   try {
@@ -617,6 +621,10 @@ const getPatientByNicController = async (req, res) => {
   }
 };
 
+/**
+ * FEATURE: Create AI medical history summary
+ * LOGIC: Pass appointment details to the service so the medical-record privacy filter is applied.
+ */
 const getPatientHistorySummaryController = async (
   req,
   res
@@ -668,6 +676,10 @@ const getPatientHistorySummaryController = async (
   }
 };
 
+/**
+ * FEATURE: Upload profile picture
+ * LOGIC: Pass the uploaded file to the service to save it in storage.
+ */
 const uploadPatientPhotoController = async (req, res) => {
   try {
     const { id } = req.params;
@@ -758,8 +770,8 @@ const getPatientAppointmentsController = async (req, res) => {
 };
 
 /**
- * Context-Aware AI Chat Controller (RAG Architecture)
- * Injects deeply-nested DB data and chat history directly into the prompt!
+ * FEATURE: Patient AI assistant
+ * LOGIC: Handle the patient question and return the AI reply from the service.
  */
 const generatePatientChatController = async (req, res) => {
   try {

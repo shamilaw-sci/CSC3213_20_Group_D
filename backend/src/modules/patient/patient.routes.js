@@ -1,7 +1,7 @@
 /**
  * @file    patient.routes.js
  * @module  Patient
- * @desc    Express route definitions for the patient module.
+ * @desc    Connects patient API addresses to access checks and request handlers.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -61,9 +61,7 @@ const {
   authorizePatientResource
 } = require('../../middleware/patientAccess');
 
-/* =========================================================
-   PATIENT LOOKUP
-========================================================= */
+
 
 /**
  * GET /api/patients/qr/:qrCodeId
@@ -86,10 +84,7 @@ router.post(
 /**
  * GET /api/patients/nic/:nic
  * Staff fallback lookup using patient NIC.
- *
  * Must appear before the generic /:id route.
- * Only authenticated pharmacists and doctors
- * can perform NIC lookup.
  */
 router.get(
   '/nic/:nic',
@@ -106,9 +101,7 @@ router.get(
  */
 router.use(isAuthenticated);
 
-/* =========================================================
-   PATIENT PROFILE
-========================================================= */
+
 
 router.get(
   '/:id',
@@ -129,13 +122,10 @@ router.post(
   uploadPatientPhotoController
 );
 
-/* =========================================================
-   PRIVACY & CONSENT
-========================================================= */
+
 
 /**
  * GET /api/patients/:id/consent
- *
  * Only the authenticated patient may read their
  * own privacy settings.
  */
@@ -149,7 +139,6 @@ router.get(
 
 /**
  * PUT /api/patients/:id/consent
- *
  * Only the authenticated patient may modify their
  * own privacy settings.
  */
@@ -163,7 +152,6 @@ router.put(
 
 /**
  * POST /api/patients/:id/consent/access/request
- *
  * Doctor requests an OTP from the patient during
  * an active consultation.
  */
@@ -176,7 +164,6 @@ router.post(
 
 /**
  * POST /api/patients/:id/consent/access/verify
- *
  * Doctor verifies the OTP supplied by the patient.
  */
 router.post(
@@ -188,7 +175,6 @@ router.post(
 
 /**
  * GET /api/patients/:id/consent/access/status
- *
  * Returns temporary access status for the current
  * doctor consultation.
  */
@@ -199,19 +185,12 @@ router.get(
   consentController.getConsentAccessStatus
 );
 
-/* =========================================================
-   MEDICAL RECORDS
-========================================================= */
+
 
 /**
  * GET /api/patients/:id/medical-records
- *
  * Medical records are available only to authenticated
  * patients and doctors.
- *
- * Doctors may supply appointmentId as a query parameter
- * so temporary OTP consent access can be evaluated for
- * the current consultation.
  */
 router.get(
   '/:id/medical-records',
@@ -224,9 +203,7 @@ router.get(
   getMedicalRecordsController
 );
 
-/* =========================================================
-   ALLERGIES
-========================================================= */
+
 
 router.get(
   '/:id/allergies',
@@ -246,9 +223,7 @@ router.delete(
   deleteAllergyController
 );
 
-/* =========================================================
-   CHRONIC CONDITIONS
-========================================================= */
+
 
 router.get(
   '/:id/conditions',
@@ -268,15 +243,12 @@ router.delete(
   deleteConditionController
 );
 
-/* =========================================================
-   MEDICAL DEVICES
-========================================================= */
+
 
 /**
  * GET /api/patients/:id/medical-devices
  * Retrieves active medical devices and implants.
  * The owning patient and authenticated doctors
- * have read-only access.
  */
 router.get(
   '/:id/medical-devices',
@@ -315,15 +287,12 @@ router.delete(
   deleteMedicalDeviceController
 );
 
-/* =========================================================
-   IMPORTANT MEDICAL BACKGROUND
-========================================================= */
+
 
 /**
  * GET /api/patients/:id/health-background
  * Retrieves active important medical background records.
  * The owning patient and authenticated doctors
- * have read-only access.
  */
 router.get(
   '/:id/health-background',
@@ -362,15 +331,12 @@ router.delete(
   deleteHealthBackgroundController
 );
 
-/* =========================================================
-   FAMILY MEDICAL HISTORY
-========================================================= */
+
 
 /**
  * GET /api/patients/:id/family-history
  * Retrieves active family medical history records.
  * The owning patient and authenticated doctors
- * have read-only access.
  */
 router.get(
   '/:id/family-history',
@@ -409,9 +375,7 @@ router.delete(
   deleteFamilyHistoryController
 );
 
-/* =========================================================
-   VACCINATIONS
-========================================================= */
+
 
 /**
  * AI Scan Route
@@ -451,9 +415,7 @@ router.delete(
   deleteVaccinationController
 );
 
-/* =========================================================
-   PRESCRIPTIONS
-========================================================= */
+
 
 router.get(
   '/:id/prescriptions',
@@ -463,19 +425,12 @@ router.get(
   getPatientPrescriptionsController
 );
 
-/* =========================================================
-   HISTORY SUMMARY
-========================================================= */
+
 
 /**
  * GET /api/patients/:id/summary
- *
  * AI history summaries are available only to
  * authenticated patients and doctors.
- *
- * During a doctor consultation, appointmentId may be
- * supplied so the summary follows the same temporary
- * consent access rules as medical records.
  */
 router.get(
   '/:id/summary',
@@ -488,9 +443,7 @@ router.get(
   getPatientHistorySummaryController
 );
 
-/* =========================================================
-   LAB REPORTS
-========================================================= */
+
 
 router.get(
   '/:id/lab-reports',
@@ -504,9 +457,7 @@ router.put(
   markLabReportAsReadController
 );
 
-/* =========================================================
-   APPOINTMENTS
-========================================================= */
+
 
 router.get(
   '/:id/appointments',
@@ -514,13 +465,15 @@ router.get(
   getPatientAppointmentsController
 );
 
-/* =========================================================
-   PATIENT AI CHAT
-========================================================= */
+
 
 /**
  * Rate limiter for AI Chat.
  * Max 500 requests per minute per IP.
+ */
+/**
+ * FEATURE: Limit AI chat requests
+ * LOGIC: Limit the number of requests from one IP address to avoid repeated automated calls.
  */
 const chatRateLimiter =
   rateLimit({

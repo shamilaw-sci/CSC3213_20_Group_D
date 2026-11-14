@@ -1,8 +1,7 @@
 /**
  * @file    consent.controller.js
  * @module  Patient
- * @desc    HTTP controllers for patient privacy settings and
- *          temporary doctor access to protected medical data.
+ * @desc    Handles requests to view privacy settings and request temporary doctor access.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -13,9 +12,7 @@ const {
   logAudit
 } = require('../../middleware/auditLog');
 
-/* =========================================================
-   HELPERS
-========================================================= */
+
 
 /**
  * Resolves the client IP address used in audit records.
@@ -30,15 +27,11 @@ const getRequestIp = (
   );
 };
 
-/* =========================================================
-   PATIENT PRIVACY SETTINGS
-========================================================= */
+
 
 /**
- * GET /api/patients/:id/consent
- *
- * Retrieves the authenticated patient's own
- * privacy and consent settings.
+ * FEATURE: Patient privacy settings
+ * LOGIC: Return only the logged-in patient's saved privacy categories.
  */
 const getConsent =
   async (
@@ -87,10 +80,8 @@ const getConsent =
   };
 
 /**
- * PUT /api/patients/:id/consent
- *
- * Updates the authenticated patient's own
- * locked medical-information categories.
+ * FEATURE: Change protected categories
+ * LOGIC: Save the patient's selected categories and record the change in the audit log.
  */
 const updateConsent =
   async (
@@ -158,20 +149,11 @@ const updateConsent =
     }
   };
 
-/* =========================================================
-   TEMPORARY DOCTOR CONSENT ACCESS
-========================================================= */
+
 
 /**
- * POST /api/patients/:id/consent/access/request
- *
- * Requests a patient-approved OTP for temporary
- * access to protected medical categories.
- *
- * Body:
- * {
- *   "appointmentId": "..."
- * }
+ * FEATURE: Doctor requests private-record access
+ * LOGIC: Ask the service for a patient consent email during an active consultation; log the request.
  */
 const requestConsentAccess =
   async (
@@ -258,16 +240,8 @@ const requestConsentAccess =
   };
 
 /**
- * POST /api/patients/:id/consent/access/verify
- *
- * Verifies the 6-digit patient consent code and
- * creates a temporary access grant.
- *
- * Body:
- * {
- *   "appointmentId": "...",
- *   "otpCode": "123456"
- * }
+ * FEATURE: Verify patient consent code
+ * LOGIC: Check the code in the service, record successful access or failed attempts, and return the result.
  */
 const verifyConsentAccess =
   async (
@@ -338,12 +312,10 @@ const verifyConsentAccess =
       );
 
       /**
-       * Record failed verification attempts without
-       * recording the submitted OTP itself.
-       *
-       * 400 covers an invalid/incorrect code.
-       * 429 covers the maximum-attempt limit.
-       */
+ * Record failed verification attempts without
+ * recording the submitted OTP itself.
+ * 400 covers an invalid/incorrect code.
+ */
       if (
         error.statusCode === 400 ||
         error.statusCode === 429
@@ -384,13 +356,8 @@ const verifyConsentAccess =
   };
 
 /**
- * GET /api/patients/:id/consent/access/status
- *
- * Returns whether the doctor currently has
- * temporary consent access for this consultation.
- *
- * Query:
- * ?appointmentId=<appointment-uuid>
+ * FEATURE: Check temporary access
+ * LOGIC: Tell the assigned doctor whether a valid consent grant still exists for this consultation.
  */
 const getConsentAccessStatus =
   async (
