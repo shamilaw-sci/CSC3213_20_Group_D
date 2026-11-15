@@ -536,6 +536,7 @@ export default function DoctorSearchScreen({
    * LOGIC: Trim specialty/name and hospital filters; the effect waits 450 ms after a change before requesting.
    * Clearing cancels the waiting timer; requests already sent are not cancelled or ordered here.
    * Failure clears the results and shows Retry; pull-to-refresh uses the current filters.
+   * Hospital is sent as hospitalName; the current backend reads hospital, so that filter is not applied.
    */
   const fetchDoctors =
     useCallback(

@@ -18,7 +18,8 @@ export const getDoctorProfile = async (doctorId) => {
 };
 
 /**
- * Searches for doctors based on specialty and hospital.
+ * Sends the supplied specialty and hospitalName parameters unchanged.
+ * The current backend expects hospital, so the mobile hospitalName filter is ignored.
  */
 export const searchDoctors = async (params) => {
   const response = await api.get('/api/doctors/search', { params });
