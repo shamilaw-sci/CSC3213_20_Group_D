@@ -87,6 +87,9 @@ const capitalise = (
   );
 };
 
+/**
+ * Use the patient’s initials when a profile photo is unavailable; default to PT if unnamed.
+ */
 const getInitials = (
   name
 ) => {
@@ -190,6 +193,7 @@ const PatientQRCardScreen =
           state.user
       );
 
+    // Use the signed-in session profile ID before requesting the QR card; reject an absent patient identity.
     const patientId =
       user?.profile_id ||
       user?.id ||
@@ -290,6 +294,7 @@ const PatientQRCardScreen =
         ]
       );
 
+    // Load the QR card on entry and whenever the authenticated patient ID changes.
     useEffect(
       () => {
         fetchPatient();

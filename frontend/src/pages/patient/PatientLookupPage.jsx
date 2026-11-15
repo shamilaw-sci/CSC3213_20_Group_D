@@ -42,22 +42,34 @@ const formatDate = (iso) => {
   });
 };
 
+/**
+ * Show a readable label or a dash for an absent field.
+ */
 const capitalise = (str) => {
   if (!str) return '—';
   return str.charAt(0).toUpperCase() + str.slice(1);
 };
 
+/**
+ * Treat an absent expiry date as not expired; compare supplied dates with the present time.
+ */
 const isExpired = (expiresAt) => {
   if (!expiresAt) return false;
   return new Date(expiresAt) < new Date();
 };
 
+/**
+ * Calculate the rounded-up number of calendar days left before prescription expiry.
+ */
 const daysRemaining = (expiresAt) => {
   if (!expiresAt) return null;
   const diff = new Date(expiresAt) - new Date();
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
 };
 
+/**
+ * Show the saved patient photo, otherwise generate a safe name-based placeholder image.
+ */
 const getAvatarSrc = (patient) => {
   if (patient?.photo_url) return patient.photo_url;
   // Match the dark brand theme for fallback avatars
@@ -72,6 +84,9 @@ const SEVERITY_STYLES = {
   mild:     { bg: 'bg-green-100',      text: 'text-green-700',   label: 'Mild' },
 };
 
+/**
+ * Highlight allergy priority using the saved severity; default unknown values to mild styling.
+ */
 const SeverityBadge = ({ severity }) => {
   const style = SEVERITY_STYLES[severity?.toLowerCase()] || SEVERITY_STYLES.mild;
   return (
@@ -85,6 +100,9 @@ const SeverityBadge = ({ severity }) => {
 const formatAiText = (text) => {
   if (!text) return null;
 
+  /**
+   * Render citation markers such as ^1 as superscripts inside an AI summary.
+   */
   const renderTextWithSuperscript = (str) => {
     const parts = str.split(/\^(\d+)/);
     return parts.map((part, i) => 
@@ -242,6 +260,9 @@ const PatientLookupPage = () => {
 
   // CARE4U-71: Session Recovery for public route
   useEffect(() => {
+    /**
+     * Attempt to restore a signed-in user for this QR route; a failed request leaves the page unauthenticated.
+     */
     const recoverSession = async () => {
       if (!user) {
         try {
@@ -262,6 +283,7 @@ const PatientLookupPage = () => {
   }, [user, setUser]);
 
   // Gating flag for Doctor Actions (CARE4U-71)
+  // Showing doctor-only buttons is a UI choice; backend permission checks still decide access.
   const isDoctor = user?.role?.toLowerCase() === 'doctor';
 
   // AI Summary States
@@ -272,6 +294,7 @@ const PatientLookupPage = () => {
   // Start Visit State (CARE4U-72)
   const [isStartingVisit, setIsStartingVisit] = useState(false);
 
+  // Look up the QR reference through the API; QR identity alone does not authorize medical-record access.
   const { data: patient, isLoading: patientLoading, error: patientError } = useQuery({
     queryKey: ['patient-qr', qrCodeId],
     queryFn: () => getPatientByQrCode(qrCodeId),
@@ -284,6 +307,7 @@ const PatientLookupPage = () => {
     enabled: !!patient?.id,
   });
 
+  // Clinical records may be denied unless the backend receives the required consultation context.
   const { data: records = [], isLoading: recordsLoading } = useQuery({
     queryKey: ['medical-records', patient?.id],
     // The role argument is retained for compatibility; backend access needs an active appointment ID, omitted here.
@@ -307,6 +331,7 @@ const PatientLookupPage = () => {
     return 0;
   });
 
+  // Exclude completed and expired prescriptions from the quick list shown on this page.
   const activePrescriptions = prescriptions.filter(
     (p) => !isExpired(p.expires_at) && p.status !== 'completed'
   );

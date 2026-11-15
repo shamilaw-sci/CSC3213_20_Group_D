@@ -660,6 +660,7 @@ const MedicalRecordsPage = () => {
     'all'
   );
 
+  // Fetch only when a patient profile ID is available; the backend checks record ownership.
   const {
     data:
       records = [],
@@ -683,6 +684,7 @@ const MedicalRecordsPage = () => {
 
   /* DERIVED RECORD DATA */
 
+  // Use a copied array before sorting so the cached API result is not modified.
   const sortedRecords =
     useMemo(
       () =>
@@ -705,6 +707,9 @@ const MedicalRecordsPage = () => {
       ]
     );
 
+  /**
+   * Apply the selected record-type filter to the newest-first list; filtering is display-only.
+   */
   const filteredRecords =
     useMemo(
       () => {
@@ -727,6 +732,9 @@ const MedicalRecordsPage = () => {
       ]
     );
 
+  /**
+   * Count consultation records from all loaded records, not just the current filter.
+   */
   const consultationCount =
     useMemo(
       () =>
@@ -740,6 +748,9 @@ const MedicalRecordsPage = () => {
       ]
     );
 
+  /**
+   * Count records flagged for follow-up so the summary does not depend on the selected tab.
+   */
   const followUpCount =
     useMemo(
       () =>
@@ -754,6 +765,9 @@ const MedicalRecordsPage = () => {
       ]
     );
 
+  /**
+   * Count confidentiality flags for display; these badges do not grant record access.
+   */
   const confidentialCount =
     useMemo(
       () =>
@@ -770,6 +784,7 @@ const MedicalRecordsPage = () => {
 
   /* LOADING */
 
+  // Missing patient identity shows an error instead of requesting another patient’s records.
   if (!patientId) return <Alert type="error" message="Your patient profile is unavailable. Please sign in again." />;
 
   if (

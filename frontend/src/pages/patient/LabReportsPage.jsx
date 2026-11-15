@@ -194,6 +194,9 @@ const getFileMeta = (
 
 
 
+/**
+ * Display one laboratory summary metric; numbers are computed from loaded reports.
+ */
 const SummaryCard = ({
   icon: Icon,
   label,
@@ -289,6 +292,9 @@ const SummaryCard = ({
 
 
 
+/**
+ * Distinguish reports already viewed from newly available results on each card.
+ */
 const ReadBadge = ({
   isRead,
 }) => {
@@ -363,6 +369,9 @@ const ReadBadge = ({
 
 
 
+/**
+ * Show the test details, status and report-view action for a single laboratory result.
+ */
 const LabReportCard = ({
   report,
   onOpen,
@@ -862,6 +871,9 @@ const LabReportCard = ({
 
 
 
+/**
+ * Preview a report image in a modal and allow the user to close it without changing the report.
+ */
 const ImageReportViewer = ({
   report,
   onClose,
@@ -1140,6 +1152,7 @@ const LabReportsPage = () => {
         state.user
     );
 
+  // Prefer the patient profile ID from the session; the user ID is only a fallback here.
   const patientId =
     user?.profile_id ||
     user?.id ||
@@ -1155,6 +1168,7 @@ const LabReportsPage = () => {
     null
   );
 
+  // Read reports only when a patient identity is available; ownership is enforced by the API.
   const {
     data:
       reports = [],
@@ -1183,6 +1197,7 @@ const LabReportsPage = () => {
    * LOGIC: Skip already-read reports; after a successful write refresh the shared report query and navbar badge.
    * Failure is logged without closing the report or changing its cached unread flag.
    */
+  // Marking a report as read is a separate API call; opening a document does not itself update the database.
   const markAsRead =
     async (
       report
@@ -1273,6 +1288,9 @@ const LabReportsPage = () => {
 
 
 
+  /**
+   * Show newest reports first using a copied array so cached results remain unchanged.
+   */
   const sortedReports =
     useMemo(
       () =>
@@ -1295,6 +1313,9 @@ const LabReportsPage = () => {
       ]
     );
 
+  /**
+   * Count only completed, unread results for the New Results summary.
+   */
   const unreadCount =
     useMemo(
       () =>
@@ -1309,6 +1330,9 @@ const LabReportsPage = () => {
       ]
     );
 
+  /**
+   * Count URLs recognized as image types for the summary card.
+   */
   const imageCount =
     useMemo(
       () =>
@@ -1323,6 +1347,9 @@ const LabReportsPage = () => {
       ]
     );
 
+  /**
+   * Count URLs recognized as PDF documents for the summary card.
+   */
   const pdfCount =
     useMemo(
       () =>

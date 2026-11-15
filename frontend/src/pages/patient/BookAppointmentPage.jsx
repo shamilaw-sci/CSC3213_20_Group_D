@@ -257,6 +257,9 @@ const formatExperience = (
 
 
 
+/**
+ * Use the doctor’s photo when available, falling back to initials if the image fails.
+ */
 const DoctorPhoto = ({
   doctor,
 }) => {
@@ -364,6 +367,9 @@ const DoctorPhoto = ({
 
 
 
+/**
+ * Show the numbered booking step and its short instructions without changing appointment state.
+ */
 const StepHeader = ({
   step,
   title,
@@ -481,6 +487,7 @@ export default function BookAppointmentPage() {
     ''
   );
 
+  // Avoid requesting a doctor or slots for a missing/invalid route ID.
   const isInvalidId =
     !doctorId ||
     doctorId ===
@@ -536,6 +543,9 @@ export default function BookAppointmentPage() {
 
 
 
+  /**
+   * Group returned available times by date; skip slots without a valid date key.
+   */
   const slotGroups =
     useMemo(
       () => {
@@ -575,6 +585,9 @@ export default function BookAppointmentPage() {
       ]
     );
 
+  /**
+   * Build the date selector from dates that actually have returned appointment slots.
+   */
   const availableDates =
     useMemo(
       () =>
@@ -591,6 +604,7 @@ export default function BookAppointmentPage() {
     availableDates[0] ||
     '';
 
+  // Show times only for the chosen date; the backend still validates availability when booking.
   const visibleSlots =
     activeDate
       ? (
@@ -609,6 +623,7 @@ export default function BookAppointmentPage() {
    * If cancellation fails, keep the new booking, show a warning and return to appointments; both can remain active.
    * A failed new booking leaves the old appointment unchanged.
    */
+  // Rescheduling is two requests: create the new booking first, then cancel the old one.
   const bookMutation =
     useMutation({
       mutationFn:

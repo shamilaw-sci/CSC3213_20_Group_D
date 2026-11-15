@@ -28,6 +28,9 @@ import {
 import toast from 'react-hot-toast';
 import api from '../../services/api';
 
+/**
+ * Format patient dates safely; missing or invalid values show Not recorded.
+ */
 const formatDate = (dateStr) => {
   if (!dateStr) return 'Not recorded';
 
@@ -44,6 +47,9 @@ const formatDate = (dateStr) => {
   });
 };
 
+/**
+ * Show the saved snapshot timestamp in a readable local format, or Unavailable.
+ */
 const formatDateTime = (dateStr) => {
   if (!dateStr) return 'Unavailable';
 
@@ -62,6 +68,9 @@ const formatDateTime = (dateStr) => {
   });
 };
 
+/**
+ * Convert stored medical-event type codes to a short label on the emergency card.
+ */
 const formatBackgroundType = (type) => {
   const labels = {
     major_surgery: 'Major Surgery',
@@ -75,6 +84,9 @@ const formatBackgroundType = (type) => {
   return labels[type] || 'Medical Background';
 };
 
+/**
+ * Make family relationship codes readable and handle missing relationships.
+ */
 const formatFamilyRelation = (relation) => {
   if (!relation) return 'Relation not recorded';
 
@@ -86,19 +98,31 @@ const formatFamilyRelation = (relation) => {
     );
 };
 
+/**
+ * Keep optional patient labels readable and show Not recorded when absent.
+ */
 const capitalise = (value) => {
   if (!value) return 'Not recorded';
 
   return value.charAt(0).toUpperCase() + value.slice(1);
 };
 
+/**
+ * Display only the emergency summary returned for the patient in the route.
+ * The server, not this page, checks the five-minute patient-specific access grant.
+ */
 const EmergencySnapshotPage = () => {
+  // Use only the fields supplied by the emergency API (allergies, priority conditions, medicines, devices, history).
   const { patientId } = useParams();
   const navigate = useNavigate();
   const [snapshot, setSnapshot] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    /**
+     * Fetch the patient’s emergency snapshot using the session cookie.
+     * On denied or failed access, show an error; do not display medical data without a successful response.
+     */
     const fetchSnapshot = async () => {
       try {
         const response = await api.get(
@@ -124,6 +148,7 @@ const EmergencySnapshotPage = () => {
       }
     };
 
+    // The snapshot loads when this route is opened or its patient ID changes; this view has no automatic expiry-clear timer.
     fetchSnapshot();
   }, [patientId]);
 
@@ -140,6 +165,7 @@ const EmergencySnapshotPage = () => {
     );
   }
 
+  // Do not show patient details when the API has not returned an authorized snapshot.
   if (!snapshot) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center">

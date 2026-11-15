@@ -803,6 +803,7 @@ export default function DoctorSearchPage() {
     hospital: '',
   });
 
+  // React Query refetches when the submitted specialty or hospital filter changes.
   const {
     data:
       doctors = [],
@@ -858,6 +859,7 @@ export default function DoctorSearchPage() {
       });
     };
 
+  // Use the applied filters, not unsent text, to decide whether the clear-filter control appears.
   const hasActiveFilters =
     Boolean(
       searchParams.specialty ||

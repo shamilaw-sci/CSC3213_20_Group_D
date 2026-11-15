@@ -84,6 +84,10 @@ const usePatientId = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    /**
+     * Confirm the current session is a patient session before using its profile ID.
+     * Do not use a patient ID typed into the page to choose which health records to load.
+     */
     const fetchMe = async () => {
       try {
         const res = await fetch(
@@ -234,6 +238,9 @@ const formatDate = (dateStr) => {
   );
 };
 
+/**
+ * Calculate age from the date of birth, subtracting one until this year’s birthday has passed.
+ */
 const formatAge = (dateStr) => {
   if (!dateStr) return '—';
 
@@ -262,6 +269,9 @@ const formatAge = (dateStr) => {
   return `${age} yrs`;
 };
 
+/**
+ * Keep short profile labels readable and show a dash for missing text.
+ */
 const capitalise = (str) => {
   if (!str) return '—';
 
@@ -271,6 +281,9 @@ const capitalise = (str) => {
   );
 };
 
+/**
+ * Use the uploaded profile photo when present; otherwise display a generated name-based avatar.
+ */
 const getAvatarSrc = (patient) => {
   if (patient?.photo_url) {
     return patient.photo_url;
@@ -281,6 +294,9 @@ const getAvatarSrc = (patient) => {
   )}&background=0D9488&color=fff&size=120&bold=true&rounded=true`;
 };
 
+/**
+ * Map saved medical-event codes to labels shown on the patient screen.
+ */
 const getHealthBackgroundTypeLabel = (
   type
 ) => {
@@ -299,6 +315,9 @@ const getHealthBackgroundTypeLabel = (
 };
 
 
+/**
+ * Show a readable relationship label for family medical history records.
+ */
 const getFamilyRelationLabel = (
   relation
 ) => {
@@ -340,6 +359,9 @@ const SEVERITY_STYLES = {
   },
 };
 
+/**
+ * Choose the matching allergy/condition severity style; use the mild style for unknown values.
+ */
 const SeverityBadge = ({
   severity
 }) => {
@@ -809,6 +831,9 @@ const PatientProfilePage = () => {
 
   // Handle clicking outside dropdowns
   useEffect(() => {
+    /**
+     * Close allergy and vaccine suggestions when the user clicks outside their menus.
+     */
     const handleClickOutside = (
       event
     ) => {
@@ -847,6 +872,9 @@ const PatientProfilePage = () => {
 
   }, []);
 
+  /**
+   * Update the allergy text and offer matching names from the local allergen list.
+   */
   const handleAllergenInputChange = (
     e
   ) => {
@@ -868,6 +896,9 @@ const PatientProfilePage = () => {
     );
   };
 
+  /**
+   * Fill the allergy field with the selected suggestion and close the suggestion list.
+   */
   const handleSelectAllergySuggestion = (
     suggestion
   ) => {
@@ -880,6 +911,9 @@ const PatientProfilePage = () => {
     );
   };
 
+  /**
+   * Add one blank, editable vaccination row; nothing is saved until the form is submitted.
+   */
   const addVaccineRow = () => {
     setBulkVaccines([
       ...bulkVaccines,
@@ -893,6 +927,9 @@ const PatientProfilePage = () => {
     ]);
   };
 
+  /**
+   * Remove the chosen vaccination entry from the unsaved form rows.
+   */
   const removeVaccineRow = (
     id
   ) => {
@@ -904,6 +941,9 @@ const PatientProfilePage = () => {
     );
   };
 
+  /**
+   * Edit only the chosen vaccine row; typing a vaccine name refreshes local suggestions.
+   */
   const updateVaccineRow = (
     id,
     field,
@@ -937,6 +977,7 @@ const PatientProfilePage = () => {
     }
   };
 
+  // Load each health list under the authenticated patient ID; React Query caches lists separately.
   // Queries
   const {
     data: patient,
@@ -1406,6 +1447,7 @@ const PatientProfilePage = () => {
           ),
     });
 
+  // Save medical events independently and reload only that category after the API succeeds.
   const addHealthBackgroundMutation =
     useMutation({
       mutationFn:
@@ -1491,6 +1533,7 @@ const PatientProfilePage = () => {
     });
 
 
+  // Family medical history is stored as its own record; reset its modal only after success.
   const addFamilyHistoryMutation =
     useMutation({
       mutationFn:
@@ -1618,6 +1661,7 @@ const PatientProfilePage = () => {
           ),
     });
 
+  // Delete by saved vaccination ID and refresh the displayed list after a confirmed response.
   const deleteVaccinationMutation =
     useMutation({
       mutationFn:
@@ -1826,6 +1870,9 @@ const handleEditClick = () => {
     );
   };
 
+  /**
+   * Open the hidden profile-photo file picker from the visible upload button.
+   */
   const handlePhotoButtonClick =
     () =>
       photoInputRef.current?.click();
@@ -1868,6 +1915,9 @@ const handleEditClick = () => {
     );
   };
 
+  /**
+   * Open the hidden vaccination-card image picker; scanning itself does not save a record.
+   */
   const handleScanVaccineClick =
     () =>
       scanVaccineInputRef.current?.click();
@@ -2119,6 +2169,9 @@ const handleEditClick = () => {
     );
   };
 
+  /**
+   * Show confirmation for the selected condition before requesting deletion.
+   */
   const promptDeleteCondition = (
     condition
   ) => {
@@ -2131,6 +2184,9 @@ const handleEditClick = () => {
     );
   };
 
+  /**
+   * Remember the chosen implant/device and open its delete-confirmation dialog.
+   */
   const promptDeleteMedicalDevice = (
     device
   ) => {
@@ -2143,6 +2199,9 @@ const handleEditClick = () => {
     );
   };
 
+  /**
+   * Confirm which past medical event is being removed before calling the API.
+   */
   const promptDeleteHealthBackground = (
     background
   ) => {
@@ -2156,6 +2215,9 @@ const handleEditClick = () => {
   };
 
 
+  /**
+   * Open confirmation for the selected family-history entry.
+   */
   const promptDeleteFamilyHistory = (
     familyHistoryRecord
   ) => {
@@ -2168,6 +2230,9 @@ const handleEditClick = () => {
     );
   };
 
+  /**
+   * Open confirmation for the selected vaccination record.
+   */
   const promptDeleteVaccination = (
     vaccination
   ) => {
@@ -2180,6 +2245,9 @@ const handleEditClick = () => {
     );
   };
 
+  /**
+   * Send the saved allergy ID only after confirmation; the mutation updates the list on success.
+   */
   const confirmDeleteAllergy =
     () => {
       if (

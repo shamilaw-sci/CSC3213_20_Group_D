@@ -124,6 +124,7 @@ const HospitalEmergencyPage = () => {
    */
   const fetchAlerts = async (isBackground = false) => {
     try {
+      // Background polling suppresses repeated network-error alerts; manual loads show the failure.
       if (!isBackground) {
         setLoadError('');
       }
@@ -166,6 +167,7 @@ const HospitalEmergencyPage = () => {
     }
   };
 
+  // Refresh active alerts every ten seconds; clear the timer when the dashboard unmounts.
   useEffect(() => {
     fetchAlerts();
 
@@ -192,6 +194,7 @@ const HospitalEmergencyPage = () => {
       return;
     }
 
+    // Disable repeated resolve clicks while the chosen alert is being updated.
     setResolvingId(alertId);
 
     try {
@@ -254,6 +257,7 @@ const HospitalEmergencyPage = () => {
    * @returns {Promise<void>}
    */
   const handleAccessSnapshot = async () => {
+    // Require a nonempty medical reason before recording Break-Glass emergency access.
     const reason =
       accessReason.trim();
 
@@ -298,6 +302,7 @@ const HospitalEmergencyPage = () => {
           ''
         );
 
+        // Open the snapshot only after the backend logs access and saves the temporary session grant.
         navigate(
           `/hospital/emergency/snapshot/${patientId}`
         );
@@ -321,6 +326,9 @@ const HospitalEmergencyPage = () => {
     }
   };
 
+  /**
+   * Count alerts that include both coordinates for the dashboard summary.
+   */
   const locationCount =
     useMemo(
       () =>
@@ -332,6 +340,9 @@ const HospitalEmergencyPage = () => {
       [alerts]
     );
 
+  /**
+   * Count alerts that include an emergency contact phone number.
+   */
   const contactCount =
     useMemo(
       () =>

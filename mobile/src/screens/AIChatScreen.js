@@ -92,6 +92,7 @@ const AIChatScreen = ({
         state.user
     );
 
+  // Use the explicit patient ID or signed-in profile; the backend must still check authorization.
   const activePatientId =
     patientId ||
     user?.profile_id ||
@@ -169,6 +170,7 @@ const AIChatScreen = ({
         return;
       }
 
+      // Send previous on-screen messages as context with the new prompt; it is not a stored diagnosis.
       const currentHistory =
         [
           ...messages,
@@ -269,6 +271,9 @@ const AIChatScreen = ({
 
   /* LANGUAGE */
 
+  /**
+   * Switch future chat requests between English and Sinhala; existing messages are not translated.
+   */
   const toggleLanguage =
     () => {
       setLanguage(
