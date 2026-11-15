@@ -22,6 +22,7 @@ const isPrescriptionExpired = async (prescription) => {
   const now = new Date();
   const expiresAt = new Date(prescription.expires_at);
 
+  // On read, mark an expired prescription in the database before returning it.
   if (expiresAt < now) {
     await prescriptionRepository.updatePrescriptionStatus(
       prescription.id,
@@ -50,6 +51,7 @@ const createPrescription = async (
   items,
   notes
 ) => {
+  // Verify the appointment is in progress and belongs to this exact doctor and patient.
   const appointment =
     await appointmentRepository.getAppointmentById(appointmentId);
 
@@ -67,6 +69,7 @@ const createPrescription = async (
   }
 
   // Step 1: Generate unique QR code value
+  // Generate an identifier for later QR lookup; the QR itself does not contain clinical details.
   const qrCodeValue = generatePrescriptionQR();
 
   // Step 2: Set expiry to 30 days from now
@@ -75,6 +78,7 @@ const createPrescription = async (
   );
 
   // Step 3: Insert prescription into database
+  // This header insert uses the repository pool before item inserts; creation is not one shared transaction.
   const prescription =
     await prescriptionRepository.createPrescription(
       patientId,
@@ -86,6 +90,7 @@ const createPrescription = async (
     );
 
   // Step 4: Insert all medicine items
+  // Medicine rows are inserted separately; a failure here can leave the header already saved.
   const prescriptionItems =
     await prescriptionRepository.createPrescriptionItems(
       prescription.id,
@@ -163,9 +168,11 @@ const dispenseMedicine = async (
     throw error;
   }
 
+  // Use a single database client for the complete dispensing transaction.
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    // Lock the prescription row before checking quantities so concurrent dispensers do not use stale balances.
     if (!await prescriptionRepository.lockPrescription(prescriptionId, client)) {
       await client.query('ROLLBACK');
       return null;
@@ -185,6 +192,7 @@ const dispenseMedicine = async (
   // Step 3: Check and update expiry status before dispensing
   const checkedPrescription = prescription;
 
+  // Check the prescription expiry again inside the dispensing transaction.
   if (
     checkedPrescription.status === 'expired' ||
     new Date(checkedPrescription.expires_at) < new Date()
@@ -221,6 +229,7 @@ const dispenseMedicine = async (
   }
 
   // Step 5: Validate all requested quantities before changing the database
+  // Prevent one medicine item appearing twice in the same dispensing request.
   const requestedIds = new Set();
   for (const dispenseItem of dispenseItems) {
     if (requestedIds.has(dispenseItem.prescriptionItemId)) {
@@ -246,6 +255,7 @@ const dispenseMedicine = async (
       throw error;
     }
 
+    // Reject zero, fractional and negative quantities; dispensing units must be positive integers.
     const quantityDispensed =
       Number(dispenseItem.quantityDispensed);
 
@@ -263,6 +273,7 @@ const dispenseMedicine = async (
     }
 
     // Check cannot over-dispense
+    // Check against the remaining prescribed balance, not just the quantity typed into the form.
     const totalAfterDispense =
       existingItem.quantity_dispensed +
       quantityDispensed;
@@ -287,6 +298,7 @@ const dispenseMedicine = async (
       Number(dispenseItem.quantityDispensed),
       client
     );
+    // The SQL update repeats the balance check in case another request changed the row.
     if (!updatedItem) {
       const error = new Error('Dispensing quantity exceeds the remaining balance');
       error.statusCode = 409;
@@ -302,6 +314,7 @@ const dispenseMedicine = async (
     );
 
   // Step 8: Check if all items are fully dispensed
+  // Set completed only when every item is filled; otherwise retain a partial-fill status if needed.
   const allDispensed =
     updatedPrescription.items.every(
       item =>
@@ -341,9 +354,11 @@ const dispenseMedicine = async (
   );
 
   // Step 11: Return updated prescription
+  // Save all quantity changes, prescription status and dispensing history as one successful action.
   await client.query('COMMIT');
   return updatedPrescription;
   } catch (error) {
+    // Undo the dispensing transaction on failure, leaving stored quantities unchanged.
     await client.query('ROLLBACK');
     throw error;
   } finally {

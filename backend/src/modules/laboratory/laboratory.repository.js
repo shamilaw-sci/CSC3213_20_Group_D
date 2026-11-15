@@ -19,6 +19,7 @@ const { pool } = require('../../config/db');
  * @returns {Promise<Object>} The newly created laboratory row
  */
 const createLaboratory = async (userId, name, licenseNumber, address, phone, availableTests) => {
+  // Bind inserted values as SQL parameters rather than concatenating user input.
   const result = await pool.query(
     `INSERT INTO laboratories (user_id, name, license_number, address, phone, available_tests)
      VALUES ($1, $2, $3, $4, $5, $6)
@@ -123,6 +124,7 @@ const createLabTestRequest = async (laboratoryId, patientId, doctorId, appointme
  * @returns {Promise<Array>} List of test requests with patient info
  */
 const getLabRequestsByLaboratory = async (laboratoryId) => {
+  // Show urgent requests first, then sort remaining requests by newest date.
   const result = await pool.query(
     `SELECT lr.*,
             p.full_name as patient_name,
@@ -195,23 +197,31 @@ const createLabReport = async (labRequestId, laboratoryId, patientId, reportUrl,
   return result.rows[0];
 };
 
+/**
+ * Finalize Laboratory Report: save a report and complete its test request in one transaction.
+ * Lock the request first, reject wrong laboratories and duplicate reports, then commit both changes.
+ */
 const createLabReportAndCompleteRequest = async (
   labRequestId, laboratoryId, reportUrl, findings
 ) => {
   const client = await pool.connect();
   try {
+    // All checks and updates below run on one transaction connection.
     await client.query('BEGIN');
+    // The row lock prevents two concurrent report submissions from finalizing this request together.
     const requestResult = await client.query(
       'SELECT * FROM lab_test_requests WHERE id = $1 FOR UPDATE',
       [labRequestId]
     );
     const request = requestResult.rows[0];
+    // Reject missing requests, wrong laboratories and requests not ready for reporting.
     if (!request || String(request.laboratory_id) !== String(laboratoryId) ||
         !['in_progress', 'completed'].includes(request.status)) {
       const error = new Error('Lab request is not available for report upload');
       error.statusCode = 409;
       throw error;
     }
+    // Recheck for an existing report inside the lock, not only in the service.
     const existing = await client.query(
       'SELECT id FROM lab_reports WHERE lab_request_id = $1',
       [labRequestId]
@@ -221,20 +231,24 @@ const createLabReportAndCompleteRequest = async (
       error.statusCode = 400;
       throw error;
     }
+    // Insert a finalized report containing text findings and an optional URL.
     const reportResult = await client.query(
       `INSERT INTO lab_reports
         (lab_request_id, laboratory_id, patient_id, report_url, findings, is_finalized)
        VALUES ($1, $2, $3, $4, $5, true) RETURNING *`,
       [labRequestId, laboratoryId, request.patient_id, reportUrl || null, findings || null]
     );
+    // Complete the request in the same transaction as the report insert.
     await client.query(
       `UPDATE lab_test_requests SET status = 'completed', updated_at = NOW()
        WHERE id = $1`,
       [labRequestId]
     );
+    // Both the report and completed status become visible together only after commit.
     await client.query('COMMIT');
     return reportResult.rows[0];
   } catch (error) {
+    // Undo both writes if report creation or request completion fails.
     await client.query('ROLLBACK');
     throw error;
   } finally {

@@ -26,6 +26,7 @@ const createPrescription = async (
   expiresAt,
   notes
 ) => {
+  // Use SQL parameters for values so user-supplied text is not inserted into query strings.
   const result = await pool.query(
     `INSERT INTO prescriptions 
       (
@@ -73,6 +74,7 @@ const createPrescriptionItems = async (
 ) => {
   const insertedItems = [];
 
+  // Each medicine is a separate INSERT; the current creation flow does not wrap all rows in one transaction.
   for (const item of items) {
     const result = await pool.query(
       `INSERT INTO prescription_items
@@ -123,6 +125,7 @@ const createPrescriptionItems = async (
  * @returns {Promise<Object|null>} Prescription object with items array, or null if not found
  */
 const getPrescriptionById = async (id, db = pool) => {
+  // The optional database client lets dispensing read within the same locked transaction.
   const prescriptionResult = await db.query(
     `SELECT *
      FROM prescriptions
@@ -162,6 +165,7 @@ const getPrescriptionById = async (id, db = pool) => {
 const getPrescriptionByQrCode = async (
   qrValue
 ) => {
+  // Look up only the matching QR reference before loading its medicine rows.
   const prescriptionResult =
     await pool.query(
       `SELECT *
@@ -204,6 +208,7 @@ const updatePrescriptionStatus = async (
   status,
   db = pool
 ) => {
+  // Update the prescription status using the same transaction client when dispensing.
   const result = await db.query(
     `UPDATE prescriptions
      SET status = $1,
@@ -236,6 +241,7 @@ const updateQuantityDispensed = async (
   quantityDispensed,
   db = pool
 ) => {
+  // The WHERE condition also prevents dispensing beyond the prescribed quantity.
   const result = await db.query(
     `UPDATE prescription_items
      SET quantity_dispensed =
@@ -295,6 +301,10 @@ const recordDispensing = async (
   return result.rows[0];
 };
 
+/**
+ * Dispensing Lock: serialize dispensing requests for the same prescription.
+ * Return false when the prescription row does not exist.
+ */
 const lockPrescription = async (id, db) => {
   const result = await db.query(
     'SELECT id FROM prescriptions WHERE id = $1 FOR UPDATE',

@@ -10,6 +10,7 @@ const laboratoryRepository = require('./laboratory.repository');
 const { pool } = require('../../config/db');
 const bcrypt = require('bcrypt');
 
+// Define allowed next states; completed and cancelled requests cannot be reopened here.
 const VALID_STATUS_TRANSITIONS = {
   pending: ['sample_collected', 'cancelled'],
   sample_collected: ['in_progress', 'cancelled'],
@@ -40,11 +41,13 @@ const registerLaboratory = async (
   availableTests
 ) => {
   // Step 1: Check if license number already exists
+  // Refuse duplicate laboratory license numbers before account creation.
   const existingLicense =
     await laboratoryRepository.getLaboratoryByLicense(
       licenseNumber
     );
 
+  // Only the laboratory assigned to this test request can change its state.
   if (existingLicense) {
     const error = new Error(
       'A laboratory with this license number already exists'
@@ -61,6 +64,7 @@ const registerLaboratory = async (
     [email]
   );
 
+  // A laboratory cannot finalize a test requested from another laboratory.
   if (existingUser.rows.length > 0) {
     const error = new Error(
       'An account with this email already exists'
@@ -70,6 +74,7 @@ const registerLaboratory = async (
   }
 
   // Step 3: Hash the password
+  // Hash the account password before storing it; the new staff account still requires approval.
   const passwordHash =
     await bcrypt.hash(password, 12);
 
@@ -115,6 +120,7 @@ const registerLaboratory = async (
     userResult.rows[0];
 
   // Step 5: Create the laboratory record
+  // The login account and laboratory profile are created in separate database operations.
   const laboratory =
     await laboratoryRepository.createLaboratory(
       newUser.id,
@@ -222,6 +228,7 @@ const updateLabRequestStatus = async (
     'cancelled'
   ];
 
+  // Reject unknown status values before checking which state changes are allowed.
   if (!VALID_STATUSES.includes(status)) {
     const error = new Error(
       `Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}`
@@ -253,6 +260,7 @@ const updateLabRequestStatus = async (
     throw error;
   }
 
+  // Reject invalid state jumps, such as pending directly to completed.
   if (!VALID_STATUS_TRANSITIONS[request.status]?.includes(status)) {
     const error = new Error(
       `Cannot change lab request status from ${request.status} to ${status}`
@@ -307,6 +315,7 @@ const uploadLabReport = async (
     throw error;
   }
 
+  // Reports are accepted only for requests in an allowed late-stage status.
   if (!['in_progress', 'completed'].includes(request.status)) {
     const error = new Error(
       'A report can only be uploaded for a test that is in progress or completed'
@@ -316,6 +325,7 @@ const uploadLabReport = async (
   }
 
   // Step 2: Check if report already exists
+  // Check for a previous report before calling the transaction that checks again under a row lock.
   const existingReport =
     await laboratoryRepository.getLabReportByRequestId(
       labRequestId
@@ -337,6 +347,7 @@ const uploadLabReport = async (
     );
 
   // Step 4: Create the report
+  // Save findings and an optional report URL; this endpoint does not upload a PDF file.
   const report =
     await laboratoryRepository.createLabReportAndCompleteRequest(
       labRequestId,
@@ -345,6 +356,7 @@ const uploadLabReport = async (
       findings
   );
 
+  // Email is attempted after saving; failures are logged and do not undo the finalized report.
   // Step 6: Send email notifications (non-blocking — don't fail if email fails)
   try {
     const {
@@ -367,6 +379,7 @@ const uploadLabReport = async (
         [request.patient_id]
       );
 
+    // Notify the patient email found through the patient account; no doctor email is sent in this block.
     if (
       patientResult.rows.length > 0
     ) {

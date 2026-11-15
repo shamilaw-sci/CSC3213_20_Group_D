@@ -33,6 +33,9 @@ import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import PageHeader from '../../components/common/PageHeader';
 
+/**
+ * Display prescription dates in a readable format; show a dash when no date exists.
+ */
 const formatDate = (iso) => {
   if (!iso) return '-';
 
@@ -43,12 +46,19 @@ const formatDate = (iso) => {
   });
 };
 
+/**
+ * Browser expiry indicator: compare the saved expiry against the current date.
+ * Backend expiry checks are still required when dispensing.
+ */
 const isExpired = (expiresAt) => {
   if (!expiresAt) return false;
 
   return new Date(expiresAt) < new Date();
 };
 
+/**
+ * Status Badge: show expired when the date has passed, otherwise use saved status.
+ */
 const resolveBadgeStatus = (
   status,
   expiresAt
@@ -71,6 +81,7 @@ const MedicineRow = ({
   onQtyChange,
   canDispense,
 }) => {
+  // Each medicine shows the amount still available: prescribed minus previously dispensed.
   const remaining =
     item.quantity_prescribed -
     item.quantity_dispensed;
@@ -224,6 +235,10 @@ const MedicineRow = ({
   );
 };
 
+/**
+ * Prescription Verification page: fetch one QR-matched prescription and manage dispensing.
+ * Main actions: enter quantities, confirm dispensing, cancel, and refresh displayed balances.
+ */
 const PharmacyLookupPage = () => {
   const { qrValue } = useParams();
 
@@ -259,6 +274,7 @@ const PharmacyLookupPage = () => {
    * Loads and verifies the prescription
    * using the QR code supplied in the URL.
    */
+  // Verify the QR reference through the API; avoid retrying an invalid prescription automatically.
   const {
     data: prescriptionData,
     isLoading,
@@ -287,6 +303,7 @@ const PharmacyLookupPage = () => {
     itemId,
     qty
   ) => {
+    // Quantity edits stay local until the pharmacist confirms dispensing.
     setDispenseQtys(
       (prev) => ({
         ...prev,
@@ -307,6 +324,7 @@ const PharmacyLookupPage = () => {
       setSubmitting(true);
 
       try {
+        // Send only rows with a positive quantity, paired with their prescription item IDs.
         const dispenseItems =
           Object.entries(
             dispenseQtys
@@ -325,6 +343,7 @@ const PharmacyLookupPage = () => {
               })
             );
 
+        // Block an empty selection in the UI; the backend validates every requested amount again.
         if (
           dispenseItems.length === 0
         ) {
@@ -337,6 +356,7 @@ const PharmacyLookupPage = () => {
           return;
         }
 
+        // Confirm Dispense sends selected quantities; the server performs locking and balance checks.
         await api.post(
           `/api/prescriptions/${prescription.id}/dispense`,
           {
@@ -344,6 +364,7 @@ const PharmacyLookupPage = () => {
           }
         );
 
+        // Clear the form only after the server confirms a successful dispense.
         setDispenseSuccess(true);
         setDispensing(false);
         setDispenseQtys({});
@@ -352,6 +373,7 @@ const PharmacyLookupPage = () => {
          * Refresh the verified prescription so that
          * the latest quantities and status appear.
          */
+        // Refresh prescription balances after dispensing; cached old quantities must not remain on screen.
         await queryClient.invalidateQueries({
           queryKey: [
             'pharmacy-lookup',
@@ -363,6 +385,7 @@ const PharmacyLookupPage = () => {
          * Dispensing also changes pharmacy dashboard
          * statistics and dispensing history.
          */
+        // Also refresh pharmacy statistics and history after a successful dispense.
         await queryClient.invalidateQueries({
           queryKey: [
             'pharmacy-dashboard'
@@ -381,6 +404,7 @@ const PharmacyLookupPage = () => {
           err
         );
 
+        // Show the server error and leave the form available for correction; always clear loading.
         setDispenseError(
           err.response?.data?.message ||
           'Dispensing failed. Please try again.'
@@ -400,6 +424,7 @@ const PharmacyLookupPage = () => {
     setDispenseError(null);
   };
 
+  // Show a loading state while verifying the QR rather than displaying incomplete prescription data.
   // ── Loading ──
   if (isLoading) {
     return (
@@ -491,6 +516,7 @@ const PharmacyLookupPage = () => {
         item.medicine_name
     );
 
+  // Hide dispensing controls for completed or expired prescriptions; backend is the final authority.
   const canDispense =
     !expired &&
     prescription.status !==

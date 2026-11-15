@@ -11,15 +11,18 @@ const { runExpiryJob }             = require('./src/utils/expiryJob');
 
 const PORT = process.env.PORT || 5000;
 
+// Scheduled jobs run inside this API server process, not in a separate worker.
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 
   // Run appointment reminder job every hour
+  // Check appointment reminders immediately at startup and again every hour.
   sendAppointmentReminders();
   setInterval(sendAppointmentReminders, 60 * 60 * 1000);
   console.log('[ReminderJob] Appointment reminder job scheduled (every 1 hour)');
 
   // Run prescription expiry job every 24 hours
+  // Mark expired prescriptions at startup and again once every 24 hours.
   runExpiryJob();
   setInterval(runExpiryJob, 24 * 60 * 60 * 1000);
   console.log('[ExpiryJob] Prescription expiry job scheduled (every 24 hours)');

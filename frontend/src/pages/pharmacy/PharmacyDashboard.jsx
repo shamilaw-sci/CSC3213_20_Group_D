@@ -101,6 +101,7 @@ const isValidPrescriptionQrValue = (value) => {
     return false;
   }
 
+  // Check the RX- prefix only for quick UI feedback, not as proof that a prescription exists.
   return value
     .trim()
     .toUpperCase()
@@ -145,6 +146,10 @@ const StatCard = ({
   );
 };
 
+/**
+ * Pharmacy Dashboard: load pharmacy-specific statistics and offer quick lookup actions.
+ * QR scan/manual entry navigates to verification; dispensing happens on the prescription page.
+ */
 const PharmacyDashboard = () => {
   const user =
     useAuthStore(
@@ -155,6 +160,7 @@ const PharmacyDashboard = () => {
    * profile_id should contain the linked pharmacy ID.
    * The user ID fallback is kept from the previous implementation.
    */
+  // Prefer the signed-in pharmacy profile ID; the saved user ID is only a fallback.
   const PHARMACY_ID =
     user?.profile_id ||
     user?.id ||
@@ -193,6 +199,7 @@ const PharmacyDashboard = () => {
       PHARMACY_ID
     ],
 
+    // Fetch dashboard information for the authenticated pharmacy profile ID.
     queryFn: async () => {
       const res = await api.get(
         `/api/pharmacies/${PHARMACY_ID}/dashboard`
@@ -201,6 +208,7 @@ const PharmacyDashboard = () => {
       return res.data.data;
     },
 
+    // Do not call the dashboard endpoint before the profile ID becomes available.
     enabled: !!PHARMACY_ID,
   });
 
@@ -235,6 +243,7 @@ const PharmacyDashboard = () => {
       return;
     }
 
+    // QR entry opens the verification page; the API verifies the prescription there.
     navigate(
       `/pharmacy/${encodeURIComponent(
         value
@@ -267,6 +276,7 @@ const PharmacyDashboard = () => {
     }
 
     setQrInput(value);
+    // Close the camera once a valid-looking QR is scanned and navigate to lookup.
     setScannerOpen(false);
 
     navigate(
@@ -295,6 +305,7 @@ const PharmacyDashboard = () => {
     );
   }
 
+  // Provide a retry button if the pharmacy dashboard request fails.
   // ── Error ──
   if (isError) {
     return (

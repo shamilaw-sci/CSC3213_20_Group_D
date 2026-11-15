@@ -19,6 +19,7 @@ const SEVERITY_ORDER = { severe: 3, moderate: 2, mild: 1 };
 const getBaseDrugName = (medicineName) => {
   return medicineName
     .replace(/\(.*?\)/g, '')
+    // Remove numeric strength/dosage before matching a medicine against stored drug names.
     .replace(/\d.*$/, '')
     .replace(/\b(Inhaler|Tablet|Injection|Syrup|Capsule)\b/gi, '')
     .trim();
@@ -39,16 +40,19 @@ const DRUG_ALLERGY_CLASSES = {
  */
 const checkAllergyConflicts = (candidateBaseName, allergies) => {
   const lowerCandidate = candidateBaseName.toLowerCase();
+  // Check both the medicine name and its known drug class (for example, penicillin).
   const classNames = DRUG_ALLERGY_CLASSES[lowerCandidate] || [];
 
   return allergies
     .filter((allergy) => {
       const allergen = (allergy.allergen || '').toLowerCase().trim();
       if (!allergen) return false;
+      // A direct match also catches longer allergy descriptions containing the drug name.
       const directMatch =
         allergen === lowerCandidate ||
         allergen.includes(lowerCandidate) ||
         lowerCandidate.includes(allergen);
+      // Known class relationships can warn even when the allergy uses a different drug name.
       const classMatch = classNames.some((c) => allergen.includes(c));
       return directMatch || classMatch;
     })
@@ -77,6 +81,7 @@ const checkDrugInteractions = (candidateBaseName, activeMedicineNames, interacti
     const a = row.drug_a.toLowerCase();
     const b = row.drug_b.toLowerCase();
     let conflictWith = null;
+    // The reference table may list either drug first, so compare both directions.
     if (a === lowerCandidate && activeBaseNames.includes(b)) conflictWith = row.drug_b;
     else if (b === lowerCandidate && activeBaseNames.includes(a)) conflictWith = row.drug_a;
 
@@ -107,6 +112,7 @@ const checkPrescriptionConflicts = async (patientId, medicineName) => {
 
   const candidateBaseName = getBaseDrugName(medicineName);
 
+  // Read allergies, active medicines and reference interactions together before checking.
   const [allergies, activeMedicines, interactionRows] = await Promise.all([
     interactionRepository.getAllergiesByPatientId(patientId),
     interactionRepository.getActiveMedicinesByPatientId(patientId),
@@ -116,6 +122,7 @@ const checkPrescriptionConflicts = async (patientId, medicineName) => {
   const allergyWarnings = checkAllergyConflicts(candidateBaseName, allergies);
   const interactionWarnings = checkDrugInteractions(candidateBaseName, activeMedicines, interactionRows);
 
+  // Show severe warnings first; warnings assist the doctor and do not automatically reject a prescription.
   return [...allergyWarnings, ...interactionWarnings].sort(
     (x, y) => (SEVERITY_ORDER[y.severity] || 0) - (SEVERITY_ORDER[x.severity] || 0)
   );

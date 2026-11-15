@@ -39,6 +39,9 @@ import Alert from '../../components/common/Alert';
 import PageHeader from '../../components/common/PageHeader';
 import QRScanner from '../../components/common/QRScanner';
 
+/**
+ * Display patient and prescription dates clearly; show a placeholder for missing dates.
+ */
 const formatDate = (iso) => {
   if (!iso) return '—';
 
@@ -65,6 +68,7 @@ const normalizePatientQrValue = (value) => {
     value.trim();
 
   try {
+    // A scanned QR may be a full URL; extract its final path segment before searching.
     const url =
       new URL(trimmedValue);
 
@@ -86,6 +90,10 @@ const normalizePatientQrValue = (value) => {
   }
 };
 
+/**
+ * Patient Lookup page: find a patient by QR or NIC, then show eligible prescriptions.
+ * QR prescription lookup needs staff confirmation and patient consent recorded on this screen.
+ */
 const PatientQRLookupPage = () => {
   const navigate = useNavigate();
 
@@ -126,6 +134,7 @@ const PatientQRLookupPage = () => {
       lookupValue,
     ],
 
+    // Use a different patient lookup endpoint for NIC and QR; encode the supplied identifier.
     queryFn: async () => {
       if (lookupMode === 'nic') {
         const res = await api.get(
@@ -146,6 +155,7 @@ const PatientQRLookupPage = () => {
       return res.data.data;
     },
 
+    // Do not request patient details until staff submits or scans an identifier.
     enabled: !!lookupValue,
     retry: false,
   });
@@ -166,6 +176,7 @@ const PatientQRLookupPage = () => {
       lookupValue,
     ],
 
+    // The prescription endpoint receives staffVerified and patientConsented flags after confirmation.
     queryFn: async () => {
       const res = await api.post(
         `/api/patients/qr/${encodeURIComponent(lookupValue)}/prescriptions`,
@@ -175,6 +186,7 @@ const PatientQRLookupPage = () => {
       return res.data.data;
     },
 
+    // Only QR-mode patient lookup enables the prescription request after confirmation; NIC mode does not.
     enabled:
       !!patientData?.id &&
       consentGiven &&
@@ -199,6 +211,7 @@ const PatientQRLookupPage = () => {
     }
 
     setLookupMode('qr');
+    // A new search resets consent; approval for one patient must not carry to the next.
     setConsentGiven(false);
     setScannerOpen(false);
     setLookupValue(value);
@@ -226,6 +239,7 @@ const PatientQRLookupPage = () => {
 
     setConsentGiven(false);
 
+    // After scanning a valid QR, close the camera and run the same patient lookup.
     setScannerOpen(false);
 
     setLookupValue(value);
@@ -244,6 +258,7 @@ const PatientQRLookupPage = () => {
       return;
     }
 
+    // NIC search can identify a patient, but this screen does not load prescriptions through NIC mode.
     setLookupMode('nic');
 
     setConsentGiven(false);
@@ -262,6 +277,7 @@ const PatientQRLookupPage = () => {
   ) => {
     setLookupMode(mode);
 
+    // Switching modes clears the previous patient result and its confirmation.
     setLookupValue(null);
 
     setConsentGiven(false);
@@ -294,6 +310,8 @@ const PatientQRLookupPage = () => {
    * medicine available for dispensing
    * should appear here.
    */
+  // Show only active or partially filled prescriptions; other statuses stay hidden here.
+  // Confirm Identity is a staff-recorded UI confirmation, not an OTP access grant.
   const activePrescriptions =
     (prescriptions || []).filter(
       (prescription) =>

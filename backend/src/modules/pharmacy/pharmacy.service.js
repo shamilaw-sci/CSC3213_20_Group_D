@@ -31,6 +31,7 @@ const registerPharmacy = async (
   address
 ) => {
   // Step 1: Check if license number already exists
+  // Do not register two pharmacies using the same license number.
   const existingLicense =
     await pharmacyRepository.getPharmacyByLicense(
       licenseNumber
@@ -45,6 +46,7 @@ const registerPharmacy = async (
   }
 
   // Step 2: Check if email already exists in users table
+  // Check for an existing login email before creating the pharmacist account.
   const existingUser = await pool.query(
     `SELECT id
      FROM users
@@ -61,6 +63,7 @@ const registerPharmacy = async (
   }
 
   // Step 3: Hash the password
+  // Store a bcrypt password hash, never the plaintext password.
   const passwordHash = await bcrypt.hash(
     password,
     12
@@ -109,6 +112,7 @@ const registerPharmacy = async (
     ]
   );
 
+  // The pharmacist account starts pending approval; this does not mean the pharmacy is verified.
   const newUser = userResult.rows[0];
 
   // Step 5: Create the pharmacy record linked to that user
@@ -116,6 +120,7 @@ const registerPharmacy = async (
   // The pharmacies table keeps its own is_verified flag.
   // New pharmacies remain unverified until the admin approves
   // the corresponding pharmacist account.
+  // The user and pharmacy inserts are separate calls, not a single database transaction.
   const pharmacy =
     await pharmacyRepository.createPharmacy(
       newUser.id,
@@ -168,6 +173,7 @@ const approvePharmacy = async (id) => {
     throw error;
   }
 
+  // Approval changes the pharmacy profile flag; route-level authorization handles who may call this.
   const updated =
     await pharmacyRepository.approvePharmacy(id);
 
@@ -235,6 +241,7 @@ const updatePharmacyProfile = async (
   }
 
   // Step 2: Only allow specific profile fields to be updated
+  // Only name, address and phone are editable; license and approval flags are excluded.
   const allowedUpdates = {};
 
   if (
@@ -310,6 +317,7 @@ const getDispensingHistory = async (
   }
 
   // Step 2: Retrieve dispensing history
+  // Fetch dispensing actions for this pharmacy only, as supplied by the caller.
   const history =
     await pharmacyRepository.getDispensingHistory(
       pharmacyId
