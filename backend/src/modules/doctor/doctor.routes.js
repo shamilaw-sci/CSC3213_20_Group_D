@@ -1,8 +1,8 @@
 /**
  * @file    doctor.routes.js
  * @module  Doctor
- * @desc    Route definitions for the Doctor module.
- * @author  Tharindu (S/21/166)
+ * @desc    Defines doctor API addresses and applies login, role, ownership and audit checks.
+ * @author  Tharindu Lakshan (S/21/166)
  */
 
 const express = require('express');
@@ -35,14 +35,14 @@ const {
 const { auditMiddleware } = require('../../middleware/auditLog');
 const { upload } = require('../../middleware/upload');
 
-// GET /api/doctors — get all verified doctors
+// Find doctors — Public list includes only verified doctors with active, approved accounts.
 router.get('/', getAllDoctorsController);
 
-// GET /api/doctors/search — search doctors by specialty and hospital
+// Search Doctors — Public search by specialty/name and hospital.
 router.get('/search', searchDoctorsController);
 
-// GET /api/doctors/laboratories — get active laboratories for the lab-order dropdown
-// Must come before GET /:id, otherwise Express treats "laboratories" as a doctor ID
+// Lab selection — A signed-in doctor can list active, verified laboratories.
+// Keep this fixed path before /:id so it is not mistaken for a doctor ID.
 router.get(
   '/laboratories',
   isAuthenticated,
@@ -50,8 +50,8 @@ router.get(
   getActiveLaboratoriesController
 );
 
-// PUT /api/doctors/lab-reports/:reportId/review — doctor marks a lab report as reviewed
-// Must come before PUT /:id, otherwise Express treats "lab-reports" as a doctor ID
+// Review Lab Report — Doctor login required; record the review in the audit log.
+// Keep this fixed prefix before /:id.
 router.put(
   '/lab-reports/:reportId/review',
   isAuthenticated,
@@ -60,17 +60,17 @@ router.put(
   reviewLabReportController
 );
 
-// GET /api/doctors/:id/slots — get next 3 available appointment slots
+// Available Appointment Slots — Public endpoint suggests the next three free times.
 router.get('/:id/slots', getAvailableSlotsController);
 
-// GET /api/doctors/:id — get doctor profile by ID
+// Doctor Profile — Public read; record the lookup in the audit log.
 router.get(
   '/:id',
   auditMiddleware('VIEW_DOCTOR_PROFILE', 'doctor'),
   getDoctorController
 );
 
-// PUT /api/doctors/:id — update doctor profile
+// Edit Doctor Profile — Only the signed-in doctor can edit their own profile.
 router.put(
   '/:id',
   isAuthenticated,
@@ -80,7 +80,7 @@ router.put(
   updateDoctorController
 );
 
-// PUT /api/doctors/:id/photo — upload doctor profile photo
+// Upload Doctor Photo — Check login, role, profile ownership and image upload before saving.
 router.put(
   '/:id/photo',
   isAuthenticated,
@@ -91,13 +91,13 @@ router.put(
   uploadDoctorPhotoController
 );
 
-// GET /api/doctors/:id/availability — get doctor availability
+// View Doctor Availability — Public schedule lookup used for booking.
 router.get(
   '/:id/availability',
   getDoctorAvailabilityController
 );
 
-// PUT /api/doctors/:id/availability — update doctor availability
+// Edit Doctor Availability — Only the matching doctor can update their weekly schedule.
 router.put(
   '/:id/availability',
   isAuthenticated,
@@ -107,7 +107,7 @@ router.put(
   updateDoctorAvailabilityController
 );
 
-// GET /api/doctors/:id/appointments/today — get today's queue
+// Today's Appointment Queue — Only the matching doctor can view today's patient list.
 router.get(
   '/:id/appointments/today',
   isAuthenticated,
@@ -117,7 +117,7 @@ router.get(
   getTodayAppointmentsController
 );
 
-// GET /api/doctors/:id/dashboard-stats — get dashboard summary stats
+// Doctor Dashboard — Only the matching doctor can view appointment totals and next patient.
 router.get(
   '/:id/dashboard-stats',
   isAuthenticated,
@@ -127,7 +127,7 @@ router.get(
   getDoctorDashboardStatsController
 );
 
-// GET /api/doctors/:id/ai-insights — get AI insights (placeholder until Epic 9.5)
+// AI Insights — Protected route currently returns an empty placeholder, not real AI advice.
 router.get(
   '/:id/ai-insights',
   isAuthenticated,
@@ -137,7 +137,7 @@ router.get(
   getDoctorAiInsightsController
 );
 
-// POST /api/doctors/:id/lab-test-requests — doctor orders a new lab test
+// Order Lab Test — Only the matching doctor can request a test during an active consultation.
 router.post(
   '/:id/lab-test-requests',
   isAuthenticated,
@@ -147,7 +147,7 @@ router.post(
   orderLabTestController
 );
 
-// GET /api/doctors/:id/unreviewed-lab-reports — finalized lab reports awaiting doctor review
+// Unreviewed Lab Reports — Only the matching doctor can see reports awaiting review.
 router.get(
   '/:id/unreviewed-lab-reports',
   isAuthenticated,

@@ -1,12 +1,16 @@
 /**
  * @file    doctor.controller.js
  * @module  Doctor
- * @desc    Request handlers for the Doctor module.
- * @author  Tharindu (S/21/166)
+ * @desc    Handles doctor API requests and sends responses from doctor services.
+ * @author  Tharindu Lakshan (S/21/166)
  */
 
 const doctorService = require('./doctor.service');
 
+/**
+ * FEATURE: View Doctor Profile
+ * LOGIC: Look up the requested doctor; return their profile or a not-found response.
+ */
 const getDoctorController = async (req, res) => {
   try {
     const { id } = req.params;
@@ -30,11 +34,15 @@ const getDoctorController = async (req, res) => {
 
     res.status(error.statusCode || 500).json({
       success: false,
-      message: 'Internal server error'
+      message: error.statusCode && error.statusCode < 500 ? error.message : 'Care4U could not complete the request. Please try again.'
     });
   }
 };
 
+/**
+ * FEATURE: Find Doctors
+ * LOGIC: Return the approved doctor list prepared by the service.
+ */
 const getAllDoctorsController = async (req, res) => {
   try {
     const doctors = await doctorService.getAllDoctors();
@@ -48,13 +56,17 @@ const getAllDoctorsController = async (req, res) => {
   } catch (error) {
     console.error('getAllDoctorsController error:', error);
 
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
-      message: 'Internal server error'
+      message: error.statusCode && error.statusCode < 500 ? error.message : 'Care4U could not complete the request. Please try again.'
     });
   }
 };
 
+/**
+ * FEATURE: Edit Doctor Profile
+ * LOGIC: Send editable details to the service; report a missing profile or rejected changes.
+ */
 const updateDoctorController = async (req, res) => {
   try {
     const { id } = req.params;
@@ -79,18 +91,16 @@ const updateDoctorController = async (req, res) => {
   } catch (error) {
     console.error('updateDoctorController error:', error);
 
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
-      message: 'Internal server error'
+      message: error.statusCode && error.statusCode < 500 ? error.message : 'Care4U could not complete the request. Please try again.'
     });
   }
 };
 
 /**
- * Handles PUT /api/doctors/:id/photo
- * Uploads a new doctor profile photo.
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
+ * FEATURE: Upload Doctor Photo
+ * LOGIC: Pass the uploaded image to the service; return the new profile photo details.
  */
 const uploadDoctorPhotoController = async (req, res) => {
   try {
@@ -116,13 +126,15 @@ const uploadDoctorPhotoController = async (req, res) => {
 
     res.status(error.statusCode || 500).json({
       success: false,
-      message:
-        error.message ||
-        'Internal server error'
+      message: error.statusCode && error.statusCode < 500 ? error.message : 'Care4U could not complete the request. Please try again.'
     });
   }
 };
 
+/**
+ * FEATURE: View Weekly Schedule
+ * LOGIC: Load the selected doctor's saved working times.
+ */
 const getDoctorAvailabilityController = async (req, res) => {
   try {
     const { id } = req.params;
@@ -142,17 +154,21 @@ const getDoctorAvailabilityController = async (req, res) => {
       error
     );
 
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
-      message: 'Internal server error'
+      message: error.statusCode && error.statusCode < 500 ? error.message : 'Care4U could not complete the request. Please try again.'
     });
   }
 };
 
+/**
+ * FEATURE: Edit Weekly Schedule
+ * LOGIC: Require a list of time windows; the service checks them before saving.
+ */
 const updateDoctorAvailabilityController = async (req, res) => {
   try {
     const { id } = req.params;
-    const { slots } = req.body;
+    const { slots } = req.body || {};
 
     if (!slots || !Array.isArray(slots)) {
       return res.status(400).json({
@@ -179,13 +195,17 @@ const updateDoctorAvailabilityController = async (req, res) => {
       error
     );
 
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
-      message: 'Internal server error'
+      message: error.statusCode && error.statusCode < 500 ? error.message : 'Care4U could not complete the request. Please try again.'
     });
   }
 };
 
+/**
+ * FEATURE: Today's Patient Queue
+ * LOGIC: Load the doctor's appointments for today.
+ */
 const getTodayAppointmentsController = async (req, res) => {
   try {
     const { id } = req.params;
@@ -205,13 +225,17 @@ const getTodayAppointmentsController = async (req, res) => {
       error
     );
 
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
-      message: 'Internal server error'
+      message: error.statusCode && error.statusCode < 500 ? error.message : 'Care4U could not complete the request. Please try again.'
     });
   }
 };
 
+/**
+ * FEATURE: Dashboard Summary
+ * LOGIC: Return today's appointment counts and the next waiting patient.
+ */
 const getDoctorDashboardStatsController = async (req, res) => {
   try {
     const { id } = req.params;
@@ -231,13 +255,17 @@ const getDoctorDashboardStatsController = async (req, res) => {
       error
     );
 
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
-      message: 'Internal server error'
+      message: error.statusCode && error.statusCode < 500 ? error.message : 'Care4U could not complete the request. Please try again.'
     });
   }
 };
 
+/**
+ * FEATURE: AI Insights Placeholder
+ * LOGIC: Return an empty list; this endpoint does not generate AI insights yet.
+ */
 const getDoctorAiInsightsController = async (req, res) => {
   try {
     res.status(200).json({
@@ -255,18 +283,16 @@ const getDoctorAiInsightsController = async (req, res) => {
       error
     );
 
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
-      message: 'Internal server error'
+      message: error.statusCode && error.statusCode < 500 ? error.message : 'Care4U could not complete the request. Please try again.'
     });
   }
 };
 
 /**
- * Handles GET /api/doctors/search
- * Searches for doctors by specialty and/or hospital name.
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
+ * FEATURE: Search Doctors
+ * LOGIC: Read the specialty and hospital filters and ask the service for matching doctors.
  */
 const searchDoctorsController = async (req, res) => {
   try {
@@ -290,18 +316,16 @@ const searchDoctorsController = async (req, res) => {
       error
     );
 
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
-      message: 'Internal server error'
+      message: error.statusCode && error.statusCode < 500 ? error.message : 'Care4U could not complete the request. Please try again.'
     });
   }
 };
 
 /**
- * Handles GET /api/doctors/:id/slots
- * Returns next 3 available appointment slots for a doctor.
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
+ * FEATURE: Find Free Appointment Times
+ * LOGIC: Get the next three suggested free slots; this does not reserve a slot.
  */
 const getAvailableSlotsController = async (req, res) => {
   try {
@@ -324,18 +348,14 @@ const getAvailableSlotsController = async (req, res) => {
 
     res.status(error.statusCode || 500).json({
       success: false,
-      message:
-        error.message ||
-        'Internal server error',
+      message: error.statusCode && error.statusCode < 500 ? error.message : 'Care4U could not complete the request. Please try again.',
     });
   }
 };
 
 /**
- * Handles POST /api/doctors/:id/lab-test-requests
- * Creates a new lab test request ordered by the doctor.
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
+ * FEATURE: Order Lab Test
+ * LOGIC: Pass patient, visit, lab, test type and priority to the service for validation.
  */
 const orderLabTestController = async (req, res) => {
   try {
@@ -348,7 +368,7 @@ const orderLabTestController = async (req, res) => {
       testType,
       priority,
       notes
-    } = req.body;
+    } = req.body || {};
 
     const request =
       await doctorService.orderLabTest({
@@ -375,18 +395,14 @@ const orderLabTestController = async (req, res) => {
 
     res.status(error.statusCode || 500).json({
       success: false,
-      message:
-        error.message ||
-        'Internal server error',
+      message: error.statusCode && error.statusCode < 500 ? error.message : 'Care4U could not complete the request. Please try again.',
     });
   }
 };
 
 /**
- * Handles GET /api/doctors/laboratories
- * Returns all active, verified laboratories for the lab-selection dropdown.
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
+ * FEATURE: Choose a Laboratory
+ * LOGIC: Return active, verified laboratories for the doctor's order form.
  */
 const getActiveLaboratoriesController = async (req, res) => {
   try {
@@ -407,19 +423,14 @@ const getActiveLaboratoriesController = async (req, res) => {
 
     res.status(error.statusCode || 500).json({
       success: false,
-      message:
-        error.message ||
-        'Internal server error',
+      message: error.statusCode && error.statusCode < 500 ? error.message : 'Care4U could not complete the request. Please try again.',
     });
   }
 };
 
 /**
- * Handles GET /api/doctors/:id/unreviewed-lab-reports
- * Returns finalized lab reports for the doctor's ordered tests that
- * haven't been reviewed yet (powers the dashboard notification badge).
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
+ * FEATURE: New Lab Report Notifications
+ * LOGIC: Load finalized lab reports the doctor has not reviewed yet.
  */
 const getUnreviewedLabReportsController = async (req, res) => {
   try {
@@ -442,23 +453,19 @@ const getUnreviewedLabReportsController = async (req, res) => {
 
     res.status(error.statusCode || 500).json({
       success: false,
-      message:
-        error.message ||
-        'Internal server error',
+      message: error.statusCode && error.statusCode < 500 ? error.message : 'Care4U could not complete the request. Please try again.',
     });
   }
 };
 
 /**
- * Handles PUT /api/doctors/lab-reports/:reportId/review
- * Marks a lab report as reviewed by the doctor and saves their remark.
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
+ * FEATURE: Review Lab Report
+ * LOGIC: Pass the remark and signed-in doctor ID; service checks it before marking reviewed.
  */
 const reviewLabReportController = async (req, res) => {
   try {
     const { reportId } = req.params;
-    const { remark } = req.body;
+    const { remark } = req.body || {};
 
     const updated =
       await doctorService.reviewLabReport(
@@ -481,9 +488,7 @@ const reviewLabReportController = async (req, res) => {
 
     res.status(error.statusCode || 500).json({
       success: false,
-      message:
-        error.message ||
-        'Internal server error',
+      message: error.statusCode && error.statusCode < 500 ? error.message : 'Care4U could not complete the request. Please try again.',
     });
   }
 };

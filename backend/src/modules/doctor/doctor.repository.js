@@ -1,8 +1,8 @@
 /**
  * @file    doctor.repository.js
  * @module  Doctor
- * @desc    Database queries for the Doctor module.
- * @author  Tharindu (S/21/166)
+ * @desc    Reads and saves doctor, appointment and lab information in PostgreSQL.
+ * @author  Tharindu Lakshan (S/21/166)
  */
 
 const { pool } = require('../../config/db');
@@ -18,9 +18,10 @@ const getDoctorById = async (id) => {
   return result.rows[0] || null;
 };
 
-/** Resolve a doctor profile from the account ID, optionally on a consent transaction.
- * @param {string} userId Account UUID. @param {Object} db Pool or transaction client.
- * @returns {Promise<Object|null>} Linked profile; uniqueness policy remains separately documented.
+/**
+ * FEATURE: Find Doctor From Login Account
+ * LOGIC: Match the logged-in account to its doctor profile; allow a shared database
+ *        transaction when provided.
  */
 const getDoctorByUserId = async (userId, db = pool) => {
   const result = await db.query(
@@ -33,28 +34,27 @@ const getDoctorByUserId = async (userId, db = pool) => {
   return result.rows[0] || null;
 };
 
+/**
+ * FEATURE: Save Only Editable Doctor Details
+ * LOGIC: Update allowed profile fields while leaving unspecified ones unchanged; an
+ *        explicitly supplied years-of-experience value can clear it.
+ */
 const updateDoctor = async (id, data) => {
   const { specialization, qualifications, years_experience, hospital_name } = data;
   const result = await pool.query(
     `UPDATE doctors
      SET specialization   = COALESCE($1, specialization),
          qualifications   = COALESCE($2, qualifications),
-         years_experience = COALESCE($3, years_experience),
+         years_experience = CASE WHEN $6::boolean THEN $3::integer ELSE years_experience END,
          hospital_name    = COALESCE($4, hospital_name),
          updated_at       = NOW()
      WHERE id = $5
      RETURNING *`,
-    [specialization, qualifications, years_experience, hospital_name, id]
+    [specialization, qualifications, years_experience, hospital_name, id, Object.hasOwn(data, 'years_experience')]
   );
   return result.rows[0] || null;
 };
 
-/**
- * Updates the profile photo URL for a doctor.
- * @param {string} id - Doctor UUID
- * @param {string} photoUrl - Public Supabase Storage photo URL
- * @returns {Promise<Object|null>} Updated doctor profile
- */
 const updateDoctorPhoto = async (id, photoUrl) => {
   const result = await pool.query(
     `UPDATE doctors
@@ -68,6 +68,11 @@ const updateDoctorPhoto = async (id, photoUrl) => {
   return result.rows[0] || null;
 };
 
+/**
+ * FEATURE: Only Show Approved Doctors
+ * LOGIC: Include doctors only when their profiles are verified and their user accounts are
+ *        approved and active.
+ */
 const getAllDoctors = async () => {
   const result = await pool.query(
     `SELECT d.*, u.email, u.phone
@@ -82,8 +87,8 @@ const getAllDoctors = async () => {
   return result.rows;
 };
 
-const getDoctorAvailability = async (doctorId) => {
-  const result = await pool.query(
+const getDoctorAvailability = async (doctorId, db = pool) => {
+  const result = await db.query(
     `SELECT * FROM doctor_availability
      WHERE doctor_id = $1
      ORDER BY day_of_week ASC`,
@@ -92,31 +97,38 @@ const getDoctorAvailability = async (doctorId) => {
   return result.rows;
 };
 
+/**
+ * FEATURE: Safely Replace Weekly Schedule
+ * LOGIC: Start a transaction and lock the doctor row; replace all time windows, then commit
+ *        together. On any failure, roll back so the old schedule remains.
+ */
 const updateDoctorAvailability = async (doctorId, slots) => {
-  await pool.query(
-    `DELETE FROM doctor_availability WHERE doctor_id = $1`,
-    [doctorId]
-  );
-
-  for (const slot of slots) {
-    await pool.query(
-      `INSERT INTO doctor_availability 
-       (doctor_id, day_of_week, start_time, end_time, slot_duration_minutes, is_active)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-      [
-        doctorId,
-        slot.day_of_week,
-        slot.start_time,
-        slot.end_time,
-        slot.slot_duration_minutes,
-        slot.is_active ?? true
-      ]
-    );
-  }
-
-  return getDoctorAvailability(doctorId);
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const doctor = await client.query('SELECT id FROM doctors WHERE id = $1 FOR UPDATE', [doctorId]);
+    if (!doctor.rows.length) throw Object.assign(new Error('Doctor not found'), { statusCode: 404 });
+    await client.query('DELETE FROM doctor_availability WHERE doctor_id = $1', [doctorId]);
+    for (const slot of slots) {
+      await client.query(`INSERT INTO doctor_availability
+        (doctor_id, day_of_week, start_time, end_time, slot_duration_minutes, is_active)
+        VALUES ($1, $2, $3, $4, $5, $6)`,
+        [doctorId, slot.day_of_week, slot.start_time, slot.end_time, slot.slot_duration_minutes, slot.is_active]);
+    }
+    const result = await getDoctorAvailability(doctorId, client);
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally { client.release(); }
 };
 
+/**
+ * FEATURE: Today's Appointment Queue
+ * LOGIC: Read this doctor's appointments for the database's current date and sort them by
+ *        appointment time.
+ */
 const getTodayAppointments = async (doctorId) => {
   const result = await pool.query(
     `SELECT 
@@ -139,6 +151,11 @@ const getTodayAppointments = async (doctorId) => {
   return result.rows;
 };
 
+/**
+ * FEATURE: Doctor Dashboard Numbers
+ * LOGIC: Count today's completed, in-progress and waiting appointments; choose the first
+ *        scheduled or confirmed patient as next.
+ */
 const getDoctorDashboardStats = async (doctorId) => {
   const result = await pool.query(
     `SELECT 
@@ -160,8 +177,8 @@ const getDoctorDashboardStats = async (doctorId) => {
   const total = appointments.length;
   const completed = appointments.filter(a => a.status === 'completed').length;
   const inProgress = appointments.filter(a => a.status === 'in_progress').length;
-  const pending = appointments.filter(a => a.status === 'scheduled').length;
-  const nextPatient = appointments.find(a => a.status === 'scheduled') || null;
+  const pending = appointments.filter(a => ['scheduled', 'confirmed'].includes(a.status)).length;
+  const nextPatient = appointments.find(a => ['scheduled', 'confirmed'].includes(a.status)) || null;
 
   return {
     total,
@@ -180,10 +197,9 @@ const getDoctorDashboardStats = async (doctorId) => {
 };
 
 /**
- * Searches for doctors based on name/specialty and hospital.
- * @param {string} specialty - Search term for specialty OR doctor name
- * @param {string} hospitalName - Search term for hospital name
- * @returns {Promise<Array>} List of verified doctors
+ * FEATURE: Search Approved Doctors
+ * LOGIC: Match doctor name/specialty and optional hospital with partial text; exclude
+ *        unverified, unapproved or inactive accounts.
  */
 const searchDoctors = async (specialty, hospitalName) => {
   let query = `
@@ -226,10 +242,9 @@ const searchDoctors = async (specialty, hospitalName) => {
 };
 
 /**
- * Gets the next available appointment slots for a doctor.
- * @param {string} doctorId - UUID of the doctor
- * @param {number} limit    - Number of slots to return
- * @returns {Promise<Array>} List of available slot datetime strings
+ * FEATURE: Find the Next Three Free Appointment Slots
+ * LOGIC: Check the doctor's working windows across the next 14 days; skip past, already
+ *        booked and invalid times. These are suggestions, not guaranteed reservations.
  */
 const getAvailableSlots = async (doctorId, limit = 3, db = pool) => {
   const availabilityResult = await db.query(
@@ -294,7 +309,9 @@ const getAvailableSlots = async (doctorId, limit = 3, db = pool) => {
     const endTime = new Date(date);
     endTime.setHours(endHour, endMin, 0, 0);
 
-    while (slotTime < endTime && slots.length < limit) {
+    // Legacy malformed schedules must never cause a backwards/infinite public slot loop.
+    if (!Number.isInteger(Number(slotDuration)) || Number(slotDuration) <= 0 || !Number.isFinite(endTime.getTime()) || !Number.isFinite(slotTime.getTime())) continue;
+    while (slotTime.getTime() + Number(slotDuration) * 60000 <= endTime.getTime() && slots.length < limit) {
       if (slotTime > now) {
         const slotISO = slotTime.toISOString();
 
@@ -313,9 +330,8 @@ const getAvailableSlots = async (doctorId, limit = 3, db = pool) => {
 };
 
 /**
- * Creates a new lab test request from the doctor's side.
- * @param {Object} data - { patientId, doctorId, appointmentId, laboratoryId, testType, priority, notes }
- * @returns {Promise<Object>} The created lab test request row
+ * FEATURE: Save Lab Test Request
+ * LOGIC: Create the lab request with a pending status after service validation.
  */
 const createLabTestRequest = async (data) => {
   const {
@@ -348,8 +364,8 @@ const createLabTestRequest = async (data) => {
 };
 
 /**
- * Gets all active, verified laboratories for the lab-selection dropdown.
- * @returns {Promise<Array>} List of { id, name, available_tests } rows
+ * FEATURE: Available Laboratories
+ * LOGIC: Show only laboratories that are both active and verified.
  */
 const getActiveLaboratories = async () => {
   const result = await pool.query(
@@ -363,10 +379,9 @@ const getActiveLaboratories = async () => {
 };
 
 /**
- * Gets all finalized lab reports for a doctor's ordered tests that the
- * doctor hasn't reviewed yet (drives the dashboard notification badge).
- * @param {string} doctorId - UUID of the doctor
- * @returns {Promise<Array>} List of unreviewed reports with patient/test context
+ * FEATURE: Unreviewed Lab Report Alerts
+ * LOGIC: Find finalized reports for tests ordered by this doctor that have no review
+ *        timestamp.
  */
 const getUnreviewedLabReports = async (doctorId) => {
   const result = await pool.query(
@@ -387,10 +402,9 @@ const getUnreviewedLabReports = async (doctorId) => {
 };
 
 /**
- * Marks a lab report as reviewed by the doctor and saves their remark.
- * @param {string} reportId - UUID of the lab report
- * @param {string} remark - Doctor's short remark on the report
- * @returns {Promise<Object>} The updated lab report row
+ * FEATURE: Mark Report Reviewed by Its Doctor
+ * LOGIC: Save the review time and remark only when the report is finalized and belongs to
+ *        this doctor's lab order.
  */
 const reviewLabReport = async (reportId, remark, doctorId) => {
   const result = await pool.query(
@@ -402,6 +416,7 @@ const reviewLabReport = async (reportId, remark, doctorId) => {
      WHERE lr.id = $2
        AND lr.lab_request_id = ltr.id
        AND ltr.doctor_id = $3
+       AND lr.is_finalized = true
      RETURNING lr.*`,
     [remark, reportId, doctorId]
   );

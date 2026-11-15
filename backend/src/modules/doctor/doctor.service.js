@@ -1,8 +1,8 @@
 /**
  * @file    doctor.service.js
  * @module  Doctor
- * @desc    Business logic for the Doctor module.
- * @author  Tharindu (S/21/166)
+ * @desc    Checks doctor profile changes, schedules, lab orders and report reviews.
+ * @author  Tharindu Lakshan (S/21/166)
  */
 
 const doctorRepository = require('./doctor.repository');
@@ -23,13 +23,38 @@ const getAllDoctors = async () => {
   return doctors;
 };
 
+/**
+ * FEATURE: Safe Doctor Profile Editing
+ * LOGIC: Accept only approved profile fields; check text lengths and nonnegative whole
+ *        years. Identity and approval fields cannot be edited here.
+ */
 const updateDoctorProfile = async (id, data) => {
-  const updated = await doctorRepository.updateDoctor(id, data);
-  return updated;
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    throw Object.assign(new Error('Profile changes must be an object'), { statusCode: 400 });
+  }
+  const clean = {};
+  for (const [field, limit] of Object.entries({ specialization: 100, qualifications: 20000, hospital_name: 255 })) {
+    if (data[field] === undefined) continue;
+    if (typeof data[field] !== 'string' || data[field].trim().length > limit || (field === 'specialization' && !data[field].trim())) {
+      throw Object.assign(new Error(`Enter a valid ${field.replaceAll('_', ' ')}`), { statusCode: 400 });
+    }
+    clean[field] = data[field].trim();
+  }
+  if (data.years_experience !== undefined) {
+    const years = data.years_experience === '' || data.years_experience === null ? null : Number(data.years_experience);
+    if (years !== null && (!Number.isSafeInteger(years) || years < 0 || years > 2147483647)) {
+      throw Object.assign(new Error('Years of experience must be a nonnegative whole number'), { statusCode: 400 });
+    }
+    clean.years_experience = years;
+  }
+  if (!Object.keys(clean).length) throw Object.assign(new Error('No editable changes were supplied'), { statusCode: 400 });
+  return doctorRepository.updateDoctor(id, clean);
 };
 
 /**
- * Uploads a new profile photo for a doctor to Supabase Storage.
+ * FEATURE: Upload Doctor Photo
+ * LOGIC: Require an image, working storage and an existing doctor; upload the file, then
+ *        save its public URL. A timestamp refreshes the displayed image.
  */
 const uploadDoctorPhoto = async (doctorId, file) => {
   if (!file) {
@@ -95,14 +120,31 @@ const getDoctorAvailability = async (doctorId) => {
   return availability;
 };
 
+/**
+ * FEATURE: Validate Weekly Availability
+ * LOGIC: Allow at most one time window per weekday; start must be before end and the slot
+ *        duration must fit. Pass the checked schedule to the repository for all-or-nothing
+ *        saving.
+ */
 const updateDoctorAvailability = async (doctorId, slots) => {
-  const updated =
-    await doctorRepository.updateDoctorAvailability(
-      doctorId,
-      slots
-    );
-
-  return updated;
+  const days = new Set();
+  const time = value => {
+    if (typeof value !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/.test(value)) return NaN;
+    const [h,m,seconds=0] = value.split(':').map(Number); return h * 60 + m + seconds / 60;
+  };
+  if (!Array.isArray(slots) || slots.length > 7) throw Object.assign(new Error('Provide up to seven availability windows'), { statusCode: 400 });
+  const clean = slots.map(slot => {
+    if (!slot || typeof slot !== 'object' || !['monday','tuesday','wednesday','thursday','friday','saturday','sunday'].includes(slot.day_of_week) || days.has(slot.day_of_week)) {
+      throw Object.assign(new Error('Choose each weekday at most once'), { statusCode: 400 });
+    }
+    days.add(slot.day_of_week);
+    const start = time(slot.start_time), end = time(slot.end_time), duration = Number(slot.slot_duration_minutes ?? 30);
+    if (!Number.isFinite(start) || !Number.isFinite(end) || start >= end || !Number.isInteger(duration) || duration < 1 || duration > end - start || (slot.is_active !== undefined && typeof slot.is_active !== 'boolean')) {
+      throw Object.assign(new Error('Choose valid start/end times and a positive slot duration that fits the window'), { statusCode: 400 });
+    }
+    return { day_of_week: slot.day_of_week, start_time: slot.start_time, end_time: slot.end_time, slot_duration_minutes: duration, is_active: slot.is_active ?? true };
+  });
+  return doctorRepository.updateDoctorAvailability(doctorId, clean);
 };
 
 const getTodayAppointments = async (doctorId) => {
@@ -119,12 +161,6 @@ const getDoctorDashboardStats = async (doctorId) => {
   return stats;
 };
 
-/**
- * Searches for doctors by specialty and/or hospital name.
- * @param {string} specialty    - Optional specialty filter
- * @param {string} hospitalName - Optional hospital name filter
- * @returns {Promise<Array>} List of matching doctors
- */
 const searchDoctors = async (specialty, hospitalName) => {
   return await doctorRepository.searchDoctors(
     specialty,
@@ -133,9 +169,9 @@ const searchDoctors = async (specialty, hospitalName) => {
 };
 
 /**
- * Gets the next available appointment slots for a doctor.
- * @param {string} doctorId - UUID of the doctor
- * @returns {Promise<Array>} List of next 3 available slot times
+ * FEATURE: Suggest Appointment Slots
+ * LOGIC: Reject an unknown doctor; ask the repository for the next three currently unbooked
+ *        times. Booking itself is checked separately.
  */
 const getAvailableSlots = async (doctorId) => {
   const doctor =
@@ -154,11 +190,10 @@ const getAvailableSlots = async (doctorId) => {
 };
 
 /**
- * Creates a new lab test request from the doctor's side, after validating
- * the required fields, the priority level, and that the chosen laboratory
- * is real and currently active.
- * @param {Object} data - { patientId, doctorId, appointmentId, laboratoryId, testType, priority, notes }
- * @returns {Promise<Object>} The created lab test request
+ * FEATURE: Order a Lab Test During Consultation
+ * LOGIC: Require a matching in-progress appointment for this doctor and patient; check test
+ *        details, routine/urgent/stat priority and an active verified laboratory before
+ *        creating the request.
  */
 const orderLabTest = async (data) => {
   const {
@@ -174,7 +209,7 @@ const orderLabTest = async (data) => {
     !doctorId ||
     !appointmentId ||
     !laboratoryId ||
-    !testType ||
+    typeof testType !== 'string' ||
     !testType.trim()
   ) {
     const error = new Error(
@@ -201,6 +236,7 @@ const orderLabTest = async (data) => {
     throw error;
   }
 
+  if (data.priority !== undefined && typeof data.priority !== 'string') throw Object.assign(new Error('Choose a valid priority'), { statusCode: 400 });
   const priority =
     (data.priority || 'routine').toLowerCase();
 
@@ -241,19 +277,10 @@ const orderLabTest = async (data) => {
   });
 };
 
-/**
- * Gets all active laboratories for the lab-selection dropdown.
- * @returns {Promise<Array>} List of active laboratories
- */
 const getActiveLaboratories = async () => {
   return await doctorRepository.getActiveLaboratories();
 };
 
-/**
- * Gets all finalized lab reports the doctor hasn't reviewed yet.
- * @param {string} doctorId - UUID of the doctor
- * @returns {Promise<Array>} List of unreviewed reports
- */
 const getUnreviewedLabReports = async (doctorId) => {
   return await doctorRepository.getUnreviewedLabReports(
     doctorId
@@ -261,11 +288,9 @@ const getUnreviewedLabReports = async (doctorId) => {
 };
 
 /**
- * Marks a lab report as reviewed and saves the doctor's remark, after
- * validating a remark was actually provided and the report exists.
- * @param {string} reportId - UUID of the lab report
- * @param {string} remark - Doctor's short remark on the report
- * @returns {Promise<Object>} The updated lab report
+ * FEATURE: Review Lab Report With Remark
+ * LOGIC: Require a nonempty remark; repository updates only a finalized report ordered by
+ *        this doctor. If no matching report is updated, return not found.
  */
 const reviewLabReport = async (reportId, remark, doctorId) => {
   if (!reportId) {
@@ -277,7 +302,7 @@ const reviewLabReport = async (reportId, remark, doctorId) => {
     throw error;
   }
 
-  if (!remark || !remark.trim()) {
+  if (typeof remark !== 'string' || !remark.trim()) {
     const error = new Error(
       'Validation failed: a remark is required to mark a report as reviewed'
     );
