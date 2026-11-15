@@ -22,10 +22,10 @@ const Groq = require('groq-sdk');
 ========================================================= */
 
 const GEMINI_TEXT_MODEL =
-  'gemini-3.8-flash';
+  'gemini-3.5-flash-lite';
 
 const GEMINI_VISION_MODEL =
-  'gemini-3.8-flash';
+  'gemini-3.5-flash-lite';
 
 const GROQ_FALLBACK_MODEL =
   'openai/gpt-oss-120b';

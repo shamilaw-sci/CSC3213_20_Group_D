@@ -155,7 +155,8 @@ const getTodayAppointments = async (doctorId) => {
      FROM appointments a
      JOIN patients p ON a.patient_id = p.id
      WHERE a.doctor_id = $1
-       AND DATE(a.scheduled_at) = CURRENT_DATE
+       AND (a.scheduled_at AT TIME ZONE 'Asia/Colombo')::date =
+            (NOW() AT TIME ZONE 'Asia/Colombo')::date
      ORDER BY a.scheduled_at ASC`,
     [doctorId]
   );
@@ -180,7 +181,8 @@ const getDoctorDashboardStats = async (doctorId) => {
      FROM appointments a
      JOIN patients p ON a.patient_id = p.id
      WHERE a.doctor_id = $1
-       AND DATE(a.scheduled_at) = CURRENT_DATE
+       AND (a.scheduled_at AT TIME ZONE 'Asia/Colombo')::date =
+            (NOW() AT TIME ZONE 'Asia/Colombo')::date
      ORDER BY a.scheduled_at ASC`,
     [doctorId]
   );
