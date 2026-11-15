@@ -1,3 +1,0 @@
-# Recoverable local copies; predecessor trackers are also preserved in Git.
-evidence/tracker-backups/
-tools/**/__pycache__/
