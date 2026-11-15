@@ -3,3 +3,12 @@ node_modules
 .env.*
 !.env.example
 backend/.env.reviewer
+
+# Generated files
+frontend/.vite/
+frontend/dist/
+outputs/
+supabase/.temp/
+
+# Local editor settings
+backend/.vscode/
