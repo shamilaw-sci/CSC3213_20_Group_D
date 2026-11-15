@@ -212,7 +212,7 @@ const getAvailableSlots = async (doctorId) => {
 
   return await doctorRepository.getAvailableSlots(
     doctorId,
-    3
+    30
   );
 };
 

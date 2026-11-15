@@ -455,7 +455,8 @@ ${prompt}`;
  */
 const generateAIResponse =
   async (
-    prompt
+    prompt,
+    modelName = GEMINI_TEXT_MODEL
   ) => {
     const preparedPrompt =
       buildTextPrompt(
@@ -473,7 +474,7 @@ const generateAIResponse =
         genAI
           .getGenerativeModel({
             model:
-              GEMINI_TEXT_MODEL,
+              modelName,
           });
 
       const geminiText =
@@ -486,9 +487,7 @@ const generateAIResponse =
                 );
 
             const text =
-              result
-                .response
-                .text();
+              result.response.text();
 
             if (
               !text ||

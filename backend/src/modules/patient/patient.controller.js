@@ -923,7 +923,8 @@ const generatePatientChatController = async (req, res) => {
     // 6. Send to AI
     const reply =
       await generateAIResponse(
-        systemPrompt
+        systemPrompt,
+        'gemini-3.5-flash-lite'
       );
 
     // 7. Log interaction
