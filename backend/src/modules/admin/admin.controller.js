@@ -1,15 +1,14 @@
 /**
  * @file admin.controller.js
  * @module admin
- * @desc Handles HTTP requests and responses for admin approval actions.
+ * @desc Handles administrator HTTP requests, responses and dashboard data.
  */
 
 const { getPendingUsers, approvePendingUser, rejectPendingUser, getAllUsers, toggleActive, getAuditLogs, getDistinctAuditActions, getEmergencyAccessLogs, getAnalyticsSummary, findPatients, reissueQrCode, getAllSettings, updateSystemSetting, getUserCountsByRole } = require('./admin.service');
 
 /**
- * Handles GET /api/admin/pending-users
- * @param {object} req - Express request
- * @param {object} res - Express response
+ * FEATURE: Pending Approvals
+ * LOGIC: Return registrations still waiting for admin approval.
  */
 const getPendingUsersController = async (req, res) => {
     try {
@@ -31,11 +30,9 @@ const getPendingUsersController = async (req, res) => {
 };
 
 /**
- * Static RBAC matrix, manually maintained from the actual authorize()
- * calls across the codebase (see each module's *.routes.js). This is a
- * transparency/demo view, not a live scan - if a route's authorize()
- * call changes, this list must be updated to match.
- * Last verified against codebase: see CARE4U-251.
+ * RBAC Display — Informational role matrix, not a live permission scan.
+ * The authorize() middleware on each route is the actual access control.
+ * This list needs manual updates when permissions change.
  */
 const RBAC_MATRIX = [
     {
@@ -81,11 +78,8 @@ const RBAC_MATRIX = [
 ];
 
 /**
- * Handles GET /api/admin/rbac-matrix
- * Returns a static, manually-maintained matrix of which roles can access
- * which resource groups, based on the codebase's actual authorize() calls.
- * @param {object} req - Express request
- * @param {object} res - Express response
+ * FEATURE: RBAC Overview
+ * LOGIC: Return a manually maintained permissions summary; route middleware enforces access.
  */
 const getRbacMatrixController = (req, res) => {
     return res.status(200).json({
@@ -96,10 +90,8 @@ const getRbacMatrixController = (req, res) => {
 };
 
 /**
- * Handles GET /api/admin/audit-logs
- * Supports optional query params: email, action, startDate, endDate, page, pageSize
- * @param {object} req - Express request
- * @param {object} res - Express response
+ * FEATURE: Audit Log Search
+ * LOGIC: Read filters and pagination from the URL; return matching events and total count.
  */
 const getAuditLogsController = async (req, res) => {
     try {
@@ -135,10 +127,8 @@ const getAuditLogsController = async (req, res) => {
 };
 
 /**
- * Handles GET /api/admin/audit-logs/actions
- * Returns the distinct list of action types for the filter dropdown.
- * @param {object} req - Express request
- * @param {object} res - Express response
+ * FEATURE: Audit Action Filter
+ * LOGIC: Return available action names for the audit log dropdown.
  */
 const getDistinctAuditActionsController = async (req, res) => {
     try {
@@ -160,11 +150,8 @@ const getDistinctAuditActionsController = async (req, res) => {
 };
 
 /**
- * Handles GET /api/admin/emergency-access-logs
- * Returns all Break-the-Glass emergency access events, with staff and
- * patient info resolved for readability.
- * @param {object} req - Express request
- * @param {object} res - Express response
+ * FEATURE: Emergency Access Oversight
+ * LOGIC: Show break-the-glass activity with the staff member and patient details.
  */
 const getEmergencyAccessLogsController = async (req, res) => {
     try {
@@ -186,10 +173,8 @@ const getEmergencyAccessLogsController = async (req, res) => {
 };
 
 /**
- * Handles GET /api/admin/analytics
- * Returns anonymized aggregate counts only - no per-patient breakdowns.
- * @param {object} req - Express request
- * @param {object} res - Express response
+ * FEATURE: Admin Analytics
+ * LOGIC: Return aggregate counts without individual patient records.
  */
 const getAnalyticsSummaryController = async (req, res) => {
     try {
@@ -211,10 +196,8 @@ const getAnalyticsSummaryController = async (req, res) => {
 };
 
 /**
- * Handles GET /api/admin/analytics/users-by-role
- * Returns a count of users grouped by role, for a bar chart.
- * @param {object} req - Express request
- * @param {object} res - Express response
+ * FEATURE: User Role Chart
+ * LOGIC: Return a count of accounts in each role.
  */
 const getUserCountsByRoleController = async (req, res) => {
     try {
@@ -236,10 +219,8 @@ const getUserCountsByRoleController = async (req, res) => {
 };
 
 /**
- * Handles GET /api/admin/patients/search
- * Supports ?search= query param
- * @param {object} req - Express request
- * @param {object} res - Express response
+ * FEATURE: Find Patient for QR Reissue
+ * LOGIC: Search by patient name or NIC before selecting a record.
  */
 const searchPatientsController = async (req, res) => {
     try {
@@ -262,11 +243,8 @@ const searchPatientsController = async (req, res) => {
 };
 
 /**
- * Handles POST /api/admin/patients/:patientId/reissue-qr
- * Deactivates the patient's old QR (overwritten, so it fails lookup
- * immediately) and assigns a fresh one. Audit-logged.
- * @param {object} req - Express request
- * @param {object} res - Express response
+ * FEATURE: Reissue Patient QR
+ * LOGIC: Use the signed-in admin account to reissue and audit a patient QR identifier.
  */
 const reissueQrCodeController = async (req, res) => {
     try {
@@ -296,9 +274,8 @@ const reissueQrCodeController = async (req, res) => {
 };
 
 /**
- * Handles GET /api/admin/settings
- * @param {object} req - Express request
- * @param {object} res - Express response
+ * FEATURE: View System Settings
+ * LOGIC: Load configurable settings for the admin panel.
  */
 const getAllSettingsController = async (req, res) => {
     try {
@@ -320,9 +297,8 @@ const getAllSettingsController = async (req, res) => {
 };
 
 /**
- * Handles PUT /api/admin/settings/:key
- * @param {object} req - Express request
- * @param {object} res - Express response
+ * FEATURE: Change System Setting
+ * LOGIC: Reject empty values, then update the selected setting key.
  */
 const updateSettingController = async (req, res) => {
     try {
@@ -359,10 +335,8 @@ const updateSettingController = async (req, res) => {
 };
 
 /**
- * Handles GET /api/admin/users
- * Supports optional query params: search, role, status ('active'/'inactive')
- * @param {object} req - Express request
- * @param {object} res - Express response
+ * FEATURE: Manage User Accounts
+ * LOGIC: Filter accounts by email/phone, role and active status.
  */
 const getAllUsersController = async (req, res) => {
     try {
@@ -386,9 +360,8 @@ const getAllUsersController = async (req, res) => {
 };
 
 /**
- * Handles POST /api/admin/users/:id/toggle-active
- * @param {object} req - Express request
- * @param {object} res - Express response
+ * FEATURE: Activate or Deactivate User
+ * LOGIC: Switch a user account between active and inactive.
  */
 const toggleActiveController = async (req, res) => {
     try {
@@ -417,9 +390,8 @@ const toggleActiveController = async (req, res) => {
 };
 
 /**
- * Handles POST /api/admin/users/:id/approve
- * @param {object} req - Express request
- * @param {object} res - Express response
+ * FEATURE: Approve Registration
+ * LOGIC: Approve a pending user, or return an error for invalid account status.
  */
 const approveUserController = async (req, res) => {
     try {
@@ -452,9 +424,8 @@ const approveUserController = async (req, res) => {
 };
 
 /**
- * Handles POST /api/admin/users/:id/reject
- * @param {object} req - Express request
- * @param {object} res - Express response
+ * FEATURE: Reject Registration
+ * LOGIC: Require a reason, reject the application and ask the service to send an email.
  */
 const rejectUserController = async (req, res) => {
     try {

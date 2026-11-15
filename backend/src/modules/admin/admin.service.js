@@ -1,7 +1,7 @@
 /**
  * @file admin.service.js
  * @module admin
- * @desc Business logic for admin approval of pending user registrations.
+ * @desc Checks administrator actions and coordinates database and email work.
  */
 
 const { sendRejectionEmail } = require('../../utils/email');
@@ -10,68 +10,64 @@ const { pool } = require('../../config/db');
 const { findPendingUsers, findUserById, approveUser, rejectUser, findAllUsers, toggleUserActive, findAuditLogs, findDistinctAuditActions, findEmergencyAccessLogs, findAnalyticsSummary, searchPatients, reissuePatientQr, findAllSettings, updateSetting, findUserCountsByRole } = require('./admin.repository');
 
 /**
- * Gets all users currently pending admin approval.
- * @returns {Promise<Array>} List of pending users
+ * FEATURE: Pending Approvals
+ * LOGIC: Get registrations waiting for review.
  */
 const getPendingUsers = async () => {
     return await findPendingUsers();
 };
 
 /**
- * Gets all users, optionally filtered by search term, role, or active status.
- * @param {object} filters - Optional filters (search, role, status)
- * @returns {Promise<Array>} List of matching users
+ * FEATURE: User Management
+ * LOGIC: Forward the account filters to the database query.
  */
 const getAllUsers = async (filters) => {
     return await findAllUsers(filters);
 };
 
 /**
- * Gets paginated, filtered audit log entries.
- * @param {object} filters - Optional filters (email, action, startDate, endDate, page, pageSize)
- * @returns {Promise<object>} { rows, totalCount }
+ * FEATURE: Audit Log History
+ * LOGIC: Load filtered log entries and total count for pagination.
  */
 const getAuditLogs = async (filters) => {
     return await findAuditLogs(filters);
 };
 
 /**
- * Gets all distinct action types currently present in the audit log,
- * for populating a filter dropdown.
- * @returns {Promise<Array<string>>} List of distinct action strings
+ * FEATURE: Audit Log Actions
+ * LOGIC: List recorded action names for the filter control.
  */
 const getDistinctAuditActions = async () => {
     return await findDistinctAuditActions();
 };
 
 /**
- * Gets all Break-the-Glass emergency access log entries.
- * @returns {Promise<Array>} List of emergency access logs
+ * FEATURE: Emergency Access History
+ * LOGIC: Load recorded break-the-glass access events.
  */
 const getEmergencyAccessLogs = async () => {
     return await findEmergencyAccessLogs();
 };
 
 /**
- * Gets anonymized aggregate analytics counts.
- * @returns {Promise<object>} { totalPatients, appointmentsThisMonth, prescriptionsIssued, emergencyOverrides }
+ * FEATURE: System Activity Counts
+ * LOGIC: Return high-level totals without patient-by-patient analytics.
  */
 const getAnalyticsSummary = async () => {
     return await findAnalyticsSummary();
 };
 
 /**
- * Gets a count of users grouped by role.
- * @returns {Promise<Array>} List of { role, count }
+ * FEATURE: Users by Role
+ * LOGIC: Count registered accounts per role.
  */
 const getUserCountsByRole = async () => {
     return await findUserCountsByRole();
 };
 
 /**
- * Searches for patients by name or NIC.
- * @param {string} search - Search term
- * @returns {Promise<Array>} List of matching patients
+ * FEATURE: Search Patients
+ * LOGIC: Return an empty list for a blank search; otherwise query by name or NIC.
  */
 const findPatients = async (search) => {
     if (!search) {
@@ -81,11 +77,8 @@ const findPatients = async (search) => {
 };
 
 /**
- * Deactivates a patient's current QR code and issues a fresh one,
- * writing an audit log entry for the action.
- * @param {string} patientId - UUID of the patient
- * @param {string} adminUserId - UUID of the admin performing the action
- * @returns {Promise<object>} Updated patient row with new qr_code_id
+ * FEATURE: Replace Patient QR
+ * LOGIC: Generate a new QR ID, overwrite the old ID, then record the action in audit logs.
  */
 const reissueQrCode = async (patientId, adminUserId) => {
     const newQrCodeId = generatePatientQR();
@@ -95,6 +88,7 @@ const reissueQrCode = async (patientId, adminUserId) => {
         throw new Error('Patient not found');
     }
 
+    // Log the admin action after the QR update; this is not one database transaction.
     await pool.query(
         `INSERT INTO audit_logs (user_id, action, entity_type, entity_id, details)
          VALUES ($1, 'REISSUE_PATIENT_QR', 'patient', $2, $3)`,
@@ -105,18 +99,16 @@ const reissueQrCode = async (patientId, adminUserId) => {
 };
 
 /**
- * Gets all system settings.
- * @returns {Promise<Array>} List of settings
+ * FEATURE: System Settings
+ * LOGIC: Load the current settings.
  */
 const getAllSettings = async () => {
     return await findAllSettings();
 };
 
 /**
- * Updates a single system setting's value.
- * @param {string} key - The setting's key
- * @param {string} value - The new value
- * @returns {Promise<object>} Updated setting
+ * FEATURE: Update Setting
+ * LOGIC: Save the key/value and report when the key does not exist.
  */
 const updateSystemSetting = async (key, value) => {
     const updated = await updateSetting(key, value);
@@ -129,9 +121,8 @@ const updateSystemSetting = async (key, value) => {
 };
 
 /**
- * Toggles a user's active status (activate/deactivate).
- * @param {string} userId - UUID of the user to toggle
- * @returns {Promise<object>} Updated user row
+ * FEATURE: Change Account Activity
+ * LOGIC: Check the account exists before reversing its active flag.
  */
 const toggleActive = async (userId) => {
     const user = await findUserById(userId);
@@ -144,9 +135,8 @@ const toggleActive = async (userId) => {
 };
 
 /**
- * Approves a pending user's registration.
- * @param {string} userId - UUID of the user to approve
- * @returns {Promise<object>} Updated user row
+ * FEATURE: Approve Pending Registration
+ * LOGIC: Allow approval only while the account has pending verification status.
  */
 const approvePendingUser = async (userId) => {
     const user = await findUserById(userId);
@@ -163,10 +153,8 @@ const approvePendingUser = async (userId) => {
 };
 
 /**
- * Rejects a pending user's registration and emails them the reason.
- * @param {string} userId - UUID of the user to reject
- * @param {string} reason - Reason for rejection, shown to the applicant
- * @returns {Promise<object>} Updated user row
+ * FEATURE: Reject Pending Registration
+ * LOGIC: Require pending status; reject first, then email the reason. Log email failures.
  */
 const rejectPendingUser = async (userId, reason) => {
     const user = await findUserById(userId);
@@ -181,6 +169,7 @@ const rejectPendingUser = async (userId, reason) => {
 
     const updatedUser = await rejectUser(userId);
 
+    // Rejection remains saved even if email delivery fails.
     const emailResult = await sendRejectionEmail(user.email, reason);
     if (!emailResult.success) {
         console.error(`[AdminReject] Failed to email ${user.email}:`, emailResult.error);

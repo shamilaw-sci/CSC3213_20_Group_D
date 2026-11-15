@@ -1,14 +1,14 @@
 /**
  * @file admin.repository.js
  * @module admin
- * @desc Database queries for admin approval of pending user registrations.
+ * @desc Reads and updates admin-controlled information in PostgreSQL.
  */
 
 const { pool } = require('../../config/db');
 
 /**
- * Retrieves all users currently pending admin approval.
- * @returns {Promise<Array>} List of pending user rows
+ * FEATURE: Pending Approval Query
+ * LOGIC: Show pending accounts, oldest applications first.
  */
 const findPendingUsers = async () => {
     const result = await pool.query(
@@ -22,9 +22,8 @@ const findPendingUsers = async () => {
 };
 
 /**
- * Finds a single user by ID.
- * @param {string} userId - UUID of the user
- * @returns {Promise<object|null>} User row or null
+ * FEATURE: User Lookup
+ * LOGIC: Find the account and its current verification state.
  */
 const findUserById = async (userId) => {
     const result = await pool.query(
@@ -38,13 +37,8 @@ const findUserById = async (userId) => {
 };
 
 /**
- * Retrieves all users, optionally filtered by search term, role, and
- * active status.
- * @param {object} filters - Optional filters
- * @param {string} [filters.search] - Matches against email or phone
- * @param {string} [filters.role] - Exact role match
- * @param {string} [filters.status] - 'active' or 'inactive'
- * @returns {Promise<Array>} List of matching user rows
+ * FEATURE: Filtered User List
+ * LOGIC: Combine optional email/phone, role and active-state conditions with SQL parameters.
  */
 const findAllUsers = async (filters = {}) => {
     const { search, role, status } = filters;
@@ -98,9 +92,8 @@ const findAllUsers = async (filters = {}) => {
 };
 
 /**
- * Toggles a user's is_active flag.
- * @param {string} userId - UUID of the user
- * @returns {Promise<object>} Updated user row
+ * FEATURE: Toggle Active Account
+ * LOGIC: Flip is_active in the database and return the new status.
  */
 const toggleUserActive = async (userId) => {
     const result = await pool.query(
@@ -115,18 +108,8 @@ const toggleUserActive = async (userId) => {
 };
 
 /**
- * Retrieves audit log entries, paginated and optionally filtered by
- * user email, action type, and date range. Joined against users via
- * LEFT JOIN since user_id can be null (unauthenticated requests are
- * still logged).
- * @param {object} filters - Optional filters
- * @param {string} [filters.email] - Matches against the acting user's email
- * @param {string} [filters.action] - Exact action match
- * @param {string} [filters.startDate] - ISO date string, inclusive lower bound
- * @param {string} [filters.endDate] - ISO date string, inclusive upper bound
- * @param {number} [filters.page] - Page number, 1-indexed (default 1)
- * @param {number} [filters.pageSize] - Rows per page (default 25)
- * @returns {Promise<object>} { rows, totalCount }
+ * FEATURE: Filtered Audit History
+ * LOGIC: Apply the same filters to the total count and the newest-first result page.
  */
 const findAuditLogs = async (filters = {}) => {
     const {
@@ -211,9 +194,8 @@ const findAuditLogs = async (filters = {}) => {
 };
 
 /**
- * Retrieves all distinct action values from audit_logs, for populating
- * a filter dropdown.
- * @returns {Promise<Array<string>>} List of distinct action strings
+ * FEATURE: Audit Action Names
+ * LOGIC: Return unique recorded action types in alphabetical order.
  */
 const findDistinctAuditActions = async () => {
     const result = await pool.query(
@@ -228,10 +210,8 @@ const findDistinctAuditActions = async () => {
 };
 
 /**
- * Retrieves all Break-the-Glass emergency access log entries, joined
- * with users (for the accessing staff member's email/role) and patients
- * (for the patient's name), ordered most recent first.
- * @returns {Promise<Array>} List of emergency access log rows
+ * FEATURE: Break-the-Glass Audit
+ * LOGIC: Include staff and patient names where available; keep logs even if a join is missing.
  */
 const findEmergencyAccessLogs = async () => {
     const result = await pool.query(
@@ -256,10 +236,8 @@ const findEmergencyAccessLogs = async () => {
 };
 
 /**
- * Retrieves anonymized aggregate analytics counts. No per-patient or
- * per-user identifiable data is returned - only totals, per the
- * charter's "no personally identifiable data in analytics" rule.
- * @returns {Promise<object>} { totalPatients, appointmentsThisMonth, prescriptionsIssued, emergencyOverrides }
+ * FEATURE: Privacy-Safe Analytics Totals
+ * LOGIC: Count patients, monthly appointments, prescriptions and emergency overrides.
  */
 const findAnalyticsSummary = async () => {
     const totalPatientsResult =
@@ -310,9 +288,8 @@ const findAnalyticsSummary = async () => {
 };
 
 /**
- * Retrieves a count of users grouped by role, for the admin overview
- * page's bar chart.
- * @returns {Promise<Array>} List of { role, count } rows
+ * FEATURE: Account Role Distribution
+ * LOGIC: Group accounts by role for the admin chart.
  */
 const findUserCountsByRole = async () => {
     const result = await pool.query(
@@ -334,9 +311,8 @@ const findUserCountsByRole = async () => {
 };
 
 /**
- * Searches for patients by name or NIC, for the admin QR reissue screen.
- * @param {string} search - Matches against full_name or nic
- * @returns {Promise<Array>} List of matching patient rows
+ * FEATURE: Patient QR Search
+ * LOGIC: Match a patient name or NIC and limit results to 20 records.
  */
 const searchPatients = async (search) => {
     const result = await pool.query(
@@ -353,12 +329,8 @@ const searchPatients = async (search) => {
 };
 
 /**
- * Overwrites a patient's qr_code_id with a freshly generated value.
- * The old QR code is not retained anywhere, so any lookup using it
- * fails instantly (no matching row exists).
- * @param {string} patientId - UUID of the patient
- * @param {string} newQrCodeId - The newly generated QR code value
- * @returns {Promise<object>} Updated patient row
+ * FEATURE: Invalidate Previous Patient QR
+ * LOGIC: Overwrite qr_code_id so lookups using the old identifier no longer match.
  */
 const reissuePatientQr = async (
     patientId,
@@ -380,8 +352,8 @@ const reissuePatientQr = async (
 };
 
 /**
- * Retrieves all system settings.
- * @returns {Promise<Array>} List of setting rows
+ * FEATURE: System Setting List
+ * LOGIC: Return current settings in key order.
  */
 const findAllSettings = async () => {
     const result = await pool.query(
@@ -398,10 +370,8 @@ const findAllSettings = async () => {
 };
 
 /**
- * Updates a single system setting's value by key.
- * @param {string} key - The setting's key
- * @param {string} value - The new value
- * @returns {Promise<object|null>} Updated setting row, or null if key doesn't exist
+ * FEATURE: Save System Setting
+ * LOGIC: Update a known key and record its modification time.
  */
 const updateSetting = async (
     key,
@@ -427,22 +397,8 @@ const updateSetting = async (
 };
 
 /**
- * Approves a pending user, setting verification_status to 'approved'.
- *
- * Doctor:
- * - users.verification_status = approved
- * - doctors.is_verified = true
- *
- * Pharmacist:
- * - users.verification_status = approved
- * - pharmacies.is_verified = true
- *
- * Laboratory:
- * - users.verification_status = approved
- * - laboratories.is_verified = true
- *
- * @param {string} userId - UUID of the user
- * @returns {Promise<object>} Updated user row
+ * FEATURE: Approve User and Profile
+ * LOGIC: In one transaction, approve the account and verify its doctor/pharmacy/lab profile.
  */
 const approveUser = async (userId) => {
     const client = await pool.connect();
@@ -473,8 +429,7 @@ const approveUser = async (userId) => {
         const role =
             updatedUser.role?.toLowerCase();
 
-        // Doctors have a separate profile-level verification flag.
-        // Keep it in sync with the admin approval status.
+        // Match the approved/rejected account state with its role-specific profile.
         if (role === 'doctor') {
             await client.query(
                 `UPDATE doctors
@@ -485,7 +440,6 @@ const approveUser = async (userId) => {
             );
         }
 
-        // Pharmacists also have a separate pharmacy-level verification flag.
         if (role === 'pharmacist') {
             await client.query(
                 `UPDATE pharmacies
@@ -496,8 +450,6 @@ const approveUser = async (userId) => {
             );
         }
 
-        // Laboratory accounts use the lab_technician role and have
-        // a separate laboratories.is_verified flag.
         if (role === 'lab_technician') {
             await client.query(
                 `UPDATE laboratories
@@ -522,22 +474,8 @@ const approveUser = async (userId) => {
 };
 
 /**
- * Rejects a pending user, setting verification_status to 'rejected'.
- *
- * Doctor:
- * - users.verification_status = rejected
- * - doctors.is_verified = false
- *
- * Pharmacist:
- * - users.verification_status = rejected
- * - pharmacies.is_verified = false
- *
- * Laboratory:
- * - users.verification_status = rejected
- * - laboratories.is_verified = false
- *
- * @param {string} userId - UUID of the user
- * @returns {Promise<object>} Updated user row
+ * FEATURE: Reject User and Profile
+ * LOGIC: In one transaction, reject the account and clear its clinical/provider verification flag.
  */
 const rejectUser = async (userId) => {
     const client = await pool.connect();
@@ -568,8 +506,6 @@ const rejectUser = async (userId) => {
         const role =
             updatedUser.role?.toLowerCase();
 
-        // Keep the doctor profile's verification state
-        // synchronized with the user approval state.
         if (role === 'doctor') {
             await client.query(
                 `UPDATE doctors
@@ -580,8 +516,6 @@ const rejectUser = async (userId) => {
             );
         }
 
-        // Keep the pharmacy profile's verification state
-        // synchronized with the user approval state.
         if (role === 'pharmacist') {
             await client.query(
                 `UPDATE pharmacies
@@ -592,8 +526,6 @@ const rejectUser = async (userId) => {
             );
         }
 
-        // Keep the laboratory profile's verification state
-        // synchronized with the user approval state.
         if (role === 'lab_technician') {
             await client.query(
                 `UPDATE laboratories
