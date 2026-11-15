@@ -137,6 +137,7 @@ const AppointmentQueuePage = () => {
         state.user
     );
 
+  // Use the signed-in doctor profile as the queue scope; backend permission checks remain authoritative.
   const DOCTOR_ID =
     user?.profile_id ||
     user?.id ||
@@ -279,6 +280,7 @@ const AppointmentQueuePage = () => {
 
     fetchAppointments();
 
+    // Refresh the doctor queue automatically and clear the timer when the page unmounts.
     const intervalId =
       setInterval(
         () => {
@@ -507,6 +509,7 @@ const AppointmentQueuePage = () => {
      DERIVED QUEUE SUMMARY
   ========================================================= */
 
+  // Count each queue status from the current appointment list for the summary badges.
   const scheduledCount =
     appointments.filter(
       (appointment) =>
@@ -521,6 +524,7 @@ const AppointmentQueuePage = () => {
         'confirmed'
     ).length;
 
+  // Count active consultations separately from scheduled and completed visits.
   const inProgressCount =
     appointments.filter(
       (appointment) =>

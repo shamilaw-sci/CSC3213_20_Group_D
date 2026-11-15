@@ -375,6 +375,7 @@ const DoctorDashboard = () => {
         state.user
     );
 
+  // Identify the doctor from the signed-in profile; fetching a page does not replace server authorization.
   const DOCTOR_ID =
     user?.profile_id ||
     user?.id ||
@@ -559,6 +560,7 @@ const DoctorDashboard = () => {
             false
           );
 
+          // Load profile, statistics, insights, unreviewed reports and today's appointments together.
           const [
             docRes,
             statsRes,
@@ -757,6 +759,7 @@ const DoctorDashboard = () => {
           ''
         ).trim();
 
+      // A lab report cannot be marked reviewed from this screen without the doctor entering a remark.
       if (!remark) {
 
         setReviewError(
@@ -1023,6 +1026,7 @@ const DoctorDashboard = () => {
           qrValue
         );
 
+      // Reject empty QR input before contacting the patient lookup endpoint.
       if (!normalizedQr) {
 
         setPatientLookupError(
@@ -1117,6 +1121,7 @@ const DoctorDashboard = () => {
       const normalizedNic =
         nicValue.trim();
 
+      // Reject an empty NIC lookup; backend still validates whether the patient may be shown.
       if (!normalizedNic) {
 
         setPatientLookupError(
@@ -1418,6 +1423,7 @@ const DoctorDashboard = () => {
           appointmentId
         );
 
+        // Start a scheduled appointment before navigating to its consultation workspace.
         await updateAppointmentStatus(
           appointmentId,
           'in_progress'

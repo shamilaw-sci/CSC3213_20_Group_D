@@ -41,6 +41,7 @@ const sendAppointmentReminders = async () => {
     const appointments = result.rows;
     console.log(`[ReminderJob] Found ${appointments.length} appointment(s) to remind.`);
 
+    // Send one reminder per returned appointment; this job does not store a separate reminder-sent flag.
     for (const appt of appointments) {
       const appointmentDate = new Date(appt.scheduled_at).toLocaleString('en-GB', {
         day: 'numeric',
@@ -56,6 +57,7 @@ const sendAppointmentReminders = async () => {
         appointmentDate
       );
 
+      // A failed email is logged but does not stop reminders for the other appointments.
       if (!emailResult.success) {
         console.error('[ReminderJob] Failed to send an appointment reminder.');
       }

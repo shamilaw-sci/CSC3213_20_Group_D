@@ -34,6 +34,9 @@ const STATUS_LABELS = {
   cancelled: 'Cancelled',
 };
 
+/**
+ * Allow a blank optional link; if supplied, accept only an HTTP or HTTPS report URL.
+ */
 const isValidReportUrl = (value) => {
   if (!value.trim()) return true;
 
@@ -45,6 +48,10 @@ const isValidReportUrl = (value) => {
   }
 };
 
+/**
+ * Finalize findings for a selected laboratory request using its request ID.
+ * This form saves text findings and an optional report URL, not a PDF file upload.
+ */
 const LabReportUploadPage = () => {
   const { requestId } = useParams();
   const navigate = useNavigate();
@@ -57,6 +64,7 @@ const LabReportUploadPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
 
+  // Load the laboratory request list using the authenticated laboratory profile ID.
   const requestsQuery = useQuery({
     queryKey: ['lab-requests', labId],
     queryFn: async () => {
@@ -66,21 +74,28 @@ const LabReportUploadPage = () => {
     enabled: Boolean(labId),
   });
 
+  // Find the requested test in the laboratory queue before allowing the report form.
   const request = useMemo(
     () => (requestsQuery.data || []).find((item) => item.id === requestId),
     [requestId, requestsQuery.data]
   );
 
+  // Enable finalization only for requests marked in progress or completed.
   const canUpload = request
     && ['in_progress', 'completed'].includes(request.status);
 
+  /**
+   * Require nonempty clinical findings and check the optional report link before submission.
+   */
   const validate = () => {
     const errors = {};
 
+    // A report without findings cannot be finalized even when a link is provided.
     if (!findings.trim()) {
       errors.findings = 'Enter the test findings before finalizing the report.';
     }
 
+    // Reject non-web schemes and malformed report URLs; the link is optional.
     if (!isValidReportUrl(reportUrl)) {
       errors.reportUrl = 'Enter a valid HTTP or HTTPS report URL.';
     }
@@ -89,9 +104,14 @@ const LabReportUploadPage = () => {
     return Object.keys(errors).length === 0;
   };
 
+  /**
+   * Validate the form and request status, then submit findings and an optional URL.
+   * On success refresh the request list and show confirmation; display API errors without clearing the form.
+   */
   const handleSubmit = async (event) => {
     event.preventDefault();
 
+    // Stop submission if the form is invalid or this request is not in an allowed status.
     if (!validate() || !canUpload) return;
 
     setIsSubmitting(true);

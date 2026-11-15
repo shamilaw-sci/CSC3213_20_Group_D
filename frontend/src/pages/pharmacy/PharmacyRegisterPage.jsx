@@ -39,6 +39,7 @@ const PharmacyRegisterPage = () => {
 
   /** @param {Object} data Validated RHF values. @returns {Promise<void>} Submit once; show pending approval only after acknowledgement. */
   const onSubmit = async data => {
+    // Ignore repeated registration clicks while the first request is pending.
     if (inFlight.current) return;
     inFlight.current = true;
     setLoading(true);
@@ -53,6 +54,7 @@ const PharmacyRegisterPage = () => {
         license_number: data.license_number,
         address:        data.address,
       });
+      // Display the pending-approval message only after the registration API confirms the application.
       setSuccess(true);
       reset();
     } catch (err) {
@@ -64,6 +66,7 @@ const PharmacyRegisterPage = () => {
   };
 
   // ── Success State ──────────────────────────────────────────────────────────
+  // An accepted application is not an active pharmacist login; administrator approval is still required.
   if (success) {
     return (
       <main className="auth-controls min-h-screen bg-background flex items-center justify-center p-4 sm:p-6">

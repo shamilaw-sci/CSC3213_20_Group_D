@@ -72,6 +72,9 @@ const VALID_STATUS_FILTERS = [
   'cancelled',
 ];
 
+/**
+ * Display the request date for lab staff, including a clear fallback for missing values.
+ */
 const formatDate = (value) => {
   if (!value) return 'Date unavailable';
 
@@ -84,6 +87,10 @@ const formatDate = (value) => {
   });
 };
 
+/**
+ * Show test requests assigned to the signed-in laboratory, with status, priority and text filters.
+ * Technicians update a request status or open the report form; the server validates each transition.
+ */
 const LabQueuePage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -97,6 +104,7 @@ const LabQueuePage = () => {
   const [updatingId, setUpdatingId] = useState(null);
   const labId = useAuthStore((state) => state.user?.profile_id);
 
+  // Fetch laboratory requests only when a laboratory profile ID exists.
   const requestsQuery = useQuery({
     queryKey: ['lab-requests', labId],
     queryFn: async () => {
@@ -111,6 +119,7 @@ const LabQueuePage = () => {
     [requestsQuery.data]
   );
 
+  // Filter already-loaded requests locally by status, priority, and search text.
   const filteredRequests = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
@@ -135,6 +144,9 @@ const LabQueuePage = () => {
     });
   }, [priorityFilter, requests, searchTerm, statusFilter]);
 
+  /**
+   * Keep the chosen queue-status filter in the URL so the selected view can be revisited.
+   */
   const handleStatusChange = (value) => {
     if (value === 'all') {
       setSearchParams({});
@@ -144,13 +156,19 @@ const LabQueuePage = () => {
     setSearchParams({ status: value });
   };
 
+  /**
+   * Submit the new request status to the laboratory API.
+   * Refresh the cached queue after success, or show the backend error without changing the visible status.
+   */
   const handleStatusUpdate = async (requestId, nextStatus) => {
+    // Track the request being updated so its action can show progress and avoid confusion.
     setUpdatingId(requestId);
 
     try {
       await api.put(`/api/laboratories/requests/${requestId}/status`, {
         status: nextStatus,
       });
+      // Reload the list from the server so a successful status update appears in the queue.
       await queryClient.invalidateQueries({ queryKey: ['lab-requests', labId] });
       toast.success(`Request updated to ${STATUS_LABELS[nextStatus].toLowerCase()}.`);
     } catch (error) {
@@ -294,6 +312,7 @@ const LabQueuePage = () => {
           ) : (
             <div className="space-y-4">
               {filteredRequests.map((request) => {
+                // Display only the next predefined status action for each request, alongside a separate reporting action.
                 const nextStatus = NEXT_STATUS[request.status];
                 const canUpload = ['in_progress', 'completed'].includes(request.status);
 

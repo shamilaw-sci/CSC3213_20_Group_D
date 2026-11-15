@@ -63,6 +63,10 @@ const formatDateTime = (iso) => {
   });
 };
 
+/**
+ * Display dispensing events returned for the signed-in pharmacy.
+ * Search is a client-side filter; the backend controls which records this pharmacy may retrieve.
+ */
 const PharmacyDispensingHistoryPage = () => {
   const navigate = useNavigate();
 
@@ -70,6 +74,7 @@ const PharmacyDispensingHistoryPage = () => {
     (state) => state.user
   );
 
+  // Use the signed-in pharmacy profile ID when requesting dispensing history.
   const PHARMACY_ID =
     user?.profile_id ||
     user?.id ||
@@ -81,6 +86,7 @@ const PharmacyDispensingHistoryPage = () => {
   /**
    * Loads dispensing history for the logged-in pharmacy.
    */
+  // Load history with React Query and keep it disabled until the pharmacy ID is available.
   const {
     data: history = [],
     isLoading,
@@ -106,6 +112,7 @@ const PharmacyDispensingHistoryPage = () => {
   /**
    * Filters dispensing history locally.
    */
+  // Filter the loaded history by QR value, patient, doctor and status without another API request.
   const filteredHistory = useMemo(() => {
     const term =
       searchTerm.trim().toLowerCase();
@@ -164,6 +171,7 @@ const PharmacyDispensingHistoryPage = () => {
   }
 
   // ── Error ──
+  // Offer Retry when the history API fails instead of displaying a false empty state.
   if (isError) {
     return (
       <div className="min-h-[calc(100vh-5rem)] bg-muted/30 flex items-center justify-center p-6">

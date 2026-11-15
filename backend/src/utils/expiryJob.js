@@ -18,6 +18,7 @@ const runExpiryJob = async () => {
   try {
     console.log('[ExpiryJob] Checking for expired prescriptions...');
 
+    // Expire only currently active prescriptions whose expiry time has passed; preserve all other statuses.
     const result = await pool.query(
       `UPDATE prescriptions
        SET status     = 'expired',
@@ -39,6 +40,7 @@ const runExpiryJob = async () => {
     console.log('[ExpiryJob] Done.');
 
   } catch (error) {
+    // Log job failures without crashing the API process; the next scheduled run can retry.
     console.error('[ExpiryJob] Error:', error.message);
   }
 };

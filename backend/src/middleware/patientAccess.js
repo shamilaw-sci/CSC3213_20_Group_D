@@ -22,6 +22,7 @@ const authorizePatientResource = ({
   return async (req, res, next) => {
     try {
       const user = req.session?.user;
+      // Read the patient identifier from the route or request; permissions are checked against the session identity.
       const patientId =
         req.params?.id || req.params?.patientId || req.body?.patientId;
 
@@ -35,10 +36,12 @@ const authorizePatientResource = ({
       }
 
       // This exception works only on routes that enable pharmacist access.
+      // Pharmacists are an explicit route-level exception, not general readers of all patient records.
       if (user?.role === 'pharmacist' && allowPharmacist) {
         return next();
       }
 
+      // Doctor access requires an appointment ID and an active appointment linking this doctor and patient.
       if (user?.role === 'doctor' && allowDoctor) {
         const appointmentId =
           req.query?.appointmentId || req.body?.appointmentId;
@@ -64,6 +67,7 @@ const authorizePatientResource = ({
         }
       }
 
+      // Deny all unmatched roles and patient/appointment combinations by default.
       return res.status(403).json({
         success: false,
         message: 'You are not authorized to access this patient record.'

@@ -25,6 +25,10 @@ import PageHeader from '../../components/common/PageHeader';
 
 const API_URL = API_BASE_URL;
 
+/**
+ * Show administrator summary counts, not a list of identifiable patient records.
+ * The backend decides which authenticated accounts may request these metrics.
+ */
 const AdminAnalyticsPage = () => {
   const [
     summary,
@@ -41,7 +45,12 @@ const AdminAnalyticsPage = () => {
     setError
   ] = useState(null);
 
+  // Load analytics when the administrator first opens this page.
   useEffect(() => {
+    /**
+     * Request aggregate system metrics using the current session cookie.
+     * Show an error on unsuccessful responses and always stop the loading indicator.
+     */
     const fetchSummary = async () => {
       try {
         setLoading(true);
@@ -57,6 +66,7 @@ const AdminAnalyticsPage = () => {
         const data =
           await res.json();
 
+        // Treat a rejected backend response as an error rather than displaying misleading zero counts.
         if (!data.success) {
           setError(
             data.message ||
@@ -86,6 +96,7 @@ const AdminAnalyticsPage = () => {
     fetchSummary();
   }, []);
 
+  // Keep the dashboard in its loading state until the first request finishes.
   if (loading) {
     return (
       <div className="min-h-[55vh] flex flex-col items-center justify-center gap-3">
@@ -103,6 +114,7 @@ const AdminAnalyticsPage = () => {
   }
 
   // Mapped specifically to standard design tokens and semantic icons
+  // Map the four backend totals to display cards; no patient-level rows are fetched here.
   const cards = summary
     ? [
         {

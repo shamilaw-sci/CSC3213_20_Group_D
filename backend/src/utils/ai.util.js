@@ -375,6 +375,7 @@ const runGeminiWithRetry =
           'Provider request failed.'
         );
 
+        // Retry only transient Gemini failures and stop after the configured attempt limit.
         const canRetry =
           attempt <
             GEMINI_MAX_ATTEMPTS &&
@@ -466,6 +467,7 @@ const generateAIResponse =
     ====================================================== */
 
     try {
+      // Missing Gemini credentials enter the fallback path for text rather than stopping the API.
       if (!genAI) throw new Error('Primary AI is not configured');
       const model =
         genAI
@@ -522,6 +524,7 @@ const generateAIResponse =
     ====================================================== */
 
     try {
+      // If the text fallback is also unavailable, return the safe service-unavailable notice below.
       if (!groq) throw new Error('Fallback AI is not configured');
       const groqResponse =
         await groq
@@ -637,6 +640,7 @@ const generateAIVisionResponse =
               GEMINI_VISION_MODEL,
           });
 
+      // Encode the image as base64 with its MIME type for Gemini Vision; the text-only Groq fallback is not used for images.
       const imagePart = {
         inlineData: {
           data:

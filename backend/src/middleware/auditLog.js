@@ -15,6 +15,7 @@ const { pool } = require('../config/db');
  */
 const logAudit = async (userId, action, entityType, entityId, details = {}, ipAddress = null) => {
   try {
+    // The audit entry records actor, action, record type and redacted details using parameterized SQL.
     await pool.query(
       `INSERT INTO audit_logs 
        (user_id, action, entity_type, entity_id, details, ip_address)
@@ -44,12 +45,14 @@ const auditMiddleware = (action, entityType) => (req, res, next) => {
   const details = { method: req.method, path: `${req.baseUrl || ''}${pattern}`,
     userAgent: String(req.headers?.['user-agent'] || '').slice(0, 512) };
 
+  // Wait until the HTTP response finishes so the log includes its final status; audit failure does not interrupt the request.
   res.once('finish', () => {
     const statusCode = res.statusCode;
     void logAudit(userId, action, entityType, entityId, { ...details, statusCode,
       outcome: statusCode >= 400 ? 'failed' : 'completed' }, ipAddress);
   });
 
+  // Continue to the protected route immediately; the audit insert runs separately after the response.
   next();
 };
 
