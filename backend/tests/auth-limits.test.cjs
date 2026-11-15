@@ -3,7 +3,6 @@
  * @module Authentication regression tests
  * @desc Execute installed rate-limit middleware/MemoryStore, with synthetic HTTP
  *       objects and controlled time. No database, network listener or email call.
- * @author Codex Review Assistant (new tests; no student credit claimed)
  */
 const test = require('node:test');
 const assert = require('node:assert/strict');

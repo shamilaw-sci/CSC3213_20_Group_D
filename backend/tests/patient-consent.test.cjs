@@ -2,7 +2,6 @@
  * @file patient-consent.test.cjs
  * @module Patient/consent regression tests
  * @desc Actual source behind closed SQL/provider boundaries; no live records or PG concurrency claim.
- * @author Codex Review Assistant
  */
 const test = require('node:test');
 const assert = require('node:assert/strict');

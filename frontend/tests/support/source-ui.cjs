@@ -2,7 +2,6 @@
  * @file source-ui.cjs
  * @module Auth UI regression support
  * @desc Execute trusted JSX handlers with synthetic hook/API boundaries; not a renderer or native-runtime test.
- * @author Codex Review Assistant
  */
 const fs = require('node:fs');
 const vm = require('node:vm');

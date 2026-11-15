@@ -3,7 +3,6 @@
  * @module Web/mobile authentication regression tests
  * @desc Actual source handlers/services behind synthetic React/API/navigation boundaries.
  *       Browser screenshots/keyboard checks are separate; this does not render React Native.
- * @author Codex Review Assistant
  */
 const test = require('node:test');
 const assert = require('node:assert/strict');

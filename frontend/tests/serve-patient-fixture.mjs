@@ -2,7 +2,6 @@
  * @file serve-patient-fixture.mjs
  * @module Synthetic patient browser verification
  * @desc Loopback-only in-memory Vite/API fixture; no dotenv, app, DB, provider or disk build.
- * @author Codex Review Assistant
  */
 import http from 'node:http';
 import {fileURLToPath} from 'node:url';

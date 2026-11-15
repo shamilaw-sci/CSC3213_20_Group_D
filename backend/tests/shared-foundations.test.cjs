@@ -2,7 +2,6 @@
  * @file shared-foundations.test.cjs
  * @module Shared database/audit regression tests
  * @desc Actual source with fake pg/client and synthetic HTTP events; no network/live DB.
- * @author Codex Review Assistant
  */
 const test=require('node:test');const assert=require('node:assert/strict');const {EventEmitter}=require('node:events');
 const {load}=require('./support/isolated.cjs');

@@ -2,7 +2,6 @@
  * @file auth-contracts.test.cjs
  * @module Authentication regression tests
  * @desc Exercise actual route ordering, SQL command contracts and consent status.
- * @author Codex Review Assistant (test implementation; no student credit claimed)
  */
 const test = require('node:test');
 const assert = require('node:assert/strict');

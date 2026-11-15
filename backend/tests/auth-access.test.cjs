@@ -2,7 +2,6 @@
  * @file auth-access.test.cjs
  * @module Authentication regression tests
  * @desc Synthetic policy/lifecycle tests of actual application modules with closed mocks.
- * @author Codex Review Assistant (test implementation; no student credit claimed)
  */
 const test = require('node:test');
 const assert = require('node:assert/strict');

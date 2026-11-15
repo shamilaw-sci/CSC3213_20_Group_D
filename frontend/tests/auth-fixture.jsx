@@ -2,7 +2,6 @@
  * @file auth-fixture.jsx
  * @module Auth UI verification fixture
  * @desc Actual auth screens with synthetic API and destination routes, not a production app entry.
- * @author Codex Review Assistant
  */
 import { useState } from 'react';
 import { createRoot } from 'react-dom/client';

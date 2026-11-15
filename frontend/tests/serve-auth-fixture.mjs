@@ -2,7 +2,6 @@
  * @file serve-auth-fixture.mjs
  * @module Auth UI verification fixture
  * @desc Loopback-only, in-memory build/API fixtures. No dotenv, DB, email, disk build or app server import.
- * @author Codex Review Assistant
  */
 import http from 'node:http';
 import { fileURLToPath } from 'node:url';

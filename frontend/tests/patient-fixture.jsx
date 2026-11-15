@@ -2,7 +2,6 @@
  * @file patient-fixture.jsx
  * @module Synthetic patient browser verification
  * @desc Actual patient screens, stores and Query provider; synthetic API only, no real destinations.
- * @author Codex Review Assistant
  */
 import {useState} from 'react';
 import {createRoot} from 'react-dom/client';

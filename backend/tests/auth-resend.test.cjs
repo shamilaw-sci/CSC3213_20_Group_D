@@ -2,7 +2,6 @@
  * @file auth-resend.test.cjs
  * @module Authentication regression tests
  * @desc Controlled interleavings of the actual resend service and repository contract.
- * @author Codex Review Assistant (new tests; no student authorship assigned)
  */
 const test = require('node:test');
 const assert = require('node:assert/strict');

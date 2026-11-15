@@ -2,7 +2,6 @@
  * @file isolated.cjs
  * @module Authentication regression tests
  * @desc Load actual CommonJS source with explicit mocks and no live-service imports.
- * @author Codex Review Assistant (test implementation; no student credit claimed)
  */
 const fs = require('node:fs');
 const path = require('node:path');

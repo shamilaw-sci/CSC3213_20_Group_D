@@ -2,7 +2,6 @@
  * @file patient-ui.test.cjs
  * @module Patient UI/service contract tests
  * @desc Actual service exports with synthetic Axios only; browser/native rendering is separate.
- * @author Codex Review Assistant
  */
 const test=require('node:test');const assert=require('node:assert/strict');
 const {load}=require('./support/source-ui.cjs');
