@@ -1,9 +1,7 @@
 /**
  * @file    PatientHomeScreen.js
  * @module  Patient
- * @desc    Premium patient home dashboard for the Care4U mobile app.
- *          Shows patient identity, next appointment, health summary,
- *          quick-access care tools, and personalized health infographics.
+ * @desc    Patient dashboard with upcoming care, health counts and navigation shortcuts.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -56,9 +54,7 @@ import useAuthStore from '../store/authStore';
 
 import HealthAwarenessFeed from '../components/HealthAwarenessFeed';
 
-/* =========================================================
-   CARE4U MOBILE DESIGN TOKENS
-========================================================= */
+/* CARE4U MOBILE DESIGN TOKENS */
 
 const COLORS = {
   background: '#F6F8FA',
@@ -94,15 +90,10 @@ const COLORS = {
   successSoft: '#EDF9F2',
 };
 
-/* =========================================================
-   HELPERS
-========================================================= */
+/* HELPERS */
 
 /**
  * Returns initials from a person's full name.
- *
- * @param {string} name - Full patient name
- * @returns {string} Initials
  */
 const getInitials = (
   name
@@ -126,9 +117,6 @@ const getInitials = (
 
 /**
  * Returns the patient's first name.
- *
- * @param {string} name - Full patient name
- * @returns {string} First name
  */
 const getFirstName = (
   name
@@ -146,8 +134,6 @@ const getFirstName = (
 
 /**
  * Returns a time-aware greeting.
- *
- * @returns {string} Greeting
  */
 const getGreeting = () => {
   const hour =
@@ -171,8 +157,6 @@ const getGreeting = () => {
 
 /**
  * Formats the current date for the dashboard greeting.
- *
- * @returns {string} Formatted current date
  */
 const formatToday = () => {
   return new Date()
@@ -188,9 +172,6 @@ const formatToday = () => {
 
 /**
  * Formats an appointment date.
- *
- * @param {string} value - ISO date
- * @returns {string} Formatted date
  */
 const formatAppointmentDate = (
   value
@@ -223,9 +204,6 @@ const formatAppointmentDate = (
 
 /**
  * Formats an appointment time.
- *
- * @param {string} value - ISO date
- * @returns {string} Formatted time
  */
 const formatAppointmentTime = (
   value
@@ -258,9 +236,6 @@ const formatAppointmentTime = (
 
 /**
  * Converts an appointment status into a readable label.
- *
- * @param {string} status - Appointment status
- * @returns {string} Formatted status
  */
 const formatStatus = (
   status
@@ -283,10 +258,9 @@ const formatStatus = (
 };
 
 /**
- * Checks whether a prescription is still clinically active.
- *
- * @param {Object} prescription - Prescription object
- * @returns {boolean} Whether prescription is active
+ * FEATURE: Count active prescriptions
+ * LOGIC: Count active/partially-filled prescriptions unless a valid expiry is before the device time.
+ * Missing or invalid expiry dates do not exclude an otherwise active status.
  */
 const isActivePrescription = (
   prescription
@@ -327,9 +301,7 @@ const isActivePrescription = (
   return true;
 };
 
-/* =========================================================
-   SMALL COMPONENTS
-========================================================= */
+/* SMALL COMPONENTS */
 
 /**
  * @component SectionTitle
@@ -424,7 +396,7 @@ const MetricCard = ({
 
 /**
  * @component QuickActionCard
- * @desc      Premium shortcut card for common patient workflows.
+ * @desc      shortcut card for common patient workflows.
  */
 const QuickActionCard = ({
   icon: Icon,
@@ -483,14 +455,11 @@ const QuickActionCard = ({
   );
 };
 
-/* =========================================================
-   MAIN SCREEN
-========================================================= */
+/* MAIN SCREEN */
 
 /**
  * @component PatientHomeScreen
  * @desc      Main patient dashboard for the mobile application.
- * @param {Function} navigate - Root mobile navigation callback
  */
 const PatientHomeScreen = ({
   navigate,
@@ -547,13 +516,10 @@ const PatientHomeScreen = ({
   ] = useState(false);
 
   /**
-   * Loads the patient dashboard information.
-   *
-   * Promise.allSettled is used so one failed secondary
-   * request does not make the entire dashboard unusable.
-   *
-   * @param {boolean} background - Whether this is pull-to-refresh
-   * @returns {Promise<void>}
+   * FEATURE: Refresh the patient dashboard
+   * LOGIC: Load profile, allergies, appointments and prescriptions independently with allSettled.
+   * Update successful sections and keep previous values for failed sections; show partial/all-failed warnings.
+   * Pull-to-refresh uses its own loading flag, and both flags are released after the requests settle.
    */
   const loadDashboard =
     useCallback(
@@ -729,7 +695,9 @@ const PatientHomeScreen = ({
   ]);
 
   /**
-   * Finds the patient's nearest future appointment.
+   * FEATURE: Next appointment
+   * LOGIC: Keep valid future times with scheduled/confirmed status, sort earliest first and take one.
+   * In-progress visits are not included; the memo recalculates when the appointment list changes.
    */
   const nextAppointment =
     useMemo(
@@ -999,9 +967,7 @@ const PatientHomeScreen = ({
       }
     >
 
-      {/* =====================================================
-          PERSONAL GREETING
-      ====================================================== */}
+      {/* PERSONAL GREETING */}
 
       <View style={styles.identitySection}>
 
@@ -1035,6 +1001,7 @@ const PatientHomeScreen = ({
 
         </View>
 
+        {/* Patient Profile Photo Shortcut */}
         <TouchableOpacity
           activeOpacity={0.8}
           style={styles.avatarShell}
@@ -1085,9 +1052,7 @@ const PatientHomeScreen = ({
 
       </View>
 
-      {/* =====================================================
-          PARTIAL LOAD WARNING
-      ====================================================== */}
+      {/* PARTIAL LOAD WARNING */}
 
       {dashboardWarning ? (
         <View style={styles.warningCard}>
@@ -1104,9 +1069,7 @@ const PatientHomeScreen = ({
         </View>
       ) : null}
 
-      {/* =====================================================
-          NEXT APPOINTMENT
-      ====================================================== */}
+      {/* NEXT APPOINTMENT */}
 
       <SectionTitle
         title="Next appointment"
@@ -1118,6 +1081,7 @@ const PatientHomeScreen = ({
         }
       />
 
+      {/* Next Appointment Card and Find a Doctor Shortcut */}
       <TouchableOpacity
         activeOpacity={0.85}
         style={styles.appointmentCard}
@@ -1304,10 +1268,9 @@ const PatientHomeScreen = ({
 
       </TouchableOpacity>
 
-      {/* =====================================================
-          HEALTH SNAPSHOT
-      ====================================================== */}
+      {/* HEALTH SNAPSHOT */}
 
+      {/* Health at a Glance Heading and Metrics */}
       <SectionTitle
         title="Health at a glance"
       />
@@ -1433,10 +1396,9 @@ const PatientHomeScreen = ({
         </TouchableOpacity>
       )}
 
-      {/* =====================================================
-          QUICK ACCESS
-      ====================================================== */}
+      {/* QUICK ACCESS */}
 
+      {/* Quick Access Heading */}
       <SectionTitle
         title="Quick access"
       />
@@ -1447,7 +1409,7 @@ const PatientHomeScreen = ({
           (
             action
           ) => (
-            <QuickActionCard
+            /* Prescriptions Lab Reports My QR Card and AI Assistant Shortcuts */ <QuickActionCard
               key={
                 action.id
               }
@@ -1458,10 +1420,9 @@ const PatientHomeScreen = ({
 
       </View>
 
-      {/* =====================================================
-          FIND DOCTOR
-      ====================================================== */}
+      {/* FIND DOCTOR */}
 
+      {/* Find the Right Doctor Card */}
       <TouchableOpacity
         activeOpacity={0.82}
         style={styles.doctorBanner}
@@ -1508,9 +1469,7 @@ const PatientHomeScreen = ({
 
       </TouchableOpacity>
 
-      {/* =====================================================
-          PERSONALIZED HEALTH CONTENT
-      ====================================================== */}
+      {/* PERSONALIZED HEALTH CONTENT */}
 
       <View style={styles.healthSectionHeader}>
 
@@ -1543,6 +1502,7 @@ const PatientHomeScreen = ({
 
       <View style={styles.healthFeedCard}>
 
+        {/* Health Insights Feed */}
         <HealthAwarenessFeed
           patientAllergies={
             allergies
@@ -1551,9 +1511,7 @@ const PatientHomeScreen = ({
 
       </View>
 
-      {/* =====================================================
-          SECURITY NOTE
-      ====================================================== */}
+      {/* SECURITY NOTE */}
 
       <View style={styles.securityFooter}>
 
@@ -1574,9 +1532,7 @@ const PatientHomeScreen = ({
   );
 };
 
-/* =========================================================
-   STYLES
-========================================================= */
+/* STYLES */
 
 const styles =
   StyleSheet.create({
@@ -1593,9 +1549,7 @@ const styles =
       paddingBottom: 28,
     },
 
-    /* =====================================================
-       LOADING
-    ====================================================== */
+    /* LOADING */
 
     loadingScreen: {
       flex: 1,
@@ -1648,9 +1602,7 @@ const styles =
       textAlign: 'center',
     },
 
-    /* =====================================================
-       IDENTITY
-    ====================================================== */
+    /* IDENTITY */
 
     identitySection: {
       flexDirection: 'row',
@@ -1800,9 +1752,7 @@ const styles =
         COLORS.surface,
     },
 
-    /* =====================================================
-       WARNING
-    ====================================================== */
+    /* WARNING */
 
     warningCard: {
       flexDirection: 'row',
@@ -1841,9 +1791,7 @@ const styles =
       fontWeight: '600',
     },
 
-    /* =====================================================
-       SECTION TITLE
-    ====================================================== */
+    /* SECTION TITLE */
 
     sectionTitleRow: {
       flexDirection: 'row',
@@ -1884,9 +1832,7 @@ const styles =
       fontWeight: '700',
     },
 
-    /* =====================================================
-       APPOINTMENT
-    ====================================================== */
+    /* APPOINTMENT */
 
     appointmentCard: {
       position: 'relative',
@@ -2190,9 +2136,7 @@ const styles =
       fontWeight: '800',
     },
 
-    /* =====================================================
-       METRICS
-    ====================================================== */
+    /* METRICS */
 
     metricsRow: {
       flexDirection: 'row',
@@ -2331,9 +2275,7 @@ const styles =
       marginTop: 2,
     },
 
-    /* =====================================================
-       QUICK ACTIONS
-    ====================================================== */
+    /* QUICK ACTIONS */
 
     quickGrid: {
       flexDirection: 'row',
@@ -2437,9 +2379,7 @@ const styles =
       marginTop: 4,
     },
 
-    /* =====================================================
-       DOCTOR BANNER
-    ====================================================== */
+    /* DOCTOR BANNER */
 
     doctorBanner: {
       minHeight: 105,
@@ -2548,9 +2488,7 @@ const styles =
         'center',
     },
 
-    /* =====================================================
-       HEALTH CONTENT
-    ====================================================== */
+    /* HEALTH CONTENT */
 
     healthSectionHeader: {
       marginBottom: 12,
@@ -2629,9 +2567,7 @@ const styles =
       elevation: 2,
     },
 
-    /* =====================================================
-       SECURITY FOOTER
-    ====================================================== */
+    /* SECURITY FOOTER */
 
     securityFooter: {
       flexDirection: 'row',

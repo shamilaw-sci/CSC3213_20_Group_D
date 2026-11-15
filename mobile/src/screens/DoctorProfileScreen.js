@@ -2,9 +2,9 @@
  * @file    DoctorProfileScreen.js
  * @module  Doctor
  * @desc    Mobile professional profile for logged-in doctors.
- *          Care4U Mobile is patient-focused; doctors use the Care4U
- *          web clinical workspace for appointments, consultations,
- *          prescriptions, laboratory requests, and availability.
+ * Care4U Mobile is patient-focused; doctors use the Care4U
+ * web clinical workspace for appointments, consultations,
+ * prescriptions, laboratory requests, and availability.
  * @author  I.M.L.S. Idirisinghe (S/21/389)
  */
 
@@ -47,9 +47,7 @@ import {
 
 import useAuthStore from '../store/authStore';
 
-/* =========================================================
-   DESIGN TOKENS
-========================================================= */
+/* DESIGN TOKENS */
 
 const COLORS = {
   background: '#F6F8FA',
@@ -78,9 +76,7 @@ const COLORS = {
   dangerSoft: '#FFF1F1',
 };
 
-/* =========================================================
-   HELPERS
-========================================================= */
+/* HELPERS */
 
 const getInitials = (
   name
@@ -120,9 +116,7 @@ const getDoctorPhoto = (
   );
 };
 
-/* =========================================================
-   PROFILE ROW
-========================================================= */
+/* PROFILE ROW */
 
 const ProfileRow = ({
   icon: Icon,
@@ -157,10 +151,13 @@ const ProfileRow = ({
   );
 };
 
-/* =========================================================
-   SCREEN
-========================================================= */
+/* SCREEN */
 
+/**
+ * FEATURE: Mobile doctor professional profile
+ * LOGIC: Load the supplied/session doctor ID, show returned verification state and keep clinical tools on web.
+ * Initial failure offers retry; failed refresh keeps the last profile. No profile changes or web launch run here.
+ */
 export default function DoctorProfileScreen({
   doctorId,
 }) {
@@ -196,9 +193,7 @@ export default function DoctorProfileScreen({
     setError,
   ] = useState(null);
 
-  /* =======================================================
-     LOAD PROFILE
-  ======================================================= */
+  /* LOAD PROFILE */
 
   const fetchData =
     useCallback(
@@ -255,9 +250,7 @@ export default function DoctorProfileScreen({
     fetchData();
   }, [fetchData]);
 
-  /* =======================================================
-     LOADING
-  ======================================================= */
+  /* LOADING */
 
   if (loading) {
     return (
@@ -289,9 +282,7 @@ export default function DoctorProfileScreen({
     );
   }
 
-  /* =======================================================
-     ERROR
-  ======================================================= */
+  /* ERROR */
 
   if (
     error &&
@@ -322,6 +313,7 @@ export default function DoctorProfileScreen({
           {error}
         </Text>
 
+        {/* Try Again Doctor Profile Button */}
         <TouchableOpacity
           style={styles.retryButton}
           activeOpacity={0.8}
@@ -355,9 +347,7 @@ export default function DoctorProfileScreen({
       doctor?.is_verified
     );
 
-  /* =======================================================
-     PAGE
-  ======================================================= */
+  /* PAGE */
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -379,9 +369,7 @@ export default function DoctorProfileScreen({
         }
       >
 
-        {/* =================================================
-            PROFILE HERO
-        ================================================== */}
+        {/* PROFILE HERO */}
 
         <View style={styles.hero}>
 
@@ -396,6 +384,7 @@ export default function DoctorProfileScreen({
                 CARE4U DOCTOR
               </Text>
 
+              {/* Professional Profile Heading */}
               <Text style={styles.heroLabel}>
                 Professional Profile
               </Text>
@@ -446,9 +435,7 @@ export default function DoctorProfileScreen({
 
         </View>
 
-        {/* =================================================
-            IDENTITY
-        ================================================== */}
+        {/* IDENTITY */}
 
         <View style={styles.identitySection}>
 
@@ -510,9 +497,7 @@ export default function DoctorProfileScreen({
 
         </View>
 
-        {/* =================================================
-            PROFESSIONAL SUMMARY
-        ================================================== */}
+        {/* PROFESSIONAL SUMMARY */}
 
         <View style={styles.summaryRow}>
 
@@ -589,9 +574,7 @@ export default function DoctorProfileScreen({
 
         </View>
 
-        {/* =================================================
-            PROFESSIONAL INFORMATION
-        ================================================== */}
+        {/* PROFESSIONAL INFORMATION */}
 
         <View style={styles.sectionCard}>
 
@@ -669,10 +652,9 @@ export default function DoctorProfileScreen({
 
         </View>
 
-        {/* =================================================
-            WEB CLINICAL WORKSPACE
-        ================================================== */}
+        {/* WEB CLINICAL WORKSPACE */}
 
+        {/* Doctor Tools Available on Care4U Web Notice */}
         <View style={styles.workspaceCard}>
 
           <View style={styles.workspaceIcon}>
@@ -702,9 +684,7 @@ export default function DoctorProfileScreen({
 
         </View>
 
-        {/* =================================================
-            MOBILE SCOPE NOTE
-        ================================================== */}
+        {/* MOBILE SCOPE NOTE */}
 
         <View style={styles.mobileNote}>
 
@@ -725,9 +705,7 @@ export default function DoctorProfileScreen({
   );
 }
 
-/* =========================================================
-   STYLES
-========================================================= */
+/* STYLES */
 
 const styles =
   StyleSheet.create({
@@ -744,9 +722,7 @@ const styles =
       paddingBottom: 32,
     },
 
-    /* =====================================================
-       HERO
-    ====================================================== */
+    /* HERO */
 
     hero: {
       height: 185,
@@ -834,9 +810,7 @@ const styles =
       height: 75,
     },
 
-    /* =====================================================
-       IDENTITY
-    ====================================================== */
+    /* IDENTITY */
 
     identitySection: {
       alignItems: 'center',
@@ -922,9 +896,7 @@ const styles =
       textAlign: 'center',
     },
 
-    /* =====================================================
-       SUMMARY
-    ====================================================== */
+    /* SUMMARY */
 
     summaryRow: {
       flexDirection: 'row',
@@ -970,9 +942,7 @@ const styles =
       color: COLORS.amber,
     },
 
-    /* =====================================================
-       PROFESSIONAL INFORMATION
-    ====================================================== */
+    /* PROFESSIONAL INFORMATION */
 
     sectionCard: {
       marginHorizontal: 16,
@@ -1047,9 +1017,7 @@ const styles =
       marginTop: 3,
     },
 
-    /* =====================================================
-       WEB WORKSPACE
-    ====================================================== */
+    /* WEB WORKSPACE */
 
     workspaceCard: {
       flexDirection: 'row',
@@ -1100,9 +1068,7 @@ const styles =
       marginTop: 5,
     },
 
-    /* =====================================================
-       MOBILE NOTE
-    ====================================================== */
+    /* MOBILE NOTE */
 
     mobileNote: {
       flexDirection: 'row',
@@ -1119,9 +1085,7 @@ const styles =
       textAlign: 'center',
     },
 
-    /* =====================================================
-       STATES
-    ====================================================== */
+    /* STATES */
 
     centered: {
       flex: 1,

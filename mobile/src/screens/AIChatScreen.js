@@ -1,10 +1,7 @@
 /**
  * @file    AIChatScreen.js
  * @module  Patient
- * @desc    Premium mobile AI Chat Assistant for patients.
- *          Supports English/Sinhala responses, Markdown rendering,
- *          conversation context, quick prompts, persistent AI safety
- *          guidance, and keyboard-aware chat input.
+ * @desc    Patient AI chat with language selection, local conversation context and safety guidance.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -41,9 +38,7 @@ import {
 import api from '../services/api';
 import useAuthStore from '../store/authStore';
 
-/* =========================================================
-   DESIGN TOKENS
-========================================================= */
+/* DESIGN TOKENS */
 
 const COLORS = {
   background: '#F6F8FA',
@@ -70,9 +65,7 @@ const COLORS = {
   dangerSoft: '#FFF1F1',
 };
 
-/* =========================================================
-   QUICK PROMPTS
-========================================================= */
+/* QUICK PROMPTS */
 
 const QUICK_PROMPTS = {
   en: [
@@ -88,9 +81,7 @@ const QUICK_PROMPTS = {
   ],
 };
 
-/* =========================================================
-   MAIN SCREEN
-========================================================= */
+/* MAIN SCREEN */
 
 const AIChatScreen = ({
   patientId,
@@ -136,10 +127,14 @@ const AIChatScreen = ({
   const scrollViewRef =
     useRef(null);
 
-  /* =======================================================
-     SEND MESSAGE
-  ======================================================= */
+  /* SEND MESSAGE */
 
+  /**
+   * FEATURE: Send a patient AI chat message
+   * LOGIC: Ignore blank text or another send while loading and require a patient ID.
+   * Copy previous messages before adding the new one; send that history, new text and chosen language.
+   * Append the reply or failure message and release loading. Conversation state belongs to this screen.
+   */
   const sendMessage =
     async (
       suppliedMessage = null
@@ -272,9 +267,7 @@ const AIChatScreen = ({
       }
     };
 
-  /* =======================================================
-     LANGUAGE
-  ======================================================= */
+  /* LANGUAGE */
 
   const toggleLanguage =
     () => {
@@ -287,9 +280,7 @@ const AIChatScreen = ({
       );
     };
 
-  /* =======================================================
-     PAGE
-  ======================================================= */
+  /* PAGE */
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -305,9 +296,7 @@ const AIChatScreen = ({
         }
       >
 
-        {/* =================================================
-            ASSISTANT INTRO
-        ================================================== */}
+        {/* ASSISTANT INTRO */}
 
         <View style={styles.assistantCard}>
 
@@ -336,6 +325,7 @@ const AIChatScreen = ({
 
           </View>
 
+          {/* Switch AI Assistant Language Button */}
           <TouchableOpacity
             style={styles.languageButton}
             activeOpacity={0.75}
@@ -360,10 +350,9 @@ const AIChatScreen = ({
 
         </View>
 
-        {/* =================================================
-            DISCLAIMER
-        ================================================== */}
+        {/* DISCLAIMER */}
 
+        {/* AI Medical Safety Notice */}
         <View style={styles.disclaimerCard}>
 
           <View style={styles.disclaimerIcon}>
@@ -389,9 +378,7 @@ const AIChatScreen = ({
 
         </View>
 
-        {/* =================================================
-            CHAT
-        ================================================== */}
+        {/* CHAT */}
 
         <ScrollView
           ref={scrollViewRef}
@@ -464,7 +451,7 @@ const AIChatScreen = ({
                         {message.content}
                       </Text>
                     ) : (
-                      <Markdown
+                      /* AI Reply Markdown Display */ <Markdown
                         style={
                           markdownStyles
                         }
@@ -491,9 +478,7 @@ const AIChatScreen = ({
             }
           )}
 
-          {/* ===============================================
-              QUICK PROMPTS
-          ================================================ */}
+          {/* QUICK PROMPTS */}
 
           {messages.length ===
             1 &&
@@ -510,7 +495,7 @@ const AIChatScreen = ({
                   language
                 ].map(
                   prompt => (
-                    <TouchableOpacity
+                    /* Suggested AI Question Button */ <TouchableOpacity
                       key={prompt}
                       style={styles.quickPrompt}
                       activeOpacity={0.75}
@@ -539,9 +524,7 @@ const AIChatScreen = ({
             </View>
           ) : null}
 
-          {/* ===============================================
-              THINKING
-          ================================================ */}
+          {/* THINKING */}
 
           {loading ? (
             <View
@@ -584,9 +567,7 @@ const AIChatScreen = ({
 
         </ScrollView>
 
-        {/* =================================================
-            INPUT
-        ================================================== */}
+        {/* INPUT */}
 
         <View style={styles.composerArea}>
 
@@ -608,6 +589,7 @@ const AIChatScreen = ({
               editable={!loading}
             />
 
+            {/* Send AI Chat Message Button */}
             <TouchableOpacity
               style={[
                 styles.sendButton,
@@ -666,9 +648,7 @@ const AIChatScreen = ({
   );
 };
 
-/* =========================================================
-   STYLES
-========================================================= */
+/* STYLES */
 
 const styles =
   StyleSheet.create({
@@ -686,9 +666,7 @@ const styles =
         COLORS.background,
     },
 
-    /* =====================================================
-       ASSISTANT INTRO
-    ====================================================== */
+    /* ASSISTANT INTRO */
 
     assistantCard: {
       flexDirection: 'row',
@@ -813,9 +791,7 @@ const styles =
       fontWeight: '800',
     },
 
-    /* =====================================================
-       DISCLAIMER
-    ====================================================== */
+    /* DISCLAIMER */
 
     disclaimerCard: {
       flexDirection: 'row',
@@ -884,9 +860,7 @@ const styles =
       marginTop: 3,
     },
 
-    /* =====================================================
-       CHAT
-    ====================================================== */
+    /* CHAT */
 
     chatArea: {
       flex: 1,
@@ -1048,9 +1022,7 @@ const styles =
       fontWeight: '600',
     },
 
-    /* =====================================================
-       QUICK PROMPTS
-    ====================================================== */
+    /* QUICK PROMPTS */
 
     quickPromptSection: {
       marginTop: 3,
@@ -1117,9 +1089,7 @@ const styles =
       fontWeight: '700',
     },
 
-    /* =====================================================
-       COMPOSER
-    ====================================================== */
+    /* COMPOSER */
 
     composerArea: {
       borderTopWidth: 1,
@@ -1246,9 +1216,7 @@ const styles =
     },
   });
 
-/* =========================================================
-   MARKDOWN STYLES
-========================================================= */
+/* MARKDOWN STYLES */
 
 const markdownStyles =
   StyleSheet.create({

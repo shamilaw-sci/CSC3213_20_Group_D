@@ -2,9 +2,9 @@
  * @file    HealthAwarenessFeed.js
  * @module  Patient
  * @desc    Mobile personalized health-awareness infographic carousel.
- *          Displays published Care4U infographic articles, prioritizes
- *          allergy-relevant content, supports swipe navigation,
- *          manual controls, and automatic rotation.
+ * Displays published Care4U infographic articles, prioritizes
+ * allergy-relevant content, supports swipe navigation,
+ * manual controls, and automatic rotation.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -67,9 +67,6 @@ const COLORS = {
  * Absolute URLs are returned unchanged.
  * Relative backend URLs are joined with the configured
  * API base URL.
- *
- * @param {string} imageUrl
- * @returns {string}
  */
 const resolveImageUrl = (
   imageUrl
@@ -121,9 +118,6 @@ const resolveImageUrl = (
 
 /**
  * Removes duplicate content items using the article title.
- *
- * @param {Array} items
- * @returns {Array}
  */
 const removeDuplicateArticles = (
   items
@@ -143,10 +137,6 @@ const removeDuplicateArticles = (
 /**
  * Prioritizes content containing one of the patient's
  * saved allergy keywords.
- *
- * @param {Array} items
- * @param {Array} patientAllergies
- * @returns {Array}
  */
 const personalizeArticles = (
   items,
@@ -232,8 +222,6 @@ const personalizeArticles = (
 /**
  * @component HealthAwarenessFeed
  * @desc      Personalized mobile infographic carousel.
- *
- * @param {Array} patientAllergies
  */
 const HealthAwarenessFeed = ({
   patientAllergies = [],
@@ -283,8 +271,9 @@ const HealthAwarenessFeed = ({
     useRef(null);
 
   /**
-   * Loads published health content and keeps only
-   * complete infographic articles.
+   * FEATURE: Select patient awareness infographics
+   * LOGIC: Keep the last article for each exact title in memory, rank nonempty allergy matches first
+   * and display only articles with images. Loading failure and no articles share the empty display.
    */
   useEffect(() => {
     const fetchContent =
@@ -321,8 +310,7 @@ const HealthAwarenessFeed = ({
             );
 
           /**
-           * Match the finished web feed:
-           * patients see infographic articles only.
+           * Keep articles with an image for the infographic carousel.
            */
           const infographicArticles =
             personalized.filter(
@@ -367,7 +355,9 @@ const HealthAwarenessFeed = ({
   ]);
 
   /**
-   * Automatic carousel rotation.
+   * FEATURE: Automatic and manual infographic navigation
+   * LOGIC: Rotate multiple articles every 15 seconds while unpaused. Arrows, dots and swipes
+   * choose slides and schedule a resume after 2.5 seconds; clean up interval/resume timers on unmount.
    */
   useEffect(() => {
     if (
@@ -711,9 +701,7 @@ const HealthAwarenessFeed = ({
   return (
     <View>
 
-      {/* ===================================================
-          INFOGRAPHIC VIEWER
-      ==================================================== */}
+      {/* INFOGRAPHIC VIEWER */}
 
       <View
         style={styles.carousel}
@@ -727,6 +715,7 @@ const HealthAwarenessFeed = ({
 
         <View style={styles.imageStage}>
 
+          {/* Health Infographic Image and Aspect Ratio */}
           <Image
             key={
               currentArticle
@@ -767,6 +756,7 @@ const HealthAwarenessFeed = ({
         {articles.length >
           1 && (
           <>
+            {/* Previous Health Infographic Button */}
             <TouchableOpacity
               style={[
                 styles.arrowButton,
@@ -788,6 +778,7 @@ const HealthAwarenessFeed = ({
               />
             </TouchableOpacity>
 
+            {/* Next Health Infographic Button */}
             <TouchableOpacity
               style={[
                 styles.arrowButton,
@@ -813,9 +804,7 @@ const HealthAwarenessFeed = ({
 
       </View>
 
-      {/* ===================================================
-          CURRENT ARTICLE INFORMATION
-      ==================================================== */}
+      {/* CURRENT ARTICLE INFORMATION */}
 
       <View style={styles.articleInfo}>
 
@@ -844,7 +833,7 @@ const HealthAwarenessFeed = ({
 
         {articles.length >
           1 && (
-          <TouchableOpacity
+          /* Pause or Resume Infographic Button */ <TouchableOpacity
             style={styles.pauseButton}
             activeOpacity={
               0.75
@@ -884,9 +873,7 @@ const HealthAwarenessFeed = ({
 
       </View>
 
-      {/* ===================================================
-          CAROUSEL INDICATORS
-      ==================================================== */}
+      {/* CAROUSEL INDICATORS */}
 
       {articles.length >
         1 && (

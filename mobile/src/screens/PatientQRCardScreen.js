@@ -1,11 +1,7 @@
 /**
  * @file      PatientQRCardScreen.js
  * @module    Patient
- * @desc      Premium Care4U patient QR identity card.
- *            Displays the patient's identity, blood group and emergency
- *            contact while encoding only the patient's qr_code_id in the QR.
- *            The QR acts as a secure patient reference for authorized Care4U
- *            doctor, hospital and pharmacy workflows.
+ * @desc      Patient identity card showing a QR reference, blood group and emergency contact.
  * @author    Wasana Karunanayaka (S/21/081)
  */
 
@@ -45,9 +41,7 @@ import {
 
 import useAuthStore from '../store/authStore';
 
-/* =========================================================
-   DESIGN TOKENS
-========================================================= */
+/* DESIGN TOKENS */
 
 const COLORS = {
   background: '#F6F8FA',
@@ -74,9 +68,7 @@ const COLORS = {
   amberSoft: '#FFF8E7',
 };
 
-/* =========================================================
-   HELPERS
-========================================================= */
+/* HELPERS */
 
 const capitalise = (
   value
@@ -128,9 +120,7 @@ const getInitials = (
   ).toUpperCase();
 };
 
-/* =========================================================
-   INFORMATION ITEM
-========================================================= */
+/* INFORMATION ITEM */
 
 const InfoItem = ({
   icon: Icon,
@@ -184,10 +174,14 @@ const InfoItem = ({
   );
 };
 
-/* =========================================================
-   SCREEN
-========================================================= */
+/* SCREEN */
 
+/**
+ * FEATURE: Patient QR identity card
+ * LOGIC: Load the session patient profile and encode only qr_code_id; missing IDs show QR unavailable.
+ * Initial load failure offers retry; a failed refresh leaves the previous card visible.
+ * The QR identifies a patient and does not itself authorize medical-record access.
+ */
 const PatientQRCardScreen =
   () => {
     const user =
@@ -221,9 +215,7 @@ const PatientQRCardScreen =
       setError,
     ] = useState(null);
 
-    /* =====================================================
-       LOAD PATIENT
-    ====================================================== */
+    /* LOAD PATIENT */
 
     const fetchPatient =
       useCallback(
@@ -307,9 +299,7 @@ const PatientQRCardScreen =
       ]
     );
 
-    /* =====================================================
-       LOADING
-    ====================================================== */
+    /* LOADING */
 
     if (
       loading
@@ -343,9 +333,7 @@ const PatientQRCardScreen =
       );
     }
 
-    /* =====================================================
-       ERROR
-    ====================================================== */
+    /* ERROR */
 
     if (
       error &&
@@ -376,6 +364,7 @@ const PatientQRCardScreen =
             {error}
           </Text>
 
+          {/* Try Again QR Card Button */}
           <TouchableOpacity
             style={styles.retryButton}
             activeOpacity={0.8}
@@ -404,9 +393,7 @@ const PatientQRCardScreen =
         patient?.qr_code_id
       );
 
-    /* =====================================================
-       PAGE
-    ====================================================== */
+    /* PAGE */
 
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -436,9 +423,7 @@ const PatientQRCardScreen =
           }
         >
 
-          {/* =================================================
-              PATIENT IDENTITY CARD
-          ================================================== */}
+          {/* PATIENT IDENTITY CARD */}
 
           <View style={styles.identityCard}>
 
@@ -544,9 +529,7 @@ const PatientQRCardScreen =
 
           </View>
 
-          {/* =================================================
-              QR SECTION
-          ================================================== */}
+          {/* QR SECTION */}
 
           <View style={styles.qrCard}>
 
@@ -571,6 +554,7 @@ const PatientQRCardScreen =
 
                     <View style={styles.qrInner}>
 
+                      {/* Patient Identity QR Code */}
                       <QRCode
                         value={
                           patient.qr_code_id
@@ -635,9 +619,7 @@ const PatientQRCardScreen =
 
           </View>
 
-          {/* =================================================
-              PATIENT DETAILS
-          ================================================== */}
+          {/* PATIENT DETAILS */}
 
           <View style={styles.detailsCard}>
 
@@ -686,10 +668,9 @@ const PatientQRCardScreen =
 
           </View>
 
-          {/* =================================================
-              EMERGENCY CONTACT
-          ================================================== */}
+          {/* EMERGENCY CONTACT */}
 
+          {/* Emergency Contact Card */}
           <View style={styles.emergencyCard}>
 
             <View style={styles.emergencyHeader}>
@@ -770,9 +751,7 @@ const PatientQRCardScreen =
 
           </View>
 
-          {/* =================================================
-              SECURITY
-          ================================================== */}
+          {/* SECURITY */}
 
           <View style={styles.securityNote}>
 
@@ -793,9 +772,7 @@ const PatientQRCardScreen =
     );
   };
 
-/* =========================================================
-   STYLES
-========================================================= */
+/* STYLES */
 
 const styles =
   StyleSheet.create({
@@ -815,9 +792,7 @@ const styles =
       paddingBottom: 32,
     },
 
-    /* =====================================================
-       IDENTITY CARD
-    ====================================================== */
+    /* IDENTITY CARD */
 
     identityCard: {
       position: 'relative',
@@ -1033,9 +1008,7 @@ const styles =
         'rgba(255,255,255,0.12)',
     },
 
-    /* =====================================================
-       COMMON SECTION HEADER
-    ====================================================== */
+    /* COMMON SECTION HEADER */
 
     sectionHeading: {
       paddingHorizontal: 16,
@@ -1075,9 +1048,7 @@ const styles =
       marginTop: 4,
     },
 
-    /* =====================================================
-       QR CARD
-    ====================================================== */
+    /* QR CARD */
 
     qrCard: {
       overflow: 'hidden',
@@ -1252,9 +1223,7 @@ const styles =
       marginTop: 4,
     },
 
-    /* =====================================================
-       DETAILS
-    ====================================================== */
+    /* DETAILS */
 
     detailsCard: {
       overflow: 'hidden',
@@ -1355,9 +1324,7 @@ const styles =
       fontWeight: '800',
     },
 
-    /* =====================================================
-       EMERGENCY CONTACT
-    ====================================================== */
+    /* EMERGENCY CONTACT */
 
     emergencyCard: {
       overflow: 'hidden',
@@ -1527,9 +1494,7 @@ const styles =
       fontWeight: '800',
     },
 
-    /* =====================================================
-       SECURITY
-    ====================================================== */
+    /* SECURITY */
 
     securityNote: {
       flexDirection: 'row',
@@ -1557,9 +1522,7 @@ const styles =
       textAlign: 'center',
     },
 
-    /* =====================================================
-       STATES
-    ====================================================== */
+    /* STATES */
 
     centered: {
       flex: 1,

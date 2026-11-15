@@ -1,16 +1,18 @@
 /**
  * @file    patient.service.js
- * @module  Services
+ * @module  Patient / Services
  * @desc    Mobile service functions for the Patient module.
- *          Calls the Care4U backend patient API endpoints.
+ * Calls the Care4U backend patient API endpoints.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
 import api from './api';
 
-/** Require an acknowledged patient response before reporting a save, unlock or empty list.
- * @param {Object} response Axios response. @param {string} kind Expected object/array payload.
- * @returns {Object|Array} Valid payload; rejected/malformed envelopes throw for screen recovery.
+/**
+ * FEATURE: Confirm profile, records and privacy responses
+ * LOGIC: Callers using this helper require success=true and the expected object/list payload shape.
+ * Empty arrays are valid; malformed or rejected envelopes throw so the screen can offer recovery.
+ * Other wrappers below retain their direct payload handling.
  */
 const patientData = (response, kind = 'object') => {
   const data = response?.data?.data;
@@ -22,15 +24,10 @@ const patientData = (response, kind = 'object') => {
 };
 
 
-/* =========================================================
-   MULTIPART HELPERS
-========================================================= */
+/* MULTIPART HELPERS */
 
 /**
  * Returns a suitable file extension from an image MIME type.
- *
- * @param {string} mimeType
- * @returns {string}
  */
 const getImageExtension = (
   mimeType
@@ -53,11 +50,6 @@ const getImageExtension = (
 
 /**
  * Creates the React Native multipart object expected by FormData.
- *
- * @param {string} uri
- * @param {string} mimeType
- * @param {string} prefix
- * @returns {Object}
  */
 const createMobileImageFile = (
   uri,
@@ -80,15 +72,10 @@ const createMobileImageFile = (
   };
 };
 
-/* =========================================================
-   PROFILE
-========================================================= */
+/* PROFILE */
 
 /**
  * Fetches a patient profile by patient UUID.
- *
- * @param {string} patientId
- * @returns {Promise<Object>}
  */
 export const getPatientProfile =
   async (
@@ -106,10 +93,6 @@ export const getPatientProfile =
 
 /**
  * Updates editable fields on a patient profile.
- *
- * @param {string} patientId
- * @param {Object} data
- * @returns {Promise<Object>}
  */
 export const updatePatientProfile =
   async (
@@ -129,11 +112,6 @@ export const updatePatientProfile =
 
 /**
  * Uploads a patient profile photo from React Native.
- *
- * @param {string} patientId
- * @param {string} uri
- * @param {string} mimeType
- * @returns {Promise<Object>}
  */
 export const uploadPatientPhoto =
   async (
@@ -171,16 +149,12 @@ export const uploadPatientPhoto =
   return data;
   };
 
-/* =========================================================
-   MEDICAL RECORDS
-========================================================= */
+/* MEDICAL RECORDS */
 
 /**
- * Fetches all medical records for a patient.
- *
- * @param {string} patientId
- * @param {string} role
- * @returns {Promise<Array>}
+ * FEATURE: Request patient medical records
+ * LOGIC: Forward appointmentId when provided; the legacy role argument is unused.
+ * The server session and consultation checks authorize access, and the array envelope is validated.
  */
 export const getMedicalRecords = async (patientId, role, appointmentId = null) => {
   // role is retained for caller compatibility; only the server session authorizes access.
@@ -190,15 +164,10 @@ export const getMedicalRecords = async (patientId, role, appointmentId = null) =
   return patientData(response, 'array');
 };
 
-/* =========================================================
-   PRESCRIPTIONS
-========================================================= */
+/* PRESCRIPTIONS */
 
 /**
  * Fetches prescriptions with medicine items.
- *
- * @param {string} patientId
- * @returns {Promise<Array>}
  */
 export const getPatientPrescriptions =
   async (
@@ -212,15 +181,10 @@ export const getPatientPrescriptions =
     return response.data.data;
   };
 
-/* =========================================================
-   QR LOOKUP
-========================================================= */
+/* QR LOOKUP */
 
 /**
  * Fetches a patient using their Care4U QR code ID.
- *
- * @param {string} qrCodeId
- * @returns {Promise<Object>}
  */
 export const getPatientByQrCode =
   async (
@@ -234,9 +198,7 @@ export const getPatientByQrCode =
     return response.data.data;
   };
 
-/* =========================================================
-   ALLERGIES
-========================================================= */
+/* ALLERGIES */
 
 /**
  * Fetches allergy records.
@@ -292,9 +254,7 @@ export const deleteAllergy =
     return response.data;
   };
 
-/* =========================================================
-   CHRONIC CONDITIONS
-========================================================= */
+/* CHRONIC CONDITIONS */
 
 /**
  * Fetches chronic conditions.
@@ -352,15 +312,10 @@ export const deleteCondition =
     return response.data;
   };
 
-/* =========================================================
-   MEDICAL DEVICES & IMPLANTS
-========================================================= */
+/* MEDICAL DEVICES & IMPLANTS */
 
 /**
  * Fetches active medical devices and implants.
- *
- * @param {string} patientId
- * @returns {Promise<Array>}
  */
 export const getMedicalDevices =
   async (
@@ -379,11 +334,11 @@ export const getMedicalDevices =
  *
  * Expected fields:
  * {
- *   deviceName,
- *   deviceType,
- *   implantedAt,
- *   notes,
- *   isEmergencyRelevant
+ * deviceName,
+ * deviceType,
+ * implantedAt,
+ * notes,
+ * isEmergencyRelevant
  * }
  */
 export const addMedicalDevice =
@@ -416,15 +371,10 @@ export const deleteMedicalDevice =
     return response.data;
   };
 
-/* =========================================================
-   IMPORTANT MEDICAL BACKGROUND
-========================================================= */
+/* IMPORTANT MEDICAL BACKGROUND */
 
 /**
  * Fetches important medical background records.
- *
- * @param {string} patientId
- * @returns {Promise<Array>}
  */
 export const getHealthBackground =
   async (
@@ -443,11 +393,11 @@ export const getHealthBackground =
  *
  * Expected fields:
  * {
- *   backgroundType,
- *   title,
- *   eventDate,
- *   notes,
- *   isEmergencyRelevant
+ * backgroundType,
+ * title,
+ * eventDate,
+ * notes,
+ * isEmergencyRelevant
  * }
  */
 export const addHealthBackground =
@@ -480,15 +430,10 @@ export const deleteHealthBackground =
     return response.data;
   };
 
-/* =========================================================
-   FAMILY MEDICAL HISTORY
-========================================================= */
+/* FAMILY MEDICAL HISTORY */
 
 /**
  * Fetches active family medical history records.
- *
- * @param {string} patientId
- * @returns {Promise<Array>}
  */
 export const getFamilyHistory =
   async (
@@ -507,10 +452,10 @@ export const getFamilyHistory =
  *
  * Expected fields:
  * {
- *   relation,
- *   condition,
- *   notes,
- *   isEmergencyRelevant
+ * relation,
+ * condition,
+ * notes,
+ * isEmergencyRelevant
  * }
  */
 export const addFamilyHistory =
@@ -543,9 +488,7 @@ export const deleteFamilyHistory =
     return response.data;
   };
 
-/* =========================================================
-   VACCINATIONS
-========================================================= */
+/* VACCINATIONS */
 
 /**
  * Fetches vaccination records.
@@ -627,11 +570,6 @@ export const deleteVaccination =
  * and returns AI-extracted vaccination information.
  *
  * This does not write to the database.
- *
- * @param {string} patientId
- * @param {string} uri
- * @param {string} mimeType
- * @returns {Promise<Array>}
  */
 export const scanVaccinationCard =
   async (
@@ -667,12 +605,11 @@ export const scanVaccinationCard =
     return response.data.data;
   };
 
-/* =========================================================
-   AI HISTORY SUMMARY
-========================================================= */
+/* AI HISTORY SUMMARY */
 
 /**
- * Fetches an AI-generated clinical history summary.
+ * Requests an AI history summary using the legacy role query.
+ * The role query cannot authorize access, and this wrapper does not forward a consultation ID.
  */
 export const getPatientHistorySummary =
   async (
@@ -692,9 +629,7 @@ export const getPatientHistorySummary =
     return response.data.data;
   };
 
-/* =========================================================
-   LAB REPORTS
-========================================================= */
+/* LAB REPORTS */
 
 /**
  * Fetches completed lab reports.
@@ -756,9 +691,7 @@ export const markLabReportAsRead =
     }
   };
 
-/* =========================================================
-   APPOINTMENTS
-========================================================= */
+/* APPOINTMENTS */
 
 /**
  * Fetches appointments belonging to the patient.
@@ -775,9 +708,7 @@ export const getPatientAppointments =
     return response.data.data;
   };
 
-/* =========================================================
-   PRIVACY & CONSENT
-========================================================= */
+/* PRIVACY & CONSENT */
 
 /**
  * Retrieves locked privacy categories.
@@ -797,7 +728,9 @@ export const getConsentSettings =
 };
 
 /**
- * Updates locked privacy categories.
+ * FEATURE: Save patient privacy locks
+ * LOGIC: Send the complete category list and require an acknowledged locked_categories array.
+ * The profile screen keeps its last confirmed list if the request rejects.
  */
 export const updateConsentSettings =
   async (

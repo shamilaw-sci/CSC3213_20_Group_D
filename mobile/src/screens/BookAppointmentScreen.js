@@ -1,9 +1,7 @@
 /**
  * @file    BookAppointmentScreen.js
  * @module  Patient
- * @desc    Premium mobile appointment booking and rescheduling screen.
- *          Displays doctor details, groups available slots by date,
- *          allows slot selection, optional visit notes, and confirmation.
+ * @desc    Doctor slot selection, OPD appointment booking and replacement-booking requests.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -54,9 +52,7 @@ import {
 
 import useAuthStore from '../store/authStore';
 
-/* =========================================================
-   DESIGN TOKENS
-========================================================= */
+/* DESIGN TOKENS */
 
 const COLORS = {
   background: '#F6F8FA',
@@ -90,15 +86,10 @@ const COLORS = {
   successSoft: '#EDF9F2',
 };
 
-/* =========================================================
-   HELPERS
-========================================================= */
+/* HELPERS */
 
 /**
  * Returns doctor initials.
- *
- * @param {string} name
- * @returns {string}
  */
 const getInitials = (
   name
@@ -122,9 +113,6 @@ const getInitials = (
 
 /**
  * Returns an internal date key for grouping slots.
- *
- * @param {string} isoString
- * @returns {string}
  */
 const getDateKey = (
   isoString
@@ -147,9 +135,6 @@ const getDateKey = (
 
 /**
  * Formats a slot date for the date-selection card.
- *
- * @param {string} isoString
- * @returns {Object}
  */
 const formatDateCard = (
   isoString
@@ -200,9 +185,6 @@ const formatDateCard = (
 
 /**
  * Formats a slot time.
- *
- * @param {string} isoString
- * @returns {string}
  */
 const formatTime = (
   isoString
@@ -232,9 +214,6 @@ const formatTime = (
 
 /**
  * Formats a selected slot for the summary.
- *
- * @param {string} isoString
- * @returns {string}
  */
 const formatFullSlot = (
   isoString
@@ -272,9 +251,6 @@ const formatFullSlot = (
 
 /**
  * Formats doctor experience.
- *
- * @param {number|string} value
- * @returns {string}
  */
 const formatExperience = (
   value
@@ -297,9 +273,7 @@ const formatExperience = (
   } experience`;
 };
 
-/* =========================================================
-   DOCTOR PHOTO
-========================================================= */
+/* DOCTOR PHOTO */
 
 /**
  * @component DoctorPhoto
@@ -374,9 +348,7 @@ const DoctorPhoto = ({
   );
 };
 
-/* =========================================================
-   SECTION HEADER
-========================================================= */
+/* SECTION HEADER */
 
 /**
  * @component SectionHeader
@@ -416,14 +388,12 @@ const SectionHeader = ({
   );
 };
 
-/* =========================================================
-   MAIN SCREEN
-========================================================= */
+/* MAIN SCREEN */
 
 /**
  * @component BookAppointmentScreen
  * @desc      Creates a new patient appointment or reschedules
- *            an existing appointment.
+ * an existing appointment.
  */
 export default function BookAppointmentScreen({
   doctorId,
@@ -481,9 +451,7 @@ export default function BookAppointmentScreen({
     setLoadError,
   ] = useState('');
 
-  /* =======================================================
-     LOAD DOCTOR + AVAILABILITY
-  ======================================================= */
+  /* LOAD DOCTOR + AVAILABILITY */
 
   useEffect(() => {
     if (!doctorId) {
@@ -585,9 +553,7 @@ export default function BookAppointmentScreen({
     rescheduleId,
   ]);
 
-  /* =======================================================
-     SLOT GROUPING
-  ======================================================= */
+  /* SLOT GROUPING */
 
   const slotGroups =
     useMemo(
@@ -651,10 +617,15 @@ export default function BookAppointmentScreen({
         )
       : [];
 
-  /* =======================================================
-     BOOK / RESCHEDULE
-  ======================================================= */
+  /* BOOK / RESCHEDULE */
 
+  /**
+   * FEATURE: Confirm a booking or replacement appointment
+   * LOGIC: Require patient and selected time, then book first so a failed new request keeps the old visit.
+   * On reschedule, attempt original cancellation afterward; failure is logged but the success alert still appears.
+   * Both visits can therefore remain active. Displayed slots are not reserved; the backend rechecks under a doctor-row lock.
+   * The button disables while booking; the handler has no separate in-flight ref guard.
+   */
   const handleBookAppointment =
     async () => {
       if (!patientId) {
@@ -763,9 +734,7 @@ export default function BookAppointmentScreen({
       }
     };
 
-  /* =======================================================
-     LOADING
-  ======================================================= */
+  /* LOADING */
 
   if (isLoading) {
     return (
@@ -797,9 +766,7 @@ export default function BookAppointmentScreen({
     );
   }
 
-  /* =======================================================
-     LOAD ERROR
-  ======================================================= */
+  /* LOAD ERROR */
 
   if (
     loadError ||
@@ -848,9 +815,7 @@ export default function BookAppointmentScreen({
     );
   }
 
-  /* =======================================================
-     MAIN VIEW
-  ======================================================= */
+  /* MAIN VIEW */
 
   return (
     <ScrollView
@@ -864,9 +829,7 @@ export default function BookAppointmentScreen({
       keyboardShouldPersistTaps="handled"
     >
 
-      {/* =====================================================
-          RESCHEDULE NOTICE
-      ====================================================== */}
+      {/* RESCHEDULE NOTICE */}
 
       {rescheduleId ? (
         <View style={styles.rescheduleNotice}>
@@ -895,9 +858,7 @@ export default function BookAppointmentScreen({
         </View>
       ) : null}
 
-      {/* =====================================================
-          DOCTOR PROFILE CARD
-      ====================================================== */}
+      {/* DOCTOR PROFILE CARD */}
 
       <View style={styles.doctorCard}>
 
@@ -1013,9 +974,7 @@ export default function BookAppointmentScreen({
 
       </View>
 
-      {/* =====================================================
-          STEP 1 — DATE
-      ====================================================== */}
+      {/* STEP 1 — DATE */}
 
       <View style={styles.bookingSection}>
 
@@ -1051,6 +1010,7 @@ export default function BookAppointmentScreen({
               This doctor does not currently have any open slots. You can return to Doctor Search and choose another doctor.
             </Text>
 
+            {/* Find Another Doctor Button */}
             <TouchableOpacity
               style={styles.findDoctorButton}
               activeOpacity={0.78}
@@ -1201,9 +1161,7 @@ export default function BookAppointmentScreen({
 
       </View>
 
-      {/* =====================================================
-          STEP 2 — TIME
-      ====================================================== */}
+      {/* STEP 2 — TIME */}
 
       {availableDates.length >
         0 && (
@@ -1226,7 +1184,7 @@ export default function BookAppointmentScreen({
                   slot;
 
                 return (
-                  <TouchableOpacity
+                  /* Available Appointment Time Button */ <TouchableOpacity
                     key={
                       slot
                     }
@@ -1288,9 +1246,7 @@ export default function BookAppointmentScreen({
         </View>
       )}
 
-      {/* =====================================================
-          STEP 3 — REASON
-      ====================================================== */}
+      {/* STEP 3 — REASON */}
 
       {availableDates.length >
         0 && (
@@ -1309,6 +1265,7 @@ export default function BookAppointmentScreen({
               color={COLORS.subtle}
             />
 
+            {/* Reason for Visit Notes Field */}
             <TextInput
               style={styles.reasonInput}
               placeholder="e.g. Regular checkup, fever, follow-up..."
@@ -1339,12 +1296,10 @@ export default function BookAppointmentScreen({
         </View>
       )}
 
-      {/* =====================================================
-          APPOINTMENT SUMMARY
-      ====================================================== */}
+      {/* APPOINTMENT SUMMARY */}
 
       {selectedSlot ? (
-        <View style={styles.summaryCard}>
+        /* Appointment Summary Card */ <View style={styles.summaryCard}>
 
           <View style={styles.summaryTop}>
 
@@ -1448,13 +1403,11 @@ export default function BookAppointmentScreen({
         </View>
       ) : null}
 
-      {/* =====================================================
-          CONFIRM BUTTON
-      ====================================================== */}
+      {/* CONFIRM BUTTON */}
 
       {availableDates.length >
         0 && (
-        <TouchableOpacity
+        /* Confirm Appointment or Confirm Reschedule Button */ <TouchableOpacity
           activeOpacity={0.82}
           style={[
             styles.confirmButton,
@@ -1513,9 +1466,7 @@ export default function BookAppointmentScreen({
         </TouchableOpacity>
       )}
 
-      {/* =====================================================
-          SECURITY / BOOKING NOTE
-      ====================================================== */}
+      {/* SECURITY / BOOKING NOTE */}
 
       <View style={styles.securityNote}>
 
@@ -1536,9 +1487,7 @@ export default function BookAppointmentScreen({
   );
 }
 
-/* =========================================================
-   STYLES
-========================================================= */
+/* STYLES */
 
 const styles =
   StyleSheet.create({
@@ -1557,9 +1506,7 @@ const styles =
       paddingBottom: 28,
     },
 
-    /* =====================================================
-       LOADING
-    ====================================================== */
+    /* LOADING */
 
     loadingScreen: {
       flex: 1,
@@ -1614,9 +1561,7 @@ const styles =
       marginTop: 5,
     },
 
-    /* =====================================================
-       ERROR
-    ====================================================== */
+    /* ERROR */
 
     errorScreen: {
       flex: 1,
@@ -1702,9 +1647,7 @@ const styles =
       fontWeight: '800',
     },
 
-    /* =====================================================
-       RESCHEDULE NOTICE
-    ====================================================== */
+    /* RESCHEDULE NOTICE */
 
     rescheduleNotice: {
       flexDirection: 'row',
@@ -1770,9 +1713,7 @@ const styles =
       marginTop: 3,
     },
 
-    /* =====================================================
-       DOCTOR CARD
-    ====================================================== */
+    /* DOCTOR CARD */
 
     doctorCard: {
       overflow: 'hidden',
@@ -2074,9 +2015,7 @@ const styles =
       marginTop: 2,
     },
 
-    /* =====================================================
-       BOOKING SECTIONS
-    ====================================================== */
+    /* BOOKING SECTIONS */
 
     bookingSection: {
       marginBottom: 25,
@@ -2141,9 +2080,7 @@ const styles =
       marginTop: 2,
     },
 
-    /* =====================================================
-       DATE SELECTION
-    ====================================================== */
+    /* DATE SELECTION */
 
     dateList: {
       paddingRight: 10,
@@ -2266,9 +2203,7 @@ const styles =
         '#D9F5F2',
     },
 
-    /* =====================================================
-       TIME SELECTION
-    ====================================================== */
+    /* TIME SELECTION */
 
     timeGrid: {
       flexDirection: 'row',
@@ -2363,9 +2298,7 @@ const styles =
         '#FFFFFF',
     },
 
-    /* =====================================================
-       REASON
-    ====================================================== */
+    /* REASON */
 
     reasonInputShell: {
       minHeight: 110,
@@ -2418,9 +2351,7 @@ const styles =
       marginTop: 5,
     },
 
-    /* =====================================================
-       NO SLOTS
-    ====================================================== */
+    /* NO SLOTS */
 
     noSlotsCard: {
       alignItems: 'center',
@@ -2511,9 +2442,7 @@ const styles =
       fontWeight: '800',
     },
 
-    /* =====================================================
-       SUMMARY
-    ====================================================== */
+    /* SUMMARY */
 
     summaryCard: {
       backgroundColor:
@@ -2645,9 +2574,7 @@ const styles =
       marginTop: 2,
     },
 
-    /* =====================================================
-       CONFIRM
-    ====================================================== */
+    /* CONFIRM */
 
     confirmButton: {
       minHeight: 54,
@@ -2699,9 +2626,7 @@ const styles =
       fontWeight: '800',
     },
 
-    /* =====================================================
-       SECURITY
-    ====================================================== */
+    /* SECURITY */
 
     securityNote: {
       flexDirection: 'row',

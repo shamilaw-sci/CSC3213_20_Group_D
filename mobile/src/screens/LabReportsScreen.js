@@ -1,9 +1,7 @@
 /**
  * @file      LabReportsScreen.js
  * @module    Patient
- * @desc      Premium mobile laboratory-report screen.
- *            Supports image report preview, PDF opening,
- *            unread indicators, pull-to-refresh, and read tracking.
+ * @desc      Laboratory history, image previews, external documents and unread tracking.
  * @author    Wasana Karunanayaka (S/21/081)
  */
 
@@ -53,9 +51,7 @@ import {
 
 import useAuthStore from '../store/authStore';
 
-/* =========================================================
-   DESIGN TOKENS
-========================================================= */
+/* DESIGN TOKENS */
 
 const COLORS = {
   background: '#F6F8FA',
@@ -90,15 +86,10 @@ const COLORS = {
   dangerSoft: '#FFF1F1',
 };
 
-/* =========================================================
-   HELPERS
-========================================================= */
+/* HELPERS */
 
 /**
  * Formats a report timestamp.
- *
- * @param {string} dateStr
- * @returns {string}
  */
 const formatDate = (
   dateStr
@@ -154,9 +145,6 @@ const cleanFileUrl = (
 
 /**
  * Determines whether the uploaded report is an image.
- *
- * @param {string} url
- * @returns {boolean}
  */
 const isImageReport = (
   url
@@ -182,9 +170,6 @@ const isImageReport = (
 
 /**
  * Determines whether the uploaded report is a PDF.
- *
- * @param {string} url
- * @returns {boolean}
  */
 const isPdfReport = (
   url
@@ -198,9 +183,6 @@ const isPdfReport = (
 
 /**
  * Returns display information for the uploaded file.
- *
- * @param {string} url
- * @returns {Object}
  */
 const getFileMeta = (
   url
@@ -245,9 +227,7 @@ const getFileMeta = (
   };
 };
 
-/* =========================================================
-   SUMMARY CARD
-========================================================= */
+/* SUMMARY CARD */
 
 const SummaryCard = ({
   icon: Icon,
@@ -287,9 +267,7 @@ const SummaryCard = ({
   );
 };
 
-/* =========================================================
-   IMAGE REPORT MODAL
-========================================================= */
+/* IMAGE REPORT MODAL */
 
 const ImageReportModal = ({
   report,
@@ -313,9 +291,7 @@ const ImageReportModal = ({
 
       <SafeAreaView style={styles.modalSafeArea}>
 
-        {/* =================================================
-            TOP BAR
-        ================================================== */}
+        {/* TOP BAR */}
 
         <View style={styles.modalTopBar}>
 
@@ -364,9 +340,7 @@ const ImageReportModal = ({
 
         </View>
 
-        {/* =================================================
-            IMAGE
-        ================================================== */}
+        {/* IMAGE */}
 
         <ScrollView
           style={styles.imagePreviewScroll}
@@ -451,6 +425,7 @@ const ImageReportModal = ({
 
         <View style={styles.modalFooter}>
 
+          {/* Close Report Button */}
           <TouchableOpacity
             style={styles.closeButton}
             activeOpacity={0.8}
@@ -471,9 +446,7 @@ const ImageReportModal = ({
   );
 };
 
-/* =========================================================
-   LAB REPORT CARD
-========================================================= */
+/* LAB REPORT CARD */
 
 const LabReportCard = ({
   report,
@@ -503,9 +476,7 @@ const LabReportCard = ({
       }
     >
 
-      {/* ===================================================
-          TOP
-      ==================================================== */}
+      {/* TOP */}
 
       <View style={styles.reportTop}>
 
@@ -595,9 +566,7 @@ const LabReportCard = ({
 
       </View>
 
-      {/* ===================================================
-          IMAGE PREVIEW
-      ==================================================== */}
+      {/* IMAGE PREVIEW */}
 
       {isImageReport(
         report.report_url
@@ -629,9 +598,7 @@ const LabReportCard = ({
         </View>
       ) : null}
 
-      {/* ===================================================
-          DETAILS
-      ==================================================== */}
+      {/* DETAILS */}
 
       <View style={styles.reportDetails}>
 
@@ -714,9 +681,7 @@ const LabReportCard = ({
 
       </View>
 
-      {/* ===================================================
-          ACTION
-      ==================================================== */}
+      {/* ACTION */}
 
       <View style={styles.openReportButton}>
 
@@ -758,9 +723,7 @@ const LabReportCard = ({
   );
 };
 
-/* =========================================================
-   MAIN SCREEN
-========================================================= */
+/* MAIN SCREEN */
 
 const LabReportsScreen = () => {
   const user =
@@ -799,9 +762,7 @@ const LabReportsScreen = () => {
     setImageReport,
   ] = useState(null);
 
-  /* =======================================================
-     LOAD REPORTS
-  ======================================================= */
+  /* LOAD REPORTS */
 
   const fetchReports =
     useCallback(
@@ -878,10 +839,13 @@ const LabReportsScreen = () => {
     fetchReports,
   ]);
 
-  /* =======================================================
-     MARK REPORT READ
-  ======================================================= */
+  /* MARK REPORT READ */
 
+  /**
+   * FEATURE: Mark a lab result viewed
+   * LOGIC: Skip already-read reports; update local read status only after the server write succeeds.
+   * Failed writes are logged and leave the unread flag unchanged without closing the report.
+   */
   const markAsRead =
     async (
       report
@@ -924,10 +888,14 @@ const LabReportsScreen = () => {
       }
     };
 
-  /* =======================================================
-     OPEN REPORT
-  ======================================================= */
+  /* OPEN REPORT */
 
+  /**
+   * FEATURE: Open a laboratory report
+   * LOGIC: Missing URLs show an alert; image extensions open the in-app modal and request a read update.
+   * Other files require a supported device URL handler and a successful open before requesting the read update.
+   * Unsupported or failed opening leaves read state unchanged and displays an alert.
+   */
   const handleOpenReport =
     async (
       report
@@ -1005,9 +973,7 @@ const LabReportsScreen = () => {
       }
     };
 
-  /* =======================================================
-     DERIVED DATA
-  ======================================================= */
+  /* DERIVED DATA */
 
   const sortedReports =
     useMemo(
@@ -1073,9 +1039,7 @@ const LabReportsScreen = () => {
       ]
     );
 
-  /* =======================================================
-     LOADING
-  ======================================================= */
+  /* LOADING */
 
   if (loading) {
     return (
@@ -1107,9 +1071,7 @@ const LabReportsScreen = () => {
     );
   }
 
-  /* =======================================================
-     ERROR
-  ======================================================= */
+  /* ERROR */
 
   if (
     error &&
@@ -1159,13 +1121,12 @@ const LabReportsScreen = () => {
     );
   }
 
-  /* =======================================================
-     PAGE
-  ======================================================= */
+  /* PAGE */
 
   return (
     <SafeAreaView style={styles.safeArea}>
 
+      {/* Lab Report Image Preview Modal */}
       <ImageReportModal
         report={
           imageReport
@@ -1205,9 +1166,7 @@ const LabReportsScreen = () => {
         }
       >
 
-        {/* =================================================
-            INTRO
-        ================================================== */}
+        {/* INTRO */}
 
         <View style={styles.introSection}>
 
@@ -1226,6 +1185,7 @@ const LabReportsScreen = () => {
               DIAGNOSTIC RESULTS
             </Text>
 
+            {/* Lab Reports Heading */}
             <Text style={styles.introTitle}>
               Lab reports
             </Text>
@@ -1238,9 +1198,7 @@ const LabReportsScreen = () => {
 
         </View>
 
-        {/* =================================================
-            SUMMARY
-        ================================================== */}
+        {/* SUMMARY */}
 
         <View style={styles.summaryRow}>
 
@@ -1287,9 +1245,7 @@ const LabReportsScreen = () => {
 
         </View>
 
-        {/* =================================================
-            LIST TITLE
-        ================================================== */}
+        {/* LIST TITLE */}
 
         <View style={styles.listHeading}>
 
@@ -1345,9 +1301,7 @@ const LabReportsScreen = () => {
           </View>
         ) : null}
 
-        {/* =================================================
-            EMPTY
-        ================================================== */}
+        {/* EMPTY */}
 
         {sortedReports.length ===
         0 ? (
@@ -1379,7 +1333,7 @@ const LabReportsScreen = () => {
 
             {sortedReports.map(
               report => (
-                <LabReportCard
+                /* Open Lab Report Card */ <LabReportCard
                   key={
                     report.id
                   }
@@ -1397,9 +1351,7 @@ const LabReportsScreen = () => {
 
         )}
 
-        {/* =================================================
-            SECURITY
-        ================================================== */}
+        {/* SECURITY */}
 
         <View style={styles.securityFooter}>
 
@@ -1422,9 +1374,7 @@ const LabReportsScreen = () => {
   );
 };
 
-/* =========================================================
-   STYLES
-========================================================= */
+/* STYLES */
 
 const styles =
   StyleSheet.create({
@@ -1444,9 +1394,7 @@ const styles =
       paddingBottom: 26,
     },
 
-    /* =====================================================
-       INTRO
-    ====================================================== */
+    /* INTRO */
 
     introSection: {
       flexDirection: 'row',
@@ -1498,9 +1446,7 @@ const styles =
       maxWidth: 295,
     },
 
-    /* =====================================================
-       SUMMARY
-    ====================================================== */
+    /* SUMMARY */
 
     summaryRow: {
       flexDirection: 'row',
@@ -1555,9 +1501,7 @@ const styles =
       marginTop: 2,
     },
 
-    /* =====================================================
-       LIST
-    ====================================================== */
+    /* LIST */
 
     listHeading: {
       flexDirection: 'row',
@@ -1611,9 +1555,7 @@ const styles =
       gap: 11,
     },
 
-    /* =====================================================
-       REPORT CARD
-    ====================================================== */
+    /* REPORT CARD */
 
     reportCard: {
       backgroundColor:
@@ -1729,9 +1671,7 @@ const styles =
       marginTop: 7,
     },
 
-    /* =====================================================
-       IMAGE THUMBNAIL
-    ====================================================== */
+    /* IMAGE THUMBNAIL */
 
     thumbnailContainer: {
       position: 'relative',
@@ -1769,9 +1709,7 @@ const styles =
       fontWeight: '800',
     },
 
-    /* =====================================================
-       REPORT DETAILS
-    ====================================================== */
+    /* REPORT DETAILS */
 
     reportDetails: {
       backgroundColor:
@@ -1811,9 +1749,7 @@ const styles =
       marginTop: 2,
     },
 
-    /* =====================================================
-       OPEN BUTTON
-    ====================================================== */
+    /* OPEN BUTTON */
 
     openReportButton: {
       flexDirection: 'row',
@@ -1840,9 +1776,7 @@ const styles =
       fontWeight: '800',
     },
 
-    /* =====================================================
-       EMPTY
-    ====================================================== */
+    /* EMPTY */
 
     emptyCard: {
       alignItems: 'center',
@@ -1886,9 +1820,7 @@ const styles =
       marginTop: 6,
     },
 
-    /* =====================================================
-       INLINE WARNING
-    ====================================================== */
+    /* INLINE WARNING */
 
     inlineWarning: {
       flexDirection: 'row',
@@ -1911,9 +1843,7 @@ const styles =
       fontWeight: '600',
     },
 
-    /* =====================================================
-       LOADING / ERROR
-    ====================================================== */
+    /* LOADING / ERROR */
 
     loadingScreen: {
       flex: 1,
@@ -2011,9 +1941,7 @@ const styles =
       fontWeight: '800',
     },
 
-    /* =====================================================
-       IMAGE MODAL
-    ====================================================== */
+    /* IMAGE MODAL */
 
     modalSafeArea: {
       flex: 1,
@@ -2164,9 +2092,7 @@ const styles =
       fontWeight: '800',
     },
 
-    /* =====================================================
-       SECURITY
-    ====================================================== */
+    /* SECURITY */
 
     securityFooter: {
       flexDirection: 'row',

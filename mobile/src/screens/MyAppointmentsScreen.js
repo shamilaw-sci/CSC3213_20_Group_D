@@ -1,9 +1,7 @@
 /**
  * @file    MyAppointmentsScreen.js
  * @module  Patient
- * @desc    Premium mobile appointment-management screen.
- *          Displays upcoming and past visits with clear status,
- *          cancel confirmation, rescheduling, refresh, and booking.
+ * @desc    Patient appointment list, status filters, cancellation and rescheduling.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -47,9 +45,7 @@ import {
 
 import useAuthStore from '../store/authStore';
 
-/* =========================================================
-   DESIGN TOKENS
-========================================================= */
+/* DESIGN TOKENS */
 
 const COLORS = {
   background: '#F6F8FA',
@@ -82,9 +78,7 @@ const COLORS = {
   dangerSoft: '#FFF1F1',
 };
 
-/* =========================================================
-   STATUS CONFIG
-========================================================= */
+/* STATUS CONFIG */
 
 const STATUS_CONFIG = {
   scheduled: {
@@ -123,15 +117,10 @@ const STATUS_CONFIG = {
   },
 };
 
-/* =========================================================
-   HELPERS
-========================================================= */
+/* HELPERS */
 
 /**
  * Converts a doctor's name into initials.
- *
- * @param {string} name
- * @returns {string}
  */
 const getInitials = (
   name
@@ -155,9 +144,6 @@ const getInitials = (
 
 /**
  * Formats appointment date.
- *
- * @param {string} value
- * @returns {string}
  */
 const formatDate = (
   value
@@ -190,9 +176,6 @@ const formatDate = (
 
 /**
  * Formats appointment time.
- *
- * @param {string} value
- * @returns {string}
  */
 const formatTime = (
   value
@@ -224,9 +207,6 @@ const formatTime = (
 
 /**
  * Converts an appointment type into readable text.
- *
- * @param {string} value
- * @returns {string}
  */
 const formatType = (
   value
@@ -250,9 +230,6 @@ const formatType = (
 
 /**
  * Resolves styling and label for an appointment status.
- *
- * @param {string} status
- * @returns {Object}
  */
 const getStatusConfig = (
   status
@@ -278,11 +255,9 @@ const getStatusConfig = (
 };
 
 /**
- * Determines whether the appointment belongs
- * in the upcoming section.
- *
- * @param {Object} appointment
- * @returns {boolean}
+ * FEATURE: Upcoming and history status filters
+ * LOGIC: Scheduled, confirmed and in-progress count as upcoming without comparing dates to now.
+ * Upcoming sorts earliest first; other statuses sort newest first in History.
  */
 const isUpcomingAppointment = (
   appointment
@@ -297,9 +272,7 @@ const isUpcomingAppointment = (
   );
 };
 
-/* =========================================================
-   SMALL COMPONENTS
-========================================================= */
+/* SMALL COMPONENTS */
 
 /**
  * @component SummaryTile
@@ -346,7 +319,7 @@ const SummaryTile = ({
 /**
  * @component StatusBadge
  * @desc      Appointment status badge with both
- *            icon and text for accessibility.
+ * icon and text for accessibility.
  */
 const StatusBadge = ({
   status,
@@ -390,9 +363,7 @@ const StatusBadge = ({
   );
 };
 
-/* =========================================================
-   APPOINTMENT CARD
-========================================================= */
+/* APPOINTMENT CARD */
 
 /**
  * @component AppointmentCard
@@ -429,9 +400,7 @@ const AppointmentCard = ({
       ]}
     >
 
-      {/* ===================================================
-          DOCTOR
-      ==================================================== */}
+      {/* DOCTOR */}
 
       <View style={styles.cardTop}>
 
@@ -475,9 +444,7 @@ const AppointmentCard = ({
 
       </View>
 
-      {/* ===================================================
-          DATE / TIME
-      ==================================================== */}
+      {/* DATE / TIME */}
 
       <View style={styles.visitInfoCard}>
 
@@ -541,9 +508,7 @@ const AppointmentCard = ({
 
       </View>
 
-      {/* ===================================================
-          TYPE
-      ==================================================== */}
+      {/* TYPE */}
 
       <View style={styles.typeRow}>
 
@@ -568,13 +533,12 @@ const AppointmentCard = ({
 
       </View>
 
-      {/* ===================================================
-          ACTIONS
-      ==================================================== */}
+      {/* ACTIONS */}
 
       {isScheduled && (
         <View style={styles.actionRow}>
 
+          {/* Reschedule Appointment Button */}
           <TouchableOpacity
             style={styles.rescheduleButton}
             activeOpacity={0.76}
@@ -597,6 +561,7 @@ const AppointmentCard = ({
             </Text>
           </TouchableOpacity>
 
+          {/* Cancel Appointment Button */}
           <TouchableOpacity
             style={[
               styles.cancelButton,
@@ -678,9 +643,7 @@ const AppointmentCard = ({
   );
 };
 
-/* =========================================================
-   MAIN SCREEN
-========================================================= */
+/* MAIN SCREEN */
 
 /**
  * @component MyAppointmentsScreen
@@ -807,7 +770,9 @@ export default function MyAppointmentsScreen({
   ]);
 
   /**
-   * Handles appointment cancellation.
+   * FEATURE: Cancel an appointment
+   * LOGIC: Ask for native confirmation, request cancelled status, then update that item locally after success.
+   * Failure leaves its status unchanged and shows an alert; the affected card disables while cancelling.
    */
   const handleCancel = (
     appointmentId
@@ -892,7 +857,9 @@ export default function MyAppointmentsScreen({
   };
 
   /**
-   * Starts the existing appointment reschedule flow.
+   * FEATURE: Reschedule an appointment
+   * LOGIC: Require a doctor ID and open booking with the original appointment ID.
+   * Only scheduled cards offer actions; the booking screen creates the replacement and attempts cancellation.
    */
   const handleReschedule = (
     appointment
@@ -925,9 +892,7 @@ export default function MyAppointmentsScreen({
     );
   };
 
-  /* =======================================================
-     DERIVED APPOINTMENT DATA
-  ======================================================= */
+  /* DERIVED APPOINTMENT DATA */
 
   const upcomingAppointments =
     useMemo(
@@ -1002,9 +967,7 @@ export default function MyAppointmentsScreen({
       ? upcomingAppointments
       : pastAppointments;
 
-  /* =======================================================
-     LOADING
-  ======================================================= */
+  /* LOADING */
 
   if (loading) {
     return (
@@ -1036,9 +999,7 @@ export default function MyAppointmentsScreen({
     );
   }
 
-  /* =======================================================
-     ERROR
-  ======================================================= */
+  /* ERROR */
 
   if (
     error &&
@@ -1086,9 +1047,7 @@ export default function MyAppointmentsScreen({
     );
   }
 
-  /* =======================================================
-     MAIN CONTENT
-  ======================================================= */
+  /* MAIN CONTENT */
 
   return (
     <View style={styles.container}>
@@ -1105,7 +1064,7 @@ export default function MyAppointmentsScreen({
         renderItem={({
           item,
         }) => (
-          <AppointmentCard
+          /* Appointment List Card */ <AppointmentCard
             appointment={
               item
             }
@@ -1148,9 +1107,7 @@ export default function MyAppointmentsScreen({
         }
         ListHeaderComponent={(
           <>
-            {/* ===============================================
-                INTRO
-            ================================================ */}
+            {/* INTRO */}
 
             <View style={styles.introRow}>
 
@@ -1170,6 +1127,7 @@ export default function MyAppointmentsScreen({
 
               </View>
 
+              {/* Book Another Appointment Button */}
               <TouchableOpacity
                 style={styles.bookButton}
                 activeOpacity={0.78}
@@ -1187,9 +1145,7 @@ export default function MyAppointmentsScreen({
 
             </View>
 
-            {/* ===============================================
-                SUMMARY
-            ================================================ */}
+            {/* SUMMARY */}
 
             <View style={styles.summaryRow}>
 
@@ -1239,12 +1195,11 @@ export default function MyAppointmentsScreen({
 
             </View>
 
-            {/* ===============================================
-                FILTER
-            ================================================ */}
+            {/* FILTER */}
 
             <View style={styles.segmentedControl}>
 
+              {/* Upcoming Appointments Tab */}
               <TouchableOpacity
                 style={[
                   styles.segmentButton,
@@ -1283,6 +1238,7 @@ export default function MyAppointmentsScreen({
                 </Text>
               </TouchableOpacity>
 
+              {/* Appointment History Tab */}
               <TouchableOpacity
                 style={[
                   styles.segmentButton,
@@ -1454,9 +1410,7 @@ export default function MyAppointmentsScreen({
   );
 }
 
-/* =========================================================
-   STYLES
-========================================================= */
+/* STYLES */
 
 const styles =
   StyleSheet.create({
@@ -1473,9 +1427,7 @@ const styles =
       paddingBottom: 26,
     },
 
-    /* =====================================================
-       INTRO
-    ====================================================== */
+    /* INTRO */
 
     introRow: {
       flexDirection: 'row',
@@ -1563,9 +1515,7 @@ const styles =
       elevation: 4,
     },
 
-    /* =====================================================
-       SUMMARY
-    ====================================================== */
+    /* SUMMARY */
 
     summaryRow: {
       flexDirection: 'row',
@@ -1641,9 +1591,7 @@ const styles =
       marginTop: 2,
     },
 
-    /* =====================================================
-       SEGMENTED CONTROL
-    ====================================================== */
+    /* SEGMENTED CONTROL */
 
     segmentedControl: {
       flexDirection: 'row',
@@ -1708,9 +1656,7 @@ const styles =
         COLORS.tealDark,
     },
 
-    /* =====================================================
-       APPOINTMENT CARD
-    ====================================================== */
+    /* APPOINTMENT CARD */
 
     appointmentCard: {
       backgroundColor:
@@ -1824,9 +1770,7 @@ const styles =
       fontWeight: '800',
     },
 
-    /* =====================================================
-       VISIT INFORMATION
-    ====================================================== */
+    /* VISIT INFORMATION */
 
     visitInfoCard: {
       flexDirection: 'row',
@@ -1943,9 +1887,7 @@ const styles =
       fontWeight: '600',
     },
 
-    /* =====================================================
-       ACTIONS
-    ====================================================== */
+    /* ACTIONS */
 
     actionRow: {
       flexDirection: 'row',
@@ -2098,9 +2040,7 @@ const styles =
       fontWeight: '600',
     },
 
-    /* =====================================================
-       EMPTY / ERROR / LOADING
-    ====================================================== */
+    /* EMPTY / ERROR / LOADING */
 
     loadingScreen: {
       flex: 1,
@@ -2364,9 +2304,7 @@ const styles =
       fontWeight: '600',
     },
 
-    /* =====================================================
-       FOOTER BOOKING CTA
-    ====================================================== */
+    /* FOOTER BOOKING CTA */
 
     footerBookCard: {
       flexDirection: 'row',

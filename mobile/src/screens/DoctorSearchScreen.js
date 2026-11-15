@@ -1,10 +1,7 @@
 /**
  * @file    DoctorSearchScreen.js
  * @module  Patient
- * @desc    Premium mobile doctor discovery screen.
- *          Lets patients search verified doctors by specialty
- *          and hospital, view doctor profile photos and details,
- *          and continue directly into appointment booking.
+ * @desc    Mobile doctor search, professional details and appointment-booking navigation.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -42,9 +39,7 @@ import {
   searchDoctors,
 } from '../services/doctor.service';
 
-/* =========================================================
-   DESIGN TOKENS
-========================================================= */
+/* DESIGN TOKENS */
 
 const COLORS = {
   background: '#F6F8FA',
@@ -71,15 +66,10 @@ const COLORS = {
   dangerSoft: '#FFF1F1',
 };
 
-/* =========================================================
-   HELPERS
-========================================================= */
+/* HELPERS */
 
 /**
  * Converts a doctor's full name into initials.
- *
- * @param {string} name
- * @returns {string}
  */
 const getInitials = (
   name
@@ -103,9 +93,6 @@ const getInitials = (
 
 /**
  * Creates a readable experience value.
- *
- * @param {number|string} value
- * @returns {string}
  */
 const formatExperience = (
   value
@@ -128,14 +115,12 @@ const formatExperience = (
   } experience`;
 };
 
-/* =========================================================
-   SEARCH FIELD
-========================================================= */
+/* SEARCH FIELD */
 
 /**
  * @component SearchField
  * @desc      Shared doctor-search input with visible label,
- *            icon, and clear action.
+ * icon, and clear action.
  */
 const SearchField = ({
   label,
@@ -208,9 +193,7 @@ const SearchField = ({
   );
 };
 
-/* =========================================================
-   DOCTOR PHOTO
-========================================================= */
+/* DOCTOR PHOTO */
 
 /**
  * @component DoctorPhoto
@@ -295,14 +278,12 @@ const DoctorPhoto = ({
   );
 };
 
-/* =========================================================
-   DOCTOR CARD
-========================================================= */
+/* DOCTOR CARD */
 
 /**
  * @component DoctorCard
  * @desc      Large doctor profile card with portrait,
- *            professional information, and booking action.
+ * professional information, and booking action.
  */
 const DoctorCard = ({
   doctor,
@@ -329,9 +310,7 @@ const DoctorCard = ({
       accessibilityLabel={`Book appointment with Doctor ${doctorName}`}
     >
 
-      {/* ===================================================
-          MAIN PROFILE
-      ==================================================== */}
+      {/* MAIN PROFILE */}
 
       <View style={styles.profileRow}>
 
@@ -391,9 +370,7 @@ const DoctorCard = ({
 
       </View>
 
-      {/* ===================================================
-          PROFESSIONAL DETAILS
-      ==================================================== */}
+      {/* PROFESSIONAL DETAILS */}
 
       {(doctor?.qualifications ||
         doctor?.slmc_reg_number) && (
@@ -467,9 +444,7 @@ const DoctorCard = ({
         </View>
       )}
 
-      {/* ===================================================
-          BOOKING
-      ==================================================== */}
+      {/* BOOKING */}
 
       <View style={styles.cardFooter}>
 
@@ -515,15 +490,11 @@ const DoctorCard = ({
   );
 };
 
-/* =========================================================
-   MAIN SCREEN
-========================================================= */
+/* MAIN SCREEN */
 
 /**
  * @component DoctorSearchScreen
  * @desc      Patient doctor discovery and booking screen.
- *
- * @param {Function} navigate
  */
 export default function DoctorSearchScreen({
   navigate,
@@ -558,15 +529,13 @@ export default function DoctorSearchScreen({
     setError,
   ] = useState('');
 
-  /* =======================================================
-     SEARCH
-  ======================================================= */
+  /* SEARCH */
 
   /**
-   * Loads doctors matching the current search filters.
-   *
-   * @param {boolean} background
-   * @returns {Promise<void>}
+   * FEATURE: Search doctors while typing
+   * LOGIC: Trim specialty/name and hospital filters; the effect waits 450 ms after a change before requesting.
+   * Clearing cancels the waiting timer; requests already sent are not cancelled or ordered here.
+   * Failure clears the results and shows Retry; pull-to-refresh uses the current filters.
    */
   const fetchDoctors =
     useCallback(
@@ -669,9 +638,7 @@ export default function DoctorSearchScreen({
       setHospital('');
     };
 
-  /* =======================================================
-     LOADING
-  ======================================================= */
+  /* LOADING */
 
   if (
     isLoading &&
@@ -720,7 +687,7 @@ export default function DoctorSearchScreen({
         renderItem={({
           item,
         }) => (
-          <DoctorCard
+          /* Doctor Result Card and Book Appointment Action */ <DoctorCard
             doctor={item}
             onBook={() =>
               navigate(
@@ -762,9 +729,7 @@ export default function DoctorSearchScreen({
         ListHeaderComponent={(
           <>
 
-            {/* =============================================
-                INTRO
-            ============================================== */}
+            {/* INTRO */}
 
             <View style={styles.introSection}>
 
@@ -795,9 +760,7 @@ export default function DoctorSearchScreen({
 
             </View>
 
-            {/* =============================================
-                SEARCH PANEL
-            ============================================== */}
+            {/* SEARCH PANEL */}
 
             <View style={styles.searchCard}>
 
@@ -816,7 +779,7 @@ export default function DoctorSearchScreen({
                 </View>
 
                 {hasFilters && (
-                  <TouchableOpacity
+                  /* Clear Doctor Search Filters Button */ <TouchableOpacity
                     style={styles.clearFiltersButton}
                     activeOpacity={0.7}
                     onPress={
@@ -837,6 +800,7 @@ export default function DoctorSearchScreen({
 
               </View>
 
+              {/* Doctor or Specialty Search Field */}
               <SearchField
                 label="Doctor or specialty"
                 value={specialty}
@@ -852,6 +816,7 @@ export default function DoctorSearchScreen({
                 }
               />
 
+              {/* Hospital Search Field */}
               <SearchField
                 label="Hospital"
                 value={hospital}
@@ -869,9 +834,7 @@ export default function DoctorSearchScreen({
 
             </View>
 
-            {/* =============================================
-                RESULTS HEADER
-            ============================================== */}
+            {/* RESULTS HEADER */}
 
             <View style={styles.resultsHeader}>
 
@@ -967,7 +930,7 @@ export default function DoctorSearchScreen({
               </Text>
 
               {hasFilters && (
-                <TouchableOpacity
+                /* View All Doctors Button */ <TouchableOpacity
                   style={styles.emptyAction}
                   activeOpacity={0.78}
                   onPress={
@@ -1015,9 +978,7 @@ export default function DoctorSearchScreen({
   );
 }
 
-/* =========================================================
-   STYLES
-========================================================= */
+/* STYLES */
 
 const styles =
   StyleSheet.create({
@@ -1036,9 +997,7 @@ const styles =
       paddingBottom: 25,
     },
 
-    /* =====================================================
-       INTRO
-    ====================================================== */
+    /* INTRO */
 
     introSection: {
       flexDirection: 'row',
@@ -1109,9 +1068,7 @@ const styles =
       maxWidth: 290,
     },
 
-    /* =====================================================
-       SEARCH
-    ====================================================== */
+    /* SEARCH */
 
     searchCard: {
       backgroundColor:
@@ -1271,9 +1228,7 @@ const styles =
         '#F1F4F6',
     },
 
-    /* =====================================================
-       RESULTS
-    ====================================================== */
+    /* RESULTS */
 
     resultsHeader: {
       flexDirection: 'row',
@@ -1308,9 +1263,7 @@ const styles =
       marginTop: 2,
     },
 
-    /* =====================================================
-       DOCTOR CARD
-    ====================================================== */
+    /* DOCTOR CARD */
 
     doctorCard: {
       backgroundColor:
@@ -1349,9 +1302,7 @@ const styles =
         'stretch',
     },
 
-    /* =====================================================
-       DOCTOR PHOTO
-    ====================================================== */
+    /* DOCTOR PHOTO */
 
     photoShell: {
       position: 'relative',
@@ -1433,9 +1384,7 @@ const styles =
       fontWeight: '800',
     },
 
-    /* =====================================================
-       DOCTOR IDENTITY
-    ====================================================== */
+    /* DOCTOR IDENTITY */
 
     profileContent: {
       flex: 1,
@@ -1527,9 +1476,7 @@ const styles =
       fontWeight: '700',
     },
 
-    /* =====================================================
-       PROFESSIONAL DETAILS
-    ====================================================== */
+    /* PROFESSIONAL DETAILS */
 
     professionalPanel: {
       backgroundColor:
@@ -1600,9 +1547,7 @@ const styles =
       marginTop: 2,
     },
 
-    /* =====================================================
-       CARD FOOTER
-    ====================================================== */
+    /* CARD FOOTER */
 
     cardFooter: {
       flexDirection: 'row',
@@ -1691,9 +1636,7 @@ const styles =
       fontWeight: '800',
     },
 
-    /* =====================================================
-       ERROR
-    ====================================================== */
+    /* ERROR */
 
     errorBanner: {
       flexDirection: 'row',
@@ -1767,9 +1710,7 @@ const styles =
       fontWeight: '800',
     },
 
-    /* =====================================================
-       EMPTY
-    ====================================================== */
+    /* EMPTY */
 
     emptyCard: {
       backgroundColor:
@@ -1862,9 +1803,7 @@ const styles =
       fontWeight: '800',
     },
 
-    /* =====================================================
-       LOADING
-    ====================================================== */
+    /* LOADING */
 
     loadingScreen: {
       flex: 1,
@@ -1919,9 +1858,7 @@ const styles =
       textAlign: 'center',
     },
 
-    /* =====================================================
-       FOOTER
-    ====================================================== */
+    /* FOOTER */
 
     footerNote: {
       flexDirection: 'row',

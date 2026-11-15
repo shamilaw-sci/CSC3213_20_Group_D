@@ -2,8 +2,8 @@
  * @file    App.js
  * @module  Root
  * @desc    Root component for the Care4U mobile app.
- *          Provides shared authentication, premium patient navigation,
- *          persistent bottom tabs, overlay workflows, and logout.
+ * Provides shared authentication, patient navigation,
+ * persistent bottom tabs, overlay workflows, and logout.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -67,9 +67,7 @@ import MyAppointmentsScreen from './src/screens/MyAppointmentsScreen';
 // EMERGENCY
 import EmergencySOS from './src/components/EmergencySOS';
 
-/* =========================================================
-   DESIGN TOKENS
-========================================================= */
+/* DESIGN TOKENS */
 
 const COLORS = {
   background: '#F6F8FA',
@@ -92,9 +90,7 @@ const COLORS = {
   dangerSoft: '#FFF1F1',
 };
 
-/* =========================================================
-   NAVIGATION CONFIGURATION
-========================================================= */
+/* NAVIGATION CONFIGURATION */
 
 const TABS = [
   {
@@ -140,13 +136,11 @@ const OVERLAY_TITLES = {
   aichat: 'AI Health Assistant',
 };
 
-/* =========================================================
-   SHARED HEADER
-========================================================= */
+/* SHARED HEADER */
 
 /**
  * @component MobileHeader
- * @desc      Premium shared authenticated header using the Care4U logo.
+ * @desc      shared authenticated header using the Care4U logo.
  */
 const MobileHeader = ({
   title,
@@ -160,7 +154,7 @@ const MobileHeader = ({
       <View style={styles.headerLeft}>
 
         {canGoBack ? (
-          <TouchableOpacity
+          /* Back to Patient Tab Button */ <TouchableOpacity
             style={styles.headerButton}
             onPress={onBack}
             activeOpacity={0.75}
@@ -205,6 +199,7 @@ const MobileHeader = ({
 
       </View>
 
+      {/* Logout Button */}
       <TouchableOpacity
         style={styles.logoutButton}
         onPress={onLogout}
@@ -223,13 +218,11 @@ const MobileHeader = ({
   );
 };
 
-/* =========================================================
-   PREMIUM TAB BAR
-========================================================= */
+/* PREMIUM TAB BAR */
 
 /**
  * @component PatientTabBar
- * @desc      Premium persistent patient bottom navigation.
+ * @desc      persistent patient bottom navigation.
  */
 const PatientTabBar = ({
   activeTab,
@@ -319,11 +312,14 @@ const PatientTabBar = ({
   );
 };
 
-/* =========================================================
-   ROOT APPLICATION
-========================================================= */
+/* ROOT APPLICATION */
 
-/** @component App @returns {JSX.Element} Existing app/navigation shell; Stage 3A review covers auth screens, public identity and logout only. */
+/**
+ * FEATURE: Mobile role and patient navigation shell
+ * LOGIC: Show auth screens without a user, a read-only doctor profile for doctors and a web notice for other roles.
+ * Patients use one active tab or overlay at a time; changing screens unmounts the previous screen.
+ * UI role selection does not replace backend permission checks.
+ */
 export default function App() {
   const logoutInFlight = useRef(false);
   const user =
@@ -379,11 +375,13 @@ export default function App() {
     {}
   );
 
-  /* =======================================================
-     AUTHENTICATION
-  ======================================================= */
+  /* AUTHENTICATION */
 
-  /** @returns {Promise<void>} Clear local identity only after acknowledged server logout; failure keeps a retry path. */
+  /**
+   * FEATURE: Logout
+   * LOGIC: Block repeated taps and require an acknowledged server logout before clearing local identity/navigation.
+   * Failure keeps the session state and shows a retry alert; the request has a 15-second timeout.
+   */
   const handleLogout = async () => {
     if (logoutInFlight.current) return;
     logoutInFlight.current = true;
@@ -402,10 +400,13 @@ export default function App() {
     }
   };
 
-  /* =======================================================
-     NAVIGATION
-  ======================================================= */
+  /* NAVIGATION */
 
+  /**
+   * FEATURE: Patient tabs and secondary workflows
+   * LOGIC: Known tab names close overlays and clear booking parameters. Booking preserves doctor/reschedule IDs.
+   * Other names open an overlay; Back closes it and returns to the existing active tab.
+   */
   const manualNavigate = (
     screenName,
     params = {}
@@ -466,9 +467,7 @@ export default function App() {
       );
     };
 
-  /* =======================================================
-     AUTH SCREENS
-  ======================================================= */
+  /* AUTH SCREENS */
 
   // Auth callbacks carry pending email to OTP, return pending professionals to sign-in,
   // and admit acknowledged public identities. Screen selection changes UI state only;
@@ -639,9 +638,7 @@ export default function App() {
     );
   }
 
-  /* =======================================================
-     DOCTOR MOBILE FALLBACK
-  ======================================================= */
+  /* DOCTOR MOBILE FALLBACK */
 
   if (
     user.role ===
@@ -678,9 +675,7 @@ export default function App() {
     );
   }
 
-  /* =======================================================
-     UNSUPPORTED MOBILE ROLES
-  ======================================================= */
+  /* UNSUPPORTED MOBILE ROLES */
 
   if (
     user.role !==
@@ -733,9 +728,7 @@ export default function App() {
     );
   }
 
-  /* =======================================================
-     PATIENT APPLICATION
-  ======================================================= */
+  /* PATIENT APPLICATION */
 
   const currentTitle =
     overlayScreen
@@ -781,13 +774,11 @@ export default function App() {
 
       <View style={styles.screen}>
 
-        {/* =================================================
-            SECONDARY PATIENT WORKFLOWS
-        ================================================= */}
+        {/* SECONDARY PATIENT WORKFLOWS */}
 
         {overlayScreen ===
           'BookAppointment' && (
-          <BookAppointmentScreen
+          /* Book or Reschedule Appointment Overlay */ <BookAppointmentScreen
             doctorId={
               bookingParams
                 .doctorId
@@ -819,16 +810,14 @@ export default function App() {
 
         {overlayScreen ===
           'aichat' && (
-          <AIChatScreen
+          /* AI Assistant Overlay */ <AIChatScreen
             patientId={
               user.profile_id
             }
           />
         )}
 
-        {/* =================================================
-            MAIN PATIENT TABS
-        ================================================= */}
+        {/* MAIN PATIENT TABS */}
 
         {!overlayScreen && (
           <>
@@ -875,10 +864,12 @@ export default function App() {
           </>
         )}
 
+        {/* Emergency SOS Available Across Patient Screens */}
         <EmergencySOS />
 
       </View>
 
+      {/* Patient Home Doctors Visits Records and Profile Tabs */}
       <PatientTabBar
         activeTab={
           activeTab
@@ -892,9 +883,7 @@ export default function App() {
   );
 }
 
-/* =========================================================
-   STYLES
-========================================================= */
+/* STYLES */
 
 const styles =
   StyleSheet.create({
@@ -912,9 +901,7 @@ const styles =
         COLORS.background,
     },
 
-    /* =====================================================
-       HEADER
-    ====================================================== */
+    /* HEADER */
 
     header: {
       paddingTop:
@@ -1073,9 +1060,7 @@ const styles =
         '#F2D4D4',
     },
 
-    /* =====================================================
-       TAB DOCK
-    ====================================================== */
+    /* TAB DOCK */
 
     tabDock: {
       backgroundColor:
@@ -1180,9 +1165,7 @@ const styles =
       fontWeight: '800',
     },
 
-    /* =====================================================
-       UNSUPPORTED ROLE PLACEHOLDER
-    ====================================================== */
+    /* UNSUPPORTED ROLE PLACEHOLDER */
 
     centeredMessage: {
       justifyContent:

@@ -1,9 +1,9 @@
 /**
  * @file      MedicalRecordsScreen.js
  * @module    Patient
- * @desc      Premium mobile patient medical-record timeline.
- *            Supports filtering, pull-to-refresh, record summaries,
- *            confidential indicators, and detailed record viewing.
+ * @desc      mobile patient medical-record timeline.
+ * Supports filtering, pull-to-refresh, record summaries,
+ * confidential indicators, and detailed record viewing.
  * @author    Wasana Karunanayaka (S/21/081)
  */
 
@@ -54,9 +54,7 @@ import {
 
 import useAuthStore from '../store/authStore';
 
-/* =========================================================
-   DESIGN TOKENS
-========================================================= */
+/* DESIGN TOKENS */
 
 const COLORS = {
   background: '#F6F8FA',
@@ -92,9 +90,7 @@ const COLORS = {
   dangerSoft: '#FFF1F1',
 };
 
-/* =========================================================
-   RECORD TYPES
-========================================================= */
+/* RECORD TYPES */
 
 const RECORD_TYPES = {
   consultation: {
@@ -161,15 +157,10 @@ const FILTERS = [
   },
 ];
 
-/* =========================================================
-   HELPERS
-========================================================= */
+/* HELPERS */
 
 /**
  * Returns presentation metadata for a record type.
- *
- * @param {string} type
- * @returns {Object}
  */
 const recordTypeMeta = (
   type
@@ -184,9 +175,6 @@ const recordTypeMeta = (
 
 /**
  * Formats an ISO date into a readable date.
- *
- * @param {string} dateStr
- * @returns {string}
  */
 const formatDate = (
   dateStr
@@ -220,9 +208,6 @@ const formatDate = (
 
 /**
  * Formats a record date with weekday for detail view.
- *
- * @param {string} dateStr
- * @returns {string}
  */
 const formatLongDate = (
   dateStr
@@ -255,16 +240,14 @@ const formatLongDate = (
   );
 };
 
-/* =========================================================
-   SUMMARY CARD
-========================================================= */
+/* SUMMARY CARD */
 
 /**
  * @component SummaryCard
  * @desc      Compact medical-record summary statistic.
  */
-/** Render a native record metric using label/value/icon/color props; no API side effects.
- * @returns {*} UI element, local transition or acknowledged async completion as described above.
+/**
+ * Render a native record metric using label/value/icon/color props; no API side effects.
  */
 const SummaryCard = ({
   icon: Icon,
@@ -304,16 +287,14 @@ const SummaryCard = ({
   );
 };
 
-/* =========================================================
-   RECORD CARD
-========================================================= */
+/* RECORD CARD */
 
 /**
  * @component RecordCard
- * @desc      Premium medical-record timeline card.
+ * @desc      medical-record timeline card.
  */
-/** Render a native record summary and delegate opening through onPress/onOpen props; record selection belongs to the screen.
- * @returns {*} UI element, local transition or acknowledged async completion as described above.
+/**
+ * Render a native record summary and delegate opening through onPress/onOpen props; record selection belongs to the screen.
  */
 const RecordCard = ({
   record,
@@ -474,9 +455,7 @@ const RecordCard = ({
   );
 };
 
-/* =========================================================
-   DETAIL SECTION
-========================================================= */
+/* DETAIL SECTION */
 
 /**
  * @component DetailSection
@@ -509,16 +488,15 @@ const DetailSection = ({
   );
 };
 
-/* =========================================================
-   RECORD DETAIL MODAL
-========================================================= */
+/* RECORD DETAIL MODAL */
 
 /**
  * @component RecordDetailModal
  * @desc      Full record detail experience.
  */
-/** Render selected record detail with native Modal controls. Props provide record/visibility/close handling; device/back/focus acceptance remains NOT_RUN.
- * @returns {*} UI element, local transition or acknowledged async completion as described above.
+/**
+ * Show consultation fields when a chief complaint exists; otherwise show the record description.
+ * Native back and both close controls call the supplied close handler.
  */
 const RecordDetailModal = ({
   record,
@@ -554,9 +532,7 @@ const RecordDetailModal = ({
 
       <SafeAreaView style={styles.modalSafeArea}>
 
-        {/* =================================================
-            MODAL TOP BAR
-        ================================================== */}
+        {/* MODAL TOP BAR */}
 
         <View style={styles.modalTopBar}>
 
@@ -620,9 +596,7 @@ const RecordDetailModal = ({
           }
         >
 
-          {/* =================================================
-              RECORD HERO
-          ================================================== */}
+          {/* RECORD HERO */}
 
           <View style={styles.modalHero}>
 
@@ -713,9 +687,7 @@ const RecordDetailModal = ({
 
           </View>
 
-          {/* =================================================
-              CONFIDENTIAL WARNING
-          ================================================== */}
+          {/* CONFIDENTIAL WARNING */}
 
           {record.is_confidential ? (
             <View style={styles.confidentialBanner}>
@@ -744,9 +716,7 @@ const RecordDetailModal = ({
             </View>
           ) : null}
 
-          {/* =================================================
-              STRUCTURED DETAILS
-          ================================================== */}
+          {/* STRUCTURED DETAILS */}
 
           <View style={styles.modalBody}>
 
@@ -841,9 +811,7 @@ const RecordDetailModal = ({
 
           </View>
 
-          {/* =================================================
-              PRIVACY NOTE
-          ================================================== */}
+          {/* PRIVACY NOTE */}
 
           <View style={styles.privacyNote}>
 
@@ -862,6 +830,7 @@ const RecordDetailModal = ({
 
         <View style={styles.modalFooter}>
 
+          {/* Close Record Button */}
           <TouchableOpacity
             style={styles.closeButton}
             activeOpacity={0.8}
@@ -882,12 +851,13 @@ const RecordDetailModal = ({
   );
 };
 
-/* =========================================================
-   MAIN SCREEN
-========================================================= */
+/* MAIN SCREEN */
 
-/** Load the session profile records, reject stale async results via loadVersion, clear detail/payload before refresh, and derive type filters. No account-ID fallback or native runtime claim.
- * @returns {*} UI element, local transition or acknowledged async completion as described above.
+/**
+ * FEATURE: Medical record timeline and stale-response protection
+ * LOGIC: Require session profile_id, clear old records/detail before loading and assign a request version.
+ * Ignore results/errors from older requests or an unmounted screen. Sort newest first and filter by type.
+ * Backend access rules decide the returned data; confidentiality badges do not grant access.
  */
 const MedicalRecordsScreen = () => {
   const user =
@@ -932,9 +902,7 @@ const MedicalRecordsScreen = () => {
 
   const loadVersion = useRef(0);
 
-  /* =======================================================
-     LOAD RECORDS
-  ======================================================= */
+  /* LOAD RECORDS */
 
   const fetchRecords =
     useCallback(
@@ -1018,9 +986,7 @@ const MedicalRecordsScreen = () => {
     fetchRecords,
   ]);
 
-  /* =======================================================
-     DERIVED DATA
-  ======================================================= */
+  /* DERIVED DATA */
 
   const sortedRecords =
     useMemo(
@@ -1099,9 +1065,7 @@ const MedicalRecordsScreen = () => {
       ]
     );
 
-  /* =======================================================
-     LOADING
-  ======================================================= */
+  /* LOADING */
 
   if (loading) {
     return (
@@ -1133,9 +1097,7 @@ const MedicalRecordsScreen = () => {
     );
   }
 
-  /* =======================================================
-     ERROR
-  ======================================================= */
+  /* ERROR */
 
   if (
     error &&
@@ -1185,13 +1147,12 @@ const MedicalRecordsScreen = () => {
     );
   }
 
-  /* =======================================================
-     PAGE
-  ======================================================= */
+  /* PAGE */
 
   return (
     <SafeAreaView style={styles.safeArea}>
 
+      {/* Medical Record Details Modal */}
       <RecordDetailModal
         record={
           selectedRecord
@@ -1231,9 +1192,7 @@ const MedicalRecordsScreen = () => {
         }
       >
 
-        {/* =================================================
-            INTRO
-        ================================================== */}
+        {/* INTRO */}
 
         <View style={styles.introSection}>
 
@@ -1264,9 +1223,7 @@ const MedicalRecordsScreen = () => {
 
         </View>
 
-        {/* =================================================
-            SUMMARY
-        ================================================== */}
+        {/* SUMMARY */}
 
         <View style={styles.summaryRow}>
 
@@ -1320,9 +1277,7 @@ const MedicalRecordsScreen = () => {
 
         </View>
 
-        {/* =================================================
-            FILTERS
-        ================================================== */}
+        {/* FILTERS */}
 
         <View style={styles.filterSection}>
 
@@ -1363,7 +1318,7 @@ const MedicalRecordsScreen = () => {
                   filter.key;
 
                 return (
-                  <TouchableOpacity
+                  /* Medical Record Category Filter Button */ <TouchableOpacity
                     key={
                       filter.key
                     }
@@ -1403,9 +1358,7 @@ const MedicalRecordsScreen = () => {
 
         </View>
 
-        {/* =================================================
-            INLINE REFRESH ERROR
-        ================================================== */}
+        {/* INLINE REFRESH ERROR */}
 
         {error ? (
           <View style={styles.inlineWarning}>
@@ -1422,9 +1375,7 @@ const MedicalRecordsScreen = () => {
           </View>
         ) : null}
 
-        {/* =================================================
-            EMPTY
-        ================================================== */}
+        {/* EMPTY */}
 
         {filteredRecords.length ===
         0 ? (
@@ -1456,7 +1407,7 @@ const MedicalRecordsScreen = () => {
 
             {records.length >
               0 && (
-              <TouchableOpacity
+              /* View All Records Button */ <TouchableOpacity
                 style={styles.clearFilterButton}
                 activeOpacity={0.75}
                 onPress={() =>
@@ -1481,7 +1432,7 @@ const MedicalRecordsScreen = () => {
               (
                 record
               ) => (
-                <RecordCard
+                /* Open Medical Record Card */ <RecordCard
                   key={
                     record.id
                   }
@@ -1501,9 +1452,7 @@ const MedicalRecordsScreen = () => {
 
         )}
 
-        {/* =================================================
-            PRIVACY FOOTER
-        ================================================== */}
+        {/* PRIVACY FOOTER */}
 
         <View style={styles.securityFooter}>
 
@@ -1526,9 +1475,7 @@ const MedicalRecordsScreen = () => {
   );
 };
 
-/* =========================================================
-   STYLES
-========================================================= */
+/* STYLES */
 
 const styles =
   StyleSheet.create({
@@ -1551,9 +1498,7 @@ const styles =
       paddingBottom: 26,
     },
 
-    /* =====================================================
-       INTRO
-    ====================================================== */
+    /* INTRO */
 
     introSection: {
       flexDirection: 'row',
@@ -1624,9 +1569,7 @@ const styles =
       maxWidth: 295,
     },
 
-    /* =====================================================
-       SUMMARY
-    ====================================================== */
+    /* SUMMARY */
 
     summaryRow: {
       flexDirection: 'row',
@@ -1704,9 +1647,7 @@ const styles =
       marginTop: 2,
     },
 
-    /* =====================================================
-       FILTER
-    ====================================================== */
+    /* FILTER */
 
     filterSection: {
       marginBottom: 15,
@@ -1791,9 +1732,7 @@ const styles =
         '#FFFFFF',
     },
 
-    /* =====================================================
-       RECORD CARD
-    ====================================================== */
+    /* RECORD CARD */
 
     recordsList: {
       gap: 10,
@@ -2000,9 +1939,7 @@ const styles =
       marginLeft: 7,
     },
 
-    /* =====================================================
-       EMPTY
-    ====================================================== */
+    /* EMPTY */
 
     emptyCard: {
       alignItems: 'center',
@@ -2087,9 +2024,7 @@ const styles =
       fontWeight: '800',
     },
 
-    /* =====================================================
-       INLINE WARNING
-    ====================================================== */
+    /* INLINE WARNING */
 
     inlineWarning: {
       flexDirection: 'row',
@@ -2122,9 +2057,7 @@ const styles =
       fontWeight: '600',
     },
 
-    /* =====================================================
-       LOADING / ERROR
-    ====================================================== */
+    /* LOADING / ERROR */
 
     loadingScreen: {
       flex: 1,
@@ -2264,9 +2197,7 @@ const styles =
       fontWeight: '800',
     },
 
-    /* =====================================================
-       MODAL TOP BAR
-    ====================================================== */
+    /* MODAL TOP BAR */
 
     modalSafeArea: {
       flex: 1,
@@ -2366,9 +2297,7 @@ const styles =
       paddingBottom: 25,
     },
 
-    /* =====================================================
-       MODAL HERO
-    ====================================================== */
+    /* MODAL HERO */
 
     modalHero: {
       position: 'relative',
@@ -2509,9 +2438,7 @@ const styles =
       fontWeight: '600',
     },
 
-    /* =====================================================
-       CONFIDENTIAL MODAL
-    ====================================================== */
+    /* CONFIDENTIAL MODAL */
 
     confidentialBanner: {
       flexDirection: 'row',
@@ -2577,9 +2504,7 @@ const styles =
       marginTop: 2,
     },
 
-    /* =====================================================
-       MODAL DETAILS
-    ====================================================== */
+    /* MODAL DETAILS */
 
     modalBody: {
       paddingHorizontal: 18,
@@ -2649,9 +2574,7 @@ const styles =
       lineHeight: 19,
     },
 
-    /* =====================================================
-       FOLLOW-UP
-    ====================================================== */
+    /* FOLLOW-UP */
 
     followUpBanner: {
       flexDirection: 'row',
@@ -2714,9 +2637,7 @@ const styles =
       marginTop: 2,
     },
 
-    /* =====================================================
-       PRIVACY
-    ====================================================== */
+    /* PRIVACY */
 
     privacyNote: {
       flexDirection: 'row',
@@ -2783,9 +2704,7 @@ const styles =
       fontWeight: '800',
     },
 
-    /* =====================================================
-       FOOTER
-    ====================================================== */
+    /* FOOTER */
 
     securityFooter: {
       flexDirection: 'row',

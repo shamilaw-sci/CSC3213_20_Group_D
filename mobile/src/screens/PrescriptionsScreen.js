@@ -1,10 +1,9 @@
 /**
  * @file    PrescriptionsScreen.js
  * @module  Patient
- * @desc    Premium patient prescription screen.
- *          Displays prescription status, medicine details,
- *          dispensing progress, expiry information, and pharmacy QR.
- * @author  S/21/001 — status fix + medicine details by S/21/081
+ * @desc    Patient medicines, expiry, dispensing progress and prescription QR references.
+ * @author  Pamudika Abayarathna (S/21/001)
+ * Status and medicine details: Wasana Karunanayaka (S/21/081).
  */
 
 import React, {
@@ -50,9 +49,7 @@ import {
 
 import useAuthStore from '../store/authStore';
 
-/* =========================================================
-   DESIGN TOKENS
-========================================================= */
+/* DESIGN TOKENS */
 
 const COLORS = {
   background: '#F6F8FA',
@@ -87,9 +84,7 @@ const COLORS = {
   graySoft: '#F1F5F9',
 };
 
-/* =========================================================
-   STATUS CONFIG
-========================================================= */
+/* STATUS CONFIG */
 
 const STATUS_CONFIG = {
   active: {
@@ -121,9 +116,7 @@ const STATUS_CONFIG = {
   },
 };
 
-/* =========================================================
-   FILTERS
-========================================================= */
+/* FILTERS */
 
 const FILTERS = [
   {
@@ -144,15 +137,10 @@ const FILTERS = [
   },
 ];
 
-/* =========================================================
-   HELPERS
-========================================================= */
+/* HELPERS */
 
 /**
  * Checks whether a prescription has expired.
- *
- * @param {string} expiresAt
- * @returns {boolean}
  */
 const isExpired = (
   expiresAt
@@ -179,11 +167,10 @@ const isExpired = (
 };
 
 /**
- * Resolves the patient-facing prescription status.
- *
- * @param {string} status
- * @param {string} expiresAt
- * @returns {string}
+ * FEATURE: Prescription expiry and QR eligibility
+ * LOGIC: A valid expiry before device time overrides the saved status as expired.
+ * Missing/invalid expiry falls back to the lowercased status; only active/partially-filled
+ * prescriptions with a reference offer Show Pharmacy QR. Backend checks still govern dispensing.
  */
 const resolveStatus = (
   status,
@@ -206,9 +193,6 @@ const resolveStatus = (
 
 /**
  * Returns metadata for a prescription status.
- *
- * @param {string} status
- * @returns {Object}
  */
 const getStatusMeta = (
   status
@@ -235,9 +219,6 @@ const getStatusMeta = (
 
 /**
  * Formats a date.
- *
- * @param {string} dateStr
- * @returns {string}
  */
 const formatDate = (
   dateStr
@@ -270,10 +251,9 @@ const formatDate = (
 };
 
 /**
- * Calculates medicine dispensing progress.
- *
- * @param {Object} item
- * @returns {number}
+ * FEATURE: Partial dispensing progress
+ * LOGIC: Divide dispensed quantity by prescribed quantity and limit the visual bar to 0–100 percent.
+ * Nonpositive prescribed quantities display zero; this screen does not dispense medicine.
  */
 const getDispensingProgress = (
   item
@@ -311,9 +291,7 @@ const getDispensingProgress = (
   );
 };
 
-/* =========================================================
-   SUMMARY CARD
-========================================================= */
+/* SUMMARY CARD */
 
 const SummaryCard = ({
   icon: Icon,
@@ -353,9 +331,7 @@ const SummaryCard = ({
   );
 };
 
-/* =========================================================
-   STATUS BADGE
-========================================================= */
+/* STATUS BADGE */
 
 const StatusBadge = ({
   status,
@@ -401,9 +377,7 @@ const StatusBadge = ({
   );
 };
 
-/* =========================================================
-   MEDICINE ITEM
-========================================================= */
+/* MEDICINE ITEM */
 
 const MedicineItem = ({
   item,
@@ -553,9 +527,7 @@ const MedicineItem = ({
   );
 };
 
-/* =========================================================
-   PRESCRIPTION CARD
-========================================================= */
+/* PRESCRIPTION CARD */
 
 const PrescriptionCard = ({
   prescription,
@@ -594,9 +566,7 @@ const PrescriptionCard = ({
   return (
     <View style={styles.prescriptionCard}>
 
-      {/* ===================================================
-          HEADER
-      ==================================================== */}
+      {/* HEADER */}
 
       <View style={styles.prescriptionHeader}>
 
@@ -635,9 +605,7 @@ const PrescriptionCard = ({
 
       </View>
 
-      {/* ===================================================
-          DATES
-      ==================================================== */}
+      {/* DATES */}
 
       <View style={styles.datePanel}>
 
@@ -698,9 +666,7 @@ const PrescriptionCard = ({
 
       </View>
 
-      {/* ===================================================
-          DOCTOR NOTES
-      ==================================================== */}
+      {/* DOCTOR NOTES */}
 
       {prescription.notes ? (
         <View style={styles.notesBox}>
@@ -731,9 +697,7 @@ const PrescriptionCard = ({
         </View>
       ) : null}
 
-      {/* ===================================================
-          MEDICINES
-      ==================================================== */}
+      {/* MEDICINES */}
 
       {validItems.length >
         0 ? (
@@ -795,12 +759,10 @@ const PrescriptionCard = ({
         </View>
       )}
 
-      {/* ===================================================
-          QR ACTION
-      ==================================================== */}
+      {/* QR ACTION */}
 
       {canShowQR ? (
-        <TouchableOpacity
+        /* Show Pharmacy QR Button */ <TouchableOpacity
           style={styles.qrButton}
           activeOpacity={0.82}
           onPress={() =>
@@ -862,9 +824,7 @@ const PrescriptionCard = ({
   );
 };
 
-/* =========================================================
-   QR MODAL
-========================================================= */
+/* QR MODAL */
 
 const PrescriptionQRModal = ({
   prescription,
@@ -968,6 +928,7 @@ const PrescriptionQRModal = ({
 
             <View style={styles.qrInner}>
 
+              {/* Prescription QR Code */}
               <QRCode
                 value={
                   qrValue
@@ -1013,6 +974,7 @@ const PrescriptionQRModal = ({
 
         <View style={styles.modalFooter}>
 
+          {/* Close Prescription QR Button */}
           <TouchableOpacity
             style={styles.closeButton}
             activeOpacity={0.8}
@@ -1033,9 +995,7 @@ const PrescriptionQRModal = ({
   );
 };
 
-/* =========================================================
-   MAIN SCREEN
-========================================================= */
+/* MAIN SCREEN */
 
 const PrescriptionsScreen = () => {
   const user =
@@ -1079,9 +1039,7 @@ const PrescriptionsScreen = () => {
     setSelectedFilter,
   ] = useState('all');
 
-  /* =======================================================
-     LOAD PRESCRIPTIONS
-  ======================================================= */
+  /* LOAD PRESCRIPTIONS */
 
   const fetchPrescriptions =
     useCallback(
@@ -1158,9 +1116,7 @@ const PrescriptionsScreen = () => {
     fetchPrescriptions,
   ]);
 
-  /* =======================================================
-     DERIVED DATA
-  ======================================================= */
+  /* DERIVED DATA */
 
   const sortedPrescriptions =
     useMemo(
@@ -1291,9 +1247,7 @@ const PrescriptionsScreen = () => {
       ]
     );
 
-  /* =======================================================
-     LOADING
-  ======================================================= */
+  /* LOADING */
 
   if (loading) {
     return (
@@ -1325,9 +1279,7 @@ const PrescriptionsScreen = () => {
     );
   }
 
-  /* =======================================================
-     ERROR
-  ======================================================= */
+  /* ERROR */
 
   if (
     error &&
@@ -1377,13 +1329,12 @@ const PrescriptionsScreen = () => {
     );
   }
 
-  /* =======================================================
-     MAIN VIEW
-  ======================================================= */
+  /* MAIN VIEW */
 
   return (
     <SafeAreaView style={styles.safeArea}>
 
+      {/* Pharmacy QR Modal */}
       <PrescriptionQRModal
         prescription={
           selectedPrescription
@@ -1423,9 +1374,7 @@ const PrescriptionsScreen = () => {
         }
       >
 
-        {/* =================================================
-            INTRO
-        ================================================== */}
+        {/* INTRO */}
 
         <View style={styles.introSection}>
 
@@ -1456,9 +1405,7 @@ const PrescriptionsScreen = () => {
 
         </View>
 
-        {/* =================================================
-            SUMMARY
-        ================================================== */}
+        {/* SUMMARY */}
 
         <View style={styles.summaryRow}>
 
@@ -1488,9 +1435,7 @@ const PrescriptionsScreen = () => {
 
         </View>
 
-        {/* =================================================
-            FILTER
-        ================================================== */}
+        {/* FILTER */}
 
         <View style={styles.filterSection}>
 
@@ -1531,7 +1476,7 @@ const PrescriptionsScreen = () => {
                   filter.key;
 
                 return (
-                  <TouchableOpacity
+                  /* Prescription Status Filter Button */ <TouchableOpacity
                     key={filter.key}
                     style={[
                       styles.filterChip,
@@ -1582,9 +1527,7 @@ const PrescriptionsScreen = () => {
           </View>
         ) : null}
 
-        {/* =================================================
-            EMPTY
-        ================================================== */}
+        {/* EMPTY */}
 
         {filteredPrescriptions.length ===
         0 ? (
@@ -1661,9 +1604,7 @@ const PrescriptionsScreen = () => {
 
         )}
 
-        {/* =================================================
-            SECURITY FOOTER
-        ================================================== */}
+        {/* SECURITY FOOTER */}
 
         <View style={styles.securityFooter}>
 
@@ -1686,9 +1627,7 @@ const PrescriptionsScreen = () => {
   );
 };
 
-/* =========================================================
-   STYLES
-========================================================= */
+/* STYLES */
 
 const styles =
   StyleSheet.create({
@@ -1711,9 +1650,7 @@ const styles =
       paddingBottom: 26,
     },
 
-    /* =====================================================
-       INTRO
-    ====================================================== */
+    /* INTRO */
 
     introSection: {
       flexDirection: 'row',
@@ -1784,9 +1721,7 @@ const styles =
       maxWidth: 295,
     },
 
-    /* =====================================================
-       SUMMARY
-    ====================================================== */
+    /* SUMMARY */
 
     summaryRow: {
       flexDirection: 'row',
@@ -1864,9 +1799,7 @@ const styles =
       marginTop: 2,
     },
 
-    /* =====================================================
-       FILTER
-    ====================================================== */
+    /* FILTER */
 
     filterSection: {
       marginBottom: 15,
@@ -1950,9 +1883,7 @@ const styles =
         '#FFFFFF',
     },
 
-    /* =====================================================
-       PRESCRIPTION CARD
-    ====================================================== */
+    /* PRESCRIPTION CARD */
 
     prescriptionList: {
       gap: 13,
@@ -2057,9 +1988,7 @@ const styles =
       fontWeight: '800',
     },
 
-    /* =====================================================
-       DATES
-    ====================================================== */
+    /* DATES */
 
     datePanel: {
       flexDirection: 'row',
@@ -2120,9 +2049,7 @@ const styles =
       marginHorizontal: 9,
     },
 
-    /* =====================================================
-       NOTES
-    ====================================================== */
+    /* NOTES */
 
     notesBox: {
       flexDirection: 'row',
@@ -2186,9 +2113,7 @@ const styles =
       marginTop: 3,
     },
 
-    /* =====================================================
-       MEDICINES
-    ====================================================== */
+    /* MEDICINES */
 
     medicinesSection: {
       marginTop: 16,
@@ -2349,9 +2274,7 @@ const styles =
       fontStyle: 'italic',
     },
 
-    /* =====================================================
-       QUANTITY
-    ====================================================== */
+    /* QUANTITY */
 
     quantitySection: {
       marginTop: 11,
@@ -2458,9 +2381,7 @@ const styles =
       lineHeight: 14,
     },
 
-    /* =====================================================
-       QR BUTTON
-    ====================================================== */
+    /* QR BUTTON */
 
     qrButton: {
       flexDirection: 'row',
@@ -2550,9 +2471,7 @@ const styles =
       lineHeight: 13,
     },
 
-    /* =====================================================
-       FILTER EMPTY
-    ====================================================== */
+    /* FILTER EMPTY */
 
     emptyCard: {
       alignItems: 'center',
@@ -2668,9 +2587,7 @@ const styles =
       fontWeight: '600',
     },
 
-    /* =====================================================
-       LOADING / ERROR
-    ====================================================== */
+    /* LOADING / ERROR */
 
     loadingScreen: {
       flex: 1,
@@ -2810,9 +2727,7 @@ const styles =
       fontWeight: '800',
     },
 
-    /* =====================================================
-       QR MODAL
-    ====================================================== */
+    /* QR MODAL */
 
     modalSafeArea: {
       flex: 1,
@@ -3118,9 +3033,7 @@ const styles =
       fontWeight: '800',
     },
 
-    /* =====================================================
-       SECURITY FOOTER
-    ====================================================== */
+    /* SECURITY FOOTER */
 
     securityFooter: {
       flexDirection: 'row',

@@ -1,16 +1,16 @@
 /**
  * @file    prescription.service.js
- * @module  Services
+ * @module  Prescription
  * @desc    API calls for prescription module on mobile.
- * @author  S/21/001
+ * @author  Pamudika Abayarathna (S/21/001)
  */
 
 import api from './api';
 
 /**
- * Gets all prescriptions for a patient.
- * @param {string} patientId - UUID of the patient
- * @returns {Promise<Array>} List of prescriptions with items
+ * FEATURE: Load patient prescription details
+ * LOGIC: Return the server list with its medicine items. Expiry, status filters and QR presentation
+ * are calculated by the prescription screen; dispensing authorization remains on the backend.
  */
 export const getPatientPrescriptions = async (patientId) => {
   const response = await api.get(`/api/patients/${patientId}/prescriptions`);
@@ -19,8 +19,6 @@ export const getPatientPrescriptions = async (patientId) => {
 
 /**
  * Gets a single prescription by ID.
- * @param {string} id - UUID of the prescription
- * @returns {Promise<Object>} Prescription with items
  */
 export const getPrescriptionById = async (id) => {
   const response = await api.get(`/api/prescriptions/${id}`);

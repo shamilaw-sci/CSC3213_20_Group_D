@@ -1,12 +1,7 @@
 /**
  * @file    PatientProfileScreen.js
  * @module  Patient
- * @desc    Premium patient profile and clinical-safety workspace.
- *          Supports unified Edit Mode, profile photo updates,
- *          allergies, chronic conditions, medical devices,
- *          important medical background, family history,
- *          vaccinations, AI vaccination-card scanning,
- *          and privacy/consent controls.
+ * @desc    Patient profile, health lists, image uploads, vaccination scanning and privacy controls.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -110,9 +105,7 @@ import {
 
 import useAuthStore from '../store/authStore';
 
-/* =========================================================
-   DESIGN TOKENS
-========================================================= */
+/* DESIGN TOKENS */
 
 const COLORS = {
   background: '#F6F8FA',
@@ -148,9 +141,7 @@ const COLORS = {
   violetSoft: '#F4F0FA',
 };
 
-/* =========================================================
-   OPTIONS
-========================================================= */
+/* OPTIONS */
 
 const BLOOD_GROUP_OPTIONS = [
   'A+',
@@ -261,9 +252,7 @@ const FAMILY_RELATIONS = [
 
 const MAX_PHOTO_SIZE_BYTES = 2 * 1024 * 1024;
 
-/* =========================================================
-   HELPERS
-========================================================= */
+/* HELPERS */
 
 const formatDate = (dateStr) => {
   if (!dateStr) {
@@ -403,9 +392,7 @@ const severityMeta = (severity) => {
   }
 };
 
-/* =========================================================
-   OPTION SELECTOR
-========================================================= */
+/* OPTION SELECTOR */
 
 const OptionSelector = ({
   label,
@@ -537,9 +524,7 @@ const OptionSelector = ({
   );
 };
 
-/* =========================================================
-   MODAL SHELL
-========================================================= */
+/* MODAL SHELL */
 
 const ModalShell = ({
   visible,
@@ -619,9 +604,7 @@ const ModalShell = ({
   );
 };
 
-/* =========================================================
-   SECTION CARD
-========================================================= */
+/* SECTION CARD */
 
 const SectionCard = ({
   title,
@@ -679,9 +662,7 @@ const SectionCard = ({
   );
 };
 
-/* =========================================================
-   INFORMATION ROW
-========================================================= */
+/* INFORMATION ROW */
 
 const InformationRow = ({
   icon: Icon,
@@ -716,9 +697,7 @@ const InformationRow = ({
   );
 };
 
-/* =========================================================
-   EMPTY SECTION
-========================================================= */
+/* EMPTY SECTION */
 
 const EmptySection = ({
   icon: Icon,
@@ -740,12 +719,13 @@ const EmptySection = ({
   );
 };
 
-/* =========================================================
-   MAIN SCREEN
-========================================================= */
+/* MAIN SCREEN */
 
-/** Coordinate owned profile and privacy controls from patientId prop/session profile_id. Mutations require acknowledgement; privacy uses a separate serialized save. Other clinical CRUD/AI remains partial scope.
- * @returns {*} UI element, local transition or acknowledged async completion as described above.
+/**
+ * FEATURE: Patient profile and health lists
+ * LOGIC: Use the supplied patient ID or session profile ID; load profile and seven lists together.
+ * A failed request leaves previous data unchanged and shows a load error; initial failure offers retry.
+ * Profile, clinical-list and privacy writes save independently.
  */
 const PatientProfileScreen = ({
   patientId,
@@ -759,9 +739,7 @@ const PatientProfileScreen = ({
     user?.profile_id ||
     '';
 
-  /* =======================================================
-     MAIN DATA
-  ======================================================= */
+  /* MAIN DATA */
 
   const [patient, setPatient] = useState(null);
 
@@ -788,9 +766,7 @@ const PatientProfileScreen = ({
 
   const [error, setError] = useState(null);
 
-  /* =======================================================
-     EDIT MODE
-  ======================================================= */
+  /* EDIT MODE */
 
   const [isEditing, setIsEditing] = useState(false);
 
@@ -804,9 +780,7 @@ const PatientProfileScreen = ({
 
   const [photoUploading, setPhotoUploading] = useState(false);
 
-  /* =======================================================
-     ALLERGY STATE
-  ======================================================= */
+  /* ALLERGY STATE */
 
   const [isAddAllergyModalOpen, setIsAddAllergyModalOpen] = useState(false);
 
@@ -820,9 +794,7 @@ const PatientProfileScreen = ({
 
   const [addingAllergy, setAddingAllergy] = useState(false);
 
-  /* =======================================================
-     CONDITION STATE
-  ======================================================= */
+  /* CONDITION STATE */
 
   const [isAddConditionModalOpen, setIsAddConditionModalOpen] = useState(false);
 
@@ -836,9 +808,7 @@ const PatientProfileScreen = ({
 
   const [addingCondition, setAddingCondition] = useState(false);
 
-  /* =======================================================
-     MEDICAL DEVICE STATE
-  ======================================================= */
+  /* MEDICAL DEVICE STATE */
 
   const [isAddDeviceModalOpen, setIsAddDeviceModalOpen] = useState(false);
 
@@ -854,9 +824,7 @@ const PatientProfileScreen = ({
 
   const [addingDevice, setAddingDevice] = useState(false);
 
-  /* =======================================================
-     MEDICAL BACKGROUND STATE
-  ======================================================= */
+  /* MEDICAL BACKGROUND STATE */
 
   const [isAddBackgroundModalOpen, setIsAddBackgroundModalOpen] = useState(false);
 
@@ -872,9 +840,7 @@ const PatientProfileScreen = ({
 
   const [addingBackground, setAddingBackground] = useState(false);
 
-  /* =======================================================
-     FAMILY HISTORY STATE
-  ======================================================= */
+  /* FAMILY HISTORY STATE */
 
   const [isAddFamilyModalOpen, setIsAddFamilyModalOpen] = useState(false);
 
@@ -888,9 +854,7 @@ const PatientProfileScreen = ({
 
   const [addingFamily, setAddingFamily] = useState(false);
 
-  /* =======================================================
-     VACCINATION STATE
-  ======================================================= */
+  /* VACCINATION STATE */
 
   const [isVaccinationModalOpen, setIsVaccinationModalOpen] = useState(false);
 
@@ -912,9 +876,7 @@ const PatientProfileScreen = ({
 
   const [scanningCard, setScanningCard] = useState(false);
 
-  /* =======================================================
-     FETCH ALL PROFILE DATA
-  ======================================================= */
+  /* FETCH ALL PROFILE DATA */
 
   const fetchData = useCallback(
     async (
@@ -1040,13 +1002,11 @@ const PatientProfileScreen = ({
     fetchData,
   ]);
 
-  /* =======================================================
-     GLOBAL EDIT MODE
-  ======================================================= */
+  /* GLOBAL EDIT MODE */
 
-  /** Copy confirmed editable profile values into formData and clear old save feedback. No backend write occurs until saveProfile.
- * @returns {*} UI element, local transition or acknowledged async completion as described above.
- */
+  /**
+   * Copy confirmed editable profile values into formData and clear old save feedback. No backend write occurs until saveProfile.
+   */
 const startEditing = () => {
     setFormData({
       full_name:
@@ -1075,9 +1035,9 @@ const startEditing = () => {
     setIsEditing(true);
   };
 
-  /** Update one local editable form field. Inputs are field name/value; the backend still applies its fixed allow-list.
- * @returns {*} UI element, local transition or acknowledged async completion as described above.
- */
+  /**
+   * Update one local editable form field. Inputs are field name/value; the backend still applies its fixed allow-list.
+   */
 const updateField = (
     field,
     value
@@ -1090,9 +1050,9 @@ const updateField = (
     );
   };
 
-  /** Validate nonempty name, exclude repeated taps, await the confirmed profile, then replace patient state and exit edit mode. Failure preserves the form and restores retry.
- * @returns {*} UI element, local transition or acknowledged async completion as described above.
- */
+  /**
+   * Validate nonempty name, exclude repeated taps, await the confirmed profile, then replace patient state and exit edit mode. Failure preserves the form and restores retry.
+   */
 const saveProfile = async () => {
     if (saveInFlight.current) return;
     if (
@@ -1149,10 +1109,13 @@ const saveProfile = async () => {
     }
   };
 
-  /* =======================================================
-     PROFILE PHOTO
-  ======================================================= */
+  /* PROFILE PHOTO */
 
+  /**
+   * FEATURE: Upload a profile photo
+   * LOGIC: Reject a known file size above 2 MB, then upload the selected URI and image type.
+   * Missing size metadata is left to server validation; failure keeps the old profile.
+   */
   const uploadSelectedPhoto = async (
     asset
   ) => {
@@ -1277,6 +1240,10 @@ const saveProfile = async () => {
     }
   };
 
+  /**
+   * FEATURE: Choose camera or gallery
+   * LOGIC: Open the source chooser; each picker requests its own permission and uploads only when selection is not cancelled.
+   */
   const handleChangePhoto = () => {
     Alert.alert(
       'Change Profile Photo',
@@ -1300,16 +1267,14 @@ const saveProfile = async () => {
     );
   };
 
-  /* =======================================================
-     PRIVACY
-  ======================================================= */
+  /* PRIVACY */
 
-  /** Save privacy independently of profile edits; never show an unacknowledged lock.
-   * @param {string} category Existing display label. @returns {Promise<void>} Confirmed list or retry alert.
+  /**
+   * FEATURE: Lock or unlock sensitive categories
+   * LOGIC: Require Edit Mode, serialize writes with a ref and show only the acknowledged category list.
+   * Failure keeps the last confirmed settings; cancelling profile editing does not undo saved locks.
    */
-  /** Serialize a complete privacy-list save; update the visible list only after acknowledgement. Failure keeps the confirmed state.
- * @returns {*} UI element, local transition or acknowledged async completion as described above.
- */
+
 const toggleConsent = async category => {
     if (!isEditing || consentInFlight.current) return;
     consentInFlight.current = true;
@@ -1328,10 +1293,13 @@ const toggleConsent = async category => {
     }
   };
 
-  /* =======================================================
-     ALLERGIES
-  ======================================================= */
+  /* ALLERGIES */
 
+  /**
+   * FEATURE: Save an allergy
+   * LOGIC: Require an allergen name, send selected severity and notes, then refresh allergies before closing the form.
+   * A refresh failure can show an error after the write already succeeded.
+   */
   const addAllergyRecord = async () => {
     if (
       !allergenInput
@@ -1379,6 +1347,11 @@ const toggleConsent = async category => {
     }
   };
 
+  /**
+   * FEATURE: Remove a health-list entry
+   * LOGIC: Native confirmation is required before deletion; the remove handlers reload their own list after success.
+   * A failed delete or subsequent reload displays an alert.
+   */
   const removeAllergy = (
     allergy
   ) => {
@@ -1421,10 +1394,12 @@ const toggleConsent = async category => {
     );
   };
 
-  /* =======================================================
-     CONDITIONS
-  ======================================================= */
+  /* CONDITIONS */
 
+  /**
+   * FEATURE: Save a chronic condition
+   * LOGIC: Require a name and send optional date/notes plus the patient-chosen priority flag; refresh the list after saving.
+   */
   const addConditionRecord = async () => {
     if (
       !conditionInput
@@ -1515,10 +1490,12 @@ const toggleConsent = async category => {
     );
   };
 
-  /* =======================================================
-     MEDICAL DEVICES
-  ======================================================= */
+  /* MEDICAL DEVICES */
 
+  /**
+   * FEATURE: Save a medical device or implant
+   * LOGIC: Require a device name and save optional details plus the emergency-relevance flag, then reload devices.
+   */
   const addDeviceRecord = async () => {
     if (
       !deviceNameInput
@@ -1622,10 +1599,12 @@ const toggleConsent = async category => {
     );
   };
 
-  /* =======================================================
-     MEDICAL BACKGROUND
-  ======================================================= */
+  /* MEDICAL BACKGROUND */
 
+  /**
+   * FEATURE: Save important medical background
+   * LOGIC: Require a title and save the event type, optional date/notes and emergency flag, then reload background records.
+   */
   const addBackgroundRecord = async () => {
     if (
       !backgroundTitleInput
@@ -1729,10 +1708,12 @@ const toggleConsent = async category => {
     );
   };
 
-  /* =======================================================
-     FAMILY HISTORY
-  ======================================================= */
+  /* FAMILY HISTORY */
 
+  /**
+   * FEATURE: Save family medical history
+   * LOGIC: Require a condition and save relationship, notes and emergency flag, then refresh family history.
+   */
   const addFamilyRecord = async () => {
     if (
       !familyConditionInput
@@ -1832,9 +1813,7 @@ const toggleConsent = async category => {
     );
   };
 
-  /* =======================================================
-     VACCINATIONS
-  ======================================================= */
+  /* VACCINATIONS */
 
   const resetVaccines = () => {
     setBulkVaccines([
@@ -1901,6 +1880,10 @@ const toggleConsent = async category => {
     }
   };
 
+  /**
+   * FEATURE: Save reviewed vaccination rows
+   * LOGIC: Ignore blank rows and require name plus date for every active row, then submit all rows and reload vaccinations.
+   */
   const saveVaccinations = async () => {
     const activeRows =
       bulkVaccines.filter(
@@ -2007,10 +1990,13 @@ const toggleConsent = async category => {
     );
   };
 
-  /* =======================================================
-     AI VACCINATION CARD SCAN
-  ======================================================= */
+  /* AI VACCINATION CARD SCAN */
 
+  /**
+   * FEATURE: Review AI vaccination-card extraction
+   * LOGIC: Map nonempty extraction results into editable rows, replacing current rows only when results exist.
+   * Camera/gallery permissions and cancellation are handled before extraction; records save only after patient review.
+   */
   const processVaccineImage = async (
     asset
   ) => {
@@ -2157,9 +2143,7 @@ const toggleConsent = async category => {
     }
   };
 
-  /* =======================================================
-     LOADING / ERROR
-  ======================================================= */
+  /* LOADING / ERROR */
 
   if (
     loading
@@ -2241,9 +2225,7 @@ const toggleConsent = async category => {
     );
   }
 
-  /* =======================================================
-     PAGE
-  ======================================================= */
+  /* PAGE */
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -2282,9 +2264,7 @@ const toggleConsent = async category => {
           }
         >
 
-          {/* =================================================
-              PROFILE HERO
-          ================================================== */}
+          {/* PROFILE HERO */}
 
           <View style={styles.heroCard}>
 
@@ -2334,7 +2314,7 @@ const toggleConsent = async category => {
                 </View>
 
                 {isEditing ? (
-                  <TouchableOpacity
+                  /* Change Profile Photo Button */ <TouchableOpacity
                     style={styles.photoButton}
                     activeOpacity={0.8}
                     disabled={photoUploading}
@@ -2411,7 +2391,7 @@ const toggleConsent = async category => {
               </View>
 
               {!isEditing ? (
-                <TouchableOpacity
+                /* Edit Profile Button */ <TouchableOpacity
                   style={styles.primaryEditButton}
                   activeOpacity={0.8}
                   onPress={startEditing}
@@ -2448,9 +2428,7 @@ const toggleConsent = async category => {
 
           </View>
 
-          {/* =================================================
-              SUCCESS
-          ================================================== */}
+          {/* SUCCESS */}
 
           {saveSuccess ? (
             <View style={styles.successBanner}>
@@ -2467,9 +2445,7 @@ const toggleConsent = async category => {
             </View>
           ) : null}
 
-          {/* =================================================
-              HEALTH SNAPSHOT
-          ================================================== */}
+          {/* HEALTH SNAPSHOT */}
 
           <View style={styles.summaryGrid}>
 
@@ -2544,9 +2520,7 @@ const toggleConsent = async category => {
 
           </View>
 
-          {/* =================================================
-              PERSONAL INFORMATION
-          ================================================== */}
+          {/* PERSONAL INFORMATION */}
 
           <SectionCard
             title="Personal Information"
@@ -2651,9 +2625,7 @@ const toggleConsent = async category => {
 
           </SectionCard>
 
-          {/* =================================================
-              EMERGENCY CONTACT
-          ================================================== */}
+          {/* EMERGENCY CONTACT */}
 
           <SectionCard
             title="Emergency Contact"
@@ -2752,10 +2724,9 @@ const toggleConsent = async category => {
 
           </SectionCard>
 
-          {/* =================================================
-              CONDITIONS
-          ================================================== */}
+          {/* CONDITIONS */}
 
+          {/* Chronic Conditions Card */}
           <SectionCard
             title="Chronic Conditions"
             description="Long-term health conditions relevant to clinical care."
@@ -2885,10 +2856,9 @@ const toggleConsent = async category => {
 
           </SectionCard>
 
-          {/* =================================================
-              ALLERGIES
-          ================================================== */}
+          {/* ALLERGIES */}
 
+          {/* Known Allergies Card */}
           <SectionCard
             title="Known Allergies"
             description="Important allergy information used during treatment."
@@ -3048,10 +3018,9 @@ const toggleConsent = async category => {
 
           </SectionCard>
 
-          {/* =================================================
-              MEDICAL DEVICES
-          ================================================== */}
+          {/* MEDICAL DEVICES */}
 
+          {/* Medical Devices & Implants Card */}
           <SectionCard
             title="Medical Devices & Implants"
             description="Implants and medical equipment important to your care."
@@ -3194,10 +3163,9 @@ const toggleConsent = async category => {
 
           </SectionCard>
 
-          {/* =================================================
-              IMPORTANT MEDICAL BACKGROUND
-          ================================================== */}
+          {/* IMPORTANT MEDICAL BACKGROUND */}
 
+          {/* Important Medical Background Card */}
           <SectionCard
             title="Important Medical Background"
             description="Major surgeries, procedures and serious past health events."
@@ -3325,10 +3293,9 @@ const toggleConsent = async category => {
 
           </SectionCard>
 
-          {/* =================================================
-              FAMILY HISTORY
-          ================================================== */}
+          {/* FAMILY HISTORY */}
 
+          {/* Family Medical History Card */}
           <SectionCard
             title="Family Medical History"
             description="Clinically relevant conditions affecting close family members."
@@ -3446,10 +3413,9 @@ const toggleConsent = async category => {
 
           </SectionCard>
 
-          {/* =================================================
-              VACCINATIONS
-          ================================================== */}
+          {/* VACCINATIONS */}
 
+          {/* Vaccination Records Card */}
           <SectionCard
             title="Vaccination Records"
             description="Your recorded immunisation history."
@@ -3560,10 +3526,9 @@ const toggleConsent = async category => {
 
           </SectionCard>
 
-          {/* =================================================
-              PRIVACY
-          ================================================== */}
+          {/* PRIVACY */}
 
+          {/* Privacy & Consent Card */}
           <SectionCard
             title="Privacy & Consent"
             description="Control access to sensitive medical-record categories."
@@ -3653,6 +3618,7 @@ const toggleConsent = async category => {
 
                     </View>
 
+                    {/* Privacy Category Lock Switch */}
                     <Switch
                       value={locked}
                       disabled={!isEditing || consentSaving}
@@ -3684,9 +3650,7 @@ const toggleConsent = async category => {
 
           </SectionCard>
 
-          {/* =================================================
-              GLOBAL EDIT ACTIONS
-          ================================================== */}
+          {/* GLOBAL EDIT ACTIONS */}
 
           {isEditing ? (
             <View style={styles.editActions}>
@@ -3708,6 +3672,7 @@ const toggleConsent = async category => {
 
               <View style={styles.editActionButtons}>
 
+                {/* Cancel Profile Editing Button */}
                 <TouchableOpacity
                   style={styles.cancelButton}
                   disabled={saving}
@@ -3729,6 +3694,7 @@ const toggleConsent = async category => {
 
                 </TouchableOpacity>
 
+                {/* Save Changes Button */}
                 <TouchableOpacity
                   style={styles.saveButton}
                   disabled={saving}
@@ -3777,10 +3743,9 @@ const toggleConsent = async category => {
 
       </KeyboardAvoidingView>
 
-      {/* =====================================================
-          ALLERGY MODAL
-      ====================================================== */}
+      {/* ALLERGY MODAL */}
 
+      {/* Add Allergy Form */}
       <ModalShell
         visible={isAddAllergyModalOpen}
         title="Add Allergy"
@@ -3922,10 +3887,9 @@ const toggleConsent = async category => {
 
       </ModalShell>
 
-      {/* =====================================================
-          CONDITION MODAL
-      ====================================================== */}
+      {/* CONDITION MODAL */}
 
+      {/* Add Chronic Condition Form */}
       <ModalShell
         visible={isAddConditionModalOpen}
         title="Add Chronic Condition"
@@ -4049,10 +4013,9 @@ const toggleConsent = async category => {
 
       </ModalShell>
 
-      {/* =====================================================
-          DEVICE MODAL
-      ====================================================== */}
+      {/* DEVICE MODAL */}
 
+      {/* Add Medical Device Form */}
       <ModalShell
         visible={isAddDeviceModalOpen}
         title="Add Medical Device"
@@ -4188,10 +4151,9 @@ const toggleConsent = async category => {
 
       </ModalShell>
 
-      {/* =====================================================
-          MEDICAL BACKGROUND MODAL
-      ====================================================== */}
+      {/* MEDICAL BACKGROUND MODAL */}
 
+      {/* Add Medical Background Form */}
       <ModalShell
         visible={isAddBackgroundModalOpen}
         title="Add Medical Background"
@@ -4318,10 +4280,9 @@ const toggleConsent = async category => {
 
       </ModalShell>
 
-      {/* =====================================================
-          FAMILY HISTORY MODAL
-      ====================================================== */}
+      {/* FAMILY HISTORY MODAL */}
 
+      {/* Add Family Medical History Form */}
       <ModalShell
         visible={isAddFamilyModalOpen}
         title="Add Family Medical History"
@@ -4432,10 +4393,9 @@ const toggleConsent = async category => {
 
       </ModalShell>
 
-      {/* =====================================================
-          VACCINATION MODAL
-      ====================================================== */}
+      {/* VACCINATION MODAL */}
 
+      {/* Add Vaccinations Form */}
       <ModalShell
         visible={isVaccinationModalOpen}
         title="Add Vaccinations"
@@ -4477,6 +4437,7 @@ const toggleConsent = async category => {
 
           <View style={styles.aiScanButtons}>
 
+            {/* Vaccination Card Camera Button */}
             <TouchableOpacity
               style={styles.aiScanButton}
               disabled={scanningCard}
@@ -4501,6 +4462,7 @@ const toggleConsent = async category => {
 
             </TouchableOpacity>
 
+            {/* Vaccination Card Gallery Button */}
             <TouchableOpacity
               style={styles.aiScanButton}
               disabled={scanningCard}
@@ -4738,6 +4700,7 @@ const toggleConsent = async category => {
             )
           )}
 
+          {/* Add Another Vaccination Record Button */}
           <TouchableOpacity
             style={styles.addAnotherButton}
             onPress={addVaccineRow}
@@ -4754,6 +4717,7 @@ const toggleConsent = async category => {
 
           </TouchableOpacity>
 
+          {/* Save All Vaccination Records Button */}
           <TouchableOpacity
             style={styles.modalSaveButton}
             disabled={addingVaccinations}
@@ -4783,9 +4747,7 @@ const toggleConsent = async category => {
   );
 };
 
-/* =========================================================
-   STYLES
-========================================================= */
+/* STYLES */
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -4804,9 +4766,7 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
   },
 
-  /* =====================================================
-     PROFILE HERO
-  ====================================================== */
+  /* PROFILE HERO */
 
   heroCard: {
     position: 'relative',
@@ -5039,9 +4999,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 
-  /* =====================================================
-     SUMMARY
-  ====================================================== */
+  /* SUMMARY */
 
   summaryGrid: {
     flexDirection: 'row',
@@ -5090,9 +5048,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  /* =====================================================
-     SECTION CARDS
-  ====================================================== */
+  /* SECTION CARDS */
 
   sectionCard: {
     borderWidth: 1,
@@ -5187,9 +5143,7 @@ const styles = StyleSheet.create({
       '#FBFCFD',
   },
 
-  /* =====================================================
-     INFORMATION ROWS
-  ====================================================== */
+  /* INFORMATION ROWS */
 
   infoRow: {
     flexDirection: 'row',
@@ -5234,9 +5188,7 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
 
-  /* =====================================================
-     RECORDS
-  ====================================================== */
+  /* RECORDS */
 
   recordItem: {
     flexDirection: 'row',
@@ -5410,9 +5362,7 @@ const styles = StyleSheet.create({
     lineHeight: 13,
   },
 
-  /* =====================================================
-     PRIVACY
-  ====================================================== */
+  /* PRIVACY */
 
   privacyReadOnlyNotice: {
     flexDirection: 'row',
@@ -5486,9 +5436,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  /* =====================================================
-     FORMS
-  ====================================================== */
+  /* FORMS */
 
   formField: {
     marginTop: 13,
@@ -5685,9 +5633,7 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
 
-  /* =====================================================
-     MODALS
-  ====================================================== */
+  /* MODALS */
 
   modalOverlay: {
     flex: 1,
@@ -5863,9 +5809,7 @@ const styles = StyleSheet.create({
       'uppercase',
   },
 
-  /* =====================================================
-     VACCINATION MODAL
-  ====================================================== */
+  /* VACCINATION MODAL */
 
   aiScanCard: {
     borderRadius: 17,
@@ -6066,9 +6010,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 
-  /* =====================================================
-     GLOBAL EDIT ACTIONS
-  ====================================================== */
+  /* GLOBAL EDIT ACTIONS */
 
   editActions: {
     borderRadius: 20,
@@ -6207,9 +6149,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 
-  /* =====================================================
-     GENERAL STATES
-  ====================================================== */
+  /* GENERAL STATES */
 
   securityFooter: {
     flexDirection: 'row',

@@ -1,8 +1,7 @@
 /**
  * @file    EmergencySOS.js
  * @module  Emergency
- * @desc    Floating action button and 10-second countdown modal for SOS alerts.
- *          Integrates native phone dialer and background GPS capture.
+ * @desc    SOS countdown, native dialer opening and hospital alert submission with optional location.
  * @author  Wasana Karunanayaka (S/21/081)
  */
 
@@ -41,6 +40,13 @@ const EmergencySOS = () => {
     setIsModalVisible(false);
   };
 
+  /**
+   * FEATURE: Open emergency dialer and save a hospital alert
+   * LOGIC: Close the countdown and attempt the dialer first; the patient places the call there.
+   * Request foreground location; denial sends null coordinates. Location/API failure retries without GPS.
+   * If that request also fails, warn that the hospital alert was not confirmed.
+   * There is no separate in-flight guard here, and a retry cannot confirm whether an earlier request reached the server.
+   */
   const triggerEmergency = async () => {
     setIsModalVisible(false); // Hide the modal immediately
 
@@ -67,7 +73,7 @@ const EmergencySOS = () => {
         accuracy: Location.Accuracy.Balanced,
       });
 
-      // Send the SOS payload to our new endpoint!
+      // Submit the captured coordinates with the SOS alert.
       await api.post('/api/emergencies/sos', {
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
@@ -96,15 +102,17 @@ const EmergencySOS = () => {
         <View style={styles.modalContainer}>
           <Text style={styles.warningText}>EMERGENCY ALERT</Text>
           <Text style={styles.subText}>Opening your phone dialer for 1990 and attempting to save a hospital dashboard alert in...</Text>
-          
+
           <View style={styles.countdownCircle}>
             <Text style={styles.countdownText}>{countdown}</Text>
           </View>
 
+          {/* Cancel SOS Countdown Button */}
           <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
             <Text style={styles.cancelButtonText}>CANCEL</Text>
           </TouchableOpacity>
 
+          {/* Open Dialer Now Button */}
           <TouchableOpacity style={styles.callNowButton} onPress={triggerEmergency}>
             <Text style={styles.callNowButtonText}>OPEN DIALER NOW</Text>
           </TouchableOpacity>
