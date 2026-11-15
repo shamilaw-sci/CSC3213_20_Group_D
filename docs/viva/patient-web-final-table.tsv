@@ -1,0 +1,29 @@
+File / Module	Important feature	Important logic
+PatientLayout / PatientNavbar	Navigation and logout	Show grouped patient links → flag completed unread reports. Attempt logout → open login even on failure; response status is not checked.
+PatientProfilePage / patient service	Profile identity and editing	Confirm a patient profile ID through /auth/me → load data → edit name, blood group and emergency contact. Identity fields stay read-only.
+	Save profile and avoid duplicate writes	Block another profile save with a ref → wait for confirmed response → replace cache and exit editing. Failure keeps the form open.
+	Profile photo	Accept JPEG/PNG/WEBP up to 2 MB → upload as photo → update profile cache on success.
+	Patient identity QR	Render the saved patient QR ID; show unavailable when missing. Backend checks who may use it.
+	Allergies and priority conditions	Require a name → save selected allergy severity or condition priority flag. Severe allergies sort first; priority is chosen by the patient.
+	Devices, past events and family history	Require device name, event title or family condition → save details and chosen emergency flag → refresh that list. Family history collects a relationship, not a relative name.
+	Remove health-list entries	Choose an entry → confirm in its dialog → send removal → refresh only the affected list on success. Failure shows an error.
+	Vaccinations and AI card scan	Scan image → review editable extracted rows; scanning does not save. Ignore blank rows → require name and date on every active row → submit together.
+	Privacy category locks	Edit Mode + loaded settings → block overlapping writes → save full category list separately. Cancel profile editing does not undo saved locks; backend filtering uses record text matching.
+Patient service / doctor consent	Temporary access confirmation	Send appointment ID and patient code → require a confirmed grant, category list and valid expiry. The legacy role argument grants no access.
+DoctorSearchPage / doctor service	Find and select a doctor	Submit trimmed specialty/hospital filters → query that filter pair → choose a doctor → open booking. Typing alone does not change applied filters.
+BookAppointmentPage / Appointment backend	Book and handle competing patients	Group displayed slots by date → select time → request OPD booking. Backend locks the doctor row, rechecks slots/conflicts and inserts in one transaction; stale requests are rejected.
+BookAppointmentPage	Reschedule failure handling	Book replacement first → cancel original. Failed new booking keeps original; failed cancellation keeps replacement and may leave both active, with a warning.
+MyAppointmentsPage	Upcoming visits, cancellation and rescheduling	Upcoming means scheduled/confirmed/in-progress by status, sorted earliest first. Other statuses form History. Only scheduled cards offer cancel/reschedule; cancellation asks for confirmation.
+MedicalRecordsPage	Record timeline and details	Require session profile ID → load records → newest first → filter by type. Counts use all records; open details only if the selected record is still returned.
+LabReportsPage / PatientNavbar	Report viewing and unread badge	Detect image extension after stripping query/fragment → preview images here; attempt new tab for other files. Mark unread reports read → refresh shared query after success. A blocked popup is not detected.
+PrescriptionsPage	Expiry, partial dispensing and QR	Valid expiry before browser time overrides saved status. QR needs active/partially-filled status and a reference. Progress is dispensed ÷ prescribed, limited to 0–100%; backend authorizes dispensing.
+PatientLookupPage / patient service	Doctor QR lookup and access limits	Load scanned patient identity → request health lists. Current doctor calls omit required appointment ID, so backend can reject them; some failed list requests look empty.
+PatientLookupPage / Appointment backend	Start Visit	Doctor-only button requests immediate OPD booking → backend resolves doctor profile from session and may reuse today’s active visit → require returned ID → open consultation.
+PatientLookupPage	AI medical-history summary	Request summary → display response or failure. Current call omits consultation ID; current formatter splits into characters, so line/table formatting is unreliable.
+HealthAwarenessFeed / healthContentService	Select awareness infographics	Keep last article for each exact title in memory → rank allergy keyword matches first → show only image articles. Conditions are not used; failures become an empty feed.
+	Slideshow controls	Rotate multiple articles every 15 seconds while unpaused → hover/focus pauses → arrows, dots and swipes select slides.
+AIChatWidget	Patient AI chat	Ignore blank or loading sends → send new text, chosen language and previous local messages → append reply or failure → release loading. Closing keeps local history; Enter sends, Shift+Enter adds a line.
+	AI chat presentation and safety notice	Switch English/Sinhala for later requests → render reply Markdown → keep safety guidance visible. Full screen and close buttons change local display state.
+OrderTrackerPage	Medicine delivery progress	Display server order status through placed → accepted → packed → out for delivery → delivered. Cancelled shows an alert; unknown statuses mark no step reached. This page does not update orders.
+PaymentHistoryPage	Payment status and receipts	Load patient transactions → show returned success/pending/failed status → open selected receipt and amount. Sandbox notice stays visible; the page makes no charge request.
+Prescription service	Prescription reference verification	Send QR reference → return the complete response envelope. Backend checks access and validity; this request does not dispense medicine.

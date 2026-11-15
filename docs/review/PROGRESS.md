@@ -1,6 +1,12 @@
 # Care4U final review progress
 
-## Current work: autonomous remaining final review
+## Current work: final comments and viva preparation
+
+2026-11-15. Latest scope: comments and clearly safe presentation fixes only; functional fixes need explicit approval. Preserve current local files and dirty Doctor work; no push/merge. Patient Web: 19 source reviews complete, source comment commit f5bacbf. Eighteen exact-entry executable comparisons plus explicitly approved MyAppointments recovery; all 19 match entry HEAD executable code. Lint/build and 21 patient cases PASS. UI source-only; live DB/provider/browser/device NOT_RUN. [Report/tracker](PATIENT_WEB_FINAL_REVIEW.md), [viva guide](../../CARE4U_VIVA_CODE_GUIDE.md), [TSV](../viva/patient-web-final-table.tsv), [evidence](evidence/patient-web-2026-11-15/verification.json). PW02–PW06 remain unchanged.
+
+Next: Patient Mobile beginning mobile/src/screens/PatientHomeScreen.js; reuse auth/Stage 4A work. Later groups remain pending in the user’s requested order.
+
+## Previous review scope (2026-11-14)
 
 2026-11-14. User authorized completing remaining review without per-stage pauses or handoff ZIPs. Preserve completed work and use focused checks plus major integration checkpoints. Missing isolated-DB/native/deployment acceptance leaves explicit gaps, not unrelated source/UI/viva blockers. No live records/DB writes, real messages/payments, deployment, push or merge.
 
