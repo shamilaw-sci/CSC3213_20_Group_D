@@ -254,6 +254,7 @@ const MAX_PHOTO_SIZE_BYTES = 2 * 1024 * 1024;
 
 /* HELPERS */
 
+/** Show a readable date; use a dash when the saved value is missing or invalid. */
 const formatDate = (dateStr) => {
   if (!dateStr) {
     return '—';
@@ -275,6 +276,7 @@ const formatDate = (dateStr) => {
   );
 };
 
+/** Calculate age from the birth date, adjusting when the birthday has not happened this year. */
 const formatAge = (dob) => {
   if (!dob) {
     return '—';
@@ -305,6 +307,7 @@ const formatAge = (dob) => {
   return `${age} yrs`;
 };
 
+/** Make a short saved value easier to read, with a dash for empty values. */
 const capitalise = (value) => {
   if (!value) {
     return '—';
@@ -316,6 +319,7 @@ const capitalise = (value) => {
   );
 };
 
+/** Use patient-name initials as a fallback when no profile photo is displayed. */
 const getInitials = (name) => {
   if (!name) {
     return 'PT';
@@ -338,6 +342,7 @@ const getInitials = (name) => {
   ).toUpperCase();
 };
 
+/** Match the saved medical-event type to a readable option label. */
 const getBackgroundTypeLabel = (type) => {
   const match = HEALTH_BACKGROUND_TYPES.find(
     item => item.value === type
@@ -354,6 +359,7 @@ const getBackgroundTypeLabel = (type) => {
   );
 };
 
+/** Display a readable family relationship from the saved option value. */
 const getFamilyRelationLabel = (relation) => {
   const match = FAMILY_RELATIONS.find(
     item => item.value === relation
@@ -370,6 +376,7 @@ const getFamilyRelationLabel = (relation) => {
   );
 };
 
+/** Choose allergy severity colours so severe items remain easy to spot. */
 const severityMeta = (severity) => {
   switch (severity?.toLowerCase()) {
     case 'severe':
@@ -394,6 +401,10 @@ const severityMeta = (severity) => {
 
 /* OPTION SELECTOR */
 
+/**
+ * FEATURE: Choose a saved option
+ * LOGIC: Display the available choices; only call onSelect after the user picks one.
+ */
 const OptionSelector = ({
   label,
   value,
@@ -402,6 +413,7 @@ const OptionSelector = ({
 }) => {
   const [open, setOpen] = useState(false);
 
+  /** Get the readable label for either a text option or a label/value object. */
   const getOptionLabel = (option) => {
     if (typeof option === 'object') {
       return option.label;
@@ -410,6 +422,7 @@ const OptionSelector = ({
     return capitalise(option);
   };
 
+  /** Use the stored option value to identify the selected choice. */
   const getOptionValue = (option) => {
     if (typeof option === 'object') {
       return option.value;
@@ -526,6 +539,7 @@ const OptionSelector = ({
 
 /* MODAL SHELL */
 
+/** Reuse the same accessible close action and keyboard-aware layout for entry forms. */
 const ModalShell = ({
   visible,
   title,
@@ -606,6 +620,7 @@ const ModalShell = ({
 
 /* SECTION CARD */
 
+/** Reuse section headings and show the Add action only while editing. */
 const SectionCard = ({
   title,
   description,
@@ -664,6 +679,7 @@ const SectionCard = ({
 
 /* INFORMATION ROW */
 
+/** Display one read-only patient detail with a readable missing-value fallback. */
 const InformationRow = ({
   icon: Icon,
   label,
@@ -699,6 +715,7 @@ const InformationRow = ({
 
 /* EMPTY SECTION */
 
+/** Show a clear empty message when a medical-history list has no records. */
 const EmptySection = ({
   icon: Icon,
   text,
@@ -878,6 +895,11 @@ const PatientProfileScreen = ({
 
   /* FETCH ALL PROFILE DATA */
 
+  /**
+   * FEATURE: Load the patient profile
+   * LOGIC: Fetch profile, allergies, conditions, devices, history, vaccinations and privacy settings together;
+   * show a retry error on failure.
+   */
   const fetchData = useCallback(
     async (
       background = false
@@ -1168,6 +1190,10 @@ const saveProfile = async () => {
     }
   };
 
+  /**
+   * FEATURE: Choose profile image from gallery
+   * LOGIC: Request library permission, then upload the selected image only when the picker was not cancelled.
+   */
   const chooseProfilePhoto = async () => {
     const permission =
       await ImagePicker
@@ -1204,6 +1230,10 @@ const saveProfile = async () => {
     }
   };
 
+  /**
+   * FEATURE: Take profile image with camera
+   * LOGIC: Request camera permission before capturing and uploading a new photo.
+   */
   const takeProfilePhoto = async () => {
     const permission =
       await ImagePicker
@@ -1279,6 +1309,7 @@ const toggleConsent = async category => {
     if (!isEditing || consentInFlight.current) return;
     consentInFlight.current = true;
     setConsentSaving(true);
+    // Save one privacy-category change at a time; keep the last confirmed settings if the server rejects it.
     const next = lockedCategories.includes(category)
       ? lockedCategories.filter(item => item !== category) : [...lockedCategories, category];
     try {
@@ -1448,6 +1479,11 @@ const toggleConsent = async category => {
     }
   };
 
+  /**
+   * FEATURE: Remove a chronic condition
+   * LOGIC: Ask for confirmation, delete the selected patient record and refresh the list; alert if deletion
+   * fails.
+   */
   const removeCondition = (
     condition
   ) => {
@@ -1557,6 +1593,11 @@ const toggleConsent = async category => {
     }
   };
 
+  /**
+   * FEATURE: Remove a medical device
+   * LOGIC: Confirm removal, call the patient API and refresh active devices; the backend retains historical
+   * details.
+   */
   const removeDevice = (
     device
   ) => {
@@ -1666,6 +1707,10 @@ const toggleConsent = async category => {
     }
   };
 
+  /**
+   * FEATURE: Remove a medical event
+   * LOGIC: Confirm the selected event before deleting it from the active history list.
+   */
   const removeBackground = (
     record
   ) => {
@@ -1771,6 +1816,10 @@ const toggleConsent = async category => {
     }
   };
 
+  /**
+   * FEATURE: Remove family history
+   * LOGIC: Confirm the specific family-history entry, then reload the list after a successful request.
+   */
   const removeFamilyRecord = (
     record
   ) => {
@@ -1815,6 +1864,11 @@ const toggleConsent = async category => {
 
   /* VACCINATIONS */
 
+  /**
+   * FEATURE: Reset vaccination entry form
+   * LOGIC: Clear all draft rows and search suggestions without deleting vaccinations already saved in the
+   * database.
+   */
   const resetVaccines = () => {
     setBulkVaccines([
       {
@@ -1830,6 +1884,10 @@ const toggleConsent = async category => {
     setVaccineSuggestions([]);
   };
 
+  /**
+   * FEATURE: Add vaccination entry row
+   * LOGIC: Append another blank editable vaccine row; nothing is sent to the backend yet.
+   */
   const addVaccineRow = () => {
     setBulkVaccines(
       previous => [
@@ -1846,6 +1904,10 @@ const toggleConsent = async category => {
     );
   };
 
+  /**
+   * FEATURE: Edit vaccination draft
+   * LOGIC: Update one row; when the name changes, show local vaccine-name suggestions.
+   */
   const updateVaccineRow = (
     id,
     field,
@@ -1885,6 +1947,7 @@ const toggleConsent = async category => {
    * LOGIC: Ignore blank rows and require name plus date for every active row, then submit all rows and reload vaccinations.
    */
   const saveVaccinations = async () => {
+    // Only nonempty rows are submitted; each filled row must have a vaccine name and administration date.
     const activeRows =
       bulkVaccines.filter(
         row =>
@@ -1948,6 +2011,10 @@ const toggleConsent = async category => {
     }
   };
 
+  /**
+   * FEATURE: Delete saved vaccination
+   * LOGIC: Ask for confirmation, delete the patient-owned record and reload the saved history.
+   */
   const removeVaccination = (
     vaccination
   ) => {
@@ -2003,6 +2070,7 @@ const toggleConsent = async category => {
     setScanningCard(true);
 
     try {
+      // AI extraction fills editable draft rows only. The patient must still press Save to store them.
       const data =
         await scanVaccinationCard(
           activePatientId,
@@ -2071,6 +2139,10 @@ const toggleConsent = async category => {
     }
   };
 
+  /**
+   * FEATURE: Scan vaccination card with camera
+   * LOGIC: Request camera permission; send an uncancelled image for AI extraction and manual review.
+   */
   const takeVaccinePhoto = async () => {
     const permission =
       await ImagePicker
@@ -2107,6 +2179,10 @@ const toggleConsent = async category => {
     }
   };
 
+  /**
+   * FEATURE: Select vaccination card from gallery
+   * LOGIC: Request photo-library permission; pass only a selected image to the AI extraction step.
+   */
   const chooseVaccinePhoto = async () => {
     const permission =
       await ImagePicker

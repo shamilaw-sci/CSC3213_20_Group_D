@@ -367,12 +367,18 @@ const checkAppointmentConflict = async (
   return result.rows.length > 0;
 };
 
+/**
+ * FEATURE: Safely book an available appointment
+ * LOGIC: In one database transaction, lock the doctor, recheck availability and exact-time conflicts, then
+ * insert or roll back.
+ */
 const bookAvailableAppointment = async (
   patientId, doctorId, scheduledAt, type, notes, requireAvailableSlot
 ) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    // Lock the doctor row so competing requests cannot pass the booking checks at the same time.
     const doctor = await client.query(
       'SELECT id FROM doctors WHERE id = $1 FOR UPDATE',
       [doctorId]
@@ -382,6 +388,7 @@ const bookAvailableAppointment = async (
       error.statusCode = 404;
       throw error;
     }
+    // When the caller requires an offered slot, recheck it inside the transaction before insertion.
     if (requireAvailableSlot) {
       const slots = await doctorRepository.getAvailableSlots(doctorId, 500, client);
       if (!slots.includes(new Date(scheduledAt).toISOString())) {
@@ -390,6 +397,7 @@ const bookAvailableAppointment = async (
         throw error;
       }
     }
+    // An existing non-cancelled appointment at the exact time blocks a second booking.
     if (await checkAppointmentConflict(doctorId, scheduledAt, client)) {
       const error = new Error('This time slot is already booked for the selected doctor');
       error.statusCode = 409;
@@ -404,6 +412,7 @@ const bookAvailableAppointment = async (
     await client.query('COMMIT');
     return result.rows[0];
   } catch (error) {
+    // Undo the incomplete booking if any check or insert fails.
     await client.query('ROLLBACK');
     throw error;
   } finally {

@@ -206,6 +206,7 @@ const checkInOpdAppointment = async (
     throw error;
   }
 
+  // Only a scheduled appointment can move to the checked-in Waiting state.
   if (
     appointment.status !==
     'scheduled'
@@ -349,6 +350,7 @@ const registerAssistedPatient = async (
     999
   );
 
+  // Do not register a patient with a future date of birth.
   if (
     parsedDateOfBirth >
     today
@@ -362,6 +364,7 @@ const registerAssistedPatient = async (
     throw error;
   }
 
+  // Check an optional NIC for duplicates before creating a new assisted patient profile.
   if (nic) {
     const existingPatient =
       await hospitalRepository
@@ -380,6 +383,7 @@ const registerAssistedPatient = async (
     }
   }
 
+  // Give an assisted patient a QR identity even without a Care4U login account.
   const qrCodeId =
     generatePatientQR();
 
@@ -467,6 +471,7 @@ const assignWalkInPatientToDoctor = async (
     throw error;
   }
 
+  // Look up the doctor inside the staff member's hospital, not using a hospital name from the browser.
   const doctor =
     await hospitalRepository
       .getHospitalDoctorById(
@@ -484,6 +489,7 @@ const assignWalkInPatientToDoctor = async (
     throw error;
   }
 
+  // Reject a second active appointment for the same patient, doctor and date.
   const existingAppointment =
     await appointmentRepository
       .getTodayActiveAppointmentByPatientAndDoctor(

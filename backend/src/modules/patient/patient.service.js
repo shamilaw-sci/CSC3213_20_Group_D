@@ -1558,6 +1558,7 @@ const addBulkVaccinations = async (
   }
 
   // Execute all insertions concurrently
+  // The inserts do not share a transaction; if one fails, some records may already be saved.
   const insertedRecords =
     await Promise.all(
       vaccinationsArray.map(
@@ -1886,6 +1887,7 @@ const extractVaccinationDataFromImage = async (
   `;
 
   try {
+    // The vaccination-card image is sent to the configured external vision provider; returned records need manual review.
     const aiResponseText =
       await generateAIVisionResponse(
         prompt,
@@ -2009,6 +2011,10 @@ const markLabReportAsRead = async (
   return updatedReport;
 };
 
+/**
+ * FEATURE: Read patient appointment history
+ * LOGIC: Pass the patient ID to the repository; caller authorization is checked by the protected route.
+ */
 const getPatientAppointments = async (
   patientId
 ) => {
@@ -2058,6 +2064,7 @@ const generatePatientChatResponse = async (
   `;
 
   // 3. Call the centralized AI utility
+  // Patient chat requests use an external text model; the prompt asks for general guidance, not a diagnosis.
   const responseText =
     await generateAIResponse(
       systemPrompt

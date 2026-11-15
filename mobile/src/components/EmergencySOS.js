@@ -12,11 +12,17 @@ import api from '../services/api';
 
 const EMERGENCY_NUMBER = '1990';
 
+/**
+ * FEATURE: Patient SOS control
+ * LOGIC: Show a ten-second cancellable countdown before attempting to open the 1990 dialer and submit an
+ * alert.
+ */
 const EmergencySOS = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [countdown, setCountdown] = useState(10);
 
   // Handle the countdown timer
+  // Run the countdown only while the SOS window is open; always clear the previous timer.
   useEffect(() => {
     let timer;
     if (isModalVisible && countdown > 0) {
@@ -31,11 +37,19 @@ const EmergencySOS = () => {
     return () => clearInterval(timer);
   }, [isModalVisible, countdown]);
 
+  /**
+   * FEATURE: SOS button
+   * LOGIC: Reset the countdown and display a confirmation window; no emergency request is sent yet.
+   */
   const handleOpenSOS = () => {
     setCountdown(10);
     setIsModalVisible(true);
   };
 
+  /**
+   * FEATURE: Cancel SOS countdown
+   * LOGIC: Hide the confirmation window before the countdown reaches zero.
+   */
   const handleCancel = () => {
     setIsModalVisible(false);
   };
@@ -51,6 +65,7 @@ const EmergencySOS = () => {
     setIsModalVisible(false); // Hide the modal immediately
 
     // Open the phone dialer; the user must place the call there.
+    // Opening the dialer does not automatically place a phone call; the patient confirms the call.
     const telUrl = `tel:${EMERGENCY_NUMBER}`;
     try {
       await Linking.openURL(telUrl);
@@ -61,6 +76,7 @@ const EmergencySOS = () => {
 
     // Save an alert for the hospital dashboard, with location if available.
     try {
+      // Try GPS when permission is granted; still attempt to save the alert without coordinates otherwise.
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         // If they deny location, we still send the SOS to the backend, just without GPS

@@ -35,6 +35,7 @@ import Card from '../../components/common/Card';
 import PageHeader from '../../components/common/PageHeader';
 import Spinner from '../../components/common/Spinner';
 
+/** Show an OPD appointment time or a dash when the date is missing or invalid. */
 const formatTime = (
   dateValue
 ) => {
@@ -87,6 +88,7 @@ const getInitials = (
     .join('');
 };
 
+/** Map saved appointment states to the labels reception sees in the OPD queue. */
 const formatStatus = (
   status
 ) => {
@@ -110,6 +112,7 @@ const formatStatus = (
   );
 };
 
+/** Choose the badge appearance for waiting, consultation, completed and cancelled states. */
 const getStatusClasses = (
   status
 ) => {
@@ -131,6 +134,7 @@ const getStatusClasses = (
   }
 };
 
+/** Restore blank fields when starting another assisted patient registration. */
 const createEmptyRegistrationForm =
   () => ({
     fullName: '',
@@ -143,6 +147,7 @@ const createEmptyRegistrationForm =
     emergencyContactRelationship: '',
   });
 
+/** Use the local date for the registration/queue date input, not UTC midnight. */
 const getTodayDateInputValue =
   () => {
     const now =
@@ -160,6 +165,11 @@ const getTodayDateInputValue =
       .split('T')[0];
   };
 
+/**
+ * FEATURE: Hospital reception and OPD queue
+ * LOGIC: Show today's appointments and support assisted registration, patient check-in and doctor
+ * assignment.
+ */
 const HospitalOPDPage = () => {
 
   const [
@@ -234,6 +244,11 @@ const HospitalOPDPage = () => {
     setAssignedAppointment
   ] = useState(null);
 
+  /**
+   * FEATURE: Load today's OPD appointments
+   * LOGIC: Request the hospital queue; use a smaller refreshing state during background reloads and show API
+   * errors.
+   */
   const loadAppointments =
     async (
       background = false
@@ -281,6 +296,10 @@ const HospitalOPDPage = () => {
       }
     };
 
+  /**
+   * FEATURE: Load available hospital doctors
+   * LOGIC: Request doctors linked to the authenticated hospital and clear the list if loading fails.
+   */
   const loadHospitalDoctors =
     async () => {
       try {
@@ -329,6 +348,7 @@ const HospitalOPDPage = () => {
       }
     };
 
+  // Refresh the OPD queue every 15 seconds; remove the interval when the page unmounts.
   useEffect(() => {
 
     loadAppointments();
@@ -348,6 +368,11 @@ const HospitalOPDPage = () => {
 
   }, []);
 
+  /**
+   * FEATURE: Check In button
+   * LOGIC: Send the selected appointment ID; after server success change that row to Waiting and clear the
+   * loading state.
+   */
   const handleCheckIn =
     async (
       appointmentId
@@ -412,6 +437,7 @@ const HospitalOPDPage = () => {
       }
     };
 
+  /** Update the matching assisted-registration field without resetting other form values. */
   const handleRegistrationChange =
     (
       event
@@ -432,6 +458,7 @@ const HospitalOPDPage = () => {
       );
     };
 
+  /** Clear doctor selection, notes and the previous assignment result. */
   const resetWalkInAssignment =
     () => {
       setSelectedDoctorId(
@@ -447,6 +474,10 @@ const HospitalOPDPage = () => {
       );
     };
 
+  /**
+   * FEATURE: Open assisted registration
+   * LOGIC: Start with empty patient details, reset any old assignment and load the hospital doctor list.
+   */
   const openRegistrationModal =
     () => {
       setRegistrationForm(
@@ -466,8 +497,13 @@ const HospitalOPDPage = () => {
       loadHospitalDoctors();
     };
 
+  /**
+   * FEATURE: Close assisted registration
+   * LOGIC: Prevent closing during a save or assignment request; otherwise clear all draft state.
+   */
   const closeRegistrationModal =
     () => {
+      // Keep the modal open while registration or assignment is being submitted.
       if (
         registering ||
         assigningWalkIn
@@ -490,6 +526,11 @@ const HospitalOPDPage = () => {
       resetWalkInAssignment();
     };
 
+  /**
+   * FEATURE: Register patient without smartphone
+   * LOGIC: Require name and birth date, submit the assisted profile, then keep the returned patient for doctor
+   * assignment.
+   */
   const handleRegisterPatient =
     async (
       event
@@ -604,6 +645,11 @@ const HospitalOPDPage = () => {
       }
     };
 
+  /**
+   * FEATURE: Assign patient to an OPD doctor
+   * LOGIC: Require a registered patient and selected doctor; the backend checks hospital membership and
+   * duplicate active visits.
+   */
   const handleAssignWalkIn =
     async () => {
       if (
@@ -683,6 +729,7 @@ const HospitalOPDPage = () => {
       }
     };
 
+  /** Prepare a fresh registration form after finishing the previous patient. */
   const handleRegisterAnother =
     () => {
       setRegistrationForm(
@@ -696,6 +743,10 @@ const HospitalOPDPage = () => {
       resetWalkInAssignment();
     };
 
+  /**
+   * Count queue states from the loaded appointments; the displayed totals change when queue data
+   * refreshes.
+   */
   const stats =
     useMemo(
       () => ({

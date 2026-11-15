@@ -16,6 +16,7 @@ const ACCESS_GRANT_MINUTES = 15;
 const MAX_OTP_ATTEMPTS = 5;
 
 
+/** Attach an HTTP status to a validation error so the controller can return the right response. */
 const createServiceError = (message, statusCode) => Object.assign(new Error(message), { statusCode });
 
 /**
@@ -80,12 +81,20 @@ const normalizeCategories = categories => {
 };
 
 
+/**
+ * FEATURE: Read protected record categories
+ * LOGIC: Load saved settings and normalize the list before it is used in access decisions.
+ */
 const getLockedCategories = async (patientId, db) => {
   const settings = await consentRepository.getConsentSettings(patientId, db);
   return normalizeCategories(settings?.locked_categories);
 };
 
 
+/**
+ * FEATURE: Show patient privacy choices
+ * LOGIC: Check that the signed-in patient owns the profile before returning their category locks.
+ */
 const getPatientConsentSettings = async (patientId, user) => {
   await ensurePatientOwnsConsentSettings(patientId, user);
   return { locked_categories: await getLockedCategories(patientId) };
@@ -112,6 +121,7 @@ const requestConsentAccessOtp = async (patientId, appointmentId, user) => {
   // Validate role/context before taking a patient mutation lock or generating a code.
   await validateDoctorConsultationContext(patientId, appointmentId, user);
   const otpCode = generateOtp();
+  // Store only a bcrypt hash of the six-digit consent code; the plain code is emailed to the patient.
   const otpHash = await bcrypt.hash(otpCode, 12);
   const result = await consentRepository.withPatientTransaction(patientId, async db => {
     const { patient, doctorId } = await validateDoctorConsultationContext(patientId, appointmentId, user, db);
@@ -122,6 +132,7 @@ const requestConsentAccessOtp = async (patientId, appointmentId, user) => {
     if (!patient.user_id || !patient.email || patient.is_verified !== true) {
       throw createServiceError('A verified patient email is required for consent codes', 409);
     }
+    // Invalidate older unused codes for this doctor, patient and appointment before creating a new request.
     await consentRepository.invalidateActiveAccessRequests(patientId, doctorId, appointmentId, db);
     const request = await consentRepository.createConsentAccessRequest({ patientId, doctorId, appointmentId,
       requestedCategories: lockedCategories, otpHash, expiresAt: getOtpExpiry(OTP_EXPIRY_MINUTES) }, db);
@@ -156,6 +167,7 @@ const verifyConsentAccessOtp = async (patientId, appointmentId, otpCode, user) =
       await consentRepository.invalidateConsentAccessRequest(request.id, db);
       return { error: createServiceError('Too many attempts. Request a new consent code.', 429) };
     }
+    // Check the stored hash; failed attempts are counted and the code is invalidated at the limit.
     const matches = await bcrypt.compare(otpCode.trim(), request.otp_hash);
     if (!matches) {
       const updated = await consentRepository.incrementConsentAccessAttempt(request.id, db);
@@ -168,6 +180,7 @@ const verifyConsentAccessOtp = async (patientId, appointmentId, otpCode, user) =
     const used = await consentRepository.markConsentAccessRequestUsed(request.id, db);
     if (!used) return { error: createServiceError('This consent code is expired or no longer available. Request a new code.', 409) };
     await consentRepository.revokeActiveConsentAccessGrants(patientId, doctorId, appointmentId, db);
+    // A verified one-use code grants access only to the requested categories for fifteen minutes.
     const grant = await consentRepository.createConsentAccessGrant({ patientId, doctorId, appointmentId,
       requestId: request.id, grantedCategories: normalizeCategories(request.requested_categories),
       expiresAt: new Date(Date.now() + ACCESS_GRANT_MINUTES * 60000) }, db);

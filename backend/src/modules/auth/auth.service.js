@@ -48,6 +48,7 @@ const register = async (email, phone, password, role, profileData) => {
         throw new Error('Email already registered');
     }
 
+    // Hash the password before it enters the pending registration record.
     const passwordHash = await bcrypt.hash(password, 12);
     const otpCode = generateOtp();
     const otpExpiresAt = getOtpExpiry(10);
@@ -125,6 +126,7 @@ const verifyOtp = async (email, otpCode) => {
             throw new Error('OTP has expired');
         }
 
+        // Create the account and matching role profile in the same transaction; no partial registration on failure.
         const user = await createUser(
             pending.email,
             pending.phone,
@@ -217,6 +219,7 @@ const login = async (email, password) => {
         throw new Error('Invalid email or password');
     }
 
+    // Check the lockout end time before comparing another password.
     if (
         user.locked_until &&
         new Date(user.locked_until) > new Date()
@@ -252,6 +255,7 @@ const login = async (email, password) => {
     if (user.verification_status === 'rejected') {
         throw new Error('Account registration was not approved');
     }
+    // Professional accounts cannot sign in before administrator approval.
     if (user.role !== 'patient' && user.verification_status !== 'approved') {
         throw new Error('Account pending admin approval');
     }
@@ -276,6 +280,7 @@ const forgotPassword = async (email) => {
         };
     }
 
+    // Use an unpredictable reset token and expire it after one hour.
     const token = crypto.randomBytes(32).toString('hex');
 
     const expiresAt = new Date();
@@ -328,6 +333,7 @@ const resetPassword = async (token, newPassword) => {
             db
         );
 
+        // Mark the reset token used in the same transaction as the password change.
         const consumed = await markTokenAsUsed(token, db);
         if (!consumed) {
             throw new Error('Invalid or expired password reset token');

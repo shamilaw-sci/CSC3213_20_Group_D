@@ -9,6 +9,7 @@ const emergencyService = require('./emergency.service');
 
 const BREAK_GLASS_WINDOW_MS = 5 * 60 * 1000;
 
+/** Wrap session.save in a Promise so emergency access is persisted before returning success. */
 const saveSession = (req) =>
   new Promise((resolve, reject) => {
     req.session.save((error) => {
@@ -21,6 +22,11 @@ const saveSession = (req) =>
     });
   });
 
+/**
+ * FEATURE: Save patient SOS alert
+ * LOGIC: Read location from the request but patient identity from the login session; saving the alert does
+ * not confirm outside help.
+ */
 const triggerSosController = async (req, res) => {
   try {
     const {
@@ -28,6 +34,7 @@ const triggerSosController = async (req, res) => {
       longitude
     } = req.body;
 
+    // Never trust a patient ID from the phone for SOS; use the authenticated session profile.
     const finalPatientId =
       req.session?.user?.profile_id;
 
@@ -62,6 +69,11 @@ const triggerSosController = async (req, res) => {
   }
 };
 
+/**
+ * FEATURE: Log break-the-glass access
+ * LOGIC: Record the authenticated staff member, patient and reason; then save a five-minute grant in that
+ * session.
+ */
 const logEmergencyAccessController =
   async (req, res) => {
     try {
@@ -137,6 +149,11 @@ const logEmergencyAccessController =
     }
   };
 
+/**
+ * FEATURE: View emergency patient snapshot
+ * LOGIC: Require a grant for this exact patient whose five-minute expiry is still in the future; otherwise
+ * return 403.
+ */
 const getEmergencySnapshotController =
   async (req, res) => {
     try {
@@ -155,6 +172,7 @@ const getEmergencySnapshotController =
           accessGrant.expiresAt
         ) > Date.now();
 
+      // A missing, mismatched or expired grant must not return emergency medical information.
       if (!hasValidGrant) {
         return res.status(403).json({
           success: false,
@@ -192,6 +210,10 @@ const getEmergencySnapshotController =
     }
   };
 
+/**
+ * FEATURE: Read active hospital SOS alerts
+ * LOGIC: Ask the service for current alerts; return an error response if retrieval fails.
+ */
 const getActiveAlertsController =
   async (req, res) => {
     try {
@@ -222,6 +244,11 @@ const getActiveAlertsController =
     }
   };
 
+/**
+ * FEATURE: Resolve hospital alert
+ * LOGIC: Pass the alert and staff IDs to the service; marking a dashboard alert resolved does not dispatch
+ * an ambulance.
+ */
 const resolveAlertController =
   async (req, res) => {
     try {

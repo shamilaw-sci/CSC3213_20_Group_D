@@ -27,6 +27,7 @@ const hospitalRepository = require('../hospital/hospital.repository');
  */
 const saveAuthenticatedSession = async (req, user) => {
   try {
+    // Regenerate the session ID on login to avoid reusing an unauthenticated session.
     await new Promise((resolve, reject) => {
       req.session.regenerate((error) => error ? reject(error) : resolve());
     });
@@ -44,6 +45,7 @@ const saveAuthenticatedSession = async (req, user) => {
 };
 
 
+/** Check that required text inputs contain something other than whitespace. */
 const isNonemptyString = (value) => typeof value === 'string' && value.trim().length > 0;
 
 /**
@@ -209,6 +211,7 @@ const verifyOtpController = async (req, res) => {
     const user = result.user;
     const profile = result.profile;
 
+    // Email verification creates staff accounts, but it does not grant them login access before approval.
     const approvalPending = user.role !== 'patient' &&
       user.verification_status !== 'approved';
 
@@ -294,6 +297,7 @@ const loginController = async (req, res) => {
 
     const user = await login(email, password);
 
+    // Resolve the role-specific profile so the session carries the correct patient/doctor/staff ID.
     let profileId = null;
     let fullName = null;
 
