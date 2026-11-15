@@ -66,6 +66,9 @@ const ALLOWED_PHOTO_TYPES = [
 const MAX_PHOTO_SIZE_BYTES =
   2 * 1024 * 1024; // 2MB
 
+/**
+ * Avatar fallback: display initials when the doctor has no profile photo.
+ */
 const getInitials = (name) => {
   if (!name) {
     return 'DR';
@@ -88,6 +91,10 @@ const getInitials = (name) => {
   ).toUpperCase();
 };
 
+/**
+ * Doctor Profile page: load identity and availability; provide save, upload and schedule
+ * controls.
+ */
 const DoctorProfilePage = () => {
   const user =
     useAuthStore((state) => state.user);
@@ -148,10 +155,16 @@ const DoctorProfilePage = () => {
     return Math.round(total / availability.length);
   }, [availability]);
 
+  /**
+   * Load Profile: fetch doctor details and weekly availability together; show an error if
+   * either fails.
+   */
   const fetchData = useCallback(async () => {
     if (!DOCTOR_ID) return;
 
     try {
+      // Load both datasets in parallel; do not display an incomplete profile as a successful
+      // load.
       const [docRes, availRes] =
         await Promise.all([
           fetch(
@@ -237,6 +250,9 @@ const DoctorProfilePage = () => {
     fetchData();
   }, [fetchData]);
 
+  /**
+   * Save Profile button: send editable form fields with the session cookie and show the result.
+   */
   const handleProfileSave = async () => {
     setSavingProfile(true);
     setAlert(null);
@@ -260,6 +276,8 @@ const DoctorProfilePage = () => {
 
       const data = await res.json();
 
+      // After a successful save, update local page state; failed requests leave the form
+      // available.
       if (data.success) {
         setDoctor((previousDoctor) => ({
           ...previousDoctor,
@@ -293,10 +311,17 @@ const DoctorProfilePage = () => {
   };
 
   // ── Doctor Profile Photo Handlers ──
+  /**
+   * Change Photo button: open the hidden file picker without submitting the profile form.
+   */
   const handlePhotoButtonClick = () => {
     photoInputRef.current?.click();
   };
 
+  /**
+   * Upload Photo: validate type and 2 MB size, then call the upload service and refresh the
+   * image.
+   */
   const handlePhotoFileChange = async (e) => {
     const file = e.target.files?.[0];
 
@@ -304,6 +329,7 @@ const DoctorProfilePage = () => {
 
     if (!file) return;
 
+    // Client checks help the user, but backend upload validation must enforce limits too.
     if (!ALLOWED_PHOTO_TYPES.includes(file.type)) {
       toast.error(
         'Please select a JPEG, PNG, or WEBP image.'
@@ -323,6 +349,7 @@ const DoctorProfilePage = () => {
     setUploadingPhoto(true);
 
     try {
+      // Refresh displayed doctor information only after the photo API confirms success.
       const updatedDoctor =
         await uploadDoctorPhoto(
           DOCTOR_ID,
@@ -354,11 +381,16 @@ const DoctorProfilePage = () => {
     }
   };
 
+  /**
+   * Save Availability button: send the complete weekly schedule for backend validation and
+   * replacement.
+   */
   const handleAvailabilitySave = async () => {
     setSavingAvailability(true);
     setAlert(null);
 
     try {
+      // Save schedule and profile through separate authenticated API endpoints.
       const res = await fetch(
         `${API_URL}/api/doctors/${DOCTOR_ID}/availability`,
         {
@@ -406,12 +438,18 @@ const DoctorProfilePage = () => {
     }
   };
 
+  /**
+   * Availability day toggle: remove a selected weekday or add it with an editable 09:00–17:00
+   * default.
+   */
   const toggleDay = (day) => {
     const exists =
       availability.find(
         (s) => s.day_of_week === day
       );
 
+    // Removing a day changes the unsaved form only; the database updates when Save Availability
+    // is clicked.
     if (exists) {
       setAvailability(
         availability.filter(
@@ -434,6 +472,9 @@ const DoctorProfilePage = () => {
     }
   };
 
+  /**
+   * Availability editor: change only the selected day and field in React state.
+   */
   const updateSlot = (
     day,
     field,

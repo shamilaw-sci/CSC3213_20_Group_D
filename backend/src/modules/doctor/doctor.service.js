@@ -13,11 +13,17 @@ const PRIORITY_LEVELS = ['routine', 'urgent', 'stat'];
 
 const PHOTO_BUCKET = 'doctor-photos';
 
+/**
+ * Doctor Profile: read the requested doctor profile through the repository.
+ */
 const getDoctorProfile = async (id) => {
   const doctor = await doctorRepository.getDoctorById(id);
   return doctor;
 };
 
+/**
+ * Doctor Directory: return the approved, active doctors selected by the repository.
+ */
 const getAllDoctors = async () => {
   const doctors = await doctorRepository.getAllDoctors();
   return doctors;
@@ -32,6 +38,8 @@ const updateDoctorProfile = async (id, data) => {
   if (!data || typeof data !== 'object' || Array.isArray(data)) {
     throw Object.assign(new Error('Profile changes must be an object'), { statusCode: 400 });
   }
+  // Only whitelisted fields enter the update; the browser cannot change identity or approval
+  // status.
   const clean = {};
   for (const [field, limit] of Object.entries({ specialization: 100, qualifications: 20000, hospital_name: 255 })) {
     if (data[field] === undefined) continue;
@@ -77,6 +85,7 @@ const uploadDoctorPhoto = async (doctorId, file) => {
     throw error;
   }
 
+  // Store one photo per doctor using upsert; the updated URL refreshes the browser cache.
   const storagePath = `${doctorId}`;
 
   const { error: uploadError } = await supabase.storage
@@ -113,6 +122,9 @@ const uploadDoctorPhoto = async (doctorId, file) => {
   );
 };
 
+/**
+ * Weekly Schedule: load the doctor's saved availability windows for the profile page.
+ */
 const getDoctorAvailability = async (doctorId) => {
   const availability =
     await doctorRepository.getDoctorAvailability(doctorId);
@@ -127,12 +139,18 @@ const getDoctorAvailability = async (doctorId) => {
  *        saving.
  */
 const updateDoctorAvailability = async (doctorId, slots) => {
+  // A set catches repeated weekdays before replacing the saved schedule.
   const days = new Set();
+  /**
+   * Convert HH:MM or HH:MM:SS to minutes so start/end times can be compared.
+   */
   const time = value => {
     if (typeof value !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/.test(value)) return NaN;
     const [h,m,seconds=0] = value.split(':').map(Number); return h * 60 + m + seconds / 60;
   };
   if (!Array.isArray(slots) || slots.length > 7) throw Object.assign(new Error('Provide up to seven availability windows'), { statusCode: 400 });
+  // Reject invalid windows or durations here; the repository then saves all valid days
+  // together.
   const clean = slots.map(slot => {
     if (!slot || typeof slot !== 'object' || !['monday','tuesday','wednesday','thursday','friday','saturday','sunday'].includes(slot.day_of_week) || days.has(slot.day_of_week)) {
       throw Object.assign(new Error('Choose each weekday at most once'), { statusCode: 400 });
@@ -147,6 +165,9 @@ const updateDoctorAvailability = async (doctorId, slots) => {
   return doctorRepository.updateDoctorAvailability(doctorId, clean);
 };
 
+/**
+ * Daily Queue: load only this doctor's appointments for today.
+ */
 const getTodayAppointments = async (doctorId) => {
   const appointments =
     await doctorRepository.getTodayAppointments(doctorId);
@@ -154,6 +175,9 @@ const getTodayAppointments = async (doctorId) => {
   return appointments;
 };
 
+/**
+ * Doctor Dashboard: read appointment counts and the next waiting patient.
+ */
 const getDoctorDashboardStats = async (doctorId) => {
   const stats =
     await doctorRepository.getDoctorDashboardStats(doctorId);
@@ -161,6 +185,9 @@ const getDoctorDashboardStats = async (doctorId) => {
   return stats;
 };
 
+/**
+ * Doctor Search: pass specialty and hospital filters to the database search.
+ */
 const searchDoctors = async (specialty, hospitalName) => {
   return await doctorRepository.searchDoctors(
     specialty,
@@ -220,6 +247,7 @@ const orderLabTest = async (data) => {
     throw error;
   }
 
+  // Match the active appointment, patient AND doctor before accepting a laboratory order.
   const appointment =
     await appointmentRepository.getAppointmentById(appointmentId);
 
@@ -249,6 +277,7 @@ const orderLabTest = async (data) => {
     throw error;
   }
 
+  // A lab order may target only a laboratory currently approved and active.
   const laboratories =
     await doctorRepository.getActiveLaboratories();
 
@@ -277,10 +306,16 @@ const orderLabTest = async (data) => {
   });
 };
 
+/**
+ * Laboratory Selector: list verified, active laboratories available for test orders.
+ */
 const getActiveLaboratories = async () => {
   return await doctorRepository.getActiveLaboratories();
 };
 
+/**
+ * Lab Review Alerts: load finalized results ordered by this doctor that remain unreviewed.
+ */
 const getUnreviewedLabReports = async (doctorId) => {
   return await doctorRepository.getUnreviewedLabReports(
     doctorId

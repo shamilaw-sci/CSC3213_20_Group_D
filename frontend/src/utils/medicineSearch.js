@@ -31,6 +31,7 @@ const commonMedicines = [
   { name: 'Multivitamin Tablet', category: 'Supplement', defaultDosage: '1 tablet', defaultFrequency: 'Once daily' },
 ];
 
+// Search the local medicine names and categories; small spelling mistakes may still match.
 const fuseOptions = {
   keys: ['name', 'category'],
   threshold: 0.3,
@@ -38,6 +39,7 @@ const fuseOptions = {
   minMatchCharLength: 2,
 };
 
+// This is autocomplete only, not an external drug database or a clinical safety engine.
 const fuse = new Fuse(commonMedicines, fuseOptions);
 
 /**
@@ -50,5 +52,6 @@ export const searchMedicines = (query) => {
   if (!query || query.trim() === '') {
     return [];
   }
+  // Return editable medicine suggestions; the doctor chooses the final dose and frequency.
   return fuse.search(query).map(result => result.item);
 };

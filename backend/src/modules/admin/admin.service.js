@@ -81,6 +81,7 @@ const findPatients = async (search) => {
  * LOGIC: Generate a new QR ID, overwrite the old ID, then record the action in audit logs.
  */
 const reissueQrCode = async (patientId, adminUserId) => {
+    // Generate a replacement identifier instead of exposing medical data inside the QR code.
     const newQrCodeId = generatePatientQR();
     const updatedPatient = await reissuePatientQr(patientId, newQrCodeId);
 
@@ -145,6 +146,8 @@ const approvePendingUser = async (userId) => {
         throw new Error('User not found');
     }
 
+    // Approval/rejection is limited to pending accounts; already reviewed registrations are
+    // refused.
     if (user.verification_status !== 'pending') {
         throw new Error('User is not pending approval');
     }

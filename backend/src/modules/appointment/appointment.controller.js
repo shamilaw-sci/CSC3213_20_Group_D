@@ -127,6 +127,8 @@ const updateAppointmentStatusController =
       }
 
       const currentUser = req.session.user;
+      // Use the authenticated profile IDs, not an arbitrary appointment ID, to confirm
+      // ownership.
       const isOwningDoctor =
         currentUser.role === 'doctor' &&
         String(existing.doctor_id) === String(currentUser.profile_id);
@@ -141,6 +143,7 @@ const updateAppointmentStatusController =
         });
       }
 
+      // Patients can cancel their own bookings but cannot start or complete consultations.
       if (isOwningPatient && status !== 'cancelled') {
         return res.status(403).json({
           success: false,
@@ -148,6 +151,8 @@ const updateAppointmentStatusController =
         });
       }
 
+      // The transition table rejects invalid status jumps, including reopening completed
+      // visits.
       if (
         !VALID_STATUS_TRANSITIONS[existing.status]?.includes(status)
       ) {
@@ -296,6 +301,7 @@ const addConsultationNotesController =
         });
       }
 
+      // Clinical notes are accepted only while the assigned doctor is consulting.
       if (appointment.status !== 'in_progress') {
         return res.status(409).json({
           success: false,
@@ -594,6 +600,7 @@ const summarizeNotesController =
        * Use authenticated session user ID
        * for per-session AI usage tracking.
        */
+      // Track AI draft usage per current server process; this is not a persistent rate limit.
       const sessionKey =
         currentUser.id ||
         req.ip;
@@ -614,6 +621,7 @@ const summarizeNotesController =
         });
       }
 
+      // Ask the AI for structured fields only; the doctor still reviews the returned draft.
       const prompt =
         `You are helping a doctor structure their consultation notes. Based on the following free-text observations, return ONLY a valid JSON object (no markdown, no explanation) with exactly these keys: "chief_complaint" (string), "diagnosis" (string), "treatment_plan" (string), "follow_up_needed" (boolean).
 
@@ -644,6 +652,8 @@ Respond with JSON only.`;
             cleaned
           );
 
+      // If the AI response is not valid JSON, return a manual-entry fallback rather than saving
+      // it.
       } catch (parseError) {
 
         console.error(
@@ -754,6 +764,7 @@ const getConsultationAppointmentController =
         });
       }
 
+      // Load the consultation by ID, then verify the logged-in doctor is the assigned doctor.
       const appointment =
         await appointmentRepository
           .getConsultationAppointmentById(
@@ -887,6 +898,8 @@ const bookAppointmentController =
          * profile ID rather than trusting doctorId
          * supplied by the browser.
          */
+        // Doctor-initiated walk-ins use the doctor ID in the authenticated session, not the
+        // browser request.
         doctorId =
           resolveDoctorProfileId(
             currentUser

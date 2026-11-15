@@ -68,6 +68,7 @@ const findAllUsers = async (filters = {}) => {
         conditions.push(`is_active = false`);
     }
 
+    // Build optional filters with numbered SQL parameters, not raw text from the search form.
     const whereClause =
         conditions.length > 0
             ? `WHERE ${conditions.join(' AND ')}`
@@ -156,6 +157,7 @@ const findAuditLogs = async (filters = {}) => {
 
     const offset = (page - 1) * pageSize;
 
+    // Count and paginated audit rows use the same filters so page totals are consistent.
     const countResult = await pool.query(
         `SELECT COUNT(*)
          FROM audit_logs al
@@ -426,6 +428,7 @@ const approveUser = async (userId) => {
             return null;
         }
 
+        // Use the updated database role to choose the matching professional profile.
         const role =
             updatedUser.role?.toLowerCase();
 
@@ -460,6 +463,8 @@ const approveUser = async (userId) => {
             );
         }
 
+        // Commit account approval and its professional-profile flag together; rollback on
+        // failure.
         await client.query('COMMIT');
 
         return updatedUser;
@@ -536,6 +541,7 @@ const rejectUser = async (userId) => {
             );
         }
 
+        // Commit the rejection and profile verification change together.
         await client.query('COMMIT');
 
         return updatedUser;

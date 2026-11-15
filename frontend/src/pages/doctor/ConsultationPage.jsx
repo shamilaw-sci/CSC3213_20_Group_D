@@ -252,6 +252,9 @@ const capitalise = (
   );
 };
 
+/**
+ * Family History: display relationship labels in a readable form.
+ */
 const formatFamilyRelation = (
   relation
 ) => {
@@ -1585,6 +1588,10 @@ const ConsultationPage = () => {
    */
   useEffect(() => {
 
+    /**
+     * Unsaved Changes: warn before a browser refresh or tab close unless navigation was
+     * approved.
+     */
     const handleBeforeUnload =
       (event) => {
 
@@ -1604,6 +1611,8 @@ const ConsultationPage = () => {
         event.returnValue = '';
       };
 
+    // Register and later remove the browser event listener so navigation warnings do not
+    // accumulate.
     window.addEventListener(
       'beforeunload',
       handleBeforeUnload
@@ -1624,6 +1633,10 @@ const ConsultationPage = () => {
    */
   useEffect(() => {
 
+    /**
+     * Load Consultation: fetch the appointment linked to this URL; the API checks doctor
+     * ownership.
+     */
     const loadConsultation =
       async () => {
 
@@ -1705,6 +1718,10 @@ const ConsultationPage = () => {
    */
   useEffect(() => {
 
+    /**
+     * Load Clinical Context: fetch patient details and related records once the appointment
+     * loads.
+     */
     const loadClinicalContext =
       async () => {
 
@@ -1723,6 +1740,8 @@ const ConsultationPage = () => {
             true
           );
 
+          // Load separate clinical sections together; every protected API still checks access
+          // on the server.
           const [
             patientData,
             allergyData,
@@ -2376,6 +2395,10 @@ const ConsultationPage = () => {
     let cancelled =
       false;
 
+    /**
+     * Laboratory Selector: fetch verified laboratories only while this visit can still order
+     * tests.
+     */
     const loadLaboratories =
       async () => {
 
@@ -2419,6 +2442,7 @@ const ConsultationPage = () => {
             );
           }
 
+          // Ignore responses from a previous visit after this page/effect has been cleaned up.
           if (!cancelled) {
             setLaboratories(
               result.data ||
@@ -2642,6 +2666,8 @@ const ConsultationPage = () => {
           ''
         );
 
+        // Each selected lab test is a separate request; if one fails, others may already have
+        // been created.
         const results =
           await Promise.all(
             testTypes.map(
@@ -2834,6 +2860,8 @@ const ConsultationPage = () => {
           );
         }
 
+        // Place AI-generated fields into an editable form; this does not save a clinical
+        // record.
         setNoteForm(
           (previous) => ({
             ...previous,
@@ -3082,6 +3110,10 @@ const ConsultationPage = () => {
     let cancelled =
       false;
 
+    /**
+     * Privacy Status: load whether this doctor has a temporary grant for the current
+     * appointment.
+     */
     const loadConsentStatus =
       async () => {
 
@@ -3200,6 +3232,9 @@ const ConsultationPage = () => {
     let expiryHandled =
       false;
 
+    /**
+     * Consent Countdown: lock protected records and clear open details when the grant expires.
+     */
     const updateCountdown =
       async () => {
 
@@ -3305,6 +3340,7 @@ const ConsultationPage = () => {
    */
   const handleRequestConsentAccess =
     async () => {
+      // Prevent repeated consent requests while an earlier request is still running.
       if (consentInFlight.current) return;
 
       if (
@@ -3452,8 +3488,10 @@ const ConsultationPage = () => {
    */
   const handleVerifyConsentAccess =
     async () => {
+      // Prevent duplicate OTP verification while another verification is running.
       if (consentInFlight.current) return;
 
+      // Remove non-digits and limit input to six digits before submitting the consent code.
       const normalizedOtp =
         consentOtp
           .replace(
@@ -3924,6 +3962,8 @@ const ConsultationPage = () => {
         return;
       }
 
+      // Block incomplete medicine rows before calling the prescription API; backend checks
+      // still apply.
       const invalidMedicine =
         medicines.find(
           (medicine) =>

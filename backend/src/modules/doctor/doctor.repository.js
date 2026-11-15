@@ -7,6 +7,9 @@
 
 const { pool } = require('../../config/db');
 
+/**
+ * Doctor Lookup: join the profile with its login account for contact and role information.
+ */
 const getDoctorById = async (id) => {
   const result = await pool.query(
     `SELECT d.*, u.email, u.phone, u.role
@@ -55,6 +58,9 @@ const updateDoctor = async (id, data) => {
   return result.rows[0] || null;
 };
 
+/**
+ * Save Doctor Photo: store the public photo URL and refresh the profile update time.
+ */
 const updateDoctorPhoto = async (id, photoUrl) => {
   const result = await pool.query(
     `UPDATE doctors
@@ -87,6 +93,9 @@ const getAllDoctors = async () => {
   return result.rows;
 };
 
+/**
+ * Weekly Availability: read saved day/time windows, using a transaction client if supplied.
+ */
 const getDoctorAvailability = async (doctorId, db = pool) => {
   const result = await db.query(
     `SELECT * FROM doctor_availability
@@ -106,8 +115,11 @@ const updateDoctorAvailability = async (doctorId, slots) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    // Lock the doctor row so simultaneous schedule replacements cannot interleave.
     const doctor = await client.query('SELECT id FROM doctors WHERE id = $1 FOR UPDATE', [doctorId]);
     if (!doctor.rows.length) throw Object.assign(new Error('Doctor not found'), { statusCode: 404 });
+    // Replace the old week inside the same transaction; rollback restores it if any insert
+    // fails.
     await client.query('DELETE FROM doctor_availability WHERE doctor_id = $1', [doctorId]);
     for (const slot of slots) {
       await client.query(`INSERT INTO doctor_availability
@@ -266,6 +278,7 @@ const getAvailableSlots = async (doctorId, limit = 3, db = pool) => {
     [doctorId]
   );
 
+  // Slot suggestions exclude future appointments unless they were cancelled.
   const bookedTimes = bookedResult.rows.map(r =>
     new Date(r.scheduled_at).toISOString()
   );
@@ -407,6 +420,7 @@ const getUnreviewedLabReports = async (doctorId) => {
  *        this doctor's lab order.
  */
 const reviewLabReport = async (reportId, remark, doctorId) => {
+  // Review is allowed only for a finalized report on a test ordered by this doctor.
   const result = await pool.query(
     `UPDATE lab_reports lr
      SET doctor_reviewed_at = NOW(),

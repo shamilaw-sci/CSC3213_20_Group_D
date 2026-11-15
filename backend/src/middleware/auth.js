@@ -23,6 +23,7 @@ const isAuthenticated = async (req, res, next) => {
   }
 
   try {
+    // Check the live database account on every protected request, even if the cookie is valid.
     const result = await pool.query(
       `SELECT is_active, role, verification_status FROM users WHERE id = $1`,
       [req.session.user.id]
@@ -30,6 +31,7 @@ const isAuthenticated = async (req, res, next) => {
 
     const user = result.rows[0];
 
+    // End the old session if an admin changed the role; its saved permissions may be stale.
     if (user && user.role !== req.session.user.role) {
       delete req.session.user;
       req.session.destroy(() => {});
@@ -55,6 +57,7 @@ const isAuthenticated = async (req, res, next) => {
       });
     }
 
+    // Staff cannot enter before admin approval. Patients are handled separately.
     if (user.role !== 'patient' && user.verification_status !== 'approved') {
       req.session.destroy(() => {});
       return res.status(403).json({
@@ -84,6 +87,7 @@ const authorize = (...roles) => {
     if (!req.session?.user) {
       return res.status(401).json({ success: false, message: 'Not authenticated. Please log in.' });
     }
+    // Route-level role restrictions still apply after the general login check.
     if (!roles.includes(req.session.user.role)) {
       return res.status(403).json({
         success: false,

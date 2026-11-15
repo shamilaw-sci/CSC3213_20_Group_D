@@ -43,6 +43,7 @@ const uploadContentImage = async (file) => {
 
     const extension = IMAGE_EXTENSIONS[file.mimetype];
 
+    // Reject unsupported image types before sending a file to storage.
     if (!extension) {
         const error = new Error(
             'Article image must be a JPEG, PNG, or WebP file'
@@ -57,6 +58,7 @@ const uploadContentImage = async (file) => {
             .toString(36)
             .slice(2, 10)}.${extension}`;
 
+    // Use a new storage path for each uploaded article image; do not overwrite other images.
     const { error: uploadError } = await supabase.storage
         .from(CONTENT_IMAGE_BUCKET)
         .upload(
@@ -68,6 +70,7 @@ const uploadContentImage = async (file) => {
             }
         );
 
+    // If storage fails, stop and report the error instead of saving a broken image link.
     if (uploadError) {
         console.error(
             'Health content image upload error:',
@@ -120,6 +123,7 @@ const addContent = async (
         );
     }
 
+    // An optional image is uploaded before the new article is stored as a draft.
     const imageUrl =
         await uploadContentImage(file);
 
@@ -160,6 +164,7 @@ const editContent = async (
     source,
     file = null
 ) => {
+    // Editing an unknown article must fail rather than silently creating one.
     const existing =
         await findContentById(id);
 
@@ -175,6 +180,7 @@ const editContent = async (
         );
     }
 
+    // No replacement file returns a null URL; the repository keeps the saved image.
     const imageUrl =
         await uploadContentImage(file);
 
@@ -203,6 +209,7 @@ const publishDraftContent = async (id) => {
         );
     }
 
+    // Prevent publishing the same article twice; publishing is a separate action from drafting.
     if (existing.status === 'published') {
         throw new Error(
             'Content is already published'
