@@ -32,16 +32,19 @@ const OtpVerificationPage = () => {
   const handleVerify = async event => {
     event.preventDefault();
     if (inFlight.current || !email) return;
+    // Check the six-digit format here; OTP validity and expiry are verified on the server.
     if (!/^\d{6}$/.test(otpCode)) { setError('Enter a 6-digit verification code'); document.getElementById('otpCode')?.focus(); return; }
     inFlight.current = true; setLoading(true); setError(''); setResendMessage('');
     try {
       const data = await verifyOtp(email, otpCode);
+      // Email verification does not approve professional accounts; pending applicants return to login.
       if (data.data?.approvalPending === true) {
         clearUser();
         navigate('/login', { replace: true, state: { message: 'Email verified. Your account is awaiting admin approval. Sign in after approval.' } });
       } else {
         const user = data.data?.user;
         if (!user?.id || !user?.role) throw new Error('Invalid identity response');
+        // Only a verified response with a user identity is saved as a signed-in session.
         setUser(user);
         const paths = { patient: '/patient/profile', doctor: '/doctor/dashboard', pharmacist: '/pharmacy/dashboard',
           hospital_staff: '/hospital/dashboard', lab_technician: '/laboratory/dashboard' };
@@ -53,6 +56,7 @@ const OtpVerificationPage = () => {
   /** Request a replacement code; prevent another request while verification or resend is running. */
   const handleResend = async () => {
     if (inFlight.current || !email) return;
+    // Resend and verification share one request guard, so they cannot run at the same time.
     inFlight.current = true; setResending(true); setError(''); setResendMessage(''); setOtpCode('');
     try {
       await resendOtp(email);

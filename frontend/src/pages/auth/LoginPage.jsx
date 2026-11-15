@@ -40,6 +40,7 @@ const LoginPage = () => {
   /** Stop duplicate sign-ins, save the returned user after success, then go to their dashboard. */
   const handleSubmit = async event => {
     event.preventDefault();
+    // Ignore a repeated Sign in click while the first login request is still running.
     if (inFlight.current) return;
     const next = validate();
     setErrors(next);
@@ -52,7 +53,9 @@ const LoginPage = () => {
     setServerError('');
     try {
       const data = await login(formData.email.trim(), formData.password);
+      // Do not navigate if the API response lacks the identity and role needed for the dashboard.
       if (!data.data?.id || !data.data?.role) throw new Error('Invalid identity response');
+      // Choose the landing page from the verified backend role; the backend still controls protected access.
       const destinations = { patient: '/patient/profile', doctor: '/doctor/dashboard', admin: '/admin',
         pharmacist: '/pharmacy/dashboard', hospital_staff: '/hospital/dashboard', lab_technician: '/laboratory/dashboard' };
       setUser(data.data);

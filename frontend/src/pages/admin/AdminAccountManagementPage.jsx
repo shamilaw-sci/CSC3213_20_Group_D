@@ -26,6 +26,10 @@ import PageHeader from '../../components/common/PageHeader';
 
 const API_URL = API_BASE_URL;
 
+/**
+ * Show searchable administrator account controls, including activate/deactivate actions.
+ * Role and status changes must be enforced by the backend, not by this table.
+ */
 const AdminAccountManagementPage = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,11 +39,16 @@ const AdminAccountManagementPage = () => {
   const [roleFilter, setRoleFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
+  /**
+   * Build search, role and status filters and request the matching account list.
+   * Send the session cookie and handle API or network errors before updating the table.
+   */
   const fetchUsers = async () => {
     try {
       setLoading(true);
       setError(null);
 
+      // Use URL query parameters rather than assembling an unsafe search string.
       const params =
         new URLSearchParams();
 
@@ -100,19 +109,28 @@ const AdminAccountManagementPage = () => {
     }
   };
 
+  // Load all users on initial page entry; later searches use the form submit handler.
   useEffect(() => {
     fetchUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /**
+   * Apply the entered filters only when the administrator submits the search form.
+   */
   const handleSearch = (e) => {
     e.preventDefault();
     fetchUsers();
   };
 
+  /**
+   * Activate or deactivate the chosen account through the admin endpoint.
+   * Reload the list after success so the displayed account status matches the database.
+   */
   const handleToggleActive = async (
     userId
   ) => {
+    // Remember which account is being changed so its action button can show progress.
     setActioningId(
       userId
     );
@@ -138,6 +156,7 @@ const AdminAccountManagementPage = () => {
         return;
       }
 
+      // Refresh the table only after the backend confirms the activation change.
       await fetchUsers();
     } catch (err) {
       console.error(
@@ -155,6 +174,7 @@ const AdminAccountManagementPage = () => {
     }
   };
 
+  // Build display columns for role, verification, active status and available account actions.
   const columns = [
     {
       key: 'email',

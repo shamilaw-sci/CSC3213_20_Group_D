@@ -57,6 +57,10 @@ const emptyForm = {
   source: ''
 };
 
+/**
+ * Manage health-awareness articles through draft creation, editing, publishing and deletion.
+ * Only published articles are intended for patient-facing content feeds.
+ */
 const AdminHealthContentPage = () => {
   const [
     content,
@@ -123,6 +127,10 @@ const AdminHealthContentPage = () => {
   const fileInputRef =
     useRef(null);
 
+  /**
+   * Load administrator article records using the selected publication-status filter.
+   * Show API errors instead of treating a failed request as a blank content list.
+   */
   const fetchContent = async () => {
     try {
       setLoading(true);
@@ -175,11 +183,13 @@ const AdminHealthContentPage = () => {
     }
   };
 
+  // Reload articles when the selected draft/published status filter changes.
   useEffect(() => {
     fetchContent();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
 
+  // Clean up temporary preview blob URLs when their preview changes or this screen closes.
   useEffect(() => {
     return () => {
       if (
@@ -195,6 +205,10 @@ const AdminHealthContentPage = () => {
     };
   }, [imagePreview]);
 
+  /**
+   * Remove a newly chosen image while keeping the existing article image as the fallback.
+   * Release temporary blob URLs to avoid leaving browser preview resources allocated.
+   */
   const clearImageSelection = () => {
     if (
       imagePreview &&
@@ -221,6 +235,9 @@ const AdminHealthContentPage = () => {
     }
   };
 
+  /**
+   * Close the editor and clear article fields, selected image and previous edit state.
+   */
   const resetForm = () => {
     if (
       imagePreview &&
@@ -248,6 +265,9 @@ const AdminHealthContentPage = () => {
     }
   };
 
+  /**
+   * Start a new draft with empty fields and no image inherited from the previous article.
+   */
   const openCreateForm = () => {
     if (
       imagePreview &&
@@ -275,6 +295,9 @@ const AdminHealthContentPage = () => {
     }
   };
 
+  /**
+   * Populate the editor from the selected article, preserving its current image if unchanged.
+   */
   const openEditForm = (
     item
   ) => {
@@ -324,6 +347,10 @@ const AdminHealthContentPage = () => {
     }
   };
 
+  /**
+   * Accept only JPEG, PNG or WebP images up to 5 MB before showing a local preview.
+   * This is client-side feedback; the server must also validate uploaded files.
+   */
   const handleImageChange = (
     e
   ) => {
@@ -335,6 +362,7 @@ const AdminHealthContentPage = () => {
     }
 
     if (
+      // The visible form rejects unsupported image types before trying to upload them.
       !ALLOWED_IMAGE_TYPES.includes(
         file.type
       )
@@ -350,6 +378,7 @@ const AdminHealthContentPage = () => {
     }
 
     if (
+      // The form limits article images to 5 MB so oversized selections are rejected early.
       file.size >
       MAX_IMAGE_SIZE
     ) {
@@ -388,6 +417,10 @@ const AdminHealthContentPage = () => {
     );
   };
 
+  /**
+   * Create a new draft or update an existing article using FormData for text and optional image.
+   * Return to the list only when the backend confirms the save operation.
+   */
   const handleSave = async (
     e
   ) => {
@@ -395,6 +428,7 @@ const AdminHealthContentPage = () => {
     setSaving(true);
 
     try {
+      // Use POST for a new article and PUT for edits to the article identified by editingId.
       const url =
         editingId
           ? `${API_URL}/api/admin/health-content/${editingId}`
@@ -428,6 +462,7 @@ const AdminHealthContentPage = () => {
         form.source || ''
       );
 
+      // Attach an image only when the administrator chose a new file; otherwise keep the saved one.
       if (imageFile) {
         formData.append(
           'image',
@@ -458,6 +493,7 @@ const AdminHealthContentPage = () => {
         return;
       }
 
+      // Reset and refresh the list only after a successful save response.
       resetForm();
 
       await fetchContent();
@@ -475,6 +511,9 @@ const AdminHealthContentPage = () => {
     }
   };
 
+  /**
+   * Publish the chosen draft through a separate admin endpoint, then refresh the status list.
+   */
   const handlePublish = async (
     id
   ) => {
@@ -504,6 +543,7 @@ const AdminHealthContentPage = () => {
         return;
       }
 
+      // Refresh the list after publishing so its status changes are visible.
       await fetchContent();
     } catch (err) {
       console.error(
@@ -521,10 +561,15 @@ const AdminHealthContentPage = () => {
     }
   };
 
+  /**
+   * Ask for confirmation, delete the selected article through the API and reload the list.
+   * Cancel means no delete request is sent.
+   */
   const handleDelete = async (
     id
   ) => {
     if (
+      // Avoid accidental permanent deletion by requiring confirmation.
       !window.confirm(
         'Delete this content item? This cannot be undone.'
       )
@@ -594,6 +639,7 @@ const AdminHealthContentPage = () => {
     );
   }
 
+  // Count published articles in the currently loaded list for the dashboard summary.
   const publishedCount =
     content.filter(
       item =>

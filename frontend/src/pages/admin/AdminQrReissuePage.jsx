@@ -27,6 +27,10 @@ import PageHeader from '../../components/common/PageHeader';
 
 const API_URL = API_BASE_URL;
 
+/**
+ * Find a patient and replace a lost or compromised patient QR identifier.
+ * A QR identifies a record; it does not itself grant access to medical information.
+ */
 const AdminQrReissuePage = () => {
   const [search, setSearch] = useState('');
   const [patients, setPatients] = useState([]);
@@ -35,9 +39,14 @@ const AdminQrReissuePage = () => {
   const [reissuingId, setReissuingId] = useState(null);
   const [hasSearched, setHasSearched] = useState(false);
 
+  /**
+   * Search patients through the admin API after checking that the search field is not blank.
+   * Encode the search term before putting it in the request URL.
+   */
   const handleSearch = async (e) => {
     e.preventDefault();
 
+    // Ignore an empty patient search instead of sending a needless API request.
     if (!search.trim()) {
       return;
     }
@@ -82,10 +91,15 @@ const AdminQrReissuePage = () => {
     }
   };
 
+  /**
+   * Ask for confirmation before posting a new QR identifier for the selected patient.
+   * Update that patient in the displayed list only after the backend reports success.
+   */
   const handleReissue = async (
     patientId
   ) => {
     if (
+      // A QR replacement invalidates the old identifier; require explicit staff confirmation.
       !window.confirm(
         'Reissue this patient\'s QR code? The old code will stop working immediately.'
       )
@@ -118,6 +132,7 @@ const AdminQrReissuePage = () => {
       }
 
       // Update the patient's qr_code_id in the current list
+      // Update only the selected patient row from the returned QR ID, without clearing other results.
       setPatients(
         prev =>
           prev.map(

@@ -27,6 +27,7 @@ const RegisterPage = () => {
   const inFlight = useRef(false);
   const formRef = useRef(null);
   const navigate = useNavigate();
+  // Keep the account and role-specific forms separate so missing fields can be explained per step.
   const [step, setStep] = useState(1); // Step 1: Basic info, Step 2: Role info
 
   const [formData, setFormData] = useState({
@@ -240,6 +241,7 @@ const RegisterPage = () => {
   /** Send role-specific details once; after a successful registration request, open email verification. */
   const handleSubmit = async event => {
     event.preventDefault();
+    // Prevent sending the registration request twice from repeated Request code clicks.
     if (inFlight.current) return;
     const validationErrors = validateStep2();
 
@@ -258,6 +260,7 @@ const RegisterPage = () => {
     try {
       let profileData;
 
+      // Build only the selected role profile before calling the shared registration API.
       if (formData.role === 'patient') {
         profileData = {
           fullName: formData.fullName,
@@ -298,10 +301,12 @@ const RegisterPage = () => {
         };
 
       }
+      // The API starts registration and email verification; the form does not directly approve staff accounts.
       const data = await register(formData.email.trim(), formData.phone.trim(), formData.password, formData.role, profileData);
 
       if (typeof data.data?.email !== 'string' || !data.data.email.trim()) throw new Error('Invalid registration response');
       if (data.success) {
+        // Open the OTP page only after the backend returns a registration email.
         navigate(
           '/verify-otp',
           {

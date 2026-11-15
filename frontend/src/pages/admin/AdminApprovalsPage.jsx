@@ -25,6 +25,9 @@ import PageHeader from '../../components/common/PageHeader';
 
 const API_URL = API_BASE_URL;
 
+/**
+ * Turn a stored role such as lab_technician into a readable label for the approval list.
+ */
 const formatRole = (role) => {
   if (!role) return 'Unknown role';
 
@@ -35,6 +38,9 @@ const formatRole = (role) => {
     );
 };
 
+/**
+ * Show the applicant registration date in a consistent short format; display a dash if absent.
+ */
 const formatDate = (date) => {
   if (!date) return '—';
 
@@ -50,12 +56,20 @@ const formatDate = (date) => {
   );
 };
 
+/**
+ * List accounts waiting for administrator approval and provide Approve and Reject controls.
+ * The server must still check the administrator role on each API request.
+ */
 const AdminApprovalsPage = () => {
   const [pendingUsers, setPendingUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [actioningId, setActioningId] = useState(null);
 
+  /**
+   * Load pending professional registrations using the current session cookie.
+   * Show a readable error when the request fails and clear the loading indicator in all cases.
+   */
   const fetchPendingUsers = async () => {
     try {
       setLoading(true);
@@ -70,6 +84,7 @@ const AdminApprovalsPage = () => {
 
       const data = await res.json();
 
+      // A failed approval-list response is shown as an error, not as an empty success state.
       if (!data.success) {
         setError(
           data.message ||
@@ -95,10 +110,15 @@ const AdminApprovalsPage = () => {
     }
   };
 
+  // Fetch pending approvals once when the administrator opens this page.
   useEffect(() => {
     fetchPendingUsers();
   }, []);
 
+  /**
+   * Approve the selected applicant with a POST request, then reload the pending list.
+   * Disable repeated actions on that user while the request is in progress.
+   */
   const handleApprove = async (userId) => {
     setActioningId(userId);
 
@@ -121,6 +141,7 @@ const AdminApprovalsPage = () => {
         return;
       }
 
+      // After a successful approval, refresh the list so the processed account disappears.
       await fetchPendingUsers();
     } catch (err) {
       console.error(
@@ -136,11 +157,16 @@ const AdminApprovalsPage = () => {
     }
   };
 
+  /**
+   * Ask for a rejection reason, send it to the admin API and refresh the list after success.
+   * Cancelling the reason prompt makes no API request.
+   */
   const handleReject = async (userId) => {
     const reason = window.prompt(
       'Reason for rejection (this will be emailed to the applicant):'
     );
 
+    // A cancelled or empty reason must not reject the applicant.
     if (!reason) return; // cancelled or empty — do nothing
 
     setActioningId(userId);

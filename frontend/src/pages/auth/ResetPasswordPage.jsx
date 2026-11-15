@@ -16,6 +16,7 @@ import { resetPassword, authErrorMessage } from '../../services/auth.service';
 const ResetPasswordPage = () => {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token') || '';
+  // The screen checks the reset-link shape; the backend verifies whether the token exists or has expired.
   const validToken = /^[a-f0-9]{64}$/.test(token);
   const [formData, setFormData] = useState({ newPassword: '', confirmPassword: '' });
   const [errors, setErrors] = useState({});
@@ -39,12 +40,14 @@ const ResetPasswordPage = () => {
   /** Send the new password once; clear the entered passwords only after the backend confirms success. */
   const handleSubmit = async event => {
     event.preventDefault();
+    // Do not submit without a valid-looking link or while another reset request is running.
     if (inFlight.current || !validToken) return;
     const next = validate(); setErrors(next);
     if (Object.keys(next).length) { document.getElementById(Object.keys(next)[0])?.focus(); return; }
     inFlight.current = true; setLoading(true); setServerError('');
     try {
       await resetPassword(token, formData.newPassword);
+      // Clear both password inputs only when the backend confirms the password was changed.
       setSuccess(true); setFormData({ newPassword: '', confirmPassword: '' });
     } catch (error) { setServerError(authErrorMessage(error, 'Could not reset your password. Request a new link if it has expired.')); }
     finally { inFlight.current = false; setLoading(false); }

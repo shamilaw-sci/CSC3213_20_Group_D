@@ -26,6 +26,10 @@ import PageHeader from '../../components/common/PageHeader';
 const API_URL = API_BASE_URL;
 const PAGE_SIZE = 15;
 
+/**
+ * Review security and activity records using email, action and date filters with pagination.
+ * The API controls which audit data an administrator is allowed to see.
+ */
 const AdminAuditLogPage = () => {
   const [logs, setLogs] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -39,7 +43,12 @@ const AdminAuditLogPage = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
+  // Fetch filter choices when the audit screen opens.
   useEffect(() => {
+    /**
+     * Load available audit action types for the filter dropdown.
+     * If this request fails, the page still supports the remaining audit filters.
+     */
     const fetchActions = async () => {
       try {
         const res = await fetch(
@@ -68,6 +77,10 @@ const AdminAuditLogPage = () => {
     fetchActions();
   }, []);
 
+  /**
+   * Request one page of audit records with the currently selected filters.
+   * Read the total count from the API so Next/Previous reflect the actual result size.
+   */
   const fetchLogs = async (
     targetPage = page
   ) => {
@@ -106,6 +119,7 @@ const AdminAuditLogPage = () => {
         );
       }
 
+      // Always include pagination values in the server request.
       params.append(
         'page',
         targetPage
@@ -139,6 +153,7 @@ const AdminAuditLogPage = () => {
         data.data
       );
 
+      // Use server-reported total count to calculate how many pages exist.
       setTotalCount(
         data.pagination.totalCount
       );
@@ -160,11 +175,15 @@ const AdminAuditLogPage = () => {
     }
   };
 
+  // Load the first page of audit entries when the screen opens.
   useEffect(() => {
     fetchLogs(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /**
+   * Apply the filter form and return to page one rather than keeping an outdated page number.
+   */
   const handleFilter = (
     e
   ) => {
@@ -172,6 +191,7 @@ const AdminAuditLogPage = () => {
     fetchLogs(1);
   };
 
+  // Keep at least one page visible even when no audit records match the filters.
   const totalPages =
     Math.max(
       1,
@@ -181,6 +201,7 @@ const AdminAuditLogPage = () => {
       )
     );
 
+  // Display the audit time, user, action and related event details without editing log records.
   const columns = [
     {
       key: 'created_at',

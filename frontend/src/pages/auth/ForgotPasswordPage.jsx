@@ -24,12 +24,14 @@ const ForgotPasswordPage = () => {
   /** Request one reset email; show a neutral confirmation after the backend acknowledges it. */
   const handleSubmit = async event => {
     event.preventDefault();
+    // Keep duplicate reset-link requests from being sent during a pending request.
     if (inFlight.current) return;
     if (!email.trim()) { setError('Email is required'); document.getElementById('email')?.focus(); return; }
     inFlight.current = true;
     setLoading(true); setError('');
     try {
       await forgotPassword(email.trim());
+      // Show a neutral success message rather than disclosing whether the email belongs to an account.
       setSubmitted(true);
     } catch (requestError) {
       setError(authErrorMessage(requestError, 'Could not request a reset link. Please try again.'));
