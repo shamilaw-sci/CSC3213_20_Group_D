@@ -1,0 +1,733 @@
+{
+  "date": "2026-11-15",
+  "branch": "codex/care4u-final-review-2026-11-12",
+  "baselineCommit": "8f828057b935583c7a8217c112b3ddfc94bb2fa4",
+  "scope": "Patient Mobile and consumed shared shell/SOS; source/comment review only",
+  "files": [
+    {
+      "file": "mobile/src/screens/PatientHomeScreen.js",
+      "syntax": "PASS",
+      "header": "PASS",
+      "commentStandard": "PASS",
+      "codePreservation": "PASS",
+      "startingSignature": {
+        "ast": "a643081b209954ef5f22324d0911c665720c2f566f96babf763fc41bf3c8f492",
+        "tokens": "a2f92c2303611768f1fb0f77cbda2cc325049b4f0d92731f7461a4e0320af794"
+      },
+      "finalSignature": {
+        "ast": "a643081b209954ef5f22324d0911c665720c2f566f96babf763fc41bf3c8f492",
+        "tokens": "a2f92c2303611768f1fb0f77cbda2cc325049b4f0d92731f7461a4e0320af794"
+      },
+      "startingSha256": "aa489714193c3220f981e223e50d2f3f81edc25d9835f978ec3f7c24b1abecb2",
+      "finalSha256": "49b39b56567de625fe82d7c4a02bbf284fbde37b7a27521ebf2f5235154c9365",
+      "startingCounts": {
+        "functions": 40,
+        "imports": 8,
+        "jsxElements": 114,
+        "calls": 91
+      },
+      "finalCounts": {
+        "functions": 40,
+        "imports": 8,
+        "jsxElements": 114,
+        "calls": 91
+      }
+    },
+    {
+      "file": "mobile/src/screens/PatientProfileScreen.js",
+      "syntax": "PASS",
+      "header": "PASS",
+      "commentStandard": "PASS",
+      "codePreservation": "PASS",
+      "startingSignature": {
+        "ast": "18f84eac1f979ae2e4ea66d8058508ad6ca59126fe46d153c0cc9088284b6f7d",
+        "tokens": "179e8f087d1aef3075be0f9455dce12eddd4bf41020071f2ada6c8d7abdb225a"
+      },
+      "finalSignature": {
+        "ast": "18f84eac1f979ae2e4ea66d8058508ad6ca59126fe46d153c0cc9088284b6f7d",
+        "tokens": "179e8f087d1aef3075be0f9455dce12eddd4bf41020071f2ada6c8d7abdb225a"
+      },
+      "startingSha256": "593149a463d80d85a97ca2df057259c58f92f7b5ee55e2da11ae8eb64416b871",
+      "finalSha256": "8a1a522946e8e61048af81e376001508c345f5a1cb1838e6edef56515c7ef77b",
+      "startingCounts": {
+        "functions": 115,
+        "imports": 8,
+        "jsxElements": 398,
+        "calls": 393
+      },
+      "finalCounts": {
+        "functions": 115,
+        "imports": 8,
+        "jsxElements": 398,
+        "calls": 393
+      }
+    },
+    {
+      "file": "mobile/src/screens/PatientQRCardScreen.js",
+      "syntax": "PASS",
+      "header": "PASS",
+      "commentStandard": "PASS",
+      "codePreservation": "PASS",
+      "startingSignature": {
+        "ast": "d51d57e785c4b6f80959b1968ed9bced9e88243397fb25118d41bd83c3a8ba7c",
+        "tokens": "f006cbf4bdf22f4aeb0f1b97fe4c826a9f059e9ce0d77d8bbba216e23e1fe483"
+      },
+      "finalSignature": {
+        "ast": "d51d57e785c4b6f80959b1968ed9bced9e88243397fb25118d41bd83c3a8ba7c",
+        "tokens": "f006cbf4bdf22f4aeb0f1b97fe4c826a9f059e9ce0d77d8bbba216e23e1fe483"
+      },
+      "startingSha256": "168fd707cf37043ccc56e68dbc3f5daa48a7e40522aa87137ea1516c0d8fc868",
+      "finalSha256": "6c7b6af52060690247834a14ad85c95da5650a9cbf80d03dd0847a54f3071dee",
+      "startingCounts": {
+        "functions": 9,
+        "imports": 6,
+        "jsxElements": 95,
+        "calls": 38
+      },
+      "finalCounts": {
+        "functions": 9,
+        "imports": 6,
+        "jsxElements": 95,
+        "calls": 38
+      }
+    },
+    {
+      "file": "mobile/src/screens/DoctorSearchScreen.js",
+      "syntax": "PASS",
+      "header": "PASS",
+      "commentStandard": "PASS",
+      "codePreservation": "PASS",
+      "startingSignature": {
+        "ast": "614c6d4b77781ca326c00a966ea6918f835d4664e013f7e1f63fec671158f91a",
+        "tokens": "4713454e0d0355835f68af298370da61fef1545659609183b0c1e6e1ad44dec1"
+      },
+      "finalSignature": {
+        "ast": "614c6d4b77781ca326c00a966ea6918f835d4664e013f7e1f63fec671158f91a",
+        "tokens": "4713454e0d0355835f68af298370da61fef1545659609183b0c1e6e1ad44dec1"
+      },
+      "startingSha256": "9304ea8d47a7f827a52a9a71a8de0dd25a2b724629c8558683ffd200cee5c9e9",
+      "finalSha256": "f17a4581d2c0093231ae982e9d2b99436540885761eb6484c7bf829ba7297614",
+      "startingCounts": {
+        "functions": 21,
+        "imports": 4,
+        "jsxElements": 102,
+        "calls": 50
+      },
+      "finalCounts": {
+        "functions": 21,
+        "imports": 4,
+        "jsxElements": 102,
+        "calls": 50
+      }
+    },
+    {
+      "file": "mobile/src/screens/DoctorProfileScreen.js",
+      "syntax": "PASS",
+      "header": "PASS",
+      "commentStandard": "PASS",
+      "codePreservation": "PASS",
+      "startingSignature": {
+        "ast": "c78f757fc226b19ebcddc0d0e40fd3ada6ccd1f151e70f756256d524b4aaa116",
+        "tokens": "cda49a99f467bd35b29cc663cb213609e4a1a5a80a17ee836213edda99e3db79"
+      },
+      "finalSignature": {
+        "ast": "c78f757fc226b19ebcddc0d0e40fd3ada6ccd1f151e70f756256d524b4aaa116",
+        "tokens": "cda49a99f467bd35b29cc663cb213609e4a1a5a80a17ee836213edda99e3db79"
+      },
+      "startingSha256": "879b9fb55603a29eea9f9de8b3673a6575de142ecd6f8e415e1fd40a0437286a",
+      "finalSha256": "9ea21d04da83f9fe9b6b4ffc2a3bf956d98be561284366794a0c09cc41a7ecd7",
+      "startingCounts": {
+        "functions": 9,
+        "imports": 5,
+        "jsxElements": 81,
+        "calls": 35
+      },
+      "finalCounts": {
+        "functions": 9,
+        "imports": 5,
+        "jsxElements": 81,
+        "calls": 35
+      }
+    },
+    {
+      "file": "mobile/src/screens/BookAppointmentScreen.js",
+      "syntax": "PASS",
+      "header": "PASS",
+      "commentStandard": "PASS",
+      "codePreservation": "PASS",
+      "startingSignature": {
+        "ast": "11f94674c4552708d1c880b33a45924af48545b01f8804a136302febb8f9beb9",
+        "tokens": "dfa132bd88825eb757e8845223c828cba2cc60d9669a2f60439804f00c8f972c"
+      },
+      "finalSignature": {
+        "ast": "11f94674c4552708d1c880b33a45924af48545b01f8804a136302febb8f9beb9",
+        "tokens": "dfa132bd88825eb757e8845223c828cba2cc60d9669a2f60439804f00c8f972c"
+      },
+      "startingSha256": "c47c54c200aade9af92bf22ef80b87232195250ad0b722faa6fd8ee692359f71",
+      "finalSha256": "add63dc32895b516b9b33e64e6630ea0dbd1178cfb3f72cbee9ce24b2a7f371c",
+      "startingCounts": {
+        "functions": 27,
+        "imports": 6,
+        "jsxElements": 122,
+        "calls": 82
+      },
+      "finalCounts": {
+        "functions": 27,
+        "imports": 6,
+        "jsxElements": 122,
+        "calls": 82
+      }
+    },
+    {
+      "file": "mobile/src/screens/MyAppointmentsScreen.js",
+      "syntax": "PASS",
+      "header": "PASS",
+      "commentStandard": "PASS",
+      "codePreservation": "PASS",
+      "startingSignature": {
+        "ast": "c7633e014762f1992690a53e9cd87be0be3fc4495e3c41817c23425b5124199e",
+        "tokens": "ed52f882d6de8fa64bacfc90e2a68c820675bb5d79118f01afc51b203085f278"
+      },
+      "finalSignature": {
+        "ast": "c7633e014762f1992690a53e9cd87be0be3fc4495e3c41817c23425b5124199e",
+        "tokens": "ed52f882d6de8fa64bacfc90e2a68c820675bb5d79118f01afc51b203085f278"
+      },
+      "startingSha256": "51513605d0e9d927db96dfa2b1546d9c01d605b6690561ace954e788b77cbcb3",
+      "finalSha256": "9a797eeab60c8d5f76261bafff5e59b44f037a6ee912affeba54abf745959827",
+      "startingCounts": {
+        "functions": 37,
+        "imports": 5,
+        "jsxElements": 106,
+        "calls": 72
+      },
+      "finalCounts": {
+        "functions": 37,
+        "imports": 5,
+        "jsxElements": 106,
+        "calls": 72
+      }
+    },
+    {
+      "file": "mobile/src/screens/MedicalRecordsScreen.js",
+      "syntax": "PASS",
+      "header": "PASS",
+      "commentStandard": "PASS",
+      "codePreservation": "PASS",
+      "startingSignature": {
+        "ast": "29657fcad34cc895cee65f279af792c2b37599435318a52ec22325c968c97bbc",
+        "tokens": "0caef53008e587e3f020d3f27b81c8f80c86524b0eb4fcd4e72413d0c3e276b7"
+      },
+      "finalSignature": {
+        "ast": "29657fcad34cc895cee65f279af792c2b37599435318a52ec22325c968c97bbc",
+        "tokens": "0caef53008e587e3f020d3f27b81c8f80c86524b0eb4fcd4e72413d0c3e276b7"
+      },
+      "startingSha256": "eabc873e7a4e9f27c6e4ef030a7902240d796055816664f73209ab11996cc913",
+      "finalSha256": "0eb954fd4b3f071a5e2c81dc2ce5b3199683406dee613d60a88368d49313a491",
+      "startingCounts": {
+        "functions": 28,
+        "imports": 5,
+        "jsxElements": 136,
+        "calls": 53
+      },
+      "finalCounts": {
+        "functions": 28,
+        "imports": 5,
+        "jsxElements": 136,
+        "calls": 53
+      }
+    },
+    {
+      "file": "mobile/src/screens/LabReportsScreen.js",
+      "syntax": "PASS",
+      "header": "PASS",
+      "commentStandard": "PASS",
+      "codePreservation": "PASS",
+      "startingSignature": {
+        "ast": "ff2635e65c36fc5b85fc087e9143c8fb8b38d2e23608677f90d60b1e2dda4845",
+        "tokens": "0909c05acc0f9954d375c15242dffb48d0e3ffcabbbdc0e4bac4e2593ceabec5"
+      },
+      "finalSignature": {
+        "ast": "ff2635e65c36fc5b85fc087e9143c8fb8b38d2e23608677f90d60b1e2dda4845",
+        "tokens": "0909c05acc0f9954d375c15242dffb48d0e3ffcabbbdc0e4bac4e2593ceabec5"
+      },
+      "startingSha256": "1f6628d17e93725526dfbb1745298d6c482294360f8e3d0469dd25479d73aae8",
+      "finalSha256": "f0a39690ee9f4bed4c7a560efba0c9daea597880b986641120518f904d21d08d",
+      "startingCounts": {
+        "functions": 30,
+        "imports": 5,
+        "jsxElements": 124,
+        "calls": 69
+      },
+      "finalCounts": {
+        "functions": 30,
+        "imports": 5,
+        "jsxElements": 124,
+        "calls": 69
+      }
+    },
+    {
+      "file": "mobile/src/screens/PrescriptionsScreen.js",
+      "syntax": "PASS",
+      "header": "PASS",
+      "commentStandard": "PASS",
+      "codePreservation": "PASS",
+      "startingSignature": {
+        "ast": "893aab7bca8c6c45f982ea944862d1019d06d96bfe839a4504b41a0de7950404",
+        "tokens": "46e181bfb3c9faa590c5532c86c1c339a35a57f03eb4fd853de73972c406cf68"
+      },
+      "finalSignature": {
+        "ast": "893aab7bca8c6c45f982ea944862d1019d06d96bfe839a4504b41a0de7950404",
+        "tokens": "46e181bfb3c9faa590c5532c86c1c339a35a57f03eb4fd853de73972c406cf68"
+      },
+      "startingSha256": "c88000ea72ca76396b391b7ab0fb8b07846744351a4685b40010695ad906febc",
+      "finalSha256": "49447bb038f29107090be5e9cfb35aef23997ecf8cf67ac02c09cadd6f2a5962",
+      "startingCounts": {
+        "functions": 34,
+        "imports": 6,
+        "jsxElements": 156,
+        "calls": 65
+      },
+      "finalCounts": {
+        "functions": 34,
+        "imports": 6,
+        "jsxElements": 156,
+        "calls": 65
+      }
+    },
+    {
+      "file": "mobile/src/screens/AIChatScreen.js",
+      "syntax": "PASS",
+      "header": "PASS",
+      "commentStandard": "PASS",
+      "codePreservation": "PASS",
+      "startingSignature": {
+        "ast": "b90f00ed2e456bcf9d78c58087f73f934ba405b3100712ab47f27000b068e908",
+        "tokens": "a185eb9c4b89a1d1f1974a8a4b9dc604da9ddf2e4da42f4c5cf51b55a4a064f3"
+      },
+      "finalSignature": {
+        "ast": "b90f00ed2e456bcf9d78c58087f73f934ba405b3100712ab47f27000b068e908",
+        "tokens": "a185eb9c4b89a1d1f1974a8a4b9dc604da9ddf2e4da42f4c5cf51b55a4a064f3"
+      },
+      "startingSha256": "ec944eef3583ded9919597f3794c26c64c6499d92165d532f53e013b8cce1c0c",
+      "finalSha256": "909ce2db9943bbd1e9471cae505a567a66f2e069a4b70b0eba2c9935f898dbce",
+      "startingCounts": {
+        "functions": 15,
+        "imports": 6,
+        "jsxElements": 50,
+        "calls": 26
+      },
+      "finalCounts": {
+        "functions": 15,
+        "imports": 6,
+        "jsxElements": 50,
+        "calls": 26
+      }
+    },
+    {
+      "file": "mobile/src/components/HealthAwarenessFeed.js",
+      "syntax": "PASS",
+      "header": "PASS",
+      "commentStandard": "PASS",
+      "codePreservation": "PASS",
+      "startingSignature": {
+        "ast": "6096a35e7765736c3601ebc195671effa987ac6cfee74168d207668bbaaa5d96",
+        "tokens": "d0cea69223ac370c40071a3d1692113dc48d167c43cfbaf485a4ccf971433f72"
+      },
+      "finalSignature": {
+        "ast": "6096a35e7765736c3601ebc195671effa987ac6cfee74168d207668bbaaa5d96",
+        "tokens": "d0cea69223ac370c40071a3d1692113dc48d167c43cfbaf485a4ccf971433f72"
+      },
+      "startingSha256": "389679a553788b34beddadd1fc784c339cf4b1f907c7bb3601896a02d3f0998a",
+      "finalSha256": "4b227108826b6b4223121dcf6ef6df87e566042aa8e8a6069491d5c389bc7b17",
+      "startingCounts": {
+        "functions": 35,
+        "imports": 4,
+        "jsxElements": 31,
+        "calls": 74
+      },
+      "finalCounts": {
+        "functions": 35,
+        "imports": 4,
+        "jsxElements": 31,
+        "calls": 74
+      }
+    },
+    {
+      "file": "mobile/src/components/EmergencySOS.js",
+      "syntax": "PASS",
+      "header": "PASS",
+      "commentStandard": "PASS",
+      "codePreservation": "PASS",
+      "startingSignature": {
+        "ast": "df2337aa8f5ab3992e05f73a343a650ccb4ffe06223a721c5cd473bdfb7762ca",
+        "tokens": "7f7ab1a207b968dab7bce7a81aab766899b50bfcf59edd4becdb2028380bb7cd"
+      },
+      "finalSignature": {
+        "ast": "df2337aa8f5ab3992e05f73a343a650ccb4ffe06223a721c5cd473bdfb7762ca",
+        "tokens": "7f7ab1a207b968dab7bce7a81aab766899b50bfcf59edd4becdb2028380bb7cd"
+      },
+      "startingSha256": "0fb9a45750af07510ae257eca127bfb67e7cfefeb1c34f8b9fe4e1525bc3cc8e",
+      "finalSha256": "d885bdfdd928659c06d7519a2f8aa7192cdcb0ce3e5538b83a0bb9f4b592232c",
+      "startingCounts": {
+        "functions": 8,
+        "imports": 4,
+        "jsxElements": 12,
+        "calls": 21
+      },
+      "finalCounts": {
+        "functions": 8,
+        "imports": 4,
+        "jsxElements": 12,
+        "calls": 21
+      }
+    },
+    {
+      "file": "mobile/src/services/patient.service.js",
+      "syntax": "PASS",
+      "header": "PASS",
+      "commentStandard": "PASS",
+      "codePreservation": "PASS",
+      "startingSignature": {
+        "ast": "e46fc0960cac3b45c299693432e54b4e162ce55b4caa33cb07065adb8bd1a4bb",
+        "tokens": "03414479761e6921e44c026d6ee33ecd2d5042978e2ec7af0d42eed02080f3aa"
+      },
+      "finalSignature": {
+        "ast": "e46fc0960cac3b45c299693432e54b4e162ce55b4caa33cb07065adb8bd1a4bb",
+        "tokens": "03414479761e6921e44c026d6ee33ecd2d5042978e2ec7af0d42eed02080f3aa"
+      },
+      "startingSha256": "8060b3e39495d8272a3244a72af56d6da5a06f24ee07d1c51e80dba7a5c6144d",
+      "finalSha256": "7ca0cfda4f4407c9bdf16a3a044c540e3e290838824612a59ec2e8bfcf05fa27",
+      "startingCounts": {
+        "functions": 35,
+        "imports": 1,
+        "jsxElements": 0,
+        "calls": 48
+      },
+      "finalCounts": {
+        "functions": 35,
+        "imports": 1,
+        "jsxElements": 0,
+        "calls": 48
+      }
+    },
+    {
+      "file": "mobile/src/services/doctor.service.js",
+      "syntax": "PASS",
+      "header": "PASS",
+      "commentStandard": "PASS",
+      "codePreservation": "PASS",
+      "startingSignature": {
+        "ast": "034aa3c63df92957fe2e21c4a4c1a3eaef52998b13b24f804be96a601ee13113",
+        "tokens": "b5ee1a9a029d7a8d748d0b205eda066539c8a6151fc21ff6e6c74d4f04af39e5"
+      },
+      "finalSignature": {
+        "ast": "034aa3c63df92957fe2e21c4a4c1a3eaef52998b13b24f804be96a601ee13113",
+        "tokens": "b5ee1a9a029d7a8d748d0b205eda066539c8a6151fc21ff6e6c74d4f04af39e5"
+      },
+      "startingSha256": "852220bc50ef18487f6c1bdea088567429bac58e64accf674ad678d7866dd421",
+      "finalSha256": "aaf7abc217563f894260275af5fb5b05dbc64bbdd2e22804eb6ce07f7b3e4ec6",
+      "startingCounts": {
+        "functions": 3,
+        "imports": 1,
+        "jsxElements": 0,
+        "calls": 3
+      },
+      "finalCounts": {
+        "functions": 3,
+        "imports": 1,
+        "jsxElements": 0,
+        "calls": 3
+      }
+    },
+    {
+      "file": "mobile/src/services/appointment.service.js",
+      "syntax": "PASS",
+      "header": "PASS",
+      "commentStandard": "PASS",
+      "codePreservation": "PASS",
+      "startingSignature": {
+        "ast": "d741c306ebdb9863002ce839a88b87d9abe821833c1e433e539fb838f02a8d5a",
+        "tokens": "7b119aef6f6cda70449e12c8ddcbccc498772015ca8054fe43657f7776be2a71"
+      },
+      "finalSignature": {
+        "ast": "d741c306ebdb9863002ce839a88b87d9abe821833c1e433e539fb838f02a8d5a",
+        "tokens": "7b119aef6f6cda70449e12c8ddcbccc498772015ca8054fe43657f7776be2a71"
+      },
+      "startingSha256": "ddfef1a4fbd030e755efe0c63783bf05b262b24e3d35b3e3ccecb8424136b637",
+      "finalSha256": "9c4c81e4502dfb2875e03db29c237af451b011fdfd5c78a3b91f90e75b06f2ec",
+      "startingCounts": {
+        "functions": 3,
+        "imports": 1,
+        "jsxElements": 0,
+        "calls": 3
+      },
+      "finalCounts": {
+        "functions": 3,
+        "imports": 1,
+        "jsxElements": 0,
+        "calls": 3
+      }
+    },
+    {
+      "file": "mobile/src/services/prescription.service.js",
+      "syntax": "PASS",
+      "header": "PASS",
+      "commentStandard": "PASS",
+      "codePreservation": "PASS",
+      "startingSignature": {
+        "ast": "733b30d30bf0b6cdd6879ded62ae05f0bebf2ea68eded08c305bcceb4001740b",
+        "tokens": "2efa8ea98e45891e71f55498ccb1380dc7875ff9654a7ab678985b6f92c0b01a"
+      },
+      "finalSignature": {
+        "ast": "733b30d30bf0b6cdd6879ded62ae05f0bebf2ea68eded08c305bcceb4001740b",
+        "tokens": "2efa8ea98e45891e71f55498ccb1380dc7875ff9654a7ab678985b6f92c0b01a"
+      },
+      "startingSha256": "f83f1ce81a1dcbe7836b4dd34fd62cb590f7bfc0741d6a5c6a26e60c95820648",
+      "finalSha256": "7839dbbd77d548fedbd1b1cdab96d1d1e975b854fe45d16013331026a39608a7",
+      "startingCounts": {
+        "functions": 2,
+        "imports": 1,
+        "jsxElements": 0,
+        "calls": 2
+      },
+      "finalCounts": {
+        "functions": 2,
+        "imports": 1,
+        "jsxElements": 0,
+        "calls": 2
+      }
+    },
+    {
+      "file": "mobile/App.js",
+      "syntax": "PASS",
+      "header": "PASS",
+      "commentStandard": "PASS",
+      "codePreservation": "PASS",
+      "startingSignature": {
+        "ast": "a07fab9fdb509fd2905972d7d74d9742d9f32bb32a93733a49fe577f11f25a1d",
+        "tokens": "6aaf5954c94776d25ea3d5434762584e84b93954667b4c109aef274cdd06bc2a"
+      },
+      "finalSignature": {
+        "ast": "a07fab9fdb509fd2905972d7d74d9742d9f32bb32a93733a49fe577f11f25a1d",
+        "tokens": "6aaf5954c94776d25ea3d5434762584e84b93954667b4c109aef274cdd06bc2a"
+      },
+      "startingSha256": "03bf383c876c75bd54ecaac2b698217115410487016ff5a693d416fd63ea4cca",
+      "finalSha256": "99273412fb7a33bf292636d6520792970b3e3b61834f611e7f4f761e5ffd3131",
+      "startingCounts": {
+        "functions": 22,
+        "imports": 23,
+        "jsxElements": 56,
+        "calls": 46
+      },
+      "finalCounts": {
+        "functions": 22,
+        "imports": 23,
+        "jsxElements": 56,
+        "calls": 46
+      }
+    }
+  ],
+  "protectedFiles": [
+    {
+      "file": "backend/src/modules/doctor/doctor.controller.js",
+      "startingSha256": "e2231a1f6cc73299f249f4e8934613bb9d9ed5cb8a111da773a2d351df80871b",
+      "finalSha256": "e2231a1f6cc73299f249f4e8934613bb9d9ed5cb8a111da773a2d351df80871b"
+    },
+    {
+      "file": "backend/src/modules/doctor/doctor.repository.js",
+      "startingSha256": "0b4cc2cf7afd168dc1149d1e9925ea8de5f298a78b4bab46977bbbc0effa7e69",
+      "finalSha256": "0b4cc2cf7afd168dc1149d1e9925ea8de5f298a78b4bab46977bbbc0effa7e69"
+    },
+    {
+      "file": "backend/src/modules/doctor/doctor.service.js",
+      "startingSha256": "29c987b5d6e140a52abc6c94cc218f3a2eaa4458a9b28335d880697910e784ac",
+      "finalSha256": "29c987b5d6e140a52abc6c94cc218f3a2eaa4458a9b28335d880697910e784ac"
+    }
+  ],
+  "authorship": [
+    {
+      "file": "mobile/src/screens/PatientHomeScreen.js",
+      "header": "/**\r\n * @file    PatientHomeScreen.js\r\n * @module  Patient\r\n * @desc    Premium patient home dashboard for the Care4U mobile app.\r\n *          Shows patient identity, next appointment, health summary,\r\n *          quick-access care tools, and personalized health infographics.\r\n * @author  Wasana Karunanayaka (S/21/081)\r\n */\r\n\r\nimport React, {\r",
+      "introduction": "d6e5fa7 Wasana-Karunanayaka <wasanakarunanayaka2002@email.com> feat(mobile): implement doctor search, smart slot booking, appointments dashboard, and new home screen",
+      "contributors": [
+        "Wasana-Karunanayaka <wasanakarunanayaka2002@email.com>"
+      ]
+    },
+    {
+      "file": "mobile/src/screens/PatientProfileScreen.js",
+      "header": "/**\r\n * @file    PatientProfileScreen.js\r\n * @module  Patient\r\n * @desc    Premium patient profile and clinical-safety workspace.\r\n *          Supports unified Edit Mode, profile photo updates,\r\n *          allergies, chronic conditions, medical devices,\r\n *          important medical background, family history,\r\n *          vaccinations, AI vaccination-card scanning,\r\n *          and privacy/consent controls.\r\n * @author  Wasana Karunanayaka (S/21/081)\r",
+      "introduction": "fe29b4d Wasana-Karunanayaka <wasanakarunanayaka2002@email.com> feat(patient): add mobile patient profile screen",
+      "contributors": [
+        "Codex Review Assistant <codex-review@users.noreply.local>",
+        "Wasana-Karunanayaka <wasanakarunanayaka2002@email.com>",
+        "lasitha <lasitha.sanuth@gmail.com>"
+      ]
+    },
+    {
+      "file": "mobile/src/screens/PatientQRCardScreen.js",
+      "header": "/**\r\n * @file      PatientQRCardScreen.js\r\n * @module    Patient\r\n * @desc      Premium Care4U patient QR identity card.\r\n *            Displays the patient's identity, blood group and emergency\r\n *            contact while encoding only the patient's qr_code_id in the QR.\r\n *            The QR acts as a secure patient reference for authorized Care4U\r\n *            doctor, hospital and pharmacy workflows.\r\n * @author    Wasana Karunanayaka (S/21/081)\r\n */\r",
+      "introduction": "5391884 Wasana-Karunanayaka <wasanakarunanayaka2002@email.com> feat(patient): add patient QR identity card screen",
+      "contributors": [
+        "Wasana-Karunanayaka <wasanakarunanayaka2002@email.com>"
+      ]
+    },
+    {
+      "file": "mobile/src/screens/DoctorSearchScreen.js",
+      "header": "/**\r\n * @file    DoctorSearchScreen.js\r\n * @module  Patient\r\n * @desc    Premium mobile doctor discovery screen.\r\n *          Lets patients search verified doctors by specialty\r\n *          and hospital, view doctor profile photos and details,\r\n *          and continue directly into appointment booking.\r\n * @author  Wasana Karunanayaka (S/21/081)\r\n */\r\n\r",
+      "introduction": "d6e5fa7 Wasana-Karunanayaka <wasanakarunanayaka2002@email.com> feat(mobile): implement doctor search, smart slot booking, appointments dashboard, and new home screen",
+      "contributors": [
+        "Wasana-Karunanayaka <wasanakarunanayaka2002@email.com>"
+      ]
+    },
+    {
+      "file": "mobile/src/screens/DoctorProfileScreen.js",
+      "header": "/**\r\n * @file    DoctorProfileScreen.js\r\n * @module  Doctor\r\n * @desc    Mobile professional profile for logged-in doctors.\r\n *          Care4U Mobile is patient-focused; doctors use the Care4U\r\n *          web clinical workspace for appointments, consultations,\r\n *          prescriptions, laboratory requests, and availability.\r\n * @author  I.M.L.S. Idirisinghe (S/21/389)\r\n */\r\n\r",
+      "introduction": "cf4b450 lasitha <lasitha.sanuth@gmail.com> feat(doctor): add minimal DoctorProfileScreen for own-profile view",
+      "contributors": [
+        "Wasana-Karunanayaka <wasanakarunanayaka2002@email.com>",
+        "lasitha <lasitha.sanuth@gmail.com>"
+      ]
+    },
+    {
+      "file": "mobile/src/screens/BookAppointmentScreen.js",
+      "header": "/**\r\n * @file    BookAppointmentScreen.js\r\n * @module  Patient\r\n * @desc    Premium mobile appointment booking and rescheduling screen.\r\n *          Displays doctor details, groups available slots by date,\r\n *          allows slot selection, optional visit notes, and confirmation.\r\n * @author  Wasana Karunanayaka (S/21/081)\r\n */\r\n\r\nimport React, {\r",
+      "introduction": "d6e5fa7 Wasana-Karunanayaka <wasanakarunanayaka2002@email.com> feat(mobile): implement doctor search, smart slot booking, appointments dashboard, and new home screen",
+      "contributors": [
+        "Wasana-Karunanayaka <wasanakarunanayaka2002@email.com>"
+      ]
+    },
+    {
+      "file": "mobile/src/screens/MyAppointmentsScreen.js",
+      "header": "/**\r\n * @file    MyAppointmentsScreen.js\r\n * @module  Patient\r\n * @desc    Premium mobile appointment-management screen.\r\n *          Displays upcoming and past visits with clear status,\r\n *          cancel confirmation, rescheduling, refresh, and booking.\r\n * @author  Wasana Karunanayaka (S/21/081)\r\n */\r\n\r\nimport React, {\r",
+      "introduction": "d6e5fa7 Wasana-Karunanayaka <wasanakarunanayaka2002@email.com> feat(mobile): implement doctor search, smart slot booking, appointments dashboard, and new home screen",
+      "contributors": [
+        "Wasana-Karunanayaka <wasanakarunanayaka2002@email.com>"
+      ]
+    },
+    {
+      "file": "mobile/src/screens/MedicalRecordsScreen.js",
+      "header": "/**\r\n * @file      MedicalRecordsScreen.js\r\n * @module    Patient\r\n * @desc      Premium mobile patient medical-record timeline.\r\n *            Supports filtering, pull-to-refresh, record summaries,\r\n *            confidential indicators, and detailed record viewing.\r\n * @author    Wasana Karunanayaka (S/21/081)\r\n */\r\n\r\nimport React, {\r",
+      "introduction": "e6acde0 Wasana-Karunanayaka <wasanakarunanayaka2002@email.com> feat(patient): add medical records screen, fix prescriptions, move allergies to profile on mobile",
+      "contributors": [
+        "Codex Review Assistant <codex-review@users.noreply.local>",
+        "Wasana-Karunanayaka <wasanakarunanayaka2002@email.com>"
+      ]
+    },
+    {
+      "file": "mobile/src/screens/LabReportsScreen.js",
+      "header": "/**\r\n * @file      LabReportsScreen.js\r\n * @module    Patient\r\n * @desc      Premium mobile laboratory-report screen.\r\n *            Supports image report preview, PDF opening,\r\n *            unread indicators, pull-to-refresh, and read tracking.\r\n * @author    Wasana Karunanayaka (S/21/081)\r\n */\r\n\r\nimport React, {\r",
+      "introduction": "f089bb7 Wasana-Karunanayaka <wasanakarunanayaka2002@email.com> feat(patient): add mobile lab reports screen",
+      "contributors": [
+        "Wasana-Karunanayaka <wasanakarunanayaka2002@email.com>"
+      ]
+    },
+    {
+      "file": "mobile/src/screens/PrescriptionsScreen.js",
+      "header": "/**\r\n * @file    PrescriptionsScreen.js\r\n * @module  Patient\r\n * @desc    Premium patient prescription screen.\r\n *          Displays prescription status, medicine details,\r\n *          dispensing progress, expiry information, and pharmacy QR.\r\n * @author  S/21/001 — status fix + medicine details by S/21/081\r\n */\r\n\r\nimport React, {\r",
+      "introduction": "3fe802f S/21/001 <s21001@sci.pdn.ac.lk> feat(prescription): add prescription QR mobile screen for patients",
+      "contributors": [
+        "Codex Review Assistant <codex-review@users.noreply.local>",
+        "Wasana-Karunanayaka <wasanakarunanayaka2002@email.com>",
+        "S/21/001 <s21001@sci.pdn.ac.lk>"
+      ]
+    },
+    {
+      "file": "mobile/src/screens/AIChatScreen.js",
+      "header": "/**\r\n * @file    AIChatScreen.js\r\n * @module  Patient\r\n * @desc    Premium mobile AI Chat Assistant for patients.\r\n *          Supports English/Sinhala responses, Markdown rendering,\r\n *          conversation context, quick prompts, persistent AI safety\r\n *          guidance, and keyboard-aware chat input.\r\n * @author  Wasana Karunanayaka (S/21/081)\r\n */\r\n\r",
+      "introduction": "d6e5fa7 Wasana-Karunanayaka <wasanakarunanayaka2002@email.com> feat(mobile): implement doctor search, smart slot booking, appointments dashboard, and new home screen\n31951e6 Wasana-Karunanayaka <wasanakarunanayaka2002@email.com> feat(patient): implement AI chat mobile screen, fix markdown formatting, and add conversation memory to both web and mobile clients",
+      "contributors": [
+        "Wasana-Karunanayaka <wasanakarunanayaka2002@email.com>"
+      ]
+    },
+    {
+      "file": "mobile/src/components/HealthAwarenessFeed.js",
+      "header": "/**\r\n * @file    HealthAwarenessFeed.js\r\n * @module  Patient\r\n * @desc    Mobile personalized health-awareness infographic carousel.\r\n *          Displays published Care4U infographic articles, prioritizes\r\n *          allergy-relevant content, supports swipe navigation,\r\n *          manual controls, and automatic rotation.\r\n * @author  Wasana Karunanayaka (S/21/081)\r\n */\r\n\r",
+      "introduction": "a66c5b6 Wasana-Karunanayaka <wasanakarunanayaka2002@email.com> feat(patient): add smart health awareness feed to web and mobile dashboards with deduplication",
+      "contributors": [
+        "Codex Review Assistant <codex-review@users.noreply.local>",
+        "Wasana-Karunanayaka <wasanakarunanayaka2002@email.com>"
+      ]
+    },
+    {
+      "file": "mobile/src/components/EmergencySOS.js",
+      "header": "/**\r\n * @file    EmergencySOS.js\r\n * @module  Emergency\r\n * @desc    Floating action button and 10-second countdown modal for SOS alerts.\r\n *          Integrates native phone dialer and background GPS capture.\r\n * @author  Wasana Karunanayaka (S/21/081)\r\n */\r\n\r\nimport React, { useState, useEffect } from 'react';\r\nimport { View, Text, TouchableOpacity, StyleSheet, Modal, Alert, Linking } from 'react-native';\r",
+      "introduction": "74f3cf5 Wasana-Karunanayaka <wasanakarunanayaka2002@email.com> feat(emergency): add mobile SOS UI, native dialer, and GPS location capture",
+      "contributors": [
+        "Codex Review Assistant <codex-review@users.noreply.local>",
+        "Wasana-Karunanayaka <wasanakarunanayaka2002@email.com>"
+      ]
+    },
+    {
+      "file": "mobile/src/services/patient.service.js",
+      "header": "/**\r\n * @file    patient.service.js\r\n * @module  Services\r\n * @desc    Mobile service functions for the Patient module.\r\n *          Calls the Care4U backend patient API endpoints.\r\n * @author  Wasana Karunanayaka (S/21/081)\r\n */\r\n\r\nimport api from './api';\r\n\r",
+      "introduction": "fe29b4d Wasana-Karunanayaka <wasanakarunanayaka2002@email.com> feat(patient): add mobile patient profile screen",
+      "contributors": [
+        "Codex Review Assistant <codex-review@users.noreply.local>",
+        "Wasana-Karunanayaka <wasanakarunanayaka2002@email.com>"
+      ]
+    },
+    {
+      "file": "mobile/src/services/doctor.service.js",
+      "header": "/**\r\n * @file    doctor.service.js\r\n * @module  Services\r\n * @desc    Frontend service for the Doctor module (mobile).\r\n *          Supports doctor profile viewing, doctor search, and slot availability.\r\n * @author  I.M.L.S. Idirisinghe (S/21/389)\r\n * @author  Wasana Karunanayaka (S/21/081)\r\n */\r\n\r\nimport api from './api';\r",
+      "introduction": "c905b72 lasitha <lasitha.sanuth@gmail.com> feat(doctor): add minimal mobile doctor.service for own-profile view",
+      "contributors": [
+        "Wasana-Karunanayaka <wasanakarunanayaka2002@email.com>",
+        "lasitha <lasitha.sanuth@gmail.com>"
+      ]
+    },
+    {
+      "file": "mobile/src/services/appointment.service.js",
+      "header": "/**\r\n * @file    appointment.service.js\r\n * @module  Services\r\n * @desc    Mobile service for managing appointments.\r\n * @author  Wasana Karunanayaka (S/21/081)\r\n */\r\nimport api from './api';\r\n\r\nexport const bookAppointment = async (appointmentData) => {\r\n  const response = await api.post('/api/appointments', appointmentData);\r",
+      "introduction": "c7c8f3a Wasana-Karunanayaka <wasanakarunanayaka2002@email.com> feat(appointment): enable dynamic doctor walk-in booking, fix auth session profiles, and resolve DB constraints",
+      "contributors": [
+        "Wasana-Karunanayaka <wasanakarunanayaka2002@email.com>"
+      ]
+    },
+    {
+      "file": "mobile/src/services/prescription.service.js",
+      "header": "/**\r\n * @file    prescription.service.js\r\n * @module  Services\r\n * @desc    API calls for prescription module on mobile.\r\n * @author  S/21/001\r\n */\r\n\r\nimport api from './api';\r\n\r\n/**\r",
+      "introduction": "3fe802f S/21/001 <s21001@sci.pdn.ac.lk> feat(prescription): add prescription QR mobile screen for patients",
+      "contributors": [
+        "S/21/001 <s21001@sci.pdn.ac.lk>"
+      ]
+    },
+    {
+      "file": "mobile/App.js",
+      "header": "/**\n * @file    App.js\n * @module  Root\n * @desc    Root component for the Care4U mobile app.\n *          Provides shared authentication, premium patient navigation,\n *          persistent bottom tabs, overlay workflows, and logout.\n * @author  Wasana Karunanayaka (S/21/081)\n */\n\nimport React, {",
+      "introduction": "fac9ebb Wasana-Karunanayaka <wasanakarunanayaka2002@gmail.com> chore(mobile): setup Expo React Native with blank template",
+      "contributors": [
+        "Codex Review Assistant <codex-review@users.noreply.local>",
+        "Wasana-Karunanayaka <wasanakarunanayaka2002@email.com>",
+        "lasitha <lasitha.sanuth@gmail.com>",
+        "Wasana Karunanayaka <wasanakarunanayaka2002@gmail.com>",
+        "S/21/001 <s21001@sci.pdn.ac.lk>",
+        "Wasana-Karunanayaka <wasanakarunanayaka2002@gmail.com>"
+      ]
+    }
+  ],
+  "checks": {
+    "syntax": "18/18 PASS",
+    "astAndTokenPreservation": "18/18 PASS",
+    "headersAndComments": "18/18 PASS",
+    "diffWhitespace": "PASS",
+    "existingApplicationTests": {
+      "command": "node --test frontend/tests/patient-ui.test.cjs frontend/tests/auth-ui.test.cjs",
+      "passed": 77,
+      "failed": 0,
+      "output": "TAP version 13\r\n# Subtest: web registerPharmacy preserves its separate pending-approval API contract\r\nok 1 - web registerPharmacy preserves its separate pending-approval API contract\r\n  ---\r\n  duration_ms: 889.7407\r\n  ...\r\n# Subtest: web registerLaboratory preserves its separate pending-approval API contract\r\nok 2 - web registerLaboratory preserves its separate pending-approval API contract\r\n  ---\r\n  duration_ms: 39.359\r\n  ...\r\n# Subtest: pharmacy application callback suppresses duplicates and never reports a negative envelope as pending approval\r\nok 3 - pharmacy application callback suppresses duplicates and never reports a negative envelope as pending approval\r\n  ---\r\n  duration_ms: 89.1405\r\n  ...\r\n# Subtest: laboratory application validates confirmation, maps selected tests and waits for acknowledgement\r\nok 4 - laboratory application validates confirmation, maps selected tests and waits for acknowledgement\r\n  ---\r\n  duration_ms: 107.2913\r\n  ...\r\n# Subtest: frontend actual login wrapper requires acknowledgement and bounds request wait\r\nok 5 - frontend actual login wrapper requires acknowledgement and bounds request wait\r\n  ---\r\n  duration_ms: 20.9569\r\n  ...\r\n# Subtest: frontend actual register wrapper requires acknowledgement and bounds request wait\r\nok 6 - frontend actual register wrapper requires acknowledgement and bounds request wait\r\n  ---\r\n  duration_ms: 22.8181\r\n  ...\r\n# Subtest: frontend actual verifyOtp wrapper requires acknowledgement and bounds request wait\r\nok 7 - frontend actual verifyOtp wrapper requires acknowledgement and bounds request wait\r\n  ---\r\n  duration_ms: 33.7445\r\n  ...\r\n# Subtest: frontend actual resendOtp wrapper requires acknowledgement and bounds request wait\r\nok 8 - frontend actual resendOtp wrapper requires acknowledgement and bounds request wait\r\n  ---\r\n  duration_ms: 15.397\r\n  ...\r\n# Subtest: frontend actual forgotPassword wrapper requires acknowledgement and bounds request wait\r\nok 9 - frontend actual forgotPassword wrapper requires acknowledgement and bounds request wait\r\n  ---\r\n  duration_ms: 18.6765\r\n  ...\r\n# Subtest: frontend actual resetPassword wrapper requires acknowledgement and bounds request wait\r\nok 10 - frontend actual resetPassword wrapper requires acknowledgement and bounds request wait\r\n  ---\r\n  duration_ms: 24.4646\r\n  ...\r\n# Subtest: frontend actual error formatter preserves rate guidance and hides transport details\r\nok 11 - frontend actual error formatter preserves rate guidance and hides transport details\r\n  ---\r\n  duration_ms: 10.6799\r\n  ...\r\n# Subtest: mobile actual login wrapper requires acknowledgement and bounds request wait\r\nok 12 - mobile actual login wrapper requires acknowledgement and bounds request wait\r\n  ---\r\n  duration_ms: 45.3504\r\n  ...\r\n# Subtest: mobile actual register wrapper requires acknowledgement and bounds request wait\r\nok 13 - mobile actual register wrapper requires acknowledgement and bounds request wait\r\n  ---\r\n  duration_ms: 17.2139\r\n  ...\r\n# Subtest: mobile actual verifyOtp wrapper requires acknowledgement and bounds request wait\r\nok 14 - mobile actual verifyOtp wrapper requires acknowledgement and bounds request wait\r\n  ---\r\n  duration_ms: 11.256\r\n  ...\r\n# Subtest: mobile actual resendOtp wrapper requires acknowledgement and bounds request wait\r\nok 15 - mobile actual resendOtp wrapper requires acknowledgement and bounds request wait\r\n  ---\r\n  duration_ms: 13.5136\r\n  ...\r\n# Subtest: mobile actual forgotPassword wrapper requires acknowledgement and bounds request wait\r\nok 16 - mobile actual forgotPassword wrapper requires acknowledgement and bounds request wait\r\n  ---\r\n  duration_ms: 19.5226\r\n  ...\r\n# Subtest: mobile actual resetPassword wrapper requires acknowledgement and bounds request wait\r\nok 17 - mobile actual resetPassword wrapper requires acknowledgement and bounds request wait\r\n  ---\r\n  duration_ms: 12.2504\r\n  ...\r\n# Subtest: mobile actual error formatter preserves rate guidance and hides transport details\r\nok 18 - mobile actual error formatter preserves rate guidance and hides transport details\r\n  ---\r\n  duration_ms: 8.9279\r\n  ...\r\n# Subtest: web sign-in form handler preserves existing password compatibility and suppresses same-tick duplicates\r\nok 19 - web sign-in form handler preserves existing password compatibility and suppresses same-tick duplicates\r\n  ---\r\n  duration_ms: 35.3459\r\n  ...\r\n# Subtest: web sign-in required errors prevent API calls and associate a field error\r\nok 20 - web sign-in required errors prevent API calls and associate a field error\r\n  ---\r\n  duration_ms: 19.8353\r\n  ...\r\n# Subtest: web registration Patient: both steps submit and only selected role fields reach API\r\nok 21 - web registration Patient: both steps submit and only selected role fields reach API\r\n  ---\r\n  duration_ms: 109.4453\r\n  ...\r\n# Subtest: web registration Doctor: both steps submit and only selected role fields reach API\r\nok 22 - web registration Doctor: both steps submit and only selected role fields reach API\r\n  ---\r\n  duration_ms: 49.4222\r\n  ...\r\n# Subtest: web registration Pharmacist: both steps submit and only selected role fields reach API\r\nok 23 - web registration Pharmacist: both steps submit and only selected role fields reach API\r\n  ---\r\n  duration_ms: 44.1151\r\n  ...\r\n# Subtest: web registration Lab Technician: both steps submit and only selected role fields reach API\r\nok 24 - web registration Lab Technician: both steps submit and only selected role fields reach API\r\n  ---\r\n  duration_ms: 37.945\r\n  ...\r\n# Subtest: web registration Hospital Staff: both steps submit and only selected role fields reach API\r\nok 25 - web registration Hospital Staff: both steps submit and only selected role fields reach API\r\n  ---\r\n  duration_ms: 34.518\r\n  ...\r\n# Subtest: web registration whitespace-only role details never submit\r\nok 26 - web registration whitespace-only role details never submit\r\n  ---\r\n  duration_ms: 26.0606\r\n  ...\r\n# Subtest: web OTP patient goes directly to signed-in destination after acknowledgement\r\nok 27 - web OTP patient goes directly to signed-in destination after acknowledgement\r\n  ---\r\n  duration_ms: 34.6348\r\n  ...\r\n# Subtest: web OTP pending professional clears stale UI identity and returns to approval guidance\r\nok 28 - web OTP pending professional clears stale UI identity and returns to approval guidance\r\n  ---\r\n  duration_ms: 16.6056\r\n  ...\r\n# Subtest: web OTP missing context and malformed code do not call API\r\nok 29 - web OTP missing context and malformed code do not call API\r\n  ---\r\n  duration_ms: 29.4144\r\n  ...\r\n# Subtest: web OTP verify suppresses competing action and releases after provider failure\r\nok 30 - web OTP verify suppresses competing action and releases after provider failure\r\n  ---\r\n  duration_ms: 14.0665\r\n  ...\r\n# Subtest: web OTP resend suppresses competing action and releases after provider failure\r\nok 31 - web OTP resend suppresses competing action and releases after provider failure\r\n  ---\r\n  duration_ms: 14.1603\r\n  ...\r\n# Subtest: web ForgotPassword retains rate retry guidance without showing success\r\nok 32 - web ForgotPassword retains rate retry guidance without showing success\r\n  ---\r\n  duration_ms: 26.9257\r\n  ...\r\n# Subtest: web ResetPassword retains rate retry guidance without showing success\r\nok 33 - web ResetPassword retains rate retry guidance without showing success\r\n  ---\r\n  duration_ms: 24.5566\r\n  ...\r\n# Subtest: web reset invalid token offers recovery and mismatched passwords never call API\r\nok 34 - web reset invalid token offers recovery and mismatched passwords never call API\r\n  ---\r\n  duration_ms: 31.5881\r\n  ...\r\n# Subtest: web acknowledged recovery stays generic and acknowledged reset clears passwords\r\nok 35 - web acknowledged recovery stays generic and acknowledged reset clears passwords\r\n  ---\r\n  duration_ms: 22.6264\r\n  ...\r\n# Subtest: mobile sign-in accepts existing short passwords and suppresses rapid duplicate taps\r\nok 36 - mobile sign-in accepts existing short passwords and suppresses rapid duplicate taps\r\n  ---\r\n  duration_ms: 53.0576\r\n  ...\r\n# Subtest: mobile registration patient maps supported role fields without exposing password in success callback\r\nok 37 - mobile registration patient maps supported role fields without exposing password in success callback\r\n  ---\r\n  duration_ms: 61.6019\r\n  ...\r\n# Subtest: mobile registration doctor maps supported role fields without exposing password in success callback\r\nok 38 - mobile registration doctor maps supported role fields without exposing password in success callback\r\n  ---\r\n  duration_ms: 40.0354\r\n  ...\r\n# Subtest: mobile registration rejects impossible dates before requesting email\r\nok 39 - mobile registration rejects impossible dates before requesting email\r\n  ---\r\n  duration_ms: 35.6264\r\n  ...\r\n# Subtest: mobile ForgotPassword does not report a rejected 200 envelope as success and restores editing\r\nok 40 - mobile ForgotPassword does not report a rejected 200 envelope as success and restores editing\r\n  ---\r\n  duration_ms: 44.8205\r\n  ...\r\n# Subtest: mobile ResetPassword does not report a rejected 200 envelope as success and restores editing\r\nok 41 - mobile ResetPassword does not report a rejected 200 envelope as success and restores editing\r\n  ---\r\n  duration_ms: 33.7608\r\n  ...\r\n# Subtest: mobile reset refuses malformed link/token javascript:fixture\r\nok 42 - mobile reset refuses malformed link/token javascript:fixture\r\n  ---\r\n  duration_ms: 19.2536\r\n  ...\r\n# Subtest: mobile reset refuses malformed link/token https://example.test\r\nok 43 - mobile reset refuses malformed link/token https://example.test\r\n  ---\r\n  duration_ms: 14.5781\r\n  ...\r\n# Subtest: mobile reset refuses malformed link/token AAAAAAAAAAAAAAAAAAAA\r\nok 44 - mobile reset refuses malformed link/token AAAAAAAAAAAAAAAAAAAA\r\n  ---\r\n  duration_ms: 21.7977\r\n  ...\r\n# Subtest: mobile reset accepts a raw token and clears secrets only after acknowledgement\r\nok 45 - mobile reset accepts a raw token and clears secrets only after acknowledgement\r\n  ---\r\n  duration_ms: 16.3684\r\n  ...\r\n# Subtest: mobile OTP missing context presents recovery without accepting verification\r\nok 46 - mobile OTP missing context presents recovery without accepting verification\r\n  ---\r\n  duration_ms: 48.9365\r\n  ...\r\n# Subtest: mobile OTP verify excludes competing request\r\nok 47 - mobile OTP verify excludes competing request\r\n  ---\r\n  duration_ms: 52.8\r\n  ...\r\n# Subtest: mobile OTP resend excludes competing request\r\nok 48 - mobile OTP resend excludes competing request\r\n  ---\r\n  duration_ms: 35.7946\r\n  ...\r\n# Subtest: shared Input associates required/error text and visibility toggle never submits the form\r\nok 49 - shared Input associates required/error text and visibility toggle never submits the form\r\n  ---\r\n  duration_ms: 23.0567\r\n  ...\r\n# Subtest: mobile actual logout failure preserves local identity\r\nok 50 - mobile actual logout failure preserves local identity\r\n  ---\r\n  duration_ms: 26.793\r\n  ...\r\n# Subtest: mobile actual logout success clears local identity\r\nok 51 - mobile actual logout success clears local identity\r\n  ---\r\n  duration_ms: 26.761\r\n  ...\r\n# Subtest: web wrong-role guard preserves denial without updating store during render\r\nok 52 - web wrong-role guard preserves denial without updating store during render\r\n  ---\r\n  duration_ms: 30.3519\r\n  ...\r\n# Subtest: mobile actual OTP parent admits acknowledged patient\r\nok 53 - mobile actual OTP parent admits acknowledged patient\r\n  ---\r\n  duration_ms: 23.0718\r\n  ...\r\n# Subtest: mobile actual OTP parent awaits approval\r\nok 54 - mobile actual OTP parent awaits approval\r\n  ---\r\n  duration_ms: 21.2571\r\n  ...\r\n# Subtest: pharmacy public registration hides unexpected failures and preserves expected business errors\r\nok 55 - pharmacy public registration hides unexpected failures and preserves expected business errors\r\n  ---\r\n  duration_ms: 29.7288\r\n  ...\r\n# Subtest: laboratory public registration hides unexpected failures and preserves expected business errors\r\nok 56 - laboratory public registration hides unexpected failures and preserves expected business errors\r\n  ---\r\n  duration_ms: 35.8671\r\n  ...\r\n# Subtest: frontend getPatientProfile rejects negative envelopes rather than empty/saved success\r\nok 57 - frontend getPatientProfile rejects negative envelopes rather than empty/saved success\r\n  ---\r\n  duration_ms: 869.0573\r\n  ...\r\n# Subtest: frontend updatePatientProfile rejects negative envelopes rather than empty/saved success\r\nok 58 - frontend updatePatientProfile rejects negative envelopes rather than empty/saved success\r\n  ---\r\n  duration_ms: 62.3776\r\n  ...\r\n# Subtest: frontend getMedicalRecords rejects negative envelopes rather than empty/saved success\r\nok 59 - frontend getMedicalRecords rejects negative envelopes rather than empty/saved success\r\n  ---\r\n  duration_ms: 40.4355\r\n  ...\r\n# Subtest: frontend getConsentSettings rejects negative envelopes rather than empty/saved success\r\nok 60 - frontend getConsentSettings rejects negative envelopes rather than empty/saved success\r\n  ---\r\n  duration_ms: 22.6171\r\n  ...\r\n# Subtest: frontend updateConsentSettings rejects negative envelopes rather than empty/saved success\r\nok 61 - frontend updateConsentSettings rejects negative envelopes rather than empty/saved success\r\n  ---\r\n  duration_ms: 27.138\r\n  ...\r\n# Subtest: frontend medical record wrapper validates array and forwards consultation not role\r\nok 62 - frontend medical record wrapper validates array and forwards consultation not role\r\n  ---\r\n  duration_ms: 63.8563\r\n  ...\r\n# Subtest: frontend privacy response must contain a confirmed list\r\nok 63 - frontend privacy response must contain a confirmed list\r\n  ---\r\n  duration_ms: 68.9865\r\n  ...\r\n# Subtest: mobile getPatientProfile rejects negative envelopes rather than empty/saved success\r\nok 64 - mobile getPatientProfile rejects negative envelopes rather than empty/saved success\r\n  ---\r\n  duration_ms: 36.2409\r\n  ...\r\n# Subtest: mobile updatePatientProfile rejects negative envelopes rather than empty/saved success\r\nok 65 - mobile updatePatientProfile rejects negative envelopes rather than empty/saved success\r\n  ---\r\n  duration_ms: 30.4588\r\n  ...\r\n# Subtest: mobile getMedicalRecords rejects negative envelopes rather than empty/saved success\r\nok 66 - mobile getMedicalRecords rejects negative envelopes rather than empty/saved success\r\n  ---\r\n  duration_ms: 17.0102\r\n  ...\r\n# Subtest: mobile getConsentSettings rejects negative envelopes rather than empty/saved success\r\nok 67 - mobile getConsentSettings rejects negative envelopes rather than empty/saved success\r\n  ---\r\n  duration_ms: 23.9855\r\n  ...\r\n# Subtest: mobile updateConsentSettings rejects negative envelopes rather than empty/saved success\r\nok 68 - mobile updateConsentSettings rejects negative envelopes rather than empty/saved success\r\n  ---\r\n  duration_ms: 16.3544\r\n  ...\r\n# Subtest: mobile medical record wrapper validates array and forwards consultation not role\r\nok 69 - mobile medical record wrapper validates array and forwards consultation not role\r\n  ---\r\n  duration_ms: 45.0743\r\n  ...\r\n# Subtest: mobile privacy response must contain a confirmed list\r\nok 70 - mobile privacy response must contain a confirmed list\r\n  ---\r\n  duration_ms: 29.6844\r\n  ...\r\n# Subtest: web requestConsentAccess refuses a malformed acknowledged grant/request\r\nok 71 - web requestConsentAccess refuses a malformed acknowledged grant/request\r\n  ---\r\n  duration_ms: 25.8176\r\n  ...\r\n# Subtest: web verifyConsentAccess refuses a malformed acknowledged grant/request\r\nok 72 - web verifyConsentAccess refuses a malformed acknowledged grant/request\r\n  ---\r\n  duration_ms: 13.3142\r\n  ...\r\n# Subtest: web getConsentAccessStatus refuses a malformed acknowledged grant/request\r\nok 73 - web getConsentAccessStatus refuses a malformed acknowledged grant/request\r\n  ---\r\n  duration_ms: 18.386\r\n  ...\r\n# Subtest: web verified grant is accepted only with explicit grant acknowledgement and expiry\r\nok 74 - web verified grant is accepted only with explicit grant acknowledgement and expiry\r\n  ---\r\n  duration_ms: 21.4458\r\n  ...\r\n# Subtest: actual record screen filters all schema-supported record types\r\nok 75 - actual record screen filters all schema-supported record types\r\n  ---\r\n  duration_ms: 101.994\r\n  ...\r\n# Subtest: actual record screen does not substitute account ID for missing profile\r\nok 76 - actual record screen does not substitute account ID for missing profile\r\n  ---\r\n  duration_ms: 53.3647\r\n  ...\r\n# Subtest: opt-in dialog does not steal input focus on parent callback changes and Escape uses latest callback\r\nok 77 - opt-in dialog does not steal input focus on parent callback changes and Escape uses latest callback\r\n  ---\r\n  duration_ms: 31.8393\r\n  ...\r\n1..77\r\n# tests 77\r\n# suites 0\r\n# pass 77\r\n# fail 0\r\n# cancelled 0\r\n# skipped 0\r\n# todo 0\r\n# duration_ms 6392.8284\r\n"
+    },
+    "nativeBuild": "NOT_RUN: mobile package has no build script; parser and isolated source tests do not certify Metro/native builds",
+    "nativeVisualRuntime": "NOT_RUN: device/emulator/camera/GPS/dialer/provider/backend/database"
+  },
+  "sourceCommits": [
+    {
+      "hash": "895caba134446be0923850c72b064d61d15bfe2c",
+      "message": "docs(patient): clarify mobile workflows and screen controls"
+    },
+    {
+      "hash": "4ec4632086003ce58eabd723ce56b1de02643f79",
+      "message": "docs(patient): explain mobile hospital search limitation"
+    }
+  ],
+  "finalCommentClarification": "MedicalRecordsScreen record-card comment names its actual onPress prop; saved with completion documentation."
+}

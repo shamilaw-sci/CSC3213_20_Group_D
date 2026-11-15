@@ -4,7 +4,9 @@
 
 2026-11-15. Latest scope: comments and clearly safe presentation fixes only; functional fixes need explicit approval. Preserve current local files and dirty Doctor work; no push/merge. Patient Web: 19 source reviews complete, source comment commit f5bacbf. Eighteen exact-entry executable comparisons plus explicitly approved MyAppointments recovery; all 19 match entry HEAD executable code. Lint/build and 21 patient cases PASS. UI source-only; live DB/provider/browser/device NOT_RUN. [Report/tracker](PATIENT_WEB_FINAL_REVIEW.md), [viva guide](../../CARE4U_VIVA_CODE_GUIDE.md), [TSV](../viva/patient-web-final-table.tsv), [evidence](evidence/patient-web-2026-11-15/verification.json). PW02–PW06 remain unchanged.
 
-Next: Patient Mobile beginning mobile/src/screens/PatientHomeScreen.js; reuse auth/Stage 4A work. Later groups remain pending in the user’s requested order.
+Patient Mobile is also complete for source/comments: 18 files, source commits 895caba and 4ec4632; all entry executable AST/token comparisons PASS and existing auth+patient cases 77/77 PASS. No UI/wording/functional changes. Native build/device/provider acceptance NOT_RUN. [Mobile report/tracker](PATIENT_MOBILE_FINAL_REVIEW.md), [evidence](evidence/patient-mobile-2026-11-15/verification.json), [TSV](../viva/patient-mobile-final-table.tsv). PM01–PM06 are documented, unchanged.
+
+Resume at backend/src/modules/doctor/doctor.controller.js. The three dirty Doctor backend files remain byte-identical to the entry snapshots and uncommitted. Snapshot/check their current diffs before commenting, then follow the user’s remaining module order. No later group is marked complete.
 
 ## Previous review scope (2026-11-14)
 

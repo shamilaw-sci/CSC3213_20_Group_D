@@ -294,7 +294,7 @@ const SummaryCard = ({
  * @desc      medical-record timeline card.
  */
 /**
- * Render a native record summary and delegate opening through onPress/onOpen props; record selection belongs to the screen.
+ * Show a record summary; onPress opens its details in the parent screen.
  */
 const RecordCard = ({
   record,
